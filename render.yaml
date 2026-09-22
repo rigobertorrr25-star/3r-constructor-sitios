@@ -7,7 +7,7 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: npm install && npm run db:generate -w api && npm run build -w api && npm run db:deploy -w api
+    buildCommand: npm install && npm run db:generate -w api && npm run build -w api && npm run db:deploy -w api && npm run db:seed -w api
     startCommand: node apps/api/dist/main.js
     healthCheckPath: /api/v1/health
     envVars:
