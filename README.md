@@ -102,6 +102,35 @@ Registro (bienvenida + verificar correo, y aviso al equipo), recuperar contrase�
 2. Pon su cadena en `DATABASE_URL` de `apps/api/.env` (nunca en git).
 3. `npm run db:deploy -w api` aplica las migraciones ya creadas y `npm run db:seed -w api` carga los datos base.
 
+## Publicar en internet (producción)
+
+Cuatro servicios, cada uno con cuenta gratis, y tu propio dominio:
+
+1. **Base de datos — [Neon](https://neon.tech).** Crea un proyecto (rama de **producción**, no la de desarrollo)
+   y copia su cadena de conexión.
+2. **API — [Render](https://render.com).** *New → Blueprint*, conecta este repositorio de GitHub — detecta
+   `render.yaml` solo. Te va a pedir rellenar: `DATABASE_URL` (de Neon), `WEB_ORIGIN` (tu dominio, con `https://`),
+   `ADMIN_EMAIL`, `SITES_ROOT_HOST` (tu dominio) y `SITES_URL_TEMPLATE` (`https://{label}.tudominio.com`).
+   `RESEND_API_KEY`/`EMAIL_FROM` y las 4 de R2 son opcionales — sin ellas, los correos quedan en modo de
+   prueba y los sitios publicados se guardan en el disco de Render (que se borra en cada reinicio, ver más abajo).
+   Termina con la URL de tu API, algo como `https://3r-api.onrender.com`.
+3. **Sitio (frontend) — [Vercel](https://vercel.com).** *New Project*, mismo repositorio, con **Root Directory**
+   en `apps/web`. Variable `API_URL` = tu URL de Render + `/api/v1` (ej. `https://3r-api.onrender.com/api/v1`).
+4. **Dominio — en Cloudflare (DNS del dominio):** agrega tu dominio en el proyecto de Vercel; te da los registros
+   DNS a crear (normalmente un `A` en la raíz y un `CNAME` en `www`). Agrega también `*.tudominio.com` como
+   dominio del mismo proyecto de Vercel, con su propio `CNAME` — así cada sitio de cliente
+   (`etiqueta.tudominio.com`) llega a la misma app. **En Cloudflare, esos registros van en modo "solo DNS"
+   (nube gris, no naranja)** — con el proxy de Cloudflare activado (naranja), Vercel no puede emitir el
+   certificado HTTPS.
+
+### Sitios publicados en producción (Cloudflare R2)
+
+El disco de Render **no es permanente**: cada reinicio o nuevo despliegue borra lo que se guardó ahí, y con eso
+desaparecerían los sitios ya publicados. Para producción, activa Cloudflare R2 (S3-compatible, plan gratis):
+crea un bucket y un token con permiso de lectura/escritura, y pon las 4 variables `R2_*` en Render (ver
+`.env.example`). Con esas 4 puestas, `PublishingModule` usa R2 solo; sin ellas, sigue usando disco local
+(perfecto para desarrollo).
+
 ## Estado
 
 Hecho (todo con pruebas: 88 de API, 23 del editor y recorridos completos en un Chrome real):

@@ -8,7 +8,9 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   configureApp(app);
 
-  const port = Number(process.env.API_PORT ?? 3001);
+  // Render (y la mayoría de hostings) asignan el puerto por su cuenta en PORT; en desarrollo local
+  // usamos API_PORT como hasta ahora.
+  const port = Number(process.env.PORT ?? process.env.API_PORT ?? 3001);
   await app.listen(port);
   console.log(`API escuchando en http://localhost:${port}/api/v1`);
 }
