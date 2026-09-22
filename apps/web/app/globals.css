@@ -1,0 +1,222 @@
+@import 'tailwindcss';
+
+:root {
+  --surface-0: #000103;
+  --surface-1: #04080d;
+  --surface-2: #0a131a;
+  --background: var(--surface-0);
+  --foreground: #f2f6f8;
+  --card: var(--surface-1);
+  --primary: #8a9bff;
+  --primary-foreground: #060815;
+  --secondary: #ff86db;
+  --accent: #d6b0ff;
+  --muted: #171b22;
+  --muted-foreground: #a5abb5;
+  --destructive: #f94144;
+  --border: #ffffff0f;
+  --input: #ffffff0a;
+  --ring: #8a9bff8c;
+  --glass: #ffffff09;
+  --glass-border: #ffffff14;
+  --radius: 16px;
+
+  --gradient-hero:
+    radial-gradient(ellipse 60% 50% at 85% -10%, #8a9bff38, transparent 60%),
+    radial-gradient(ellipse 50% 50% at -10% 110%, #ff86db29, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 110%, #d6b0ff1a, transparent 70%);
+  --gradient-spectrum: linear-gradient(100deg, #8a9bff 0%, #cf9bff 28%, #ff86db 55%, #ff9479 82%, #f7cb58 100%);
+  --shadow-glass: inset 0 1px 0 0 #ffffff0d, 0 0 0 1px #ffffff0a, 0 24px 60px -24px #000c;
+  --shadow-glow: 0 0 40px -6px #8a9bff66;
+  --shadow-accent: 0 8px 32px -8px #ff86db47;
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --font-sans: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Sora Variable', ui-sans-serif, system-ui, sans-serif;
+  --radius-lg: var(--radius);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Entrada suave al cargar; se desactiva si el usuario prefiere menos movimiento. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  animation: rise 700ms var(--ease-emphasized) both;
+}
+
+/* Aparece al hacer scroll hasta la sección (ver components/reveal.tsx). */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 700ms var(--ease-emphasized), transform 700ms var(--ease-emphasized);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Manchas de luz flotantes del fondo. */
+@keyframes float-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(3%, -4%) scale(1.06); }
+}
+
+@keyframes float-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-4%, 3%) scale(1.08); }
+}
+
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  pointer-events: none;
+}
+
+.orb-a {
+  animation: float-a 16s var(--ease-emphasized) infinite;
+}
+
+.orb-b {
+  animation: float-b 19s var(--ease-emphasized) infinite;
+}
+
+/* Brillo que sigue al cursor sobre una tarjeta (ver components/spotlight-card.tsx). */
+.spotlight {
+  position: relative;
+}
+
+.spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(220px circle at var(--spot-x, 50%) var(--spot-y, 50%), #ffffff40, transparent 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.spotlight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(340px circle at var(--spot-x, 50%) var(--spot-y, 50%), #8a9bff14, transparent 65%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+
+.spotlight:hover::before,
+.spotlight:hover::after {
+  opacity: 1;
+}
+
+/* Brillo que recorre un botón al pasar el cursor. */
+.shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(115deg, transparent, #ffffff3d, transparent);
+  transform: skewX(-20deg);
+  transition: left 650ms var(--ease-emphasized);
+}
+
+.shine:hover::after {
+  left: 130%;
+}
+
+/* Resplandor que respira, para el paquete destacado. */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: var(--shadow-glow); }
+  50% { box-shadow: 0 0 64px -8px #8a9bff9e; }
+}
+
+.pulse-glow {
+  animation: pulse-glow 3.2s ease-in-out infinite;
+}
+
+/* Texto con degradado del espectro de marca, en movimiento lento. */
+@keyframes spectrum-pan {
+  to { background-position: 200% center; }
+}
+
+.text-spectrum {
+  background: var(--gradient-spectrum);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: spectrum-pan 8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .orb-a,
+  .orb-b,
+  .text-spectrum,
+  .pulse-glow {
+    animation: none;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .shine::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 64 64" role="img" aria-label="3R">
+  <title>3R</title>
+  <g transform="translate(-1 0)" fill="none" stroke="#ffffff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13 21 C13 16 29 16 29 24 C29 29 22 31 20 31 C22 31 30 33 30 39 C30 47 13 47 12 41"/>
+    <path d="M37 46 V18 H45 C53 18 53 33 45 33 H37 M45 33 L53 46"/>
+  </g>
+</svg>

@@ -1,0 +1,513 @@
+// Esquema de base de datos del constructor de sitios (PostgreSQL).
+// Los estados se guardan como VARCHAR (según el diseño) y se validan en código.
+// Convención: campos camelCase en Prisma, columnas snake_case en la base.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────── USUARIOS ─────────────────────────
+
+model User {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email           String    @unique @db.VarChar(255)
+  passwordHash    String    @map("password_hash")
+  firstName       String?   @map("first_name") @db.VarChar(100)
+  lastName        String?   @map("last_name") @db.VarChar(100)
+  avatarUrl       String?   @map("avatar_url")
+  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6)
+  // active | suspended | deleted
+  status          String    @default("active") @db.VarChar(30)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  roles         UserRole[]
+  sessions      UserSession[]
+  sites         Site[]
+  pageVersions  PageVersion[]
+  assets        Asset[]
+  subscriptions Subscription[]
+  invoices      Invoice[]
+  auditLogs     AuditLog[]
+  verificationTokens VerificationToken[]
+  tickets       SupportTicket[] @relation("TicketRequester")
+  assignedTickets SupportTicket[] @relation("TicketAssignee")
+  orders        Order[]
+  orderEvents   OrderEvent[]
+
+  @@map("users")
+}
+
+model UserRole {
+  userId String @map("user_id") @db.Uuid
+  // USER | ADMIN | SUPER_ADMIN (más adelante AGENCY, EDITOR, SUPPORT, BILLING)
+  role   String @db.VarChar(50)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, role])
+  @@map("user_roles")
+}
+
+model UserSession {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  // Solo se guarda el hash del refresh token, nunca el token en claro.
+  refreshTokenHash String    @map("refresh_token_hash")
+  ipAddress        String?   @map("ip_address") @db.Inet
+  userAgent        String?   @map("user_agent")
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_user_sessions_user_id")
+  @@index([refreshTokenHash], map: "idx_user_sessions_token_hash")
+  @@map("user_sessions")
+}
+
+// ───────────────────────── SITIOS ─────────────────────────
+
+model Site {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String   @map("user_id") @db.Uuid
+  name               String   @db.VarChar(150)
+  slug               String   @db.VarChar(150)
+  description        String?
+  // draft | published | archived
+  status             String   @default("draft") @db.VarChar(30)
+  templateId         String?  @map("template_id") @db.Uuid
+  publishedVersionId String?  @map("published_version_id") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template         Template?     @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  publishedVersion PageVersion?  @relation("SitePublishedVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
+  pages            Page[]
+  assets           Asset[]
+  domains          Domain[]
+  publications     Publication[]
+  deploymentJobs   DeploymentJob[]
+  tickets          SupportTicket[]
+  order            Order?
+
+  @@unique([userId, slug])
+  @@index([userId], map: "idx_sites_user_id")
+  @@map("sites")
+}
+
+model Page {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  siteId         String   @map("site_id") @db.Uuid
+  title          String   @db.VarChar(150)
+  slug           String   @db.VarChar(150)
+  pageType       String?  @default("standard") @map("page_type") @db.VarChar(30)
+  sortOrder      Int      @default(0) @map("sort_order")
+  isHomepage     Boolean  @default(false) @map("is_homepage")
+  isPublished    Boolean  @default(false) @map("is_published")
+  seoTitle       String?  @map("seo_title") @db.VarChar(255)
+  seoDescription String?  @map("seo_description")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  site     Site          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  versions PageVersion[]
+
+  @@unique([siteId, slug])
+  @@index([siteId], map: "idx_pages_site_id")
+  @@map("pages")
+}
+
+model PageVersion {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pageId        String   @map("page_id") @db.Uuid
+  versionNumber Int      @map("version_number")
+  // Documento completo del editor (árbol JSON versionado)
+  content       Json
+  createdBy     String?  @map("created_by") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  page              Page          @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  author            User?         @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  publications      Publication[]
+  publishedForSites Site[]        @relation("SitePublishedVersion")
+
+  @@unique([pageId, versionNumber])
+  @@index([pageId], map: "idx_page_versions_page_id")
+  @@map("page_versions")
+}
+
+// Componentes reutilizables del editor (bloques guardados).
+// Tabla listada en el diseño ("components") sin columnas definidas: se propone esta estructura.
+model Component {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(150)
+  type      String   @db.VarChar(50)
+  category  String?  @db.VarChar(100)
+  content   Json
+  isSystem  Boolean  @default(true) @map("is_system")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([type], map: "idx_components_type")
+  @@map("components")
+}
+
+model Template {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String   @db.VarChar(150)
+  slug         String   @unique @db.VarChar(150)
+  category     String?  @db.VarChar(100)
+  thumbnailUrl String?  @map("thumbnail_url")
+  content      Json
+  isPremium    Boolean  @default(false) @map("is_premium")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  sites Site[]
+
+  @@map("templates")
+}
+
+// ───────────────────────── DOMINIOS ─────────────────────────
+
+model Domain {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  siteId             String    @map("site_id") @db.Uuid
+  domain             String    @unique @db.VarChar(255)
+  // subdomain | custom
+  type               String    @default("custom") @db.VarChar(30)
+  // pending | verified | failed
+  verificationStatus String    @default("pending") @map("verification_status") @db.VarChar(30)
+  // pending | active | failed
+  sslStatus          String    @default("pending") @map("ssl_status") @db.VarChar(30)
+  verifiedAt         DateTime? @map("verified_at") @db.Timestamptz(6)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId], map: "idx_domains_site_id")
+  @@map("domains")
+}
+
+// ───────────────────────── MULTIMEDIA ─────────────────────────
+
+model Asset {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  siteId     String   @map("site_id") @db.Uuid
+  uploadedBy String?  @map("uploaded_by") @db.Uuid
+  filename   String   @db.VarChar(255)
+  // Clave del objeto en S3 / Cloudflare R2. El archivo NO vive en PostgreSQL.
+  storageKey String   @map("storage_key")
+  mimeType   String?  @map("mime_type") @db.VarChar(100)
+  fileSize   BigInt?  @map("file_size")
+  width      Int?
+  height     Int?
+  altText    String?  @map("alt_text")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  site     Site  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  uploader User? @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@index([siteId], map: "idx_assets_site_id")
+  @@map("assets")
+}
+
+// ───────────────────────── PUBLICACIÓN ─────────────────────────
+
+model Publication {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  siteId        String    @map("site_id") @db.Uuid
+  versionId     String    @map("version_id") @db.Uuid
+  // queued | building | published | failed
+  status        String    @default("queued") @db.VarChar(30)
+  deploymentUrl String?   @map("deployment_url")
+  storagePath   String?   @map("storage_path")
+  publishedAt   DateTime? @map("published_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  site    Site        @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  version PageVersion @relation(fields: [versionId], references: [id])
+  jobs    DeploymentJob[]
+
+  @@index([siteId], map: "idx_publications_site_id")
+  @@map("publications")
+}
+
+// Trabajo de despliegue que ejecuta un worker (BullMQ) para una publicación.
+// Tabla listada en el diseño sin columnas definidas: se propone esta estructura.
+model DeploymentJob {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  publicationId String    @map("publication_id") @db.Uuid
+  siteId        String    @map("site_id") @db.Uuid
+  // queued | running | succeeded | failed
+  status        String    @default("queued") @db.VarChar(30)
+  attempts      Int       @default(0)
+  queueJobId    String?   @map("queue_job_id") @db.VarChar(255)
+  errorMessage  String?   @map("error_message")
+  startedAt     DateTime? @map("started_at") @db.Timestamptz(6)
+  finishedAt    DateTime? @map("finished_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  site        Site        @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([publicationId], map: "idx_deployment_jobs_publication_id")
+  @@index([status], map: "idx_deployment_jobs_status")
+  @@map("deployment_jobs")
+}
+
+// ───────────────────────── FACTURACIÓN ─────────────────────────
+
+model Plan {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String   @unique @db.VarChar(100)
+  stripeProductId String?  @map("stripe_product_id") @db.VarChar(255)
+  stripePriceId   String?  @map("stripe_price_id") @db.VarChar(255)
+  priceCents      Int      @map("price_cents")
+  currency        String   @default("USD") @db.VarChar(10)
+  maxSites        Int?     @map("max_sites")
+  maxPages        Int?     @map("max_pages")
+  maxStorageMb    Int?     @map("max_storage_mb")
+  customDomains   Boolean? @default(false) @map("custom_domains")
+  analytics       Boolean? @default(false)
+  whiteLabel      Boolean? @default(false) @map("white_label")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId               String    @map("user_id") @db.Uuid
+  planId               String    @map("plan_id") @db.Uuid
+  stripeCustomerId     String    @map("stripe_customer_id") @db.VarChar(255)
+  stripeSubscriptionId String    @unique @map("stripe_subscription_id") @db.VarChar(255)
+  status               String    @db.VarChar(50)
+  currentPeriodStart   DateTime? @map("current_period_start") @db.Timestamptz(6)
+  currentPeriodEnd     DateTime? @map("current_period_end") @db.Timestamptz(6)
+  cancelAtPeriodEnd    Boolean   @default(false) @map("cancel_at_period_end")
+  canceledAt           DateTime? @map("canceled_at") @db.Timestamptz(6)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user     User      @relation(fields: [userId], references: [id])
+  plan     Plan      @relation(fields: [planId], references: [id])
+  invoices Invoice[]
+
+  @@index([userId], map: "idx_subscriptions_user_id")
+  @@index([status], map: "idx_subscriptions_status")
+  @@map("subscriptions")
+}
+
+model Invoice {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  subscriptionId  String?   @map("subscription_id") @db.Uuid
+  stripeInvoiceId String    @unique @map("stripe_invoice_id") @db.VarChar(255)
+  amountCents     Int       @map("amount_cents")
+  currency        String    @db.VarChar(10)
+  status          String    @db.VarChar(50)
+  invoiceUrl      String?   @map("invoice_url")
+  paidAt          DateTime? @map("paid_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user         User          @relation(fields: [userId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@map("invoices")
+}
+
+// Idempotencia de webhooks: el par (provider, event_id) es único.
+model WebhookEvent {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider     String    @db.VarChar(50)
+  eventId      String    @map("event_id") @db.VarChar(255)
+  eventType    String    @map("event_type") @db.VarChar(255)
+  payload      Json
+  processedAt  DateTime? @map("processed_at") @db.Timestamptz(6)
+  failedAt     DateTime? @map("failed_at") @db.Timestamptz(6)
+  errorMessage String?   @map("error_message")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([provider, eventId])
+  @@index([eventType], map: "idx_webhook_events_type")
+  @@map("webhook_events")
+}
+
+// Enlaces de un solo uso que se mandan por correo: verificar el email y recuperar la contraseña.
+model VerificationToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  // Solo se guarda el hash del token, igual que el refresh token.
+  tokenHash String    @map("token_hash")
+  // email_verification | password_reset
+  purpose   String    @db.VarChar(30)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@index([tokenHash])
+  @@map("verification_tokens")
+}
+
+// ───────────────────────── VENTAS ─────────────────────────
+// El cliente compra una página web hecha por nosotros: elige un paquete, describe su negocio
+// (brief), paga por fuera y sigue el estado de su pedido.
+
+model Package {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String   @db.VarChar(100)
+  slug              String   @unique @db.VarChar(100)
+  tagline           String?  @db.VarChar(200)
+  description       String?
+  // Pago único por la página, en centavos.
+  priceCents        Int      @map("price_cents")
+  // Mensualidad opcional de hosting y mantenimiento, en centavos.
+  monthlyPriceCents Int?     @map("monthly_price_cents")
+  currency          String   @default("USD") @db.VarChar(10)
+  // Lista de textos (["Diseño a medida", ...]).
+  features          Json     @default("[]")
+  pagesIncluded     Int      @default(1) @map("pages_included")
+  deliveryDays      Int?     @map("delivery_days")
+  isFeatured        Boolean  @default(false) @map("is_featured")
+  isActive          Boolean  @default(true) @map("is_active")
+  sortOrder         Int      @default(0) @map("sort_order")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  orders Order[]
+
+  @@map("packages")
+}
+
+model Order {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // Número corto para mostrar y para que el cliente lo mencione (3R-0001).
+  orderNumber       Int       @unique @default(autoincrement()) @map("order_number")
+  userId            String    @map("user_id") @db.Uuid
+  packageId         String    @map("package_id") @db.Uuid
+  // new | awaiting_payment | in_progress | in_review | delivered | cancelled
+  status            String    @default("new") @db.VarChar(30)
+  // unpaid | partial | paid | refunded
+  paymentStatus     String    @default("unpaid") @map("payment_status") @db.VarChar(30)
+  // Precios al momento de comprar: cambiar el paquete después no altera pedidos existentes.
+  priceCents        Int       @map("price_cents")
+  monthlyPriceCents Int?      @map("monthly_price_cents")
+  currency          String    @db.VarChar(10)
+  amountPaidCents   Int       @default(0) @map("amount_paid_cents")
+  // Datos del negocio que el cliente llena al pedir.
+  brief             Json
+  // Sitio que se construye para este pedido (vive en la cuenta del administrador).
+  siteId            String?   @unique @map("site_id") @db.Uuid
+  deliveryUrl       String?   @map("delivery_url")
+  deliveredAt       DateTime? @map("delivered_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user    User         @relation(fields: [userId], references: [id])
+  package Package      @relation(fields: [packageId], references: [id])
+  site    Site?        @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  events  OrderEvent[]
+
+  @@index([userId], map: "idx_orders_user_id")
+  @@index([status], map: "idx_orders_status")
+  @@map("orders")
+}
+
+// Historial del pedido: cambios de estado, pagos, mensajes y notas internas.
+model OrderEvent {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId          String   @map("order_id") @db.Uuid
+  actorId          String?  @map("actor_id") @db.Uuid
+  // status | payment | message | note | delivery
+  kind             String   @db.VarChar(30)
+  body             String?
+  metadata         Json?
+  // Las notas internas no las ve el cliente.
+  visibleToClient  Boolean  @default(true) @map("visible_to_client")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([orderId], map: "idx_order_events_order_id")
+  @@map("order_events")
+}
+
+// Trabajos ya hechos que se muestran en la portada como ejemplos.
+model PortfolioItem {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String   @db.VarChar(120)
+  // Enlace a la página publicada.
+  url          String   @db.VarChar(500)
+  category     String?  @db.VarChar(80)
+  description  String?  @db.VarChar(300)
+  // Captura de la página (ruta propia o https).
+  thumbnailUrl String?  @map("thumbnail_url") @db.VarChar(500)
+  sortOrder    Int      @default(0) @map("sort_order")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("portfolio_items")
+}
+
+// ───────────────────────── ADMINISTRACIÓN ─────────────────────────
+
+model AuditLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String   @db.VarChar(100)
+  entityType String?  @map("entity_type") @db.VarChar(100)
+  entityId   String?  @map("entity_id") @db.Uuid
+  metadata   Json?
+  ipAddress  String?  @map("ip_address") @db.Inet
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId], map: "idx_audit_logs_user_id")
+  @@index([createdAt], map: "idx_audit_logs_created_at")
+  @@map("audit_logs")
+}
+
+// Tickets de soporte. Tabla listada en el diseño sin columnas definidas: se propone esta estructura.
+model SupportTicket {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  siteId      String?   @map("site_id") @db.Uuid
+  assignedTo  String?   @map("assigned_to") @db.Uuid
+  subject     String    @db.VarChar(255)
+  description String
+  // open | pending | resolved | closed
+  status      String    @default("open") @db.VarChar(30)
+  // low | normal | high | urgent
+  priority    String    @default("normal") @db.VarChar(30)
+  resolvedAt  DateTime? @map("resolved_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user     User  @relation("TicketRequester", fields: [userId], references: [id], onDelete: Cascade)
+  assignee User? @relation("TicketAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  site     Site? @relation(fields: [siteId], references: [id], onDelete: SetNull)
+
+  @@index([userId], map: "idx_support_tickets_user_id")
+  @@index([status], map: "idx_support_tickets_status")
+  @@map("support_tickets")
+}

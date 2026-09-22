@@ -1,0 +1,21 @@
+# dependencias y builds
+node_modules/
+dist/
+.next/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# secretos: nunca al repositorio
+.env
+.env.*
+!.env.example
+
+# logs y sistema
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# cliente de Prisma generado (npm run db:generate -w api)
+apps/api/src/generated/
