@@ -133,11 +133,12 @@ crea un bucket y un token con permiso de lectura/escritura, y pon las 4 variable
 
 ## Estado
 
-Hecho (todo con pruebas: 88 de API, 23 del editor y recorridos completos en un Chrome real):
+Hecho (todo con pruebas: 90 de API, 23 del editor y recorridos completos en un Chrome real):
 
 - **Base:** monorepo, esquema (paquetes, pedidos, portafolio, sitios, páginas, versiones, publicaciones…), migraciones y seed.
 - **Cuentas:** registro/login/refresh con rotación, sesión en cookies `httpOnly`, roles USER/ADMIN, auditoría,
-  recuperar contraseña y verificar correo por enlace (ver "Correos" más abajo).
+  recuperar contraseña y verificar correo por enlace (ver "Correos" más abajo). Los endpoints de `/auth` tienen
+  límite de intentos por IP (`@nestjs/throttler`) para frenar fuerza bruta y registros en cadena.
 - **Tienda:** portada con paquetes, portafolio y preguntas frecuentes; pedido con datos del negocio (exige correo
   verificado); seguimiento del cliente (estado, pago, conversación); panel del equipo (pedidos, paquetes, portafolio, sitios).
 - **Editor visual** (`/editor/[siteId]`): arrastrar y soltar, propiedades, responsive, deshacer/rehacer, vista previa,
@@ -148,8 +149,8 @@ Pendiente: edición de texto directamente en el lienzo, gestor de medios (subir 
 componentes video/galería/formulario/mapa, dominios propios del cliente con SSL, Stripe y webhooks,
 Redis/BullMQ (la publicación y los correos hoy son inmediatos y no usan cola).
 
-Notas de seguridad para producción: falta limitar intentos (rate limiting) en `/auth`, y el renovador de tokens
-del proxy comparte una renovación por proceso (válido con una sola instancia web).
+Notas de seguridad para producción: el renovador de tokens del proxy comparte una renovación por proceso
+(válido con una sola instancia web).
 
 ## Notas técnicas
 

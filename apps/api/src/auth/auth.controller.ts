@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { UsersService } from '../users/users.service.js';
 import { AuthService } from './auth.service.js';
 import type { AuthUser, RequestMeta } from './auth.types.js';
@@ -27,18 +28,21 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
   register(@Body() dto: RegisterDto, @Req() req: RawRequest) {
     return this.auth.register(dto, metaOf(req));
   }
 
   @Post('login')
   @HttpCode(200)
+  @Throttle({ default: { limit: 15, ttl: 60_000 } })
   login(@Body() dto: LoginDto, @Req() req: RawRequest) {
     return this.auth.login(dto, metaOf(req));
   }
 
   @Post('refresh')
   @HttpCode(200)
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   refresh(@Body() dto: RefreshDto, @Req() req: RawRequest) {
     return this.auth.refresh(dto.refreshToken, metaOf(req));
   }
@@ -57,6 +61,7 @@ export class AuthController {
 
   @Post('forgot-password')
   @HttpCode(200)
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
   async forgotPassword(@Body() dto: ForgotPasswordDto, @Req() req: RawRequest) {
     await this.auth.requestPasswordReset(dto.email, metaOf(req));
     return { message: 'Si ese correo tiene una cuenta, te mandamos un enlace para cambiar tu contraseña.' };
@@ -64,6 +69,7 @@ export class AuthController {
 
   @Post('reset-password')
   @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async resetPassword(@Body() dto: ResetPasswordDto, @Req() req: RawRequest) {
     await this.auth.resetPassword(dto.token, dto.password, metaOf(req));
     return { message: 'Tu contraseña se cambió. Ya puedes iniciar sesión.' };
@@ -71,6 +77,7 @@ export class AuthController {
 
   @Post('verify-email')
   @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   verifyEmail(@Body() dto: VerifyEmailDto) {
     return this.auth.verifyEmail(dto.token);
   }
@@ -78,6 +85,7 @@ export class AuthController {
   @Post('resend-verification')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
   resendVerification(@CurrentUser() user: AuthUser, @Req() req: RawRequest) {
     return this.auth.resendVerification(user.id, metaOf(req));
   }

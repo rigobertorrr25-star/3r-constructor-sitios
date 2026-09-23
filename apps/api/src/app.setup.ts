@@ -16,6 +16,10 @@ function flattenMessages(errors: ValidationError[]): string[] {
 /** Configuración compartida entre main.ts y las pruebas e2e. */
 export function configureApp(app: NestExpressApplication) {
   app.setGlobalPrefix('api/v1');
+  // Detrás de Render (u otro proxy) hay que confiar en X-Forwarded-For para que cada visitante
+  // tenga su propia IP real; si no, todos comparten la IP del proxy y el límite de intentos
+  // (@nestjs/throttler) bloquearía a todos juntos o a nadie.
+  app.set('trust proxy', 1);
   app.use(helmet());
   app.enableCors({
     origin: process.env.WEB_ORIGIN ?? 'http://localhost:3000',
