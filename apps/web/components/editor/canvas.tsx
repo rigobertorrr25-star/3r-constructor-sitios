@@ -338,9 +338,18 @@ function ComponentView({
   index: number;
   count: number;
 }) {
+  const columns = Math.max(1, Math.min(4, resolve(node.styles?.columns, common.bp) ?? 1));
   const inner =
     node.type === 'container' ? (
-      <div style={{ ...toCss(node.styles, common.bp), display: 'flex', flexDirection: 'column', gap: node.styles?.gap ?? 0 }}>
+      <div
+        style={{
+          ...toCss(node.styles, common.bp),
+          display: columns > 1 ? 'grid' : 'flex',
+          flexDirection: columns > 1 ? undefined : 'column',
+          gridTemplateColumns: columns > 1 ? `repeat(${columns}, 1fr)` : undefined,
+          gap: node.styles?.gap ?? 0,
+        }}
+      >
         <Children common={common} parentId={node.id} kind="component" items={node.components ?? []} />
       </div>
     ) : (

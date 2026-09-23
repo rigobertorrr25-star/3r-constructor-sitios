@@ -11,7 +11,7 @@ import { AlignControl, ColorControl, Group, NumberControl, SelectControl, TextAr
 
 const BP_LABEL: Record<Breakpoint, string> = { desktop: 'escritorio', tablet: 'tablet', mobile: 'móvil' };
 
-type ResponsiveKey = 'fontSize' | 'paddingTop' | 'paddingBottom' | 'paddingX' | 'marginTop' | 'marginBottom' | 'width' | 'height';
+type ResponsiveKey = 'fontSize' | 'paddingTop' | 'paddingBottom' | 'paddingX' | 'marginTop' | 'marginBottom' | 'width' | 'height' | 'columns';
 type PlainKey = 'color' | 'background' | 'borderRadius' | 'gap' | 'fontWeight' | 'textAlign';
 
 const WEIGHTS = [
@@ -219,6 +219,13 @@ export function Properties({
     case 'container':
       body = (
         <>
+          <Group title="Columnas">
+            <NumberControl name="Cuántas lado a lado" min={1} max={4} {...responsive('columns')} />
+            <p className="text-[12px] leading-relaxed text-muted-foreground">
+              2 o más columnas, con varias imágenes adentro, arman una galería de fotos. Revisa cómo se ve en
+              móvil (arriba, en el selector de pantalla) — puede que ahí convenga poner 1.
+            </p>
+          </Group>
           <Group title="Fondo">
             <ColorControl name="Color de fondo" {...plain('background')} fallback="#f3f4f6" />
             <NumberControl name="Redondeo" unit="px" max={200} {...plain('borderRadius')} />

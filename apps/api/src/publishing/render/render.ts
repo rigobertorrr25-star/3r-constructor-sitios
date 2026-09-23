@@ -234,6 +234,12 @@ class Renderer {
           const out = common(styles, bp);
           const gap = num(styles?.gap, 0, 200);
           if (gap !== undefined) out['gap'] = `${gap}px`;
+          // "display" se fija siempre (no solo cuando hay columnas) para que la regla de un tamaño
+          // más chico sí pueda volver a "flex" — si no, al comparar contra el tamaño anterior no
+          // habría diferencia que registrar y el grid se quedaría puesto en el resto de tamaños.
+          const columns = num(resolve(styles?.columns as never, bp), 1, 4) ?? 1;
+          out['display'] = columns > 1 ? 'grid' : 'flex';
+          if (columns > 1) out['grid-template-columns'] = `repeat(${columns}, 1fr)`;
           return out;
         });
         return `<div class="box ${cls}">${this.children(node.components)}</div>`;

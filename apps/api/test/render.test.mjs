@@ -255,6 +255,33 @@ describe('renderPage: diseño', () => {
     assert.ok(media(html, '640px').includes('height:24px'));
   });
 
+  it('contenedor en columnas (galería): usa grid en escritorio, se puede apilar en móvil', () => {
+    const html = renderPage(
+      page([
+        section([
+          {
+            id: 'g',
+            type: 'container',
+            styles: { columns: { desktop: 3, mobile: 1 }, gap: 12 },
+            components: [
+              { id: 'g1', type: 'image', props: { src: 'https://ejemplo.com/1.jpg' } },
+              { id: 'g2', type: 'image', props: { src: 'https://ejemplo.com/2.jpg' } },
+            ],
+          },
+        ]),
+      ]),
+      ctx(),
+    );
+    assert.ok(html.includes('display:grid') && html.includes('grid-template-columns:repeat(3, 1fr)'));
+    assert.ok(media(html, '640px').includes('display:flex'), 'en móvil debe volver a apilarse (flex)');
+    assert.ok(!media(html, '640px').includes('grid-template-columns'), 'en móvil no debe quedar la regla de 3 columnas');
+  });
+
+  it('contenedor sin columnas configuradas sigue apilado, como antes', () => {
+    const html = renderPage(page([section([{ id: 'c', type: 'container', components: [] }])]), ctx());
+    assert.ok(!html.includes('display:grid'));
+  });
+
   it('cabecera, sitemap y robots correctos', () => {
     const html = renderPage(page([]), ctx());
     assert.ok(html.includes('<html lang="es">') && html.includes('name="viewport"'));

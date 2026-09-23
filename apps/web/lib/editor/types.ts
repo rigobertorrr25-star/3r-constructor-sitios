@@ -41,6 +41,8 @@ export interface Styles {
   /** Píxeles (separador, línea divisoria). */
   height?: Responsive<number>;
   gap?: number;
+  /** Solo contenedores: cuántas columnas lado a lado (1 = apilado, como antes). */
+  columns?: Responsive<number>;
 }
 
 export type Props = Record<string, string | number | boolean>;
