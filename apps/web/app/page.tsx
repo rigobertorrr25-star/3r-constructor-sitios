@@ -12,9 +12,9 @@ import {
 import { Logo } from '@/components/logo';
 import { Reveal } from '@/components/reveal';
 import { SpotlightCard } from '@/components/spotlight-card';
-import { rawApi } from '@/lib/api';
+import { currentUserOrNull, rawApi } from '@/lib/api';
 import { formatMoney } from '@/lib/orders';
-import type { Package, PortfolioItem } from '@/lib/types';
+import type { CurrentUser, Package, PortfolioItem } from '@/lib/types';
 
 const steps = [
   { n: '1', title: 'Elige tu paquete', text: 'Compara lo que incluye cada uno y escoge el que va con tu negocio.' },
@@ -69,7 +69,8 @@ async function loadPackages(): Promise<Package[] | null> {
 }
 
 export default async function HomePage() {
-  const [packages, portfolio] = await Promise.all([loadPackages(), loadPortfolio()]);
+  const [packages, portfolio, user] = await Promise.all([loadPackages(), loadPortfolio(), currentUserOrNull<CurrentUser>()]);
+  const isStaff = user?.roles.includes('ADMIN') || user?.roles.includes('SUPER_ADMIN');
 
   return (
     <div className="min-h-screen overflow-x-clip" style={{ backgroundImage: 'var(--gradient-hero)' }}>
@@ -93,12 +94,21 @@ export default async function HomePage() {
             <a href="#preguntas" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground md:block">
               Preguntas
             </a>
-            <Link
-              href="/login"
-              className="rounded-full border border-white/[0.08] bg-white/[0.014] px-[17px] py-[8.5px] text-[14.875px] transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
-            >
-              Iniciar sesión
-            </Link>
+            {user ? (
+              <Link
+                href={isStaff ? '/admin' : '/dashboard'}
+                className="rounded-full border border-white/[0.08] bg-white/[0.014] px-[17px] py-[8.5px] text-[14.875px] transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+              >
+                {isStaff ? 'Administración' : 'Mi cuenta'}
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-full border border-white/[0.08] bg-white/[0.014] px-[17px] py-[8.5px] text-[14.875px] transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+              >
+                Iniciar sesión
+              </Link>
+            )}
           </nav>
         </div>
       </header>

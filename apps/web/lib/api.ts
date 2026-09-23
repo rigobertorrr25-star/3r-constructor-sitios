@@ -38,6 +38,24 @@ export async function authedApi<T>(path: string, init: Omit<RequestInit, 'token'
   return result;
 }
 
+/**
+ * Igual que authedApi, pero para páginas públicas (portada) que solo quieren *mostrar* si hay
+ * sesión — nunca exige login ni redirige. `null` si no hay cookie, si el token ya no sirve, o si
+ * la API no responde. El access token dura 14 minutos y esta función no lo renueva (eso solo pasa
+ * en las rutas protegidas, ver proxy.ts); en el peor caso, la portada tarda hasta 14 minutos en
+ * volver a notar que sigues conectado, y se corrige solo con visitar cualquier página protegida.
+ */
+export async function currentUserOrNull<T>(): Promise<T | null> {
+  const token = (await cookies()).get(ACCESS_COOKIE)?.value;
+  if (!token) return null;
+  try {
+    const result = await rawApi<T>('/auth/me', { token });
+    return result.ok ? result.data : null;
+  } catch {
+    return null;
+  }
+}
+
 export const cookieOptions = (maxAgeSeconds: number) => ({
   httpOnly: true,
   sameSite: 'lax' as const,
