@@ -1,7 +1,9 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
+import { UploadIcon } from '@/components/icons';
 import { inputClass } from '@/components/field';
+import { UploadError, uploadMedia } from '@/lib/upload';
 
 const label = 'text-[12px] font-medium text-muted-foreground';
 
@@ -33,6 +35,44 @@ export function TextControl({
         {name}
       </label>
       <input id={`ctl-${name}`} className={small} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+/** Botón para subir un archivo desde el computador; llena el campo de dirección (URL) al terminar. */
+export function UploadControl({ accept, onUploaded }: { accept: string; onUploaded: (url: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [state, setState] = useState<'idle' | 'uploading' | 'error'>('idle');
+  const [error, setError] = useState('');
+
+  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setState('uploading');
+    setError('');
+    try {
+      onUploaded(await uploadMedia(file));
+      setState('idle');
+    } catch (err) {
+      setState('error');
+      setError(err instanceof UploadError ? err.message : 'No se pudo subir el archivo. Inténtalo otra vez.');
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={onPick} />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={state === 'uploading'}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.03] px-3 py-2 text-[13px] text-foreground transition hover:bg-white/[0.06] disabled:opacity-60"
+      >
+        <UploadIcon size={14} />
+        {state === 'uploading' ? 'Subiendo…' : 'Subir desde tu computador'}
+      </button>
+      {state === 'error' ? <p className="text-[12px] text-destructive">{error}</p> : null}
     </div>
   );
 }

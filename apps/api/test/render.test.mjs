@@ -70,12 +70,33 @@ describe('renderPage: seguridad', () => {
           { id: 'b4', type: 'button', content: 'D', props: { href: '//evil.com' } },
           { id: 'i1', type: 'image', props: { src: 'javascript:alert(1)' } },
           { id: 'i2', type: 'image', props: { src: 'data:image/svg+xml,<svg onload=alert(1)>' } },
+          { id: 'v1', type: 'video', props: { src: 'javascript:alert(1)' } },
+          { id: 'v2', type: 'video', props: { src: 'https://ejemplo.com/x.mp4', poster: 'javascript:alert(1)' } },
         ]),
       ]),
       ctx(),
     );
     assert.ok(!/javascript:|data:|evil\.com/i.test(html), html);
     assert.ok(!html.includes('<img'), 'sin imagen válida no se dibuja');
+    assert.ok(!html.includes('poster='), 'una portada peligrosa se descarta, pero el video sigue');
+    assert.ok(html.includes('<video'), 'el video con dirección válida sí se dibuja');
+  });
+
+  it('video: se publica con controles, se sanea la portada y sin dirección no se dibuja', () => {
+    const html = renderPage(
+      page([
+        section([
+          { id: 'v1', type: 'video', props: { src: 'https://ejemplo.com/clip.mp4', poster: 'https://ejemplo.com/portada.jpg' } },
+          { id: 'v2', type: 'video', props: {} },
+        ]),
+      ]),
+      ctx(),
+    );
+    const tag = /<video[^>]*>/.exec(html)[0];
+    assert.ok(tag.includes('src="https://ejemplo.com/clip.mp4"'));
+    assert.ok(tag.includes('poster="https://ejemplo.com/portada.jpg"'));
+    assert.ok(tag.includes(' controls'));
+    assert.equal((html.match(/<video/g) ?? []).length, 1, 'el segundo, sin dirección, no se dibuja');
   });
 
   it('los enlaces externos abren en pestaña nueva y segura; los propios no', () => {

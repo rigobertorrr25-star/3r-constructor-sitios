@@ -269,6 +269,27 @@ function Leaf({ node, bp }: { node: ComponentNode; bp: Breakpoint }) {
         </div>
       );
     }
+    case 'video': {
+      const src = safeImageUrl(String(node.props?.src ?? ''));
+      const poster = safeImageUrl(String(node.props?.poster ?? ''));
+      const width = resolve(node.styles?.width, bp) ?? 100;
+      return (
+        <div style={{ textAlign: node.styles?.textAlign, marginTop: css.marginTop, marginBottom: css.marginBottom }}>
+          {src ? (
+            <video
+              src={src}
+              poster={poster || undefined}
+              controls
+              style={{ width: `${width}%`, maxWidth: '100%', borderRadius: node.styles?.borderRadius, display: 'inline-block', background: '#000' }}
+            />
+          ) : (
+            <div style={{ width: `${width}%`, display: 'inline-block' }}>
+              <Placeholder>Video: pega una dirección (URL) en el panel de la derecha</Placeholder>
+            </div>
+          )}
+        </div>
+      );
+    }
     case 'divider':
       return (
         <div

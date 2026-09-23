@@ -6,7 +6,8 @@ import { resolve, setAt } from '@/lib/editor/responsive';
 import type { EditorAction } from '@/lib/editor/store';
 import { findNode, type NodePatch } from '@/lib/editor/tree';
 import type { Breakpoint, ComponentNode, EditorDocument, Responsive, Styles } from '@/lib/editor/types';
-import { AlignControl, ColorControl, Group, NumberControl, SelectControl, TextAreaControl, TextControl } from './controls';
+import { ACCEPT_IMAGE, ACCEPT_VIDEO } from '@/lib/upload';
+import { AlignControl, ColorControl, Group, NumberControl, SelectControl, TextAreaControl, TextControl, UploadControl } from './controls';
 
 const BP_LABEL: Record<Breakpoint, string> = { desktop: 'escritorio', tablet: 'tablet', mobile: 'móvil' };
 
@@ -142,8 +143,29 @@ export function Properties({
       body = (
         <>
           <Group title="Imagen">
+            <UploadControl accept={ACCEPT_IMAGE} onUploaded={(url) => setProp('src', url)} />
             <TextControl name="Dirección (URL)" value={prop('src')} placeholder="https://…" onChange={(value) => setProp('src', value)} />
             <TextControl name="Texto alternativo" value={prop('alt')} placeholder="Describe la imagen" onChange={(value) => setProp('alt', value)} />
+          </Group>
+          <Group title="Estilo">
+            <NumberControl name="Ancho" unit="%" min={5} max={100} {...responsive('width')} />
+            <NumberControl name="Redondeo" unit="px" max={200} {...plain('borderRadius')} />
+            <AlignControl value={styles.textAlign} onChange={(value) => setStyle('textAlign', value)} />
+          </Group>
+          {margins}
+        </>
+      );
+      break;
+    case 'video':
+      body = (
+        <>
+          <Group title="Video">
+            <UploadControl accept={ACCEPT_VIDEO} onUploaded={(url) => setProp('src', url)} />
+            <TextControl name="Dirección (URL)" value={prop('src')} placeholder="https://…" onChange={(value) => setProp('src', value)} />
+          </Group>
+          <Group title="Portada (opcional)">
+            <UploadControl accept={ACCEPT_IMAGE} onUploaded={(url) => setProp('poster', url)} />
+            <TextControl name="Imagen de portada (URL)" value={prop('poster')} placeholder="https://…" onChange={(value) => setProp('poster', value)} />
           </Group>
           <Group title="Estilo">
             <NumberControl name="Ancho" unit="%" min={5} max={100} {...responsive('width')} />

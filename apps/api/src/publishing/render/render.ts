@@ -96,6 +96,7 @@ const STATIC_CSS = `*{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:#fff;color:#111827;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.5}
 img{display:inline-block;max-width:100%;height:auto}
+video{display:inline-block;max-width:100%}
 .in{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 .box{display:flex;flex-direction:column}
 .h{margin:0;line-height:1.15;overflow-wrap:anywhere;white-space:pre-wrap}
@@ -178,6 +179,22 @@ class Renderer {
         });
         return `<div class="${wrap}"><img class="${img}" src="${escapeHtml(src)}" alt="${escapeHtml(props.alt)}" loading="lazy"></div>`;
       }
+      case 'video': {
+        const src = safeImageUrl(props.src);
+        if (!src) return '';
+        const poster = safeImageUrl(props.poster);
+        const wrap = this.sheet.next('c');
+        const vid = this.sheet.next('c');
+        this.sheet.rule(`.${wrap}`, (bp) => pick(common(styles, bp), ['text-align', 'margin-top', 'margin-bottom']));
+        this.sheet.rule(`.${vid}`, (bp) => {
+          const out = pick(common(styles, bp), ['border-radius']);
+          out['width'] = `${num(resolve(styles?.width as never, bp), 5, 100) ?? 100}%`;
+          out['background'] = '#000';
+          return out;
+        });
+        const posterAttr = poster ? ` poster="${escapeHtml(poster)}"` : '';
+        return `<div class="${wrap}"><video class="${vid}" src="${escapeHtml(src)}"${posterAttr} controls></video></div>`;
+      }
       case 'divider': {
         const cls = this.sheet.next('c');
         this.sheet.rule(`.${cls}`, (bp) => {
@@ -204,7 +221,7 @@ class Renderer {
         });
         return `<div class="box ${cls}">${this.children(node.components)}</div>`;
       }
-      // video, galería, formulario, mapa… aún no se pueden publicar: se omiten en vez de romper la página.
+      // galería, formulario, mapa… aún no se pueden publicar: se omiten en vez de romper la página.
       default:
         return '';
     }

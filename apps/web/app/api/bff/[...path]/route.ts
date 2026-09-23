@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { ACCESS_COOKIE, API_URL } from '@/lib/api';
 
 // Solo los recursos que el editor necesita; la API vuelve a comprobar dueño y permisos.
-const ALLOWED = new Set(['pages', 'sites']);
+const ALLOWED = new Set(['pages', 'sites', 'media']);
 
 const json = (message: string, status: number) => NextResponse.json({ message }, { status });
 

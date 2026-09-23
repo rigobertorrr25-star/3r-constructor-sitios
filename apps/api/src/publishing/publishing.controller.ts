@@ -41,7 +41,7 @@ export class PublishingController {
 // reglas que impiden ejecutar scripts, cargar recursos raros o compartir cookies con el resto del sitio.
 const PUBLIC_HEADERS: Record<string, string> = {
   'Content-Security-Policy':
-    "default-src 'none'; style-src 'unsafe-inline'; img-src http: https: data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; sandbox allow-popups allow-popups-to-escape-sandbox",
+    "default-src 'none'; style-src 'unsafe-inline'; img-src http: https: data:; media-src http: https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; sandbox allow-popups allow-popups-to-escape-sandbox",
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'X-Frame-Options': 'DENY',

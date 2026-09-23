@@ -123,17 +123,25 @@ Cuatro servicios, cada uno con cuenta gratis, y tu propio dominio:
    (nube gris, no naranja)** — con el proxy de Cloudflare activado (naranja), Vercel no puede emitir el
    certificado HTTPS.
 
-### Sitios publicados en producción (Cloudflare R2)
+### Sitios publicados, imágenes y video en producción (Cloudflare R2)
 
 El disco de Render **no es permanente**: cada reinicio o nuevo despliegue borra lo que se guardó ahí, y con eso
-desaparecerían los sitios ya publicados. Para producción, activa Cloudflare R2 (S3-compatible, plan gratis):
-crea un bucket y un token con permiso de lectura/escritura, y pon las 4 variables `R2_*` en Render (ver
-`.env.example`). Con esas 4 puestas, `PublishingModule` usa R2 solo; sin ellas, sigue usando disco local
-(perfecto para desarrollo).
+desaparecerían los sitios ya publicados y las imágenes/videos subidos desde el editor. Para producción, activa
+Cloudflare R2 (S3-compatible, plan gratis): crea un bucket y un token con permiso de lectura/escritura, activa su
+acceso público (Settings → Public access → r2.dev, o un dominio propio) y pon las 5 variables `R2_*` en Render (ver
+`.env.example`) — la quinta, `R2_PUBLIC_BASE_URL`, es la dirección pública que te dio ese paso. Con esas puestas,
+`PublishingModule` y `MediaModule` usan R2 solo; sin ellas, ambos siguen usando disco local (perfecto para
+desarrollo). Para que el navegador pueda subir directo a R2 (así un video no pasa por el servidor de Next, que
+tiene un límite de tamaño mucho más chico), el bucket necesita su propio permiso CORS — en el bucket → Settings →
+CORS Policy, agrega:
+
+```json
+[{ "AllowedOrigins": ["https://tudominio.com"], "AllowedMethods": ["PUT"], "AllowedHeaders": ["content-type"] }]
+```
 
 ## Estado
 
-Hecho (todo con pruebas: 90 de API, 23 del editor y recorridos completos en un Chrome real):
+Hecho (todo con pruebas: 97 de API, 23 del editor y recorridos completos en un Chrome real):
 
 - **Base:** monorepo, esquema (paquetes, pedidos, portafolio, sitios, páginas, versiones, publicaciones…), migraciones y seed.
 - **Cuentas:** registro/login/refresh con rotación, sesión en cookies `httpOnly`, roles USER/ADMIN, auditoría,
@@ -143,11 +151,13 @@ Hecho (todo con pruebas: 90 de API, 23 del editor y recorridos completos en un C
   verificado); seguimiento del cliente (estado, pago, conversación); panel del equipo (pedidos, paquetes, portafolio, sitios).
 - **Editor visual** (`/editor/[siteId]`): arrastrar y soltar, propiedades, responsive, deshacer/rehacer, vista previa,
   guardado automático con recuperación sin conexión, versiones y varias páginas. Lógica pura en `apps/web/lib/editor`.
+  Imagen y video se pueden subir desde el computador (botón "Subir" en el panel de propiedades) — el navegador
+  sube el archivo directo a su destino final (R2 o, en desarrollo, la misma API) con un enlace firmado de un solo
+  uso, sin pasar por el servidor de Next.
 - **Publicación:** HTML estático saneado en la dirección propia de cada cliente, con menú, sitemap y robots.
 
-Pendiente: edición de texto directamente en el lienzo, gestor de medios (subir imágenes),
-componentes video/galería/formulario/mapa, dominios propios del cliente con SSL, Stripe y webhooks,
-Redis/BullMQ (la publicación y los correos hoy son inmediatos y no usan cola).
+Pendiente: edición de texto directamente en el lienzo, componentes galería/formulario/mapa, dominios propios del
+cliente con SSL, Stripe y webhooks, Redis/BullMQ (la publicación y los correos hoy son inmediatos y no usan cola).
 
 Notas de seguridad para producción: el renovador de tokens del proxy comparte una renovación por proceso
 (válido con una sola instancia web).

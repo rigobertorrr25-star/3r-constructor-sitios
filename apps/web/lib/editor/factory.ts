@@ -10,6 +10,7 @@ export const PALETTE: { type: ComponentType; label: string }[] = [
   { type: 'text', label: 'Texto' },
   { type: 'image', label: 'Imagen' },
   { type: 'button', label: 'Botón' },
+  { type: 'video', label: 'Video' },
   { type: 'container', label: 'Contenedor' },
   { type: 'divider', label: 'Divisor' },
   { type: 'spacer', label: 'Espacio' },
@@ -58,6 +59,8 @@ export function createComponent(type: ComponentType, makeId: IdFactory = newId):
       };
     case 'image':
       return { id, type, props: { src: '', alt: '' }, styles: { width: 100, borderRadius: 12, textAlign: 'left' } };
+    case 'video':
+      return { id, type, props: { src: '', poster: '' }, styles: { width: 100, borderRadius: 12, textAlign: 'left' } };
     case 'container':
       return {
         id,
