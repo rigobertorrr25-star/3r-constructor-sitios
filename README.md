@@ -57,8 +57,10 @@ opcional de $60.000, $120.000 y $200.000) son **de ejemplo**: se editan en `/adm
    las últimas 5. La interfaz `PublishStorage` (`apps/api/src/publishing/storage.ts`) permite cambiar a S3 / R2.
 3. Se sirven en `GET /api/v1/public/sites/:etiqueta/*`. `apps/web/proxy.ts` reconoce `etiqueta.<SITES_ROOT_HOST>` y
    reescribe la petición a `/s/etiqueta/…`; `localhost:3000/s/etiqueta` funciona como alternativa sin DNS.
-4. Cada página publicada lleva `Content-Security-Policy` con `sandbox` y sin scripts: aunque el contenido fuera
-   malicioso, no puede ejecutar código ni leer las cookies de la aplicación.
+4. Cada página publicada lleva `Content-Security-Policy` con `sandbox`. El único permiso que suma es
+   `allow-scripts`, a propósito sin `allow-same-origin` — necesario para que el mapa (Google Maps embed) se
+   dibuje, pero como la página sandboxeada tiene un origen opaco, ese script nunca puede leer las cookies de la
+   aplicación ni llamarla como si fuera un usuario real, aunque corra.
 
 Variables (`.env.example`): `SITES_ROOT_HOST`, `SITES_URL_TEMPLATE`, `PUBLISH_DIR`.
 
@@ -141,22 +143,24 @@ CORS Policy, agrega:
 
 ## Estado
 
-Hecho (todo con pruebas: 97 de API, 23 del editor y recorridos completos en un Chrome real):
+Hecho (todo con pruebas: 98 de API, 23 del editor y recorridos completos en un Chrome real):
 
 - **Base:** monorepo, esquema (paquetes, pedidos, portafolio, sitios, páginas, versiones, publicaciones…), migraciones y seed.
 - **Cuentas:** registro/login/refresh con rotación, sesión en cookies `httpOnly`, roles USER/ADMIN, auditoría,
   recuperar contraseña y verificar correo por enlace (ver "Correos" más abajo). Los endpoints de `/auth` tienen
   límite de intentos por IP (`@nestjs/throttler`) para frenar fuerza bruta y registros en cadena.
-- **Tienda:** portada con paquetes, portafolio y preguntas frecuentes; pedido con datos del negocio (exige correo
-  verificado); seguimiento del cliente (estado, pago, conversación); panel del equipo (pedidos, paquetes, portafolio, sitios).
+- **Tienda:** portada con paquetes, portafolio y preguntas frecuentes, botón flotante de WhatsApp; pedido con datos
+  del negocio (exige correo verificado); seguimiento del cliente (estado, pago, conversación); panel del equipo
+  (pedidos, paquetes, portafolio, sitios).
 - **Editor visual** (`/editor/[siteId]`): arrastrar y soltar, propiedades, responsive, deshacer/rehacer, vista previa,
   guardado automático con recuperación sin conexión, versiones y varias páginas. Lógica pura en `apps/web/lib/editor`.
-  Imagen y video se pueden subir desde el computador (botón "Subir" en el panel de propiedades) — el navegador
-  sube el archivo directo a su destino final (R2 o, en desarrollo, la misma API) con un enlace firmado de un solo
-  uso, sin pasar por el servidor de Next.
+  Imagen, video y mapa (dirección → Google Maps embebido, sin API key) ya se pueden usar. Imagen y video se suben
+  desde el computador (botón "Subir" en el panel de propiedades) — el navegador sube el archivo directo a su
+  destino final (R2 o, en desarrollo, la misma API) con un enlace firmado de un solo uso, sin pasar por el
+  servidor de Next.
 - **Publicación:** HTML estático saneado en la dirección propia de cada cliente, con menú, sitemap y robots.
 
-Pendiente: edición de texto directamente en el lienzo, componentes galería/formulario/mapa, dominios propios del
+Pendiente: edición de texto directamente en el lienzo, componentes galería/formulario, dominios propios del
 cliente con SSL, Stripe y webhooks, Redis/BullMQ (la publicación y los correos hoy son inmediatos y no usan cola).
 
 Notas de seguridad para producción: el renovador de tokens del proxy comparte una renovación por proceso

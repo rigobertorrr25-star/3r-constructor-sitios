@@ -164,6 +164,39 @@ const packages = [
   },
 ];
 
+// Trabajos reales de Jhonny para el portafolio de la portada. PortfolioItem no tiene una columna
+// única aparte del id, así que se crea solo si no existe ya un trabajo con esa misma dirección.
+const portfolio = [
+  {
+    title: '3R Burgers',
+    url: 'https://rigobertorrr25-star.github.io/3r-burgers/',
+    category: 'Restaurante',
+    description: 'Menú digital para una hamburguesería en Cartagena.',
+    sortOrder: 1,
+  },
+  {
+    title: 'Caprichos',
+    url: 'https://rigobertorrr25-star.github.io/caprichos-tienda/',
+    category: 'Tienda de ropa',
+    description: 'Tienda de moda femenina en Cartagena.',
+    sortOrder: 2,
+  },
+  {
+    title: 'Azul Caribe Lounge',
+    url: 'http://azulcaribelounge.com/',
+    category: 'Restaurante',
+    description: 'Menú digital para un lounge frente al mar.',
+    sortOrder: 3,
+  },
+  {
+    title: 'Fidelio Pastas',
+    url: 'https://fidelio-pastas.vercel.app/',
+    category: 'Restaurante',
+    description: 'Menú digital para un restaurante de pastas.',
+    sortOrder: 4,
+  },
+];
+
 async function main() {
   for (const pkg of packages) {
     await prisma.package.upsert({ where: { slug: pkg.slug }, update: {}, create: pkg });
@@ -178,7 +211,11 @@ async function main() {
       create: template,
     });
   }
-  console.log(`Seed listo: ${packages.length} paquetes, ${plans.length} planes, ${templates.length} plantillas.`);
+  for (const item of portfolio) {
+    const exists = await prisma.portfolioItem.findFirst({ where: { url: item.url } });
+    if (!exists) await prisma.portfolioItem.create({ data: item });
+  }
+  console.log(`Seed listo: ${packages.length} paquetes, ${plans.length} planes, ${templates.length} plantillas, ${portfolio.length} trabajos de portafolio.`);
 }
 
 main()

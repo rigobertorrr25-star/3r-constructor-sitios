@@ -176,6 +176,28 @@ export function Properties({
         </>
       );
       break;
+    case 'map':
+      body = (
+        <>
+          <Group title="Mapa">
+            <TextControl
+              name="Dirección"
+              value={prop('address')}
+              placeholder="Calle 10 # 5-20, Bogotá"
+              onChange={(value) => setProp('address', value)}
+            />
+            <p className="text-[12px] leading-relaxed text-muted-foreground">
+              Escribe la dirección tal como la buscarías en Google Maps. No hace falta cuenta ni coordenadas.
+            </p>
+          </Group>
+          <Group title="Estilo">
+            <NumberControl name="Alto" unit="px" min={120} max={800} {...responsive('height')} />
+            <NumberControl name="Redondeo" unit="px" max={200} {...plain('borderRadius')} />
+          </Group>
+          {margins}
+        </>
+      );
+      break;
     case 'divider':
       body = (
         <>

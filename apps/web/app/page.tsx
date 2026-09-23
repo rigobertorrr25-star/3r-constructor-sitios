@@ -12,6 +12,7 @@ import {
 import { Logo } from '@/components/logo';
 import { Reveal } from '@/components/reveal';
 import { SpotlightCard } from '@/components/spotlight-card';
+import { WhatsAppButton } from '@/components/whatsapp-button';
 import { currentUserOrNull, rawApi } from '@/lib/api';
 import { formatMoney } from '@/lib/orders';
 import type { CurrentUser, Package, PortfolioItem } from '@/lib/types';
@@ -349,6 +350,7 @@ export default async function HomePage() {
           © 2026 3R — Páginas web para negocios
         </div>
       </footer>
+      <WhatsAppButton />
     </div>
   );
 }

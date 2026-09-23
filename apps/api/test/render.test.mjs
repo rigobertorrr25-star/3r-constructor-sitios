@@ -82,6 +82,22 @@ describe('renderPage: seguridad', () => {
     assert.ok(html.includes('<video'), 'el video con dirección válida sí se dibuja');
   });
 
+  it('mapa: se publica con la dirección codificada; sin dirección no se dibuja', () => {
+    const html = renderPage(
+      page([
+        section([
+          { id: 'm1', type: 'map', props: { address: 'Calle 10 # 5-20 <script>alert(1)</script>, Bogotá' } },
+          { id: 'm2', type: 'map', props: {} },
+        ]),
+      ]),
+      ctx(),
+    );
+    const tag = /<iframe[^>]*>/.exec(html)[0];
+    assert.ok(tag.includes('src="https://www.google.com/maps?q='));
+    assert.ok(!/<script/i.test(html), html);
+    assert.equal((html.match(/<iframe/g) ?? []).length, 1, 'el segundo, sin dirección, no se dibuja');
+  });
+
   it('video: se publica con controles, se sanea la portada y sin dirección no se dibuja', () => {
     const html = renderPage(
       page([

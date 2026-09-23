@@ -38,10 +38,18 @@ export class PublishingController {
 }
 
 // Las páginas publicadas son contenido de terceros. Aunque ya se sanea todo, el navegador recibe además
-// reglas que impiden ejecutar scripts, cargar recursos raros o compartir cookies con el resto del sitio.
+// reglas que impiden cargar recursos raros o compartir cookies con el resto del sitio.
+//
+// Sobre "allow-scripts": el mapa (Google Maps embed) necesita JavaScript para dibujarse, y sin
+// "allow-scripts" un iframe anidado hereda la restricción del padre y no corre nada, aunque el
+// origen esté permitido en frame-src (confirmado probando en un Chrome real). Se agrega, pero
+// A PROPÓSITO sin "allow-same-origin": sandbox sin ese permiso le da a la página un origen opaco
+// (aleatorio) — cualquier script que corra ahí no puede leer las cookies de sesión ni llamar a la
+// API como si fuera un usuario real, aunque se ejecute. Es el mismo patrón que usan los sitios que
+// alojan contenido embebido de terceros (CodePen y similares).
 const PUBLIC_HEADERS: Record<string, string> = {
   'Content-Security-Policy':
-    "default-src 'none'; style-src 'unsafe-inline'; img-src http: https: data:; media-src http: https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; sandbox allow-popups allow-popups-to-escape-sandbox",
+    "default-src 'none'; style-src 'unsafe-inline'; img-src http: https: data:; media-src http: https:; frame-src https://www.google.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; sandbox allow-popups allow-popups-to-escape-sandbox allow-scripts",
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'X-Frame-Options': 'DENY',

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { OrderForm } from '@/components/order-form';
+import { WhatsAppButton } from '@/components/whatsapp-button';
 import { authedApi, rawApi } from '@/lib/api';
 import { formatMoney } from '@/lib/orders';
 import type { CurrentUser, Package } from '@/lib/types';
@@ -39,6 +40,7 @@ export default async function OrderPage({ params }: { params: Promise<{ slug: st
           <OrderForm pkg={pkg} />
         </div>
       </main>
+      <WhatsAppButton />
     </div>
   );
 }

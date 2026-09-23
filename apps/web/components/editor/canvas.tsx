@@ -290,6 +290,22 @@ function Leaf({ node, bp }: { node: ComponentNode; bp: Breakpoint }) {
         </div>
       );
     }
+    case 'map': {
+      const address = String(node.props?.address ?? '').trim();
+      const height = resolve(node.styles?.height, bp) ?? 320;
+      return address ? (
+        <iframe
+          title="Mapa"
+          src={`https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`}
+          style={{ width: '100%', height, border: 0, borderRadius: node.styles?.borderRadius, display: 'block' }}
+          loading="lazy"
+        />
+      ) : (
+        <div style={{ width: '100%', height }}>
+          <Placeholder>Mapa: escribe la dirección en el panel de la derecha</Placeholder>
+        </div>
+      );
+    }
     case 'divider':
       return (
         <div

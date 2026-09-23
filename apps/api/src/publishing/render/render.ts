@@ -195,6 +195,23 @@ class Renderer {
         const posterAttr = poster ? ` poster="${escapeHtml(poster)}"` : '';
         return `<div class="${wrap}"><video class="${vid}" src="${escapeHtml(src)}"${posterAttr} controls></video></div>`;
       }
+      case 'map': {
+        const address = typeof props.address === 'string' ? props.address.trim() : '';
+        if (!address || address.length > 300) return '';
+        const wrap = this.sheet.next('c');
+        const frame = this.sheet.next('c');
+        this.sheet.rule(`.${wrap}`, (bp) => pick(common(styles, bp), ['margin-top', 'margin-bottom']));
+        this.sheet.rule(`.${frame}`, (bp) => {
+          const out = pick(common(styles, bp), ['border-radius']);
+          out['height'] = `${num(resolve(styles?.height as never, bp), 120, 800) ?? 320}px`;
+          out['width'] = '100%';
+          out['border'] = '0';
+          out['display'] = 'block';
+          return out;
+        });
+        const src = `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
+        return `<div class="${wrap}"><iframe class="${frame}" title="Mapa" src="${escapeHtml(src)}" loading="lazy"></iframe></div>`;
+      }
       case 'divider': {
         const cls = this.sheet.next('c');
         this.sheet.rule(`.${cls}`, (bp) => {
@@ -221,7 +238,7 @@ class Renderer {
         });
         return `<div class="box ${cls}">${this.children(node.components)}</div>`;
       }
-      // galería, formulario, mapa… aún no se pueden publicar: se omiten en vez de romper la página.
+      // galería y formulario aún no se pueden publicar: se omiten en vez de romper la página.
       default:
         return '';
     }
