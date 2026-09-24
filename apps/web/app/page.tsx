@@ -83,8 +83,21 @@ export default async function HomePage() {
   const [packages, portfolio, user] = await Promise.all([loadPackages(), loadPortfolio(), currentUserOrNull<CurrentUser>()]);
   const isStaff = user?.roles.includes('ADMIN') || user?.roles.includes('SUPER_ADMIN');
 
+  const prices = (packages ?? []).map((p) => p.priceCents / 100);
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfessionalService',
+    name: '3R',
+    description: 'Diseño y construcción de páginas web a medida para negocios pequeños en Colombia.',
+    url: 'https://3rpaginas.com',
+    telephone: '+573107907194',
+    areaServed: 'CO',
+    ...(prices.length > 0 ? { priceRange: `${Math.min(...prices)}-${Math.max(...prices)} COP` } : {}),
+  };
+
   return (
     <div className="min-h-screen overflow-x-clip" style={{ backgroundImage: 'var(--gradient-hero)' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-background/70 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-[1224px] items-center justify-between px-4 py-5 sm:px-[34px]">
           <Link href="/" aria-label="3R — Inicio" className="text-foreground">
