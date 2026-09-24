@@ -142,32 +142,47 @@ export default async function HomePage() {
           <div aria-hidden="true" className="pointer-events-none absolute inset-0">
             <span className="orb orb-a absolute -top-20 right-[-6%] size-[380px] bg-primary/25 sm:size-[460px]" />
             <span className="orb orb-b absolute bottom-[-14%] left-[-8%] size-[340px] bg-secondary/15 sm:size-[420px]" />
-            <div className="absolute right-[-14%] top-1/2 hidden w-[640px] -translate-y-1/2 opacity-80 mix-blend-screen lg:block orb-a">
-              <Image src="/hero-aurora.png" alt="" width={1344} height={576} priority className="h-auto w-full" style={{ maskImage: 'radial-gradient(closest-side, black 55%, transparent 90%)', WebkitMaskImage: 'radial-gradient(closest-side, black 55%, transparent 90%)' }} />
-            </div>
           </div>
 
-          <div className="relative mx-auto flex max-w-[816px] flex-col items-center px-4 pb-20 pt-12 text-center sm:pt-[68px] md:pb-28">
-            <p className="rise text-[12.75px] uppercase tracking-[0.3em] text-muted-foreground">Páginas web para negocios</p>
-            <h1
-              className="rise mt-6 font-display font-bold tracking-[-0.025em] text-foreground"
-              style={{ fontSize: 'clamp(2.5rem, 7vw, 3.984rem)', lineHeight: 1.25, animationDelay: '80ms' }}
-            >
-              Tu página web <span className="text-spectrum">profesional</span>,
-              <br />
-              hecha por nosotros
-            </h1>
-            <p className="rise mt-6 max-w-[612px] text-[17px] leading-[1.55] text-muted-foreground sm:text-[19px]" style={{ animationDelay: '160ms' }}>
-              Tú nos cuentas de tu negocio. Nosotros diseñamos, construimos y publicamos tu página. Sin complicarte con nada técnico.
-            </p>
-            <div className="rise mt-10 flex flex-wrap items-center justify-center gap-3" style={{ animationDelay: '240ms' }}>
-              <a href="#paquetes" className={`${pill} shine bg-primary font-medium text-primary-foreground hover:shadow-[var(--shadow-glow)]`}>
-                Ver paquetes
-                <ArrowRightIcon />
-              </a>
-              <a href="#como-funciona" className={`${pill} border border-white/[0.08] bg-white/[0.014] hover:bg-white/[0.06]`}>
-                Cómo funciona
-              </a>
+          <div className="relative mx-auto grid max-w-[1224px] grid-cols-1 items-center gap-10 px-4 pb-16 pt-12 sm:px-[34px] sm:pt-[68px] md:pb-20 lg:grid-cols-[1fr_460px] lg:gap-6">
+            <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+              <p className="rise text-[12.75px] uppercase tracking-[0.3em] text-muted-foreground">Páginas web para negocios</p>
+              <h1
+                className="rise mt-6 font-display font-bold tracking-[-0.025em] text-foreground"
+                style={{ fontSize: 'clamp(2.5rem, 6vw, 3.984rem)', lineHeight: 1.25, animationDelay: '80ms' }}
+              >
+                Tu página web <span className="text-spectrum">profesional</span>,
+                <br />
+                hecha por nosotros
+              </h1>
+              <p className="rise mt-6 max-w-[560px] text-[17px] leading-[1.55] text-muted-foreground sm:text-[19px]" style={{ animationDelay: '160ms' }}>
+                Tú nos cuentas de tu negocio. Nosotros diseñamos, construimos y publicamos tu página. Sin complicarte con nada técnico.
+              </p>
+              <div className="rise mt-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start" style={{ animationDelay: '240ms' }}>
+                <a href="#paquetes" className={`${pill} shine bg-primary font-medium text-primary-foreground hover:shadow-[var(--shadow-glow)]`}>
+                  Ver paquetes
+                  <ArrowRightIcon />
+                </a>
+                <a href="#como-funciona" className={`${pill} border border-white/[0.08] bg-white/[0.014] hover:bg-white/[0.06]`}>
+                  Cómo funciona
+                </a>
+              </div>
+            </div>
+
+            <div className="rise relative mx-auto w-full max-w-[340px] sm:max-w-[400px] lg:max-w-none" style={{ animationDelay: '120ms' }}>
+              <div aria-hidden="true" className="orb orb-a absolute inset-0 -z-10 opacity-70 mix-blend-screen" style={{ background: 'radial-gradient(closest-side, var(--primary), transparent 70%)' }} />
+              <video
+                aria-label="Mascota de 3R: un león con sudadera negra y lentes de sol, saludando"
+                autoPlay
+                loop
+                muted
+                playsInline
+                poster="/hero-lion.png"
+                className="w-full"
+                style={{ maskImage: 'radial-gradient(closest-side, black 72%, transparent 100%)', WebkitMaskImage: 'radial-gradient(closest-side, black 72%, transparent 100%)' }}
+              >
+                <source src="/hero-lion.mp4" type="video/mp4" />
+              </video>
             </div>
           </div>
         </section>
