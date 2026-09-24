@@ -3,6 +3,7 @@ import {
   PAYMENT_DOT,
   PAYMENT_LABEL,
   PROGRESS_STEPS,
+  STATUS_DESCRIPTION,
   STATUS_DOT,
   STATUS_LABEL,
   formatDateTime,
@@ -44,24 +45,27 @@ export function Alert({ children, tone = 'error' }: { children: ReactNode; tone?
 
 export const card = 'rounded-[32px] border border-white/[0.08] bg-card p-6 shadow-[var(--shadow-glass)]';
 
-/** Avance del pedido en 5 pasos. Un pedido cancelado no muestra avance. */
+/** Avance del pedido en 5 pasos, como el seguimiento de un envío. Un pedido cancelado no muestra avance. */
 export function Progress({ status }: { status: OrderStatus }) {
   if (status === 'cancelled') return null;
   const current = PROGRESS_STEPS.indexOf(status);
   return (
-    <ol className="grid grid-cols-5 gap-2" aria-label="Avance del pedido">
-      {PROGRESS_STEPS.map((step, i) => {
-        const done = i <= current;
-        return (
-          <li key={step} aria-current={i === current ? 'step' : undefined} className="min-w-0">
-            <div className={`h-1.5 rounded-full ${done ? 'bg-primary' : 'bg-white/[0.08]'}`} />
-            <p className={`mt-2 text-[12px] leading-tight ${i === current ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
-              {STATUS_LABEL[step]}
-            </p>
-          </li>
-        );
-      })}
-    </ol>
+    <div>
+      <ol className="grid grid-cols-5 gap-2" aria-label="Avance del pedido">
+        {PROGRESS_STEPS.map((step, i) => {
+          const done = i <= current;
+          return (
+            <li key={step} aria-current={i === current ? 'step' : undefined} className="min-w-0">
+              <div className={`h-1.5 rounded-full ${done ? 'bg-primary' : 'bg-white/[0.08]'}`} />
+              <p className={`mt-2 text-[12px] leading-tight ${i === current ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
+                {STATUS_LABEL[step]}
+              </p>
+            </li>
+          );
+        })}
+      </ol>
+      <p className="mt-4 text-[14.5px] text-foreground/90">{STATUS_DESCRIPTION[status]}</p>
+    </div>
   );
 }
 

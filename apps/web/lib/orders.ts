@@ -2,11 +2,21 @@ import type { OrderStatus, PaymentStatus } from './types';
 
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   new: 'Pedido recibido',
-  awaiting_payment: 'Esperando pago',
-  in_progress: 'En construcción',
-  in_review: 'En revisión',
+  awaiting_payment: 'Esperando el pago',
+  in_progress: 'Página en proceso',
+  in_review: 'Últimos detalles',
   delivered: 'Entregado',
   cancelled: 'Cancelado',
+};
+
+/** Una frase de seguimiento (como un envío) para el estado actual del pedido. */
+export const STATUS_DESCRIPTION: Record<OrderStatus, string> = {
+  new: 'Recibimos tu pedido y ya lo estamos organizando.',
+  awaiting_payment: 'Todo listo para empezar en cuanto se confirme el pago.',
+  in_progress: 'Estamos construyendo tu página, paso a paso.',
+  in_review: 'Ya casi terminamos: estamos afinando los últimos detalles.',
+  delivered: '¡Tu página está lista y entregada!',
+  cancelled: 'Este pedido fue cancelado.',
 };
 
 export const PAYMENT_LABEL: Record<PaymentStatus, string> = {
