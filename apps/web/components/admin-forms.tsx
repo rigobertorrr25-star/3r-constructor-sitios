@@ -15,6 +15,7 @@ import type { AdminOrderDetail, OrderStatus, Package, PortfolioItem, Publication
 import { CheckField, Field, SelectField, TextAreaField } from './field';
 import { Alert } from './shop';
 import { SubmitButton } from './submit-button';
+import { ThumbnailField } from './thumbnail-field';
 
 const STATUS_OPTIONS = (Object.keys(STATUS_LABEL) as OrderStatus[]).map((value) => ({ value, label: STATUS_LABEL[value] }));
 
@@ -204,12 +205,10 @@ export function PortfolioForm({ item }: { item?: PortfolioItem }) {
         <Field label="Orden" name="sortOrder" type="number" min={0} max={1000} defaultValue={v?.sortOrder ?? item?.sortOrder ?? 0} />
       </div>
       <Field label="Frase corta (opcional)" name="description" maxLength={300} defaultValue={v?.description ?? item?.description ?? ''} />
-      <Field
+      <ThumbnailField
         label="Captura de la página (opcional)"
         name="thumbnailUrl"
-        maxLength={500}
         defaultValue={v?.thumbnailUrl ?? item?.thumbnailUrl ?? ''}
-        placeholder="/portfolio/cafeazul.png o https://…"
         hint="Sin captura se muestra un cuadro con el nombre de la página."
       />
       <CheckField name="isActive" label="Visible en la portada" defaultChecked={v ? v.isActive === 'on' : (item?.isActive ?? true)} />
