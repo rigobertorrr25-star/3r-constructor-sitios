@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { DevicesIcon, PointerIcon, TemplateIcon } from '@/components/icons';
 import { PaymentBadge, StatusBadge } from '@/components/shop';
 import { authedApi } from '@/lib/api';
 import { formatDate, formatMoney, orderCode } from '@/lib/orders';
@@ -9,6 +10,12 @@ export const metadata: Metadata = { title: 'Mis pedidos — 3R' };
 
 const primaryLink =
   'inline-flex items-center justify-center rounded-full bg-primary px-[25.5px] py-[12.75px] text-[14.875px] font-medium text-primary-foreground transition duration-300 ease-[var(--ease-emphasized)] hover:shadow-[var(--shadow-glow)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]';
+
+const steps = [
+  { icon: <TemplateIcon />, title: 'Eliges tu paquete', text: 'Comparas lo que incluye cada uno y escoges el que va con tu negocio.' },
+  { icon: <PointerIcon />, title: 'Nos cuentas de tu negocio', text: 'Un formulario corto: a qué te dedicas y cómo te gustaría verte.' },
+  { icon: <DevicesIcon />, title: 'Recibes tu página', text: 'La diseñamos y construimos. La sigues aquí mismo hasta que esté lista.' },
+];
 
 export default async function DashboardPage() {
   const { data: orders } = await authedApi<OrderSummary[]>('/orders');
@@ -28,15 +35,33 @@ export default async function DashboardPage() {
       </div>
 
       {orders.length === 0 ? (
-        <div className="mt-10 rounded-[32px] border border-dashed border-white/[0.12] px-6 py-16 text-center">
-          <p className="font-display text-xl font-semibold text-foreground">Pide tu primera página</p>
-          <p className="mx-auto mt-2 max-w-md text-[15px] text-muted-foreground">
-            Elige un paquete, cuéntanos de tu negocio y nosotros nos encargamos del resto.
+        <>
+          <div className="mt-10 rounded-[32px] border border-dashed border-white/[0.12] px-6 py-16 text-center">
+            <p className="font-display text-xl font-semibold text-foreground">Pide tu primera página</p>
+            <p className="mx-auto mt-2 max-w-md text-[15px] text-muted-foreground">
+              Elige un paquete, cuéntanos de tu negocio y nosotros nos encargamos del resto.
+            </p>
+            <Link href="/#paquetes" className={`${primaryLink} mt-6`}>
+              Ver paquetes
+            </Link>
+          </div>
+          <div className="mt-6 grid grid-cols-1 gap-[17px] sm:grid-cols-3">
+            {steps.map((step, i) => (
+              <div key={step.title} className="rounded-[24px] border border-white/[0.08] bg-card p-5 shadow-[var(--shadow-glass)]">
+                <span className="flex size-9 items-center justify-center rounded-full bg-primary/15 text-primary">{step.icon}</span>
+                <p className="mt-3 text-[12px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">Paso {i + 1}</p>
+                <h3 className="mt-1 font-display text-[17px] font-semibold text-foreground">{step.title}</h3>
+                <p className="mt-1.5 text-[14px] leading-snug text-muted-foreground">{step.text}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-6 text-center text-[14px] text-muted-foreground">
+            ¿Todavía con dudas?{' '}
+            <Link href="/#trabajos" className="text-primary hover:underline">
+              Mira páginas reales que ya entregamos ↗
+            </Link>
           </p>
-          <Link href="/#paquetes" className={`${primaryLink} mt-6`}>
-            Ver paquetes
-          </Link>
-        </div>
+        </>
       ) : (
         <ul className="mt-8 space-y-3">
           {orders.map((order) => (
