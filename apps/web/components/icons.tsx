@@ -59,6 +59,28 @@ export const HistoryIcon = (p: IconProps) => (
   </Icon>
 );
 
+export const UtensilsIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M7 2v6a2 2 0 0 1-2 2v0a2 2 0 0 1-2-2V2" />
+    <path d="M5 10v12" />
+    <path d="M18 2c-1.5 0-3 1.5-3 4.5S16.5 11 18 11s3-1.5 3-4.5S19.5 2 18 2Z" />
+    <path d="M18 11v11" />
+  </Icon>
+);
+
+export const ShoppingBagIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 8h12l-1 12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2z" />
+    <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+  </Icon>
+);
+
+export const ChatIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+  </Icon>
+);
+
 export const ArrowRightIcon = (p: IconProps) => (
   <Icon size={p.size ?? 14}>
     <path d="M5 12h14" />

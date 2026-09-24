@@ -3,13 +3,17 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import {
   ArrowRightIcon,
+  ChatIcon,
   DevicesIcon,
   GlobeIcon,
   HistoryIcon,
   PointerIcon,
+  ShoppingBagIcon,
   TemplateIcon,
+  UtensilsIcon,
 } from '@/components/icons';
 import { Logo } from '@/components/logo';
+import { MascotGreeter } from '@/components/mascot-greeter';
 import { Reveal } from '@/components/reveal';
 import { SpotlightCard } from '@/components/spotlight-card';
 import { WhatsAppButton } from '@/components/whatsapp-button';
@@ -21,6 +25,12 @@ const steps = [
   { n: '1', title: 'Elige tu paquete', text: 'Compara lo que incluye cada uno y escoge el que va con tu negocio.' },
   { n: '2', title: 'Cuéntanos de tu negocio', text: 'Llenas un formulario corto: a qué te dedicas, qué quieres mostrar y cómo te gustaría verte.' },
   { n: '3', title: 'Recibe tu página', text: 'Nosotros la diseñamos y la construimos. Sigues el avance desde tu cuenta y pides cambios cuando quieras.' },
+];
+
+const industries: { hue: number; icon: ReactNode; title: string; text: string }[] = [
+  { hue: 25, icon: <UtensilsIcon />, title: 'Restaurantes y cafés', text: 'Tu menú, fotos de tus platos, ubicación y un botón directo a WhatsApp para pedidos y reservas.' },
+  { hue: 150, icon: <ShoppingBagIcon />, title: 'Tiendas y negocios locales', text: 'Muestra tu catálogo con fotos y precios, y deja que te escriban por WhatsApp para comprar.' },
+  { hue: 275, icon: <ChatIcon />, title: 'Servicios y profesionales', text: 'Cuenta qué haces, muestra tu trabajo y facilita que te agenden una cita o te escriban.' },
 ];
 
 const includes: { hue: number; icon: ReactNode; title: string; text: string }[] = [
@@ -173,6 +183,31 @@ export default async function HomePage() {
               </Reveal>
             ))}
           </ol>
+        </section>
+
+        <section aria-labelledby="h-negocios" className="mx-auto max-w-[1224px] px-4 pb-24 sm:px-[34px]">
+          <Reveal>
+            <h2 id="h-negocios" className="text-center font-display text-[32px] font-bold tracking-tight text-foreground sm:text-[40px]">
+              Hacemos páginas para tu tipo de negocio
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-center text-[16px] text-muted-foreground">Cada negocio necesita mostrar algo distinto. Así lo resolvemos según el tuyo.</p>
+          </Reveal>
+          <ul className="mt-10 grid grid-cols-1 gap-[17px] lg:grid-cols-3">
+            {industries.map((item, i) => (
+              <Reveal as="li" key={item.title} delayMs={i * 100}>
+                <SpotlightCard className={`${card} group block h-full p-[26px] transition duration-300 hover:-translate-y-1 hover:border-white/[0.18]`}>
+                  <span
+                    className="flex size-[43px] items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110"
+                    style={{ backgroundColor: `oklch(0.3 0.12 ${item.hue} / 0.5)`, color: `oklch(0.92 0.08 ${item.hue})` }}
+                  >
+                    {item.icon}
+                  </span>
+                  <h3 className="mt-5 font-display text-[21px] font-semibold text-foreground">{item.title}</h3>
+                  <p className="mt-2 text-[15px] leading-[1.5] text-muted-foreground">{item.text}</p>
+                </SpotlightCard>
+              </Reveal>
+            ))}
+          </ul>
         </section>
 
         {portfolio.length > 0 ? (
@@ -341,6 +376,16 @@ export default async function HomePage() {
               Ver paquetes
               <ArrowRightIcon />
             </a>
+            <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[13.5px] text-muted-foreground">
+              {['Sin compromiso al escribirnos', 'Hecha a tu medida', 'En línea cuando esté lista'].map((text) => (
+                <li key={text} className="flex items-center gap-1.5">
+                  <span className="flex size-4 items-center justify-center rounded-full bg-primary/20 text-primary" aria-hidden="true">
+                    ✓
+                  </span>
+                  {text}
+                </li>
+              ))}
+            </ul>
           </Reveal>
         </section>
       </main>
@@ -351,6 +396,7 @@ export default async function HomePage() {
         </div>
       </footer>
       <WhatsAppButton />
+      <MascotGreeter />
     </div>
   );
 }
