@@ -1,18 +1,23 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const WHATSAPP_HREF = `https://wa.me/573107907194?text=${encodeURIComponent('Hola, quiero una página web para mi negocio')}`;
 const SEEN_KEY = '3r-greeter-seen';
+// Qué tanto se desplaza la mirada hacia el clic (píxeles). Sutil: es un guiño, no un juego de ojos.
+const GAZE_RANGE = 6;
 
 /**
  * Mascota flotante que saluda al visitante y lo lleva a cotizar o a WhatsApp.
  * No es un chat con IA: es un mensaje fijo con botones, para no prometer algo que no hace.
  * Se abre sola una vez por navegador (localStorage); después queda como botón para reabrirla.
+ * El avatar "mira" hacia donde el visitante hace clic, en toda la página.
  */
 export function MascotGreeter() {
   const [open, setOpen] = useState(false);
+  const [gaze, setGaze] = useState({ x: 0, y: 0 });
+  const avatarRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     let seen = false;
@@ -31,6 +36,22 @@ export function MascotGreeter() {
       }
     }, 1800);
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      const el = avatarRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = event.clientX - cx;
+      const dy = event.clientY - cy;
+      const dist = Math.hypot(dx, dy) || 1;
+      setGaze({ x: (dx / dist) * GAZE_RANGE, y: (dy / dist) * GAZE_RANGE });
+    };
+    window.addEventListener('click', onClick);
+    return () => window.removeEventListener('click', onClick);
   }, []);
 
   return (
@@ -72,12 +93,21 @@ export function MascotGreeter() {
       </div>
 
       <button
+        ref={avatarRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? 'Cerrar el mensaje' : 'Abrir el mensaje de bienvenida'}
-        className="flex size-14 items-center justify-center overflow-hidden rounded-full border border-white/[0.08] bg-card p-1.5 shadow-[var(--shadow-glass)] transition hover:scale-105"
+        className="relative flex size-14 items-center justify-center overflow-hidden rounded-full border border-white/[0.08] bg-card shadow-[var(--shadow-glass)] transition hover:scale-105"
       >
-        <Image src="/mascot.png" alt="" width={56} height={56} className="h-full w-full object-contain" priority />
+        <Image
+          src="/avatar-lion.jpg"
+          alt=""
+          width={112}
+          height={112}
+          className="h-[130%] w-[130%] max-w-none object-cover transition-transform duration-300 ease-out"
+          style={{ transform: `translate(${gaze.x}px, ${gaze.y}px)` }}
+          priority
+        />
       </button>
     </div>
   );
