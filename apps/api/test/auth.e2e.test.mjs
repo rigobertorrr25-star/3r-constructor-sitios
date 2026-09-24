@@ -92,6 +92,15 @@ describe('auth', () => {
     assert.equal(res.body.email, email);
   });
 
+  it('/auth/me da 401 (no 200 con "null") si la cuenta se borró con el token todavía vivo', async () => {
+    const ghostEmail = `test.${stamp}.ghost@example.com`;
+    await call('POST', '/auth/register', { body: { email: ghostEmail, password } });
+    const ghostLogin = await call('POST', '/auth/login', { body: { email: ghostEmail, password } });
+    await prisma.user.delete({ where: { email: ghostEmail } });
+    const res = await call('GET', '/auth/me', { token: ghostLogin.body.accessToken });
+    assert.equal(res.status, 401);
+  });
+
   it('el rol USER no entra a /admin (403) y sin token da 401', async () => {
     assert.equal((await call('GET', '/admin/ping')).status, 401);
     assert.equal((await call('GET', '/admin/ping', { token: tokens.accessToken })).status, 403);

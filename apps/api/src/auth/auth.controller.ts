@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { UsersService } from '../users/users.service.js';
 import { AuthService } from './auth.service.js';
@@ -55,8 +55,13 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  me(@CurrentUser() user: AuthUser) {
-    return this.users.findPublicById(user.id);
+  async me(@CurrentUser() user: AuthUser) {
+    // El token puede seguir siendo válido (no venció) aunque la cuenta ya no exista — por ejemplo,
+    // si se borró directo en la base con la sesión todavía abierta en otro lado. 401, no 200 con
+    // null: así el frontend manda a iniciar sesión de nuevo en vez de romperse con "null.firstName".
+    const found = await this.users.findPublicById(user.id);
+    if (!found) throw new UnauthorizedException();
+    return found;
   }
 
   @Post('forgot-password')
