@@ -5,6 +5,8 @@ export interface MailMessage {
   subject: string;
   html: string;
   text: string;
+  /** Para que quien reciba el correo pueda responder directo a un visitante (formulario de contacto). */
+  replyTo?: string;
 }
 
 export interface MailSender {

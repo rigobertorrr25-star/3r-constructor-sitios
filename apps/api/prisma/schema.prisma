@@ -97,6 +97,7 @@ model Site {
   deploymentJobs   DeploymentJob[]
   tickets          SupportTicket[]
   order            Order?
+  formSubmissions  FormSubmission[]
 
   @@unique([userId, slug])
   @@index([userId], map: "idx_sites_user_id")
@@ -466,6 +467,22 @@ model PortfolioItem {
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("portfolio_items")
+}
+
+// Mensajes del formulario de contacto de una página publicada (visitante → dueño del sitio).
+model FormSubmission {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  siteId    String   @map("site_id") @db.Uuid
+  name      String   @db.VarChar(150)
+  email     String   @db.VarChar(255)
+  phone     String?  @db.VarChar(50)
+  message   String   @db.VarChar(4000)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId])
+  @@map("form_submissions")
 }
 
 // ───────────────────────── ADMINISTRACIÓN ─────────────────────────

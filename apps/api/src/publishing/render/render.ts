@@ -22,6 +22,8 @@ export interface RenderContext {
   siteName: string;
   nav: NavLink[];
   isHomepage: boolean;
+  /** A dónde postea el formulario de contacto (ver PublicSitesController#contact). */
+  formAction: string;
 }
 
 const px = (value: number | undefined) => (value === undefined ? undefined : `${value}px`);
@@ -107,11 +109,22 @@ video{display:inline-block;max-width:100%}
 .brand{font-weight:700;font-size:18px}
 .top nav{display:flex;flex-wrap:wrap;gap:4px 20px}
 .top nav a{font-size:15px;color:#4b5563;padding:4px 0}
-.top nav a[aria-current=page]{color:#111827;font-weight:600;border-bottom:2px solid #111827}`;
+.top nav a[aria-current=page]{color:#111827;font-weight:600;border-bottom:2px solid #111827}
+.form-box{gap:16px}
+.form-h{margin:0;font-size:18px;font-weight:700}
+.form{display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:14px;color:#374151}
+.field input,.field textarea{font:inherit;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;background:#fff;color:#111827}
+.field input:focus,.field textarea:focus{outline:2px solid #5b6cff;outline-offset:1px}
+.field textarea{resize:vertical}
+.form-submit{align-self:flex-start;padding:12px 24px;border:0;border-radius:999px;background:#5b6cff;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}`;
 
 class Renderer {
   readonly sheet = new Sheet();
   private seenHeading = false;
+
+  constructor(private readonly formAction: string) {}
 
   section(raw: unknown): string {
     const node = (raw ?? {}) as Bag;
@@ -244,7 +257,21 @@ class Renderer {
         });
         return `<div class="box ${cls}">${this.children(node.components)}</div>`;
       }
-      // galería y formulario aún no se pueden publicar: se omiten en vez de romper la página.
+      case 'form': {
+        const wrap = this.sheet.next('c');
+        this.sheet.rule(`.${wrap}`, (bp) => pick(common(styles, bp), ['margin-top', 'margin-bottom', 'background', 'border-radius', 'padding-top', 'padding-bottom', 'padding-left', 'padding-right']));
+        const title = typeof props.title === 'string' ? props.title.trim() : '';
+        const heading = title ? `<h3 class="form-h">${escapeHtml(title)}</h3>` : '';
+        return `<div class="${wrap} form-box">${heading}<form class="form" method="post" action="${escapeHtml(this.formAction)}">
+<label class="field"><span>Nombre</span><input type="text" name="name" required maxlength="150"></label>
+<label class="field"><span>Correo</span><input type="email" name="email" required maxlength="255"></label>
+<label class="field"><span>Teléfono / WhatsApp (opcional)</span><input type="tel" name="phone" maxlength="50"></label>
+<label class="field"><span>Mensaje</span><textarea name="message" required maxlength="4000" rows="4"></textarea></label>
+<input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+<button class="form-submit" type="submit">Enviar mensaje</button>
+</form></div>`;
+      }
+      // galería aún no se puede publicar: se omite en vez de romper la página.
       default:
         return '';
     }
@@ -267,7 +294,7 @@ function nav(context: RenderContext): string {
 
 /** Página HTML completa. Devuelve siempre un documento válido, aunque el contenido esté vacío o dañado. */
 export function renderPage(page: RenderPage, context: RenderContext): string {
-  const renderer = new Renderer();
+  const renderer = new Renderer(context.formAction);
   const doc = (page.doc ?? {}) as Bag;
   const sections = Array.isArray(doc.sections) ? doc.sections : [];
   const body = sections.map((section) => renderer.section(section)).join('');

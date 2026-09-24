@@ -12,6 +12,7 @@ export const PALETTE: { type: ComponentType; label: string }[] = [
   { type: 'button', label: 'Botón' },
   { type: 'video', label: 'Video' },
   { type: 'map', label: 'Mapa' },
+  { type: 'form', label: 'Formulario' },
   { type: 'container', label: 'Contenedor' },
   { type: 'divider', label: 'Divisor' },
   { type: 'spacer', label: 'Espacio' },
@@ -64,6 +65,8 @@ export function createComponent(type: ComponentType, makeId: IdFactory = newId):
       return { id, type, props: { src: '', poster: '' }, styles: { width: 100, borderRadius: 12, textAlign: 'left' } };
     case 'map':
       return { id, type, props: { address: '' }, styles: { height: 320, borderRadius: 12 } };
+    case 'form':
+      return { id, type, props: { title: 'Escríbenos' }, styles: { background: '#f9fafb', borderRadius: 16, paddingTop: 24, paddingBottom: 24, paddingX: 24 } };
     case 'container':
       return {
         id,

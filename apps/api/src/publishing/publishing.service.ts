@@ -3,7 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { AuditService } from '../audit/audit.service.js';
 import { slugify, uniqueSlug } from '../common/slug.js';
 import { validateEditorDocument } from '../editor/editor-document.js';
+import { EmailService } from '../email/email.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import type { ContactFormDto } from './dto/contact-form.dto.js';
 import { renderNotFound, renderPage, renderRobots, renderSitemap } from './render/render.js';
 import { PUBLISH_STORAGE, type PublishStorage } from './storage.js';
 
@@ -28,15 +30,18 @@ interface Manifest {
 export class PublishingService {
   private readonly rootHost: string;
   private readonly urlTemplate: string;
+  private readonly adminEmail: string;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly email: EmailService,
     @Inject(PUBLISH_STORAGE) private readonly storage: PublishStorage,
     config: ConfigService,
   ) {
     this.rootHost = (config.get<string>('SITES_ROOT_HOST') ?? 'localhost').toLowerCase();
     this.urlTemplate = config.get<string>('SITES_URL_TEMPLATE') ?? 'http://{label}.localhost:3000';
+    this.adminEmail = config.get<string>('ADMIN_EMAIL') ?? '';
   }
 
   private urlFor(label: string) {
@@ -96,6 +101,7 @@ export class PublishingService {
             siteName: site.name,
             isHomepage: r === home,
             nav: rendered.map((other) => ({ label: other.page.title, href: pathOf(other), current: other === r })),
+            formAction: `/s/${label}/contact`,
           },
         );
         manifest.pages.push({ path: pathOf(r), file });
@@ -228,5 +234,42 @@ export class PublishingService {
 
     const body = await this.storage.get(dir, entry.file);
     return body === null ? missing(domain.site.name) : { status: 200, contentType: 'text/html; charset=utf-8', body };
+  }
+
+  // ───────── formulario de contacto ─────────
+
+  /** A dónde llega el aviso: el correo del cliente dueño del pedido; si no hay pedido, al equipo. */
+  private async contactRecipient(siteId: string): Promise<string | null> {
+    const order = await this.prisma.order.findUnique({ where: { siteId }, select: { user: { select: { email: true } } } });
+    return order?.user.email ?? (this.adminEmail || null);
+  }
+
+  async submitContact(label: string, dto: ContactFormDto): Promise<{ ok: true }> {
+    // Honeypot: un visitante real nunca llena este campo (está oculto en la página). Se responde
+    // "listo" igual, para no delatarle al bot que lo detectamos.
+    if (dto.website) return { ok: true };
+    if (!/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(label)) return { ok: true };
+
+    const domain = await this.prisma.domain.findUnique({
+      where: { domain: `${label}.${this.rootHost}` },
+      select: { site: { select: { id: true, name: true, status: true } } },
+    });
+    if (!domain || domain.site.status !== 'published') return { ok: true };
+
+    await this.prisma.formSubmission.create({
+      data: { siteId: domain.site.id, name: dto.name, email: dto.email, phone: dto.phone, message: dto.message },
+    });
+
+    const to = await this.contactRecipient(domain.site.id);
+    if (to) {
+      await this.email.sendSiteContactMessage(to, {
+        siteName: domain.site.name,
+        name: dto.name,
+        email: dto.email,
+        phone: dto.phone,
+        message: dto.message,
+      });
+    }
+    return { ok: true };
   }
 }

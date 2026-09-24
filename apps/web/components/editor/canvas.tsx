@@ -306,6 +306,40 @@ function Leaf({ node, bp }: { node: ComponentNode; bp: Breakpoint }) {
         </div>
       );
     }
+    case 'form': {
+      const title = String(node.props?.title ?? '').trim();
+      const field = { display: 'flex', flexDirection: 'column' as const, gap: 4, fontSize: 14, color: '#374151' };
+      const input = { font: 'inherit', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, background: '#fff', color: '#111827' };
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {title ? <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{title}</h3> : null}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, pointerEvents: 'none' }}>
+            <label style={field}>
+              <span>Nombre</span>
+              <input style={input} disabled />
+            </label>
+            <label style={field}>
+              <span>Correo</span>
+              <input style={input} disabled />
+            </label>
+            <label style={field}>
+              <span>Teléfono / WhatsApp (opcional)</span>
+              <input style={input} disabled />
+            </label>
+            <label style={field}>
+              <span>Mensaje</span>
+              <textarea style={{ ...input, resize: 'vertical' }} rows={4} disabled />
+            </label>
+            <button
+              type="button"
+              style={{ alignSelf: 'flex-start', padding: '12px 24px', border: 0, borderRadius: 999, background: '#5b6cff', color: '#fff', fontSize: 15, fontWeight: 600 }}
+            >
+              Enviar mensaje
+            </button>
+          </div>
+        </div>
+      );
+    }
     case 'divider':
       return (
         <div

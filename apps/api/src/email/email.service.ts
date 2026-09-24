@@ -34,9 +34,9 @@ export class EmailService {
   }
 
   /** Nunca deja que un correo caído rompa lo que lo disparó (registro, pedido…): solo lo registra. */
-  private async safeSend(to: string, rendered: templates.RenderedEmail) {
+  private async safeSend(to: string, rendered: templates.RenderedEmail, replyTo?: string) {
     try {
-      await this.sender.send({ to, ...rendered });
+      await this.sender.send({ to, ...rendered, replyTo });
     } catch (error) {
       this.logger.error(`No se pudo enviar "${rendered.subject}" a ${to}: ${(error as Error).message}`);
     }
@@ -95,5 +95,12 @@ export class EmailService {
   sendAdminNewMessage(data: { orderId: string; orderCode: string; businessName: string; body: string }) {
     if (!this.adminEmail) return Promise.resolve();
     return this.safeSend(this.adminEmail, templates.adminNewMessage({ ...data, adminUrl: this.adminOrderUrl(data.orderId) }));
+  }
+
+  // ───────── formulario de contacto de un sitio publicado ─────────
+
+  /** `replyTo`: quien reciba esto puede simplemente responder el correo para llegarle al visitante. */
+  sendSiteContactMessage(to: string, data: { siteName: string; name: string; email: string; phone?: string | null; message: string }) {
+    return this.safeSend(to, templates.siteContactMessage(data), data.email);
   }
 }

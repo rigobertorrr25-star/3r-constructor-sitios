@@ -157,3 +157,23 @@ export function adminNewMessage(data: { orderCode: string; businessName: string;
   );
   return { subject: `Mensaje de ${sanitizeHeader(data.businessName, 50)} — ${sanitizeHeader(data.orderCode, 30)}`, html, text };
 }
+
+// ───────── formulario de contacto de una página publicada ─────────
+
+export function siteContactMessage(data: {
+  siteName: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  message: string;
+}): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Alguien escribió desde el formulario de contacto de <strong>${escapeHtml(data.siteName)}</strong>:</p>
+     <p><strong>Nombre:</strong> ${escapeHtml(data.name)}<br>
+     <strong>Correo:</strong> ${escapeHtml(data.email)}${data.phone ? `<br><strong>Teléfono:</strong> ${escapeHtml(data.phone)}` : ''}</p>
+     <p style="background:#f4f5f7;border-radius:12px;padding:14px 16px;white-space:pre-wrap;">${escapeHtml(data.message)}</p>
+     <p style="color:#6b7280;font-size:13px;">Puedes responder directo a este correo — llega a ${escapeHtml(data.email)}.</p>`,
+    `Alguien escribió desde el formulario de contacto de ${data.siteName}:\nNombre: ${data.name}\nCorreo: ${data.email}${data.phone ? `\nTeléfono: ${data.phone}` : ''}\n\n"${data.message}"\n\nPuedes responder directo a este correo.`,
+  );
+  return { subject: `Nuevo mensaje desde ${sanitizeHeader(data.siteName, 60)}`, html, text };
+}

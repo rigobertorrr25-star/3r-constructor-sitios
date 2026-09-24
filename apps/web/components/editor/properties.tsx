@@ -198,6 +198,23 @@ export function Properties({
         </>
       );
       break;
+    case 'form':
+      body = (
+        <>
+          <Group title="Formulario de contacto">
+            <TextControl name="Título (opcional)" value={prop('title')} placeholder="Escríbenos" onChange={(value) => setProp('title', value)} />
+            <p className="text-[12px] leading-relaxed text-muted-foreground">
+              Los campos (nombre, correo, teléfono, mensaje) son fijos. Los mensajes te llegan por correo cuando el sitio está publicado.
+            </p>
+          </Group>
+          <Group title="Estilo">
+            <ColorControl name="Fondo" {...plain('background')} fallback="#f9fafb" />
+            <NumberControl name="Redondeo" unit="px" max={200} {...plain('borderRadius')} />
+          </Group>
+          {margins}
+        </>
+      );
+      break;
     case 'divider':
       body = (
         <>

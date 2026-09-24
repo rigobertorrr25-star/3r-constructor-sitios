@@ -80,9 +80,16 @@ export async function proxy(request: NextRequest) {
   // 1. Dirección propia de un cliente: todo se reescribe a su sitio publicado; nunca a la aplicación.
   const label = publishedLabel(request);
   if (label) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/s/${label}${request.nextUrl.pathname === '/' ? '' : request.nextUrl.pathname}`;
-    return NextResponse.rewrite(url);
+    const path = request.nextUrl.pathname;
+    // El formulario de contacto usa una acción absoluta "/s/{label}/contact" (funciona igual con o sin
+    // subdominio propio, ver render.ts). En un subdominio propio ese path ya viene correcto: si se
+    // reescribiera de nuevo quedaría duplicado ("/s/{label}/s/{label}/contact").
+    const alreadyPrefixed = path === `/s/${label}` || path.startsWith(`/s/${label}/`);
+    if (!alreadyPrefixed) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/s/${label}${path === '/' ? '' : path}`;
+      return NextResponse.rewrite(url);
+    }
   }
 
   // 2. Páginas públicas de la aplicación: no exigen sesión.

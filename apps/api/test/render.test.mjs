@@ -4,7 +4,7 @@ import { describe, it } from 'node:test';
 
 const { renderPage, renderSitemap, renderRobots } = await import('../dist/publishing/render/render.js');
 
-const ctx = (extra = {}) => ({ siteName: 'Café Azul', isHomepage: true, nav: [], ...extra });
+const ctx = (extra = {}) => ({ siteName: 'Café Azul', isHomepage: true, nav: [], formAction: '/s/cafe-azul/contact', ...extra });
 const page = (sections, extra = {}) => ({ title: 'Inicio', doc: { version: 1, sections }, ...extra });
 const section = (components, styles) => ({ id: 's1', type: 'hero', styles, components });
 const media = (html, width) => {
@@ -280,6 +280,26 @@ describe('renderPage: diseño', () => {
   it('contenedor sin columnas configuradas sigue apilado, como antes', () => {
     const html = renderPage(page([section([{ id: 'c', type: 'container', components: [] }])]), ctx());
     assert.ok(!html.includes('display:grid'));
+  });
+
+  it('formulario de contacto: postea a la acción del contexto, con honeypot oculto', () => {
+    const html = renderPage(
+      page([section([{ id: 'f', type: 'form', props: { title: 'Escríbenos' } }])]),
+      ctx({ formAction: '/s/mi-negocio/contact' }),
+    );
+    assert.ok(html.includes('<form class="form" method="post" action="/s/mi-negocio/contact">'));
+    assert.ok(html.includes('name="name"') && html.includes('name="email"') && html.includes('name="phone"') && html.includes('name="message"'));
+    assert.ok(html.includes('class="hp" type="text" name="website"'), 'el honeypot debe existir y estar oculto');
+    assert.ok(html.includes('>Escríbenos<'));
+  });
+
+  it('formulario: la acción se escapa (no se puede inyectar HTML por ahí)', () => {
+    const html = renderPage(
+      page([section([{ id: 'f', type: 'form' }])]),
+      ctx({ formAction: '/s/x/contact"><script>alert(1)</script>' }),
+    );
+    assert.ok(!/<script>alert/.test(html));
+    assert.ok(html.includes('&lt;script&gt;'));
   });
 
   it('cabecera, sitemap y robots correctos', () => {

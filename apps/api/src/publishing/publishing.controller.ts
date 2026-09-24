@@ -1,8 +1,10 @@
-import { Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import type { AuthUser } from '../auth/auth.types.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { JwtAuthGuard } from '../auth/jwt.guard.js';
+import { ContactFormDto } from './dto/contact-form.dto.js';
 import { PublishingService } from './publishing.service.js';
 
 /** Publicar y despublicar: solo el dueño del sitio. */
@@ -47,9 +49,12 @@ export class PublishingController {
 // (aleatorio) — cualquier script que corra ahí no puede leer las cookies de sesión ni llamar a la
 // API como si fuera un usuario real, aunque se ejecute. Es el mismo patrón que usan los sitios que
 // alojan contenido embebido de terceros (CodePen y similares).
+// Sobre "allow-forms": el formulario de contacto (render.ts, caso 'form') hace un POST normal del
+// navegador. Sin este permiso, un documento sandboxeado bloquea CUALQUIER envío de formulario en
+// silencio (sin error visible para el visitante) — confirmado probando el envío real en un Chrome.
 const PUBLIC_HEADERS: Record<string, string> = {
   'Content-Security-Policy':
-    "default-src 'none'; style-src 'unsafe-inline'; img-src http: https: data:; media-src http: https:; frame-src https://www.google.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; sandbox allow-popups allow-popups-to-escape-sandbox allow-scripts",
+    "default-src 'none'; style-src 'unsafe-inline'; img-src http: https: data:; media-src http: https:; frame-src https://www.google.com; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; sandbox allow-popups allow-popups-to-escape-sandbox allow-scripts allow-forms",
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'X-Frame-Options': 'DENY',
@@ -70,6 +75,14 @@ export class PublicSitesController {
   @Get(':label/*path')
   page(@Param('label') label: string, @Param('path') path: string | string[], @Res() res: Response) {
     return this.send(label, Array.isArray(path) ? path.join('/') : path, res);
+  }
+
+  /** El formulario de contacto de un sitio publicado postea aquí (ver render.ts, caso 'form'). */
+  @Post(':label/contact')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
+  contact(@Param('label') label: string, @Body() dto: ContactFormDto) {
+    return this.publishing.submitContact(label, dto);
   }
 
   private async send(label: string, path: string, res: Response) {
