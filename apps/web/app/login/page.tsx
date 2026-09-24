@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AuthForm } from '@/components/auth-form';
+import { LoginPitch } from '@/components/auth-pitch';
 import { AuthShell } from '@/components/auth-shell';
 import { Alert } from '@/components/shop';
 import { ACCESS_COOKIE } from '@/lib/api';
@@ -23,6 +24,7 @@ export default async function LoginPage({
     <AuthShell
       title="Bienvenido de nuevo"
       subtitle={expired ? 'Tu sesión expiró. Inicia sesión otra vez.' : 'Entra para ver el avance de tus pedidos.'}
+      side={<LoginPitch />}
       footer={
         <>
           ¿No tienes cuenta?{' '}

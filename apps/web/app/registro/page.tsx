@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AuthForm } from '@/components/auth-form';
+import { RegisterPitch } from '@/components/auth-pitch';
 import { AuthShell } from '@/components/auth-shell';
 import { ACCESS_COOKIE } from '@/lib/api';
 
@@ -17,6 +18,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
     <AuthShell
       title="Crea tu cuenta"
       subtitle="Con tu cuenta haces tu pedido y sigues cómo avanza tu página."
+      side={<RegisterPitch />}
       footer={
         <>
           ¿Ya tienes cuenta?{' '}
