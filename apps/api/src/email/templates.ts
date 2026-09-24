@@ -177,3 +177,14 @@ export function siteContactMessage(data: {
   );
   return { subject: `Nuevo mensaje desde ${sanitizeHeader(data.siteName, 60)}`, html, text };
 }
+
+/** Al visitante: confirma que su mensaje llegó, sin prometer un tiempo de respuesta que no controlamos. */
+export function siteContactAutoReply(data: { siteName: string; name: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>${greeting(data.name)}</p>
+     <p>Gracias por escribirle a <strong>${escapeHtml(data.siteName)}</strong>. Ya recibimos tu mensaje y te van a responder pronto.</p>
+     <p style="color:#6b7280;font-size:13px;">Este es un aviso automático — puedes responder directo a este correo si quieres agregar algo.</p>`,
+    `${greeting(data.name)}\n\nGracias por escribirle a ${data.siteName}. Ya recibimos tu mensaje y te van a responder pronto.\n\n(Aviso automático — puedes responder directo a este correo.)`,
+  );
+  return { subject: `Ya recibimos tu mensaje — ${sanitizeHeader(data.siteName, 60)}`, html, text };
+}

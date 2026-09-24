@@ -103,4 +103,9 @@ export class EmailService {
   sendSiteContactMessage(to: string, data: { siteName: string; name: string; email: string; phone?: string | null; message: string }) {
     return this.safeSend(to, templates.siteContactMessage(data), data.email);
   }
+
+  /** Al visitante que escribió: un aviso automático de que su mensaje llegó (no una IA, solo confirmación). */
+  sendSiteContactAutoReply(to: string, data: { siteName: string; name: string }, replyTo?: string) {
+    return this.safeSend(to, templates.siteContactAutoReply(data), replyTo);
+  }
 }

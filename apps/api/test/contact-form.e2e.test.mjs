@@ -112,6 +112,12 @@ describe('formulario de contacto', () => {
     assert.ok(mail, 'debe avisar al administrador (el sitio no tiene un pedido dueño)');
     assert.ok(mail.html.includes('Ana Cliente') && mail.html.includes('Quiero un pastel'));
     assert.equal(mail.replyTo, 'ana@example.com', 'responder el aviso debe llegarle al visitante');
+
+    const autoReply = lastTo('ana@example.com');
+    assert.ok(autoReply, 'el visitante debe recibir la confirmación automática');
+    assert.match(autoReply.subject, /Ya recibimos tu mensaje/);
+    assert.ok(autoReply.html.includes(site.name));
+    assert.equal(autoReply.replyTo, adminEmail, 'si el visitante responde, le llega a quien puede atenderlo');
   });
 
   it('el pedido dueño del sitio recibe el aviso en vez del administrador', async () => {
@@ -136,6 +142,10 @@ describe('formulario de contacto', () => {
     assert.ok(mail, 'debe avisarle al dueño del pedido, no al administrador');
     assert.ok(mail.html.includes('Beto Visitante'));
     assert.equal(mail.replyTo, 'beto@example.com');
+
+    const autoReply = lastTo('beto@example.com');
+    assert.ok(autoReply, 'el visitante debe recibir la confirmación automática aunque el aviso vaya al dueño del pedido');
+    assert.equal(autoReply.replyTo, email, 'si el visitante responde, le llega al dueño del pedido');
 
     await prisma.order.delete({ where: { id: order.id } });
   });

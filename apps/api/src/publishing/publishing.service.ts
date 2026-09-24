@@ -270,6 +270,8 @@ export class PublishingService {
         message: dto.message,
       });
     }
+    // Aviso automático al visitante: no es una IA respondiendo, solo confirma que el mensaje llegó.
+    await this.email.sendSiteContactAutoReply(dto.email, { siteName: domain.site.name, name: dto.name }, to ?? undefined);
     return { ok: true };
   }
 }
