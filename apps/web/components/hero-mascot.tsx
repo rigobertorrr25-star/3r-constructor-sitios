@@ -2,14 +2,21 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-// Qué tanto se desplaza la mirada con el mouse (píxeles). Más que el avatar chico porque aquí es grande.
-const GAZE_RANGE = 14;
+// Cuánto se mueve el brillo dentro del lente (en % del ancho del contenedor, convertido a píxeles al medir). El león no se mueve, solo esto.
+const GAZE_RANGE_PERCENT = 1.1;
 // Distancia (px) a partir de la cual el efecto ya está al máximo — no hace falta que el mouse esté encima.
 const GAZE_FALLOFF = 420;
 
+// Centro de cada lente de las gafas, en % de la imagen (calibrado a ojo sobre hero-lion.png, 1000×1000).
+const LENSES = [
+  { left: 49.5, top: 24.5 },
+  { left: 64.5, top: 25.5 },
+];
+
 /**
- * El león del hero: saluda una vez (el video), y al terminar se queda quieto
- * y su mirada sigue el mouse por toda la página — un gesto sutil, no un juego de ojos.
+ * El león del hero: saluda una vez (el video), y al terminar se queda completamente quieto.
+ * Lo único que se mueve después es un brillo pequeño dentro de cada lente de sus gafas,
+ * siguiendo el mouse — como si mirara hacia allá — sin mover el personaje ni la imagen.
  */
 export function HeroMascot() {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -28,7 +35,8 @@ export function HeroMascot() {
       const dy = event.clientY - cy;
       const dist = Math.hypot(dx, dy) || 1;
       const strength = Math.min(dist / GAZE_FALLOFF, 1);
-      setGaze({ x: (dx / dist) * GAZE_RANGE * strength, y: (dy / dist) * GAZE_RANGE * strength });
+      const maxPx = (rect.width * GAZE_RANGE_PERCENT) / 100;
+      setGaze({ x: (dx / dist) * maxPx * strength, y: (dy / dist) * maxPx * strength });
     };
     window.addEventListener('mousemove', onMove);
     return () => window.removeEventListener('mousemove', onMove);
@@ -45,15 +53,24 @@ export function HeroMascot() {
         poster="/hero-lion.png"
         onEnded={() => setGreeted(true)}
         className="w-full"
-        style={{
-          transform: `translate(${gaze.x}px, ${gaze.y}px)`,
-          transition: 'transform 200ms ease-out',
-          maskImage: 'radial-gradient(closest-side, black 72%, transparent 100%)',
-          WebkitMaskImage: 'radial-gradient(closest-side, black 72%, transparent 100%)',
-        }}
+        style={{ maskImage: 'radial-gradient(closest-side, black 72%, transparent 100%)', WebkitMaskImage: 'radial-gradient(closest-side, black 72%, transparent 100%)' }}
       >
         <source src="/hero-lion.mp4" type="video/mp4" />
       </video>
+      {greeted
+        ? LENSES.map((lens, i) => (
+            <span
+              key={i}
+              aria-hidden="true"
+              className="pointer-events-none absolute size-[3.4%] rounded-full bg-white/70 opacity-70 blur-[2px] transition-transform duration-200 ease-out"
+              style={{
+                left: `${lens.left}%`,
+                top: `${lens.top}%`,
+                transform: `translate(-50%, -50%) translate(${gaze.x}px, ${gaze.y}px)`,
+              }}
+            />
+          ))
+        : null}
     </div>
   );
 }
