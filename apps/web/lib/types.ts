@@ -118,10 +118,20 @@ export type OrderSummary = {
   package: { name: string; slug: string };
 };
 
+export type FormSubmission = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  message: string;
+  createdAt: string;
+};
+
 export type OrderDetail = OrderSummary & {
   brief: Brief;
   deliveredAt: string | null;
   events: OrderEvent[];
+  formSubmissions: FormSubmission[];
 };
 
 export type AdminOrderRow = OrderSummary & {

@@ -121,15 +121,26 @@ export class OrdersService {
           orderBy: { createdAt: 'asc' },
           select: { id: true, kind: true, body: true, metadata: true, actorId: true, createdAt: true },
         },
+        // El sitio es del administrador (quien lo construye), no del cliente — por eso no se
+        // filtra por site.userId aquí: el dueño ya quedó verificado por el "where" de arriba.
+        site: {
+          select: {
+            formSubmissions: {
+              orderBy: { createdAt: 'desc' },
+              select: { id: true, name: true, email: true, phone: true, message: true, createdAt: true },
+            },
+          },
+        },
       },
     });
     if (!order) throw new NotFoundException('Pedido no encontrado');
 
     // No se expone quién escribió, solo si fue el cliente o el equipo.
-    const { events, ...rest } = order;
+    const { events, site, ...rest } = order;
     return {
       ...rest,
       events: events.map(({ actorId, ...event }) => ({ ...event, fromTeam: actorId !== userId })),
+      formSubmissions: site?.formSubmissions ?? [],
     };
   }
 

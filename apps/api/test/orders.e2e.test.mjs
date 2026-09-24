@@ -259,6 +259,17 @@ describe('paquetes y pedidos', () => {
     assert.equal(detail.body.site.name, 'Gimnasio Sol');
     // El cliente nunca ve el sitio interno.
     assert.ok(!(await call('GET', `/orders/${second.body.id}`, { token: tokens.a })).raw.includes(first.body.id));
+
+    // Un mensaje que le escriben a la página publicada (formulario de contacto) le llega al
+    // cliente dueño del pedido, en su propia cuenta — sin depender solo del correo.
+    await prisma.formSubmission.create({
+      data: { siteId: first.body.id, name: 'Visitante', email: 'visitante@example.com', message: 'Hola, ¿tienen cupo mañana?' },
+    });
+    const withMessage = await call('GET', `/orders/${second.body.id}`, { token: tokens.a });
+    assert.equal(withMessage.body.formSubmissions.length, 1);
+    assert.equal(withMessage.body.formSubmissions[0].message, 'Hola, ¿tienen cupo mañana?');
+    // Otro cliente no ve los mensajes de un sitio que no es suyo.
+    assert.deepEqual((await call('GET', `/orders/${orderA.id}`, { token: tokens.a })).body.formSubmissions, []);
   });
 
   it('cambiar el precio del paquete no altera pedidos existentes', async () => {

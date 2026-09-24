@@ -5,7 +5,7 @@ import { CancelOrderButton } from '@/components/cancel-order-button';
 import { MessageForm } from '@/components/message-form';
 import { Alert, PaymentBadge, Progress, StatusBadge, Timeline, card } from '@/components/shop';
 import { authedApi } from '@/lib/api';
-import { formatDate, formatMoney, orderCode } from '@/lib/orders';
+import { formatDate, formatDateTime, formatMoney, orderCode } from '@/lib/orders';
 import type { Brief, OrderDetail } from '@/lib/types';
 
 export const metadata: Metadata = { title: 'Mi pedido — 3R' };
@@ -135,6 +135,34 @@ export default async function OrderPage({
           ) : null}
         </dl>
       </section>
+
+      {order.status === 'delivered' ? (
+        <section className={`${card} mt-6`}>
+          <h2 className="font-display text-[20px] font-semibold text-foreground">Mensajes de tu página</h2>
+          <p className="mt-1 text-[14px] text-muted-foreground">Lo que te escriben desde el formulario de contacto de tu página, en un solo lugar (también te llega por correo).</p>
+          {order.formSubmissions.length === 0 ? (
+            <p className="mt-5 rounded-2xl border border-dashed border-white/[0.12] px-4 py-6 text-center text-[14.5px] text-muted-foreground">
+              Todavía no te ha escrito nadie por aquí.
+            </p>
+          ) : (
+            <ul className="mt-5 space-y-3">
+              {order.formSubmissions.map((msg) => (
+                <li key={msg.id} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <p className="font-medium text-foreground">{msg.name}</p>
+                    <p className="text-[12px] text-muted-foreground">{formatDateTime(msg.createdAt)}</p>
+                  </div>
+                  <p className="mt-0.5 text-[13.5px] text-muted-foreground">
+                    {msg.email}
+                    {msg.phone ? ` · ${msg.phone}` : ''}
+                  </p>
+                  <p className="mt-2 whitespace-pre-wrap break-words text-[14.5px] leading-relaxed text-foreground/90">{msg.message}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
 
       <section className={`${card} mt-6`}>
         <h2 className="font-display text-[20px] font-semibold text-foreground">Conversación</h2>
