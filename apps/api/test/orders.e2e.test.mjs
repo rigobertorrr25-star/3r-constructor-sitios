@@ -268,8 +268,21 @@ describe('paquetes y pedidos', () => {
     const withMessage = await call('GET', `/orders/${second.body.id}`, { token: tokens.a });
     assert.equal(withMessage.body.formSubmissions.length, 1);
     assert.equal(withMessage.body.formSubmissions[0].message, 'Hola, ¿tienen cupo mañana?');
+    assert.equal(withMessage.body.formSubmissions[0].status, 'new', 'un mensaje nuevo arranca en "new"');
     // Otro cliente no ve los mensajes de un sitio que no es suyo.
     assert.deepEqual((await call('GET', `/orders/${orderA.id}`, { token: tokens.a })).body.formSubmissions, []);
+
+    // El cliente mueve su mensaje por el embudo.
+    const leadId = withMessage.body.formSubmissions[0].id;
+    const moved = await call('PATCH', `/orders/${second.body.id}/leads/${leadId}`, { token: tokens.a, body: { status: 'contacted' } });
+    assert.equal(moved.status, 200);
+    assert.equal(moved.body.status, 'contacted');
+    const refreshed = await call('GET', `/orders/${second.body.id}`, { token: tokens.a });
+    assert.equal(refreshed.body.formSubmissions[0].status, 'contacted');
+
+    assert.equal((await call('PATCH', `/orders/${second.body.id}/leads/${leadId}`, { token: tokens.a, body: { status: 'inventado' } })).status, 400);
+    // Otro cliente no puede mover un mensaje que no es de su pedido.
+    assert.equal((await call('PATCH', `/orders/${second.body.id}/leads/${leadId}`, { token: tokens.b, body: { status: 'won' } })).status, 404);
   });
 
   it('cambiar el precio del paquete no altera pedidos existentes', async () => {

@@ -20,6 +20,17 @@ export const PAYMENT_LABELS: Record<PaymentStatus, string> = {
   refunded: 'Reembolsado',
 };
 
+export const LEAD_STATUSES = ['new', 'contacted', 'quoted', 'won', 'lost'] as const;
+export type LeadStatus = (typeof LEAD_STATUSES)[number];
+
+export const LEAD_LABELS: Record<LeadStatus, string> = {
+  new: 'Nuevo',
+  contacted: 'Contactado',
+  quoted: 'Cotizado',
+  won: 'Ganado',
+  lost: 'Perdido',
+};
+
 /** El cliente solo puede cancelar mientras nadie ha empezado a trabajar. */
 export const CLIENT_CANCELLABLE: readonly OrderStatus[] = ['new', 'awaiting_payment'];
 

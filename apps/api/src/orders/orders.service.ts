@@ -127,7 +127,7 @@ export class OrdersService {
           select: {
             formSubmissions: {
               orderBy: { createdAt: 'desc' },
-              select: { id: true, name: true, email: true, phone: true, message: true, createdAt: true },
+              select: { id: true, name: true, email: true, phone: true, message: true, status: true, createdAt: true },
             },
           },
         },
@@ -160,6 +160,20 @@ export class OrdersService {
     const businessName = String((order.brief as { businessName?: string } | null)?.businessName ?? orderCode(order.orderNumber));
     await this.email.sendAdminNewMessage({ orderId, orderCode: orderCode(order.orderNumber), businessName, body: trimmed });
     return event;
+  }
+
+  /** Mueve un mensaje de contacto de tu página por el embudo (Nuevo → Contactado → Cotizado → Ganado/Perdido). */
+  async updateLeadStatus(userId: string, orderId: string, submissionId: string, status: string) {
+    // El sitio es del administrador, no del cliente: se llega a él a través del pedido (ya verificado por userId).
+    const order = await this.prisma.order.findFirst({ where: { id: orderId, userId }, select: { siteId: true } });
+    if (!order?.siteId) throw new NotFoundException('Pedido no encontrado');
+
+    const { count } = await this.prisma.formSubmission.updateMany({
+      where: { id: submissionId, siteId: order.siteId },
+      data: { status },
+    });
+    if (count === 0) throw new NotFoundException('Mensaje no encontrado');
+    return { id: submissionId, status };
   }
 
   async cancel(userId: string, orderId: string, ip?: string) {

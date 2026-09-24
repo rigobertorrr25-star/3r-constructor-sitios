@@ -15,7 +15,7 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { ORDER_STATUSES, PAYMENT_STATUSES } from '../orders.constants.js';
+import { LEAD_STATUSES, ORDER_STATUSES, PAYMENT_STATUSES } from '../orders.constants.js';
 
 /** Datos del negocio que el cliente llena al pedir su página. */
 export class BriefDto {
@@ -97,6 +97,11 @@ export class MessageDto {
   @MinLength(1)
   @MaxLength(2000)
   body!: string;
+}
+
+export class UpdateLeadDto {
+  @IsIn(LEAD_STATUSES)
+  status!: (typeof LEAD_STATUSES)[number];
 }
 
 // ───────── administración ─────────

@@ -477,6 +477,8 @@ model FormSubmission {
   email     String   @db.VarChar(255)
   phone     String?  @db.VarChar(50)
   message   String   @db.VarChar(4000)
+  // new | contacted | quoted | won | lost — el embudo del cliente sobre sus propios mensajes.
+  status    String   @default("new") @db.VarChar(20)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)

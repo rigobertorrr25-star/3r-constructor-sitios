@@ -118,12 +118,15 @@ export type OrderSummary = {
   package: { name: string; slug: string };
 };
 
+export type LeadStatus = 'new' | 'contacted' | 'quoted' | 'won' | 'lost';
+
 export type FormSubmission = {
   id: string;
   name: string;
   email: string;
   phone: string | null;
   message: string;
+  status: LeadStatus;
   createdAt: string;
 };
 

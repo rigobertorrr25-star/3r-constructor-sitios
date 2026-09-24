@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { CancelOrderButton } from '@/components/cancel-order-button';
+import { LeadStatusSelect } from '@/components/lead-status-select';
 import { MessageForm } from '@/components/message-form';
 import { Alert, PaymentBadge, Progress, StatusBadge, Timeline, card } from '@/components/shop';
 import { authedApi } from '@/lib/api';
-import { formatDate, formatDateTime, formatMoney, orderCode } from '@/lib/orders';
+import { LEAD_DOT, LEAD_LABEL, formatDate, formatDateTime, formatMoney, orderCode } from '@/lib/orders';
 import type { Brief, OrderDetail } from '@/lib/types';
 
 export const metadata: Metadata = { title: 'Mi pedido — 3R' };
@@ -145,21 +146,39 @@ export default async function OrderPage({
               Todavía no te ha escrito nadie por aquí.
             </p>
           ) : (
-            <ul className="mt-5 space-y-3">
-              {order.formSubmissions.map((msg) => (
-                <li key={msg.id} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="font-medium text-foreground">{msg.name}</p>
-                    <p className="text-[12px] text-muted-foreground">{formatDateTime(msg.createdAt)}</p>
-                  </div>
-                  <p className="mt-0.5 text-[13.5px] text-muted-foreground">
-                    {msg.email}
-                    {msg.phone ? ` · ${msg.phone}` : ''}
-                  </p>
-                  <p className="mt-2 whitespace-pre-wrap break-words text-[14.5px] leading-relaxed text-foreground/90">{msg.message}</p>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="mt-5 flex flex-wrap gap-x-4 gap-y-1.5 text-[12.5px] text-muted-foreground">
+                {Object.entries(
+                  order.formSubmissions.reduce<Record<string, number>>((acc, msg) => {
+                    acc[msg.status] = (acc[msg.status] ?? 0) + 1;
+                    return acc;
+                  }, {}),
+                ).map(([stage, count]) => (
+                  <li key={stage} className="flex items-center gap-1.5">
+                    <span className={`size-1.5 rounded-full ${LEAD_DOT[stage as keyof typeof LEAD_DOT]}`} aria-hidden="true" />
+                    {LEAD_LABEL[stage as keyof typeof LEAD_LABEL]} · {count}
+                  </li>
+                ))}
+              </ul>
+              <ul className="mt-3 space-y-3">
+                {order.formSubmissions.map((msg) => (
+                  <li key={msg.id} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <p className="font-medium text-foreground">{msg.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[12px] text-muted-foreground">{formatDateTime(msg.createdAt)}</p>
+                        <LeadStatusSelect orderId={order.id} leadId={msg.id} status={msg.status} />
+                      </div>
+                    </div>
+                    <p className="mt-0.5 text-[13.5px] text-muted-foreground">
+                      {msg.email}
+                      {msg.phone ? ` · ${msg.phone}` : ''}
+                    </p>
+                    <p className="mt-2 whitespace-pre-wrap break-words text-[14.5px] leading-relaxed text-foreground/90">{msg.message}</p>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </section>
       ) : null}

@@ -1,8 +1,8 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import type { AuthUser } from '../auth/auth.types.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { JwtAuthGuard } from '../auth/jwt.guard.js';
-import { CreateOrderDto, MessageDto } from './dto/order.dto.js';
+import { CreateOrderDto, MessageDto, UpdateLeadDto } from './dto/order.dto.js';
 import { OrdersService } from './orders.service.js';
 
 /** Pedidos del cliente autenticado. Cada consulta filtra por su propio id. */
@@ -33,6 +33,16 @@ export class OrdersController {
     @Body() dto: MessageDto,
   ) {
     return this.orders.addMessage(user.id, orderId, dto.body);
+  }
+
+  @Patch(':orderId/leads/:submissionId')
+  updateLead(
+    @CurrentUser() user: AuthUser,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+    @Param('submissionId', ParseUUIDPipe) submissionId: string,
+    @Body() dto: UpdateLeadDto,
+  ) {
+    return this.orders.updateLeadStatus(user.id, orderId, submissionId, dto.status);
   }
 
   @Post(':orderId/cancel')

@@ -150,6 +150,17 @@ export async function cancelOrderAction(formData: FormData) {
   revalidatePath('/dashboard');
 }
 
+/** Mueve un mensaje de contacto de tu página por el embudo (Nuevo, Contactado, Cotizado, Ganado, Perdido). */
+export async function updateLeadAction(formData: FormData) {
+  const orderId = text(formData, 'orderId');
+  const leadId = text(formData, 'leadId');
+  await authedApi(`/orders/${encodeURIComponent(orderId)}/leads/${encodeURIComponent(leadId)}`, {
+    method: 'PATCH',
+    body: { status: text(formData, 'status') },
+  });
+  revalidatePath(`/dashboard/pedidos/${orderId}`);
+}
+
 // ───────── equipo: pedidos, paquetes y sitios ─────────
 
 export async function updateOrderAction(_prev: FormState, formData: FormData): Promise<FormState> {

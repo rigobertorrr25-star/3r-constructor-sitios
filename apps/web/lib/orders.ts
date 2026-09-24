@@ -1,4 +1,4 @@
-import type { OrderStatus, PaymentStatus } from './types';
+import type { LeadStatus, OrderStatus, PaymentStatus } from './types';
 
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   new: 'Pedido recibido',
@@ -7,6 +7,25 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
   in_review: 'Últimos detalles',
   delivered: 'Entregado',
   cancelled: 'Cancelado',
+};
+
+/** El embudo de mensajes de contacto: en qué va cada visitante que escribió. */
+export const LEAD_STAGES: LeadStatus[] = ['new', 'contacted', 'quoted', 'won', 'lost'];
+
+export const LEAD_LABEL: Record<LeadStatus, string> = {
+  new: 'Nuevo',
+  contacted: 'Contactado',
+  quoted: 'Cotizado',
+  won: 'Ganado',
+  lost: 'Perdido',
+};
+
+export const LEAD_DOT: Record<LeadStatus, string> = {
+  new: 'bg-[#8a9bff]',
+  contacted: 'bg-[#f7cb58]',
+  quoted: 'bg-[#d6b0ff]',
+  won: 'bg-[#5ee0a0]',
+  lost: 'bg-[#a5abb5]',
 };
 
 /** Una frase de seguimiento (como un envío) para el estado actual del pedido. */
