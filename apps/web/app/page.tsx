@@ -12,6 +12,7 @@ import {
   TemplateIcon,
   UtensilsIcon,
 } from '@/components/icons';
+import { HeroMascot } from '@/components/hero-mascot';
 import { Logo } from '@/components/logo';
 import { MascotGreeter } from '@/components/mascot-greeter';
 import { Reveal } from '@/components/reveal';
@@ -168,21 +169,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="rise relative mx-auto w-full max-w-[340px] sm:max-w-[400px] lg:max-w-none" style={{ animationDelay: '120ms' }}>
-              <div aria-hidden="true" className="orb orb-a absolute inset-0 -z-10 opacity-70 mix-blend-screen" style={{ background: 'radial-gradient(closest-side, var(--primary), transparent 70%)' }} />
-              <video
-                aria-label="Mascota de 3R: un león con sudadera negra y lentes de sol, saludando"
-                autoPlay
-                loop
-                muted
-                playsInline
-                poster="/hero-lion.png"
-                className="w-full"
-                style={{ maskImage: 'radial-gradient(closest-side, black 72%, transparent 100%)', WebkitMaskImage: 'radial-gradient(closest-side, black 72%, transparent 100%)' }}
-              >
-                <source src="/hero-lion.mp4" type="video/mp4" />
-              </video>
-            </div>
+            <HeroMascot />
           </div>
         </section>
 
