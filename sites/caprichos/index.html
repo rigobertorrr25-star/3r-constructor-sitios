@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Poppins:wght@300;400;500;600;700&display=swap" />
+    <link rel="icon" type="image/jpeg" href="%BASE_URL%brand/logo.jpg" />
+    <title>Caprichos — Moda femenina en tendencia | Cartagena</title>
+    <meta name="description" content="Caprichos: tienda virtual de moda femenina en Cartagena. Vestidos, bodys, corsets, jeans, camisetas y más. El lujo de ser tú." />
+    <meta name="author" content="Caprichos by Yendry ZG" />
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Caprichos — Moda femenina en tendencia">
+    <meta property="og:description" content="Tienda virtual de moda femenina en Cartagena. El lujo de ser tú.">
+    <meta property="og:image" content="https://rigobertorrr25-star.github.io/caprichos-tienda/brand/logo.jpg">
+    <meta property="og:site_name" content="Caprichos">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Caprichos — Moda femenina en tendencia">
+    <meta name="twitter:description" content="Tienda virtual de moda femenina en Cartagena. El lujo de ser tú.">
+    <meta name="twitter:image" content="https://rigobertorrr25-star.github.io/caprichos-tienda/brand/logo.jpg">
+
+    <style>
+      #app-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fffdfb;
+        transition: opacity 0.4s ease-out;
+      }
+      #app-loader img {
+        width: 96px;
+        height: 96px;
+        border-radius: 9999px;
+        object-fit: cover;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        animation: app-loader-pulse 1.3s ease-in-out infinite;
+      }
+      @keyframes app-loader-pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.06); opacity: 0.85; }
+      }
+      #app-loader.app-loader-hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app-loader">
+      <img src="%BASE_URL%brand/logo.jpg" alt="Caprichos" />
+    </div>
+    <div id="root"></div>
+    <script>
+      // GitHub Pages SPA redirect companion (https://github.com/rafgraph/spa-github-pages)
+      (function (l) {
+        if (l.search[1] === '/') {
+          var decoded = l.search
+            .slice(1)
+            .split('&')
+            .map(function (s) {
+              return s.replace(/~and~/g, '&');
+            })
+            .join('?');
+          window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash);
+        }
+      })(window.location);
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

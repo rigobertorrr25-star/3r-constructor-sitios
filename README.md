@@ -19,7 +19,12 @@ packages/
 design/
   REFERENCIA-LOVABLE.md         sistema visual de referencia
   logo/                         logo 3R (negro y blanco)
+sites/
+  caprichos/                    tienda de Caprichos (Vite + React), proyecto aparte
 ```
+
+Las carpetas de `sites/` son proyectos independientes: no forman parte de los workspaces de npm. Se instalan y
+corren desde su propia carpeta (`cd sites/caprichos && npm install && npm run dev`).
 
 ## Cómo funciona
 
