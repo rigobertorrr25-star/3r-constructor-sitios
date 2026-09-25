@@ -19,3 +19,5 @@ Thumbs.db
 
 # cliente de Prisma generado (npm run db:generate -w api)
 apps/api/src/generated/
+
+PENDIENTES.md
