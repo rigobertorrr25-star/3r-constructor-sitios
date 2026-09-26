@@ -7,8 +7,8 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 
 - **Publicada en producción** en https://3rpaginas.com: base en Neon, API en Render, web en Vercel, archivos en
   Cloudflare R2 y correos con Resend. `main` es lo que está en vivo.
-- Política de privacidad en `/privacidad` (Ley 1581). Faltan los datos del responsable (cédula o NIT, correo y ciudad):
-  se llenan en `RESPONSABLE` de `apps/web/app/privacidad/page.tsx`.
+- Política de privacidad en `/privacidad` (Ley 1581), completa. Datos del responsable en `RESPONSABLE` de
+  `apps/web/app/privacidad/page.tsx`.
 - Siguiente en la lista: mostrar trabajos reales en el portafolio (Azul Caribe, Caprichos, Fidelio, 3R Burgers) y
   confirmar los precios de los paquetes en `/admin/paquetes`.
 

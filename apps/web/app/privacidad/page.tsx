@@ -15,9 +15,9 @@ const VERSION = '26 de septiembre de 2026';
 // Datos del responsable. Los campos vacíos no se muestran.
 const RESPONSABLE = {
   nombre: 'Rigoberto Rincón, bajo la marca 3R',
-  documento: '', // cédula o NIT
-  ciudad: '',
-  correo: '',
+  documento: 'C.C. 1.007.401.985', // cédula o NIT
+  ciudad: 'Cartagena, Colombia',
+  correo: 'rigoberto.rrr25@gmail.com',
   whatsapp: '+57 310 790 7194',
   whatsappHref: 'https://wa.me/573107907194?text=' + encodeURIComponent('Hola, tengo una solicitud sobre mis datos personales'),
 };
