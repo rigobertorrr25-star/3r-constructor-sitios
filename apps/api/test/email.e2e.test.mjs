@@ -56,7 +56,7 @@ describe('correos', () => {
 
   it('registrarse manda bienvenida+verificación al cliente y aviso al administrador', async () => {
     const before = sentEmails.length;
-    const res = await call('POST', '/auth/register', { body: { email, password, firstName: 'Ana' } });
+    const res = await call('POST', '/auth/register', { body: { email, password, firstName: 'Ana', acceptPrivacy: true } });
     assert.equal(res.status, 201);
     assert.ok(sentEmails.length >= before + (adminEmail ? 2 : 1));
 

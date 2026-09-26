@@ -60,11 +60,13 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
   const email = text(formData, 'email');
   const password = String(formData.get('password') ?? '');
   const firstName = text(formData, 'firstName');
+  const acceptPrivacy = formData.get('acceptPrivacy') === 'on';
   const next = safeNext(optional(formData, 'next'));
+  if (!acceptPrivacy) return fail('Para crear la cuenta debes aceptar la política de privacidad.', formData);
 
   const created = await rawApi<ApiError>('/auth/register', {
     method: 'POST',
-    body: { email, password, ...(firstName ? { firstName } : {}) },
+    body: { email, password, acceptPrivacy, ...(firstName ? { firstName } : {}) },
   });
   if (created.status === 409) return fail('Ya existe una cuenta con ese email.', formData);
   if (!created.ok) return fail(errorText(created.data, 'No pudimos crear la cuenta.'), formData);

@@ -159,6 +159,9 @@ Hecho (todo con pruebas: 98 de API, 23 del editor y recorridos completos en un C
   destino final (R2 o, en desarrollo, la misma API) con un enlace firmado de un solo uso, sin pasar por el
   servidor de Next.
 - **Publicación:** HTML estático saneado en la dirección propia de cada cliente, con menú, sitemap y robots.
+- **Privacidad (Ley 1581):** política en `/privacidad`; el registro exige aceptarla y guarda la fecha
+  (`users.privacy_accepted_at`, y la versión en la auditoría). El formulario de contacto de los sitios publicados
+  pide la autorización del visitante.
 
 Pendiente: edición de texto directamente en el lienzo, componentes galería/formulario, dominios propios del
 cliente con SSL, Stripe y webhooks, Redis/BullMQ (la publicación y los correos hoy son inmediatos y no usan cola).

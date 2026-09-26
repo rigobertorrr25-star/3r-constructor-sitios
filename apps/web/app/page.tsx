@@ -419,7 +419,10 @@ export default async function HomePage() {
 
       <footer className="mx-auto w-full max-w-[1224px] px-4 sm:px-[34px]">
         <div className="border-t border-white/[0.06] py-8 text-center text-sm text-muted-foreground">
-          © 2026 3R — Páginas web para negocios
+          © 2026 3R — Páginas web para negocios ·{' '}
+          <Link href="/privacidad" className="transition hover:text-foreground">
+            Política de privacidad
+          </Link>
         </div>
       </footer>
       <MascotGreeter />

@@ -8,6 +8,7 @@ export interface CreateUserInput {
   password: string;
   firstName?: string;
   lastName?: string;
+  acceptPrivacy?: boolean;
 }
 
 // Campos que se pueden devolver al cliente. Nunca incluye password_hash.
@@ -43,6 +44,7 @@ export class UsersService {
         passwordHash,
         firstName: input.firstName,
         lastName: input.lastName,
+        privacyAcceptedAt: input.acceptPrivacy ? new Date() : null,
         status: UserStatus.ACTIVE,
         roles: { create: { role: Role.USER } },
       },

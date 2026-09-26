@@ -3,6 +3,15 @@
 Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 @docs/claude/instrucciones-globales.md
 
+## Estado (actualízalo cuando algo cambie: otras sesiones no recuerdan lo que se habló)
+
+- **Publicada en producción** en https://3rpaginas.com: base en Neon, API en Render, web en Vercel, archivos en
+  Cloudflare R2 y correos con Resend. `main` es lo que está en vivo.
+- Política de privacidad en `/privacidad` (Ley 1581). Faltan los datos del responsable (cédula o NIT, correo y ciudad):
+  se llenan en `RESPONSABLE` de `apps/web/app/privacidad/page.tsx`.
+- Siguiente en la lista: mostrar trabajos reales en el portafolio (Azul Caribe, Caprichos, Fidelio, 3R Burgers) y
+  confirmar los precios de los paquetes en `/admin/paquetes`.
+
 ## Este proyecto
 
 - Monorepo: `apps/web` (Next.js 16 + Tailwind 4) y `apps/api` (NestJS 12 + Prisma 7 + PostgreSQL).

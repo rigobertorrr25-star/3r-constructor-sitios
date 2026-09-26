@@ -56,7 +56,7 @@ describe('límite de intentos en /auth', () => {
     for (let i = 0; i < 12; i++) {
       attempts.push(
         await call('POST', '/auth/register', {
-          body: { email: `ratelimit.${stamp}.${i}@example.com`, password: 'una-clave-larga-123', firstName: 'Ana' },
+          body: { email: `ratelimit.${stamp}.${i}@example.com`, password: 'una-clave-larga-123', firstName: 'Ana', acceptPrivacy: true },
         }),
       );
     }
