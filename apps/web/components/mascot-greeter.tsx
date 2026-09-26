@@ -38,6 +38,17 @@ export function MascotGreeter() {
     return () => clearTimeout(timer);
   }, []);
 
+  // En celular el globo tapa buena parte de la pantalla: si el visitante sigue bajando, se cierra solo.
+  useEffect(() => {
+    if (!open) return;
+    const start = window.scrollY;
+    const onScroll = () => {
+      if (Math.abs(window.scrollY - start) > 160) setOpen(false);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [open]);
+
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
       const el = avatarRef.current;
