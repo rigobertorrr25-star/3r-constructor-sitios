@@ -138,7 +138,12 @@ export default async function HomePage() {
 
       <main>
         <section className="relative overflow-hidden">
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+          {/* Los brillos se desvanecen hacia abajo: sin eso, el corte de la sección se veía como un bloque de otro color. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+            style={{ maskImage: 'linear-gradient(to bottom, black 35%, transparent 90%)', WebkitMaskImage: 'linear-gradient(to bottom, black 35%, transparent 90%)' }}
+          >
             <span className="orb orb-a absolute -top-20 right-[-6%] size-[380px] bg-primary/25 sm:size-[460px]" />
             <span className="orb orb-b absolute bottom-[-14%] left-[-8%] size-[340px] bg-secondary/15 sm:size-[420px]" />
           </div>
@@ -168,8 +173,9 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="rise relative mx-auto w-full max-w-[340px] sm:max-w-[400px] lg:max-w-none" style={{ animationDelay: '120ms' }}>
-              <div aria-hidden="true" className="orb orb-a absolute inset-0 -z-10 opacity-70 mix-blend-screen" style={{ background: 'radial-gradient(closest-side, var(--primary), transparent 70%)' }} />
+            {/* mix-blend-screen: el fondo negro del video no pinta, así el león se funde con los brillos de la página.
+                Va en este contenedor (no en el video) porque la animación de entrada lo aísla del fondo. */}
+            <div className="rise relative mx-auto w-full max-w-[340px] mix-blend-screen sm:max-w-[400px] lg:max-w-none" style={{ animationDelay: '120ms' }}>
               <video
                 aria-label="Mascota de 3R: un león con sudadera negra y lentes de sol, saludando"
                 autoPlay
