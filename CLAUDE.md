@@ -9,8 +9,15 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   Cloudflare R2 y correos con Resend. `main` es lo que está en vivo.
 - Política de privacidad en `/privacidad` (Ley 1581), completa. Datos del responsable en `RESPONSABLE` de
   `apps/web/app/privacidad/page.tsx`.
-- Siguiente en la lista: mostrar trabajos reales en el portafolio (Azul Caribe, Caprichos, Fidelio, 3R Burgers) y
-  confirmar los precios de los paquetes en `/admin/paquetes`.
+- Portada (26 sep 2026): botón "Ver paquetes" fijo arriba, sección "Lo que pasa hoy" (problema del cliente), león
+  recortado en cuadrado y fundido con el fondo, globo de la mascota que se cierra al hacer scroll.
+- Instagram: se entregó foto de perfil, carrusel de presentación y el contenido de octubre 2026 (14 publicaciones,
+  calendario en https://claude.ai/artifact/6A1HRPqkdhT4PwXqbvon6Q). No hay conexión para publicar directo: Rigoberto
+  programa en Meta Business Suite.
+- Pendiente de Rigoberto: confirmar precios en `/admin/paquetes` (los del seed son de ejemplo), revisar que el
+  portafolio en vivo tenga capturas, datos de pago (`PAYMENT_INSTRUCTIONS` en Render) y su usuario de Instagram
+  (para poner el ícono en el pie de la página y en los datos estructurados).
+- 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto
 
