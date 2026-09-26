@@ -20,6 +20,13 @@ function Icon({ size = 20, children }: IconProps & { children: ReactNode }) {
   );
 }
 
+export const SearchIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </Icon>
+);
+
 export const TemplateIcon = (p: IconProps) => (
   <Icon {...p}>
     <rect x="3" y="3" width="18" height="7" rx="1" />

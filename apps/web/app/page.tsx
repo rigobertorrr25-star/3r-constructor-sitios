@@ -7,7 +7,9 @@ import {
   DevicesIcon,
   GlobeIcon,
   HistoryIcon,
+  PhoneIcon,
   PointerIcon,
+  SearchIcon,
   ShoppingBagIcon,
   TemplateIcon,
   UtensilsIcon,
@@ -30,6 +32,31 @@ const industries: { hue: number; icon: ReactNode; title: string; text: string }[
   { hue: 25, icon: <UtensilsIcon />, title: 'Restaurantes y cafés', text: 'Tu menú, fotos de tus platos, ubicación y un botón directo a WhatsApp para pedidos y reservas.' },
   { hue: 150, icon: <ShoppingBagIcon />, title: 'Tiendas y negocios locales', text: 'Muestra tu catálogo con fotos y precios, y deja que te escriban por WhatsApp para comprar.' },
   { hue: 275, icon: <ChatIcon />, title: 'Servicios y profesionales', text: 'Cuenta qué haces, muestra tu trabajo y facilita que te agenden una cita o te escriban.' },
+];
+
+// Lo que le pasa hoy a un negocio sin página, y cómo lo resuelve tener una.
+const problems: { hue: number; icon: ReactNode; title: string; text: string; fix: string }[] = [
+  {
+    hue: 25,
+    icon: <SearchIcon />,
+    title: 'Te buscan y no apareces',
+    text: 'Antes de salir de casa la gente busca en Google y en Maps. Si no te encuentra, llega donde la competencia.',
+    fix: 'apareces cuando te buscan',
+  },
+  {
+    hue: 330,
+    icon: <PhoneIcon />,
+    title: 'Tu Instagram no alcanza',
+    text: 'Las redes sirven para mostrar, pero ahí nadie encuentra rápido tus precios, tu horario o cómo llegar.',
+    fix: 'todo lo importante en un solo enlace',
+  },
+  {
+    hue: 275,
+    icon: <ChatIcon />,
+    title: 'Respondes lo mismo todo el día',
+    text: '¿Cuánto vale? ¿Dónde quedan? ¿Hacen domicilios? Cada pregunta repetida es tiempo que no le dedicas a tu negocio.',
+    fix: 'te escriben listos para comprar',
+  },
 ];
 
 const includes: { hue: number; icon: ReactNode; title: string; text: string }[] = [
@@ -132,6 +159,15 @@ export default async function HomePage() {
                 Iniciar sesión
               </Link>
             )}
+            <a
+              href="#paquetes"
+              className="shine inline-flex items-center gap-1.5 rounded-full bg-primary px-[17px] py-[8.5px] text-[14.875px] font-medium text-primary-foreground transition hover:shadow-[var(--shadow-glow)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+            >
+              Ver paquetes
+              <span className="hidden sm:inline-flex">
+                <ArrowRightIcon />
+              </span>
+            </a>
           </nav>
         </div>
       </header>
@@ -148,11 +184,11 @@ export default async function HomePage() {
             <span className="orb orb-b absolute bottom-[-14%] left-[-8%] size-[340px] bg-secondary/15 sm:size-[420px]" />
           </div>
 
-          <div className="relative mx-auto grid max-w-[1224px] grid-cols-1 items-center gap-10 px-4 pb-16 pt-12 sm:px-[34px] sm:pt-[68px] md:pb-20 lg:grid-cols-[1fr_460px] lg:gap-6">
+          <div className="relative mx-auto grid max-w-[1224px] grid-cols-1 items-center gap-6 px-4 pb-16 pt-8 sm:gap-10 sm:px-[34px] sm:pt-[68px] md:pb-20 lg:grid-cols-[1fr_460px] lg:gap-6">
             <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
               <p className="rise text-[12.75px] uppercase tracking-[0.3em] text-muted-foreground">Páginas web para negocios</p>
               <h1
-                className="rise mt-6 font-display font-bold tracking-[-0.025em] text-foreground"
+                className="rise mt-4 font-display font-bold tracking-[-0.025em] text-foreground sm:mt-6"
                 style={{ fontSize: 'clamp(2.5rem, 6vw, 3.984rem)', lineHeight: 1.25, animationDelay: '80ms' }}
               >
                 Tu página web <span className="text-spectrum">profesional</span>,
@@ -162,7 +198,7 @@ export default async function HomePage() {
               <p className="rise mt-6 max-w-[560px] text-[17px] leading-[1.55] text-muted-foreground sm:text-[19px]" style={{ animationDelay: '160ms' }}>
                 Tú nos cuentas de tu negocio. Nosotros diseñamos, construimos y publicamos tu página. Sin complicarte con nada técnico.
               </p>
-              <div className="rise mt-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start" style={{ animationDelay: '240ms' }}>
+              <div className="rise mt-8 flex flex-wrap items-center justify-center gap-3 sm:mt-10 lg:justify-start" style={{ animationDelay: '240ms' }}>
                 <a href="#paquetes" className={`${pill} shine bg-primary font-medium text-primary-foreground hover:shadow-[var(--shadow-glow)]`}>
                   Ver paquetes
                   <ArrowRightIcon />
@@ -175,7 +211,7 @@ export default async function HomePage() {
 
             {/* mix-blend-screen: el fondo negro del video no pinta, así el león se funde con los brillos de la página.
                 Va en este contenedor (no en el video) porque la animación de entrada lo aísla del fondo. */}
-            <div className="rise relative mx-auto w-full max-w-[340px] mix-blend-screen sm:max-w-[400px] lg:max-w-none" style={{ animationDelay: '120ms' }}>
+            <div className="rise relative mx-auto w-full max-w-[290px] mix-blend-screen sm:max-w-[400px] lg:max-w-none" style={{ animationDelay: '120ms' }}>
               <video
                 aria-label="Mascota de 3R: un león con sudadera negra y lentes de sol, saludando"
                 autoPlay
@@ -183,13 +219,49 @@ export default async function HomePage() {
                 muted
                 playsInline
                 poster="/hero-lion.png"
-                className="w-full"
+                // El video es vertical con mucho negro arriba y abajo: el recorte cuadrado deja al león
+                // completo y centrado, sin empujarlo fuera de la primera pantalla del celular.
+                className="aspect-square w-full object-cover"
                 style={{ maskImage: 'radial-gradient(closest-side, black 72%, transparent 100%)', WebkitMaskImage: 'radial-gradient(closest-side, black 72%, transparent 100%)' }}
               >
                 <source src="/hero-lion.mp4" type="video/mp4" />
               </video>
             </div>
           </div>
+        </section>
+
+        <section aria-labelledby="h-problema" className="mx-auto max-w-[1224px] px-4 pb-24 sm:px-[34px]">
+          <Reveal>
+            <p className="text-center text-[13px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">Lo que pasa hoy</p>
+            <h2 id="h-problema" className="mx-auto mt-4 max-w-[720px] text-center font-display text-[32px] font-bold leading-[1.2] tracking-tight text-foreground sm:text-[40px]">
+              Si no te encuentran en internet, <span className="text-spectrum">le compran a otro</span>.
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-center text-[16px] text-muted-foreground">
+              Tu negocio puede ser el mejor de la zona. Si no se ve en internet, para muchos clientes no existe.
+            </p>
+          </Reveal>
+          <ul className="mt-10 grid grid-cols-1 gap-[17px] lg:grid-cols-3">
+            {problems.map((item, i) => (
+              <Reveal as="li" key={item.title} delayMs={i * 100}>
+                <SpotlightCard className={`${card} group flex h-full flex-col p-[26px] transition duration-300 hover:-translate-y-1 hover:border-white/[0.18]`}>
+                  <span
+                    className="flex size-[43px] items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110"
+                    style={{ backgroundColor: `oklch(0.3 0.12 ${item.hue} / 0.5)`, color: `oklch(0.92 0.08 ${item.hue})` }}
+                  >
+                    {item.icon}
+                  </span>
+                  <h3 className="mt-5 font-display text-[21px] font-semibold text-foreground">{item.title}</h3>
+                  <p className="mt-2 flex-1 text-[15px] leading-[1.5] text-muted-foreground">{item.text}</p>
+                  <p className="mt-5 flex items-center gap-2 border-t border-white/[0.06] pt-4 text-[14px] font-medium text-foreground">
+                    <span className="text-primary">
+                      <ArrowRightIcon />
+                    </span>
+                    Con tu página, {item.fix}
+                  </p>
+                </SpotlightCard>
+              </Reveal>
+            ))}
+          </ul>
         </section>
 
         <section id="como-funciona" aria-labelledby="h-como" className="mx-auto max-w-[1224px] scroll-mt-8 px-4 pb-24 sm:px-[34px]">
