@@ -20,8 +20,9 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   Business Suite.
 - Instagram de 3R: https://www.instagram.com/3r.paginas_/ (en el pie de la portada y en los datos para Google).
 - Precios de los paquetes: ya confirmados por Rigoberto en `/admin/paquetes`.
-- Dominio propio del cliente: $50.000 al año (`DOMAIN_ADDON_CENTS`); el pedido cobra el primer año y la renovación
-  anual se cobra aparte (a mano por ahora). El equipo lo asigna en el pedido en
+- Dominio propio del cliente: $50.000 al año (`DOMAIN_ADDON_CENTS`); el pedido cobra el primer año. La renovación
+  se cobra aparte (a mano): 30 días antes de vencer, un cron diario de Vercel avisa al cliente (correo + mensaje en
+  su pedido) y al equipo; en `/admin` se marca "Renovado un año". Necesita `CRON_SECRET` en Render y en Vercel. El equipo lo asigna en el pedido en
   `/admin` y lo agrega a mano en Vercel (ver README, "Dominio propio de un cliente").
 - Wompi: publicado (27 sep 2026). Pago de prueba (sandbox) hecho y funcionando. Falta cambiar en Render a las llaves
   de producción (pub_prod_…, prod_integrity_…, prod_events_…) y poner la URL de eventos en el ambiente de producción.

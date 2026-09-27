@@ -1,11 +1,31 @@
-import { Body, Controller, Get, HttpCode, NotFoundException, Param, ParseUUIDPipe, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { timingSafeEqual } from 'node:crypto';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  NotFoundException,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Req,
+  Res,
+  ServiceUnavailableException,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import type { AuthUser } from '../auth/auth.types.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { JwtAuthGuard } from '../auth/jwt.guard.js';
 import { ContactFormDto } from './dto/contact-form.dto.js';
 import { CustomDomainDto } from './dto/custom-domain.dto.js';
+import { DomainExpiryDto } from './dto/domain-expiry.dto.js';
+import { DomainRenewalsService } from './domain-renewals.service.js';
 import { PublishingService } from './publishing.service.js';
 
 /** Publicar y despublicar: solo el dueño del sitio. */
@@ -48,6 +68,51 @@ export class PublishingController {
     @Req() req: { ip?: string },
   ) {
     return this.publishing.setCustomDomain(user.id, siteId, dto.domain, req.ip);
+  }
+
+  /** Hasta cuándo está pagado el dominio propio (si el registrador dice otra fecha). */
+  @Put('domain/expiry')
+  setDomainExpiry(
+    @CurrentUser() user: AuthUser,
+    @Param('siteId', ParseUUIDPipe) siteId: string,
+    @Body() dto: DomainExpiryDto,
+    @Req() req: { ip?: string },
+  ) {
+    return this.publishing.setDomainExpiry(user.id, siteId, dto.expiresOn, req.ip);
+  }
+
+  /** El cliente pagó la renovación del dominio: un año más. */
+  @Post('domain/renew')
+  @HttpCode(200)
+  renewDomain(@CurrentUser() user: AuthUser, @Param('siteId', ParseUUIDPipe) siteId: string, @Req() req: { ip?: string }) {
+    return this.publishing.renewDomain(user.id, siteId, req.ip);
+  }
+}
+
+/**
+ * Revisión diaria de dominios por vencer. La llama el cron de Vercel (a través de la web) con
+ * `Authorization: Bearer <CRON_SECRET>`; sin CRON_SECRET configurado, no hace nada.
+ */
+@Controller('internal/domain-renewals')
+@SkipThrottle()
+export class DomainRenewalsController {
+  private readonly secret: string;
+
+  constructor(
+    private readonly renewals: DomainRenewalsService,
+    config: ConfigService,
+  ) {
+    this.secret = config.get<string>('CRON_SECRET') ?? '';
+  }
+
+  @Post('run')
+  @HttpCode(200)
+  run(@Headers('authorization') authorization?: string) {
+    if (!this.secret) throw new ServiceUnavailableException('CRON_SECRET sin configurar');
+    const expected = Buffer.from(`Bearer ${this.secret}`);
+    const given = Buffer.from(authorization ?? '');
+    if (given.length !== expected.length || !timingSafeEqual(given, expected)) throw new UnauthorizedException();
+    return this.renewals.sendDueNotices();
   }
 }
 

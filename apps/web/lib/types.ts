@@ -174,6 +174,8 @@ export type PublicationStatus = {
   /** Dominio propio del cliente (tunegocio.com), si se le asignó. */
   customDomain?: string | null;
   customUrl?: string | null;
+  /** Hasta cuándo está pagado el dominio propio (ISO); se renueva cada año. */
+  customDomainExpiresAt?: string | null;
   publishedAt: string | null;
   hasUnpublishedChanges: boolean;
 };

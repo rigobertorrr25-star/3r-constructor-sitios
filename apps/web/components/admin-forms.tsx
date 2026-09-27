@@ -4,10 +4,12 @@ import { useActionState } from 'react';
 import {
   createOrderSiteAction,
   publishSiteAction,
+  renewDomainAction,
   savePackageAction,
   savePortfolioAction,
   setCustomDomainAction,
   setDeliveryUrlAction,
+  setDomainExpiryAction,
   unpublishSiteAction,
   updateOrderAction,
 } from '@/app/actions';
@@ -70,6 +72,9 @@ export function CreateSiteForm({ orderId, templates }: { orderId: string; templa
 }
 
 const publishedDate = new Intl.DateTimeFormat('es', { dateStyle: 'medium', timeStyle: 'short' });
+const expiryDate = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Bogota' });
+// AAAA-MM-DD en hora de Colombia, para el campo de fecha.
+const isoDay = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'America/Bogota' });
 
 /** Publicar el sitio del cliente en su dirección propia y dejarla como enlace de entrega del pedido. */
 export function PublishPanel({
@@ -158,6 +163,10 @@ export function PublishPanel({
         ) : null}
       </form>
 
+      {publication.customDomain && publication.customDomainExpiresAt ? (
+        <DomainRenewal siteId={siteId} domain={publication.customDomain} expiresAt={publication.customDomainExpiresAt} />
+      ) : null}
+
       {live ? (
         <form
           action={unpublishSiteAction}
@@ -171,6 +180,61 @@ export function PublishPanel({
           </button>
         </form>
       ) : null}
+    </div>
+  );
+}
+
+/** Vencimiento del dominio propio: se paga por año. Al cliente se le avisa solo un mes antes. */
+function DomainRenewal({ siteId, domain, expiresAt }: { siteId: string; domain: string; expiresAt: string }) {
+  const [expiryState, expiryAction] = useActionState(setDomainExpiryAction, undefined);
+  const [renewState, renewAction] = useActionState(renewDomainAction, undefined);
+  const expires = new Date(expiresAt);
+  const daysLeft = Math.ceil((expires.getTime() - Date.now()) / 86_400_000);
+  const tone = daysLeft <= 0 ? 'text-[#ffb4b5]' : daysLeft <= 30 ? 'text-[#f7cb58]' : 'text-foreground';
+
+  return (
+    <div className="space-y-3 border-t border-white/[0.06] pt-4">
+      <p className="text-[14px]">
+        <span className="text-muted-foreground">{domain} {daysLeft <= 0 ? 'venció el' : 'vence el'} </span>
+        <span className={tone}>{expiryDate.format(expires)}</span>
+        {daysLeft > 0 && daysLeft <= 30 ? <span className="text-muted-foreground"> · faltan {daysLeft} días</span> : null}
+      </p>
+      <p className="text-[13px] leading-relaxed text-muted-foreground">
+        Un mes antes le llega al cliente un correo y un mensaje en su pedido para renovarlo. Cuando pague, renuévalo donde se
+        compró el dominio y toca «Renovado un año».
+      </p>
+      <form
+        action={renewAction}
+        onSubmit={(event) => {
+          if (!window.confirm(`¿El cliente ya pagó y renovaste ${domain}? La fecha de vencimiento pasa un año adelante.`)) event.preventDefault();
+        }}
+      >
+        <input type="hidden" name="siteId" value={siteId} />
+        {renewState?.error ? (
+          <div className="mb-3">
+            <Alert>{renewState.error}</Alert>
+          </div>
+        ) : null}
+        <SubmitButton pendingText="Guardando…">Renovado un año</SubmitButton>
+      </form>
+      <form action={expiryAction} className="space-y-3">
+        <input type="hidden" name="siteId" value={siteId} />
+        <Field
+          label="Fecha de vencimiento"
+          name="expiresOn"
+          type="date"
+          required
+          defaultValue={expiryState?.values?.expiresOn ?? isoDay.format(expires)}
+          hint="Cámbiala si el registrador del dominio dice otra fecha."
+        />
+        {expiryState?.error ? <Alert>{expiryState.error}</Alert> : null}
+        <button
+          type="submit"
+          className="w-full rounded-full border border-white/[0.1] px-5 py-2.5 text-[14px] transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+        >
+          Guardar fecha
+        </button>
+      </form>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-// Pruebas de integración del pago en línea (Wompi) y del dominio propio del cliente.
+// Pruebas de integración del pago en línea (Wompi), del dominio propio del cliente y de su renovación anual.
 // Requieren: npm run dev:db, npm run db:seed y npm run build -w api.
 // Wompi no se llama de verdad: un servidor local hace de su API de transacciones.
 import 'reflect-metadata';
@@ -30,6 +30,8 @@ process.env.WOMPI_INTEGRITY_SECRET = INTEGRITY;
 process.env.WOMPI_EVENTS_SECRET = EVENTS;
 process.env.WOMPI_API_URL = `http://127.0.0.1:${wompiApi.address().port}/v1`;
 process.env.WEB_ORIGIN = 'https://3rpaginas.test';
+const CRON = 'clave-del-cron-de-prueba';
+process.env.CRON_SECRET = CRON;
 const publishDir = mkdtempSync(join(tmpdir(), '3r-pay-'));
 process.env.PUBLISH_DIR = publishDir;
 process.env.SITES_ROOT_HOST = 'localhost';
@@ -253,6 +255,90 @@ describe('pago en línea con Wompi y dominio propio', () => {
       const removed = await admin('PUT', `/sites/${site.id}/domain`, { domain: '' });
       assert.equal(removed.body.customDomain, null);
       assert.equal((await call('GET', '/public/domains/tienda-propia.com')).status, 404);
+    });
+  });
+
+  describe('renovación anual del dominio propio', () => {
+    const admin = (method, path, body) => call(method, path, { token: tokens.admin, body });
+    const cron = (secret = CRON) => call('POST', '/internal/domain-renewals/run', { headers: secret ? { authorization: `Bearer ${secret}` } : {} });
+    const DAY = 86_400_000;
+    let site;
+    const stored = () => prisma.domain.findUnique({ where: { domain: 'renueva-ya.com' } });
+    const notices = async () =>
+      (await prisma.orderEvent.findMany({ where: { orderId: order.id, kind: 'message' } })).filter((e) => e.body?.includes('renueva-ya.com'));
+
+    before(async () => {
+      // El sitio del pedido con dominio propio (el del cliente A), como lo crea el equipo.
+      site = (await admin('POST', '/sites', { name: 'Tienda Renueva', templateSlug: 'restaurant-caribbean' })).body;
+      await prisma.order.update({ where: { id: order.id }, data: { siteId: site.id } });
+    });
+
+    it('al asignar el dominio, queda pagado por un año', async () => {
+      const res = await admin('PUT', `/sites/${site.id}/domain`, { domain: 'renueva-ya.com' });
+      assert.equal(res.status, 200);
+      const days = (new Date(res.body.customDomainExpiresAt).getTime() - Date.now()) / DAY;
+      assert.ok(days > 364 && days < 367, `vence en ${days} días`);
+    });
+
+    it('la revisión diaria exige la clave del cron', async () => {
+      assert.equal((await cron(null)).status, 401);
+      assert.equal((await cron('otra-clave')).status, 401);
+      assert.equal((await cron()).status, 200);
+      assert.equal((await notices()).length, 0, 'a un año de vencer no se avisa');
+    });
+
+    it('un mes antes se le avisa al cliente una sola vez (correo y mensaje en su pedido)', async () => {
+      const soon = new Date(Date.now() + 20 * DAY).toISOString().slice(0, 10);
+      const res = await admin('PUT', `/sites/${site.id}/domain/expiry`, { expiresOn: soon });
+      assert.equal(res.status, 200);
+      assert.equal(res.body.customDomainExpiresAt.slice(0, 10), soon);
+
+      assert.ok((await cron()).body.sent >= 1);
+      assert.equal((await notices()).length, 1);
+      const mail = [...sentEmails].reverse().find((m) => m.to === emails.a && m.subject.includes('renueva-ya.com'));
+      assert.ok(mail, 'le llega el correo al cliente');
+      assert.match(mail.subject, /vence pronto/);
+      assert.match(mail.text, /\$\s?50\.000/);
+      assert.ok(mail.text.includes(`/dashboard/pedidos/${order.id}`));
+
+      await cron();
+      assert.equal((await notices()).length, 1, 'no se repite');
+    });
+
+    it('solo el dueño del sitio cambia la fecha o renueva, y las fechas se validan', async () => {
+      assert.equal((await call('POST', `/sites/${site.id}/domain/renew`, { token: tokens.b })).status, 404);
+      assert.equal((await call('PUT', `/sites/${site.id}/domain/expiry`, { token: tokens.b, body: { expiresOn: '2030-01-01' } })).status, 404);
+      assert.equal((await admin('PUT', `/sites/${site.id}/domain/expiry`, { expiresOn: '2027-02-30' })).status, 400);
+      assert.equal((await admin('PUT', `/sites/${site.id}/domain/expiry`, { expiresOn: 'mañana' })).status, 400);
+      const bare = (await admin('POST', '/sites', { name: 'Sin Dominio', templateSlug: 'restaurant-caribbean' })).body;
+      assert.equal((await admin('POST', `/sites/${bare.id}/domain/renew`)).status, 400);
+    });
+
+    it('renovar suma un año al vencimiento y deja listo el aviso del año siguiente', async () => {
+      const before = (await stored()).expiresAt;
+      const res = await admin('POST', `/sites/${site.id}/domain/renew`);
+      assert.equal(res.status, 200);
+      const after = await stored();
+      const next = new Date(before);
+      next.setUTCFullYear(next.getUTCFullYear() + 1);
+      assert.equal(after.expiresAt.toISOString(), next.toISOString());
+      assert.equal(after.renewalNoticeSentAt, null);
+      await cron();
+      assert.equal((await notices()).length, 1, 'renovado, no se avisa');
+    });
+
+    it('un dominio que ya venció sin aviso también se avisa', async () => {
+      const past = new Date(Date.now() - 3 * DAY).toISOString().slice(0, 10);
+      await admin('PUT', `/sites/${site.id}/domain/expiry`, { expiresOn: past });
+      await cron();
+      assert.equal((await notices()).length, 2);
+      const mail = [...sentEmails].reverse().find((m) => m.to === emails.a && m.subject.includes('renueva-ya.com'));
+      assert.match(mail.subject, /venció/);
+
+      // Renovar un dominio vencido cuenta el año desde hoy, no desde la fecha vieja.
+      await admin('POST', `/sites/${site.id}/domain/renew`);
+      const days = ((await stored()).expiresAt.getTime() - Date.now()) / DAY;
+      assert.ok(days > 364 && days < 367, `vence en ${days} días`);
     });
   });
 });

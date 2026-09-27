@@ -5,6 +5,7 @@ import { slugify, uniqueSlug } from '../common/slug.js';
 import { validateEditorDocument } from '../editor/editor-document.js';
 import { EmailService } from '../email/email.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { plusOneYear } from './domain-renewals.service.js';
 import type { ContactFormDto } from './dto/contact-form.dto.js';
 import { renderNotFound, renderPage, renderRobots, renderSitemap } from './render/render.js';
 import { PUBLISH_STORAGE, type PublishStorage } from './storage.js';
@@ -84,12 +85,44 @@ export class PublishingService {
         this.prisma.domain.upsert({
           where: { domain },
           update: {},
-          create: { siteId, domain, type: 'custom', verificationStatus: 'pending', sslStatus: 'pending' },
+          // Se paga por año: el primero va con el pedido. Si el registrador dice otra fecha, se cambia en /admin.
+          create: { siteId, domain, type: 'custom', verificationStatus: 'pending', sslStatus: 'pending', expiresAt: plusOneYear(new Date()) },
         }),
       ]);
     }
     await this.audit.log({ action: 'SITE_DOMAIN_SET', userId, entityType: 'site', entityId: siteId, metadata: { domain: input.trim() }, ipAddress: ip });
     return this.status(userId, siteId);
+  }
+
+  /** Cambia hasta cuándo está pagado el dominio propio. Vuelve a permitir el aviso de renovación. */
+  async setDomainExpiry(userId: string, siteId: string, expiresOn: string, ip?: string) {
+    // Mediodía en Colombia: así la fecha no cambia de día al mostrarla.
+    const expiresAt = new Date(`${expiresOn}T12:00:00-05:00`);
+    if (Number.isNaN(expiresAt.getTime()) || expiresAt.toISOString().slice(0, 10) !== expiresOn) {
+      throw new BadRequestException('Esa fecha no existe');
+    }
+    await this.updateCustomDomain(userId, siteId, () => expiresAt);
+    await this.audit.log({ action: 'SITE_DOMAIN_EXPIRY_SET', userId, entityType: 'site', entityId: siteId, metadata: { expiresOn }, ipAddress: ip });
+    return this.status(userId, siteId);
+  }
+
+  /** El cliente pagó la renovación: un año más desde el vencimiento (o desde hoy, si ya venció). */
+  async renewDomain(userId: string, siteId: string, ip?: string) {
+    const now = new Date();
+    await this.updateCustomDomain(userId, siteId, (current) => plusOneYear(current && current > now ? current : now));
+    await this.audit.log({ action: 'SITE_DOMAIN_RENEWED', userId, entityType: 'site', entityId: siteId, ipAddress: ip });
+    return this.status(userId, siteId);
+  }
+
+  private async updateCustomDomain(userId: string, siteId: string, nextExpiry: (current: Date | null) => Date) {
+    const site = await this.prisma.site.findFirst({
+      where: { id: siteId, userId },
+      select: { domains: { where: { type: 'custom' }, select: { id: true, expiresAt: true } } },
+    });
+    if (!site) throw new NotFoundException('Sitio no encontrado');
+    const custom = site.domains[0];
+    if (!custom) throw new BadRequestException('Este sitio no tiene dominio propio');
+    await this.prisma.domain.update({ where: { id: custom.id }, data: { expiresAt: nextExpiry(custom.expiresAt), renewalNoticeSentAt: null } });
   }
 
   /** Qué sitio corresponde a un dominio propio. La web lo usa para servir el sitio en esa dirección. */
@@ -229,7 +262,7 @@ export class PublishingService {
   async status(userId: string, siteId: string) {
     const site = await this.prisma.site.findFirst({
       where: { id: siteId, userId },
-      select: { status: true, domains: { select: { domain: true, type: true } }, pages: { select: { updatedAt: true } } },
+      select: { status: true, domains: { select: { domain: true, type: true, expiresAt: true } }, pages: { select: { updatedAt: true } } },
     });
     if (!site) throw new NotFoundException('Sitio no encontrado');
 
@@ -239,7 +272,8 @@ export class PublishingService {
       select: { id: true, publishedAt: true },
     });
     const domain = site.domains.find((d) => d.type === 'subdomain')?.domain;
-    const customDomain = site.domains.find((d) => d.type === 'custom')?.domain ?? null;
+    const custom = site.domains.find((d) => d.type === 'custom');
+    const customDomain = custom?.domain ?? null;
     const published = site.status === 'published' && !!last;
     const newestEdit = site.pages.reduce((max, p) => (p.updatedAt > max ? p.updatedAt : max), new Date(0));
     return {
@@ -247,6 +281,7 @@ export class PublishingService {
       url: domain ? this.urlFor(this.labelOf(domain)) : null,
       customDomain,
       customUrl: customDomain ? `https://${customDomain}` : null,
+      customDomainExpiresAt: custom?.expiresAt?.toISOString() ?? null,
       publishedAt: last?.publishedAt?.toISOString() ?? null,
       hasUnpublishedChanges: published && !!last?.publishedAt && newestEdit > last.publishedAt,
     };

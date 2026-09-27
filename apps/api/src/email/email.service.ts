@@ -72,6 +72,10 @@ export class EmailService {
     return this.safeSend(to, templates.clientMessage({ ...data, orderUrl: this.orderUrl(data.orderId) }));
   }
 
+  sendDomainRenewal(to: string, data: { firstName?: string | null; orderId: string; domain: string; expiresOn: string; expired: boolean; price: string }) {
+    return this.safeSend(to, templates.domainRenewal({ ...data, orderUrl: this.orderUrl(data.orderId) }));
+  }
+
   // ───────── al equipo ─────────
 
   sendAdminNewSignup(data: { email: string; firstName?: string | null }) {
@@ -95,6 +99,11 @@ export class EmailService {
   sendAdminNewMessage(data: { orderId: string; orderCode: string; businessName: string; body: string }) {
     if (!this.adminEmail) return Promise.resolve();
     return this.safeSend(this.adminEmail, templates.adminNewMessage({ ...data, adminUrl: this.adminOrderUrl(data.orderId) }));
+  }
+
+  sendAdminDomainRenewal(data: { orderId: string | null; domain: string; expiresOn: string; expired: boolean; businessName: string; clientEmail: string | null }) {
+    if (!this.adminEmail) return Promise.resolve();
+    return this.safeSend(this.adminEmail, templates.adminDomainRenewal({ ...data, adminUrl: data.orderId ? this.adminOrderUrl(data.orderId) : null }));
   }
 
   // ───────── formulario de contacto de un sitio publicado ─────────
