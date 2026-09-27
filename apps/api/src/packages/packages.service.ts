@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import type { Prisma } from '../generated/prisma/client.js';
 import { AuditService } from '../audit/audit.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { DOMAIN_ADDON_CENTS } from '../orders/orders.constants.js';
 import type { CreatePackageDto, UpdatePackageDto } from './dto/package.dto.js';
 
 const publicSelect = {
@@ -28,12 +29,14 @@ export class PackagesService {
   ) {}
 
   /** Lo que ve cualquier visitante: solo paquetes activos. */
-  listPublic() {
-    return this.prisma.package.findMany({
+  async listPublic() {
+    const packages = await this.prisma.package.findMany({
       where: { isActive: true },
       orderBy: [{ sortOrder: 'asc' }, { priceCents: 'asc' }],
       select: publicSelect,
     });
+    // El extra de dominio propio es igual para todos los paquetes; va con cada uno para que la web lo muestre.
+    return packages.map((pkg) => ({ ...pkg, domainAddonCents: DOMAIN_ADDON_CENTS }));
   }
 
   listAll() {

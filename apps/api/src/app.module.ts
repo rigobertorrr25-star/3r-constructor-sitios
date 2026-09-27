@@ -10,6 +10,7 @@ import { HealthController } from './health/health.controller.js';
 import { MediaModule } from './media/media.module.js';
 import { OrdersModule } from './orders/orders.module.js';
 import { PackagesModule } from './packages/packages.module.js';
+import { PaymentsModule } from './payments/payments.module.js';
 import { PagesModule } from './pages/pages.module.js';
 import { PortfolioModule } from './portfolio/portfolio.module.js';
 import { PublishingModule } from './publishing/publishing.module.js';
@@ -36,6 +37,7 @@ import { UsersModule } from './users/users.module.js';
     PagesModule,
     PackagesModule,
     OrdersModule,
+    PaymentsModule,
     PortfolioModule,
     PublishingModule,
     MediaModule,

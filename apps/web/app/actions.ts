@@ -128,7 +128,12 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
 
   const res = await authedApi<{ id: string } & ApiError>('/orders', {
     method: 'POST',
-    body: { packageSlug: text(formData, 'packageSlug'), maintenance: checked(formData, 'maintenance'), brief },
+    body: {
+      packageSlug: text(formData, 'packageSlug'),
+      maintenance: checked(formData, 'maintenance'),
+      customDomain: text(formData, 'address') === 'own',
+      brief,
+    },
   });
   if (!res.ok) return fail(errorText(res.data, 'No pudimos crear tu pedido. Inténtalo de nuevo.'), formData, res.data?.code);
   redirect(`/dashboard/pedidos/${res.data.id}?nuevo=1`);
@@ -143,6 +148,14 @@ export async function sendMessageAction(_prev: FormState, formData: FormData): P
   if (!res.ok) return fail(errorText(res.data, 'No se pudo enviar el mensaje.'), formData);
   revalidatePath(`/dashboard/pedidos/${orderId}`);
   return { ok: Date.now() };
+}
+
+/** Abre el pago en línea (Wompi) por lo que falta del pedido. */
+export async function payOrderAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const orderId = text(formData, 'orderId');
+  const res = await authedApi<{ url: string } & ApiError>(`/orders/${encodeURIComponent(orderId)}/payments/wompi`, { method: 'POST' });
+  if (!res.ok) return fail(errorText(res.data, 'No pudimos abrir el pago. Inténtalo de nuevo en un momento.'), formData);
+  redirect(res.data.url);
 }
 
 export async function cancelOrderAction(formData: FormData) {
@@ -288,6 +301,18 @@ export async function unpublishSiteAction(formData: FormData) {
   const siteId = text(formData, 'siteId');
   await authedApi(`/sites/${encodeURIComponent(siteId)}/unpublish`, { method: 'POST' });
   revalidatePath('/admin/pedidos/[id]', 'page');
+}
+
+/** Asigna o quita (vacío) el dominio propio del cliente a su sitio. */
+export async function setCustomDomainAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const siteId = text(formData, 'siteId');
+  const res = await authedApi<ApiError>(`/sites/${encodeURIComponent(siteId)}/domain`, {
+    method: 'PUT',
+    body: { domain: text(formData, 'domain') },
+  });
+  if (!res.ok) return fail(errorText(res.data, 'No se pudo guardar el dominio.'), formData);
+  revalidatePath('/admin/pedidos/[id]', 'page');
+  return { ok: Date.now() };
 }
 
 /** Usa la dirección publicada como el enlace que recibe el cliente al entregar. */

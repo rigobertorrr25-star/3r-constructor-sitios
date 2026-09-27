@@ -7,6 +7,7 @@ import {
   DevicesIcon,
   GlobeIcon,
   HistoryIcon,
+  InstagramIcon,
   PhoneIcon,
   PointerIcon,
   SearchIcon,
@@ -75,6 +76,8 @@ const faqs = [
   { q: '¿Necesito tener un dominio?', a: 'No. Si todavía no tienes uno, te ayudamos a elegirlo y conectarlo.' },
 ];
 
+const INSTAGRAM_URL = 'https://www.instagram.com/3r.paginas_/';
+
 const pill =
   'inline-flex items-center justify-center gap-2 rounded-full px-[25.5px] py-[12.75px] text-[14.875px] transition duration-300 ease-[var(--ease-emphasized)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]';
 const card = 'rounded-[32px] border border-white/[0.08] bg-card shadow-[var(--shadow-glass)]';
@@ -118,6 +121,7 @@ export default async function HomePage() {
     url: 'https://3rpaginas.com',
     telephone: '+573107907194',
     areaServed: 'CO',
+    sameAs: [INSTAGRAM_URL],
     ...(prices.length > 0 ? { priceRange: `${Math.min(...prices)}-${Math.max(...prices)} COP` } : {}),
   };
 
@@ -496,11 +500,22 @@ export default async function HomePage() {
       </main>
 
       <footer className="mx-auto w-full max-w-[1224px] px-4 sm:px-[34px]">
-        <div className="border-t border-white/[0.06] py-8 text-center text-sm text-muted-foreground">
-          © 2026 3R — Páginas web para negocios ·{' '}
-          <Link href="/privacidad" className="transition hover:text-foreground">
-            Política de privacidad
-          </Link>
+        <div className="flex flex-col items-center gap-4 border-t border-white/[0.06] py-8 text-center text-sm text-muted-foreground">
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] px-4 py-2 text-foreground transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+          >
+            <InstagramIcon size={18} />
+            @3r.paginas_
+          </a>
+          <p>
+            © 2026 3R — Páginas web para negocios ·{' '}
+            <Link href="/privacidad" className="transition hover:text-foreground">
+              Política de privacidad
+            </Link>
+          </p>
         </div>
       </footer>
       <MascotGreeter />

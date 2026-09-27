@@ -31,6 +31,12 @@ services:
         sync: false
       - key: SITES_URL_TEMPLATE
         sync: false
+      - key: WOMPI_PUBLIC_KEY
+        sync: false
+      - key: WOMPI_INTEGRITY_SECRET
+        sync: false
+      - key: WOMPI_EVENTS_SECRET
+        sync: false
       - key: R2_BUCKET
         sync: false
       - key: R2_ACCOUNT_ID

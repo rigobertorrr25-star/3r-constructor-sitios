@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuditService } from '../audit/audit.service.js';
 import { slugify, uniqueSlug } from '../common/slug.js';
@@ -13,6 +13,8 @@ import { PUBLISH_STORAGE, type PublishStorage } from './storage.js';
 const RESERVED_LABELS = new Set(['www', 'app', 'api', 'admin', 'mail', 'ftp', 'smtp', 'cdn', 'static', 'assets', 'dashboard', 'login', 'blog', 'ayuda', 'soporte', 'support', 'status']);
 
 const KEEP_PUBLICATIONS = 5;
+// Un dominio como "tunegocio.com" o "menu.tunegocio.com.co": etiquetas válidas y una terminación de letras.
+const DOMAIN_RE = /^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 const PAGE_KEY = /^[a-z0-9-]{1,150}$/;
 
 export interface PublishedFile {
@@ -50,6 +52,57 @@ export class PublishingService {
 
   private labelOf(domain: string) {
     return domain.slice(0, -(this.rootHost.length + 1));
+  }
+
+  /** "https://www.TuNegocio.com/menu" → "tunegocio.com". Devuelve null si no parece un dominio. */
+  normalizeDomain(input: string): string | null {
+    let host = input.trim().toLowerCase().replace(/^[a-z]+:\/\//, '');
+    host = host.split(/[/?#]/)[0].split(':')[0].replace(/\.$/, '');
+    if (host.startsWith('www.')) host = host.slice(4);
+    return DOMAIN_RE.test(host) ? host : null;
+  }
+
+  // ───────── dominio propio del cliente ─────────
+
+  /** Asigna (o quita, con texto vacío) el dominio propio del sitio. Un sitio tiene como máximo uno. */
+  async setCustomDomain(userId: string, siteId: string, input: string, ip?: string) {
+    const site = await this.prisma.site.findFirst({ where: { id: siteId, userId }, select: { id: true } });
+    if (!site) throw new NotFoundException('Sitio no encontrado');
+
+    if (input.trim() === '') {
+      await this.prisma.domain.deleteMany({ where: { siteId, type: 'custom' } });
+    } else {
+      const domain = this.normalizeDomain(input);
+      if (!domain) throw new BadRequestException('Escribe un dominio válido, por ejemplo tunegocio.com');
+      if (domain === this.rootHost || domain.endsWith(`.${this.rootHost}`)) {
+        throw new BadRequestException(`Ese es un dominio de 3R. Escribe el dominio propio del cliente, por ejemplo tunegocio.com`);
+      }
+      const taken = await this.prisma.domain.findUnique({ where: { domain }, select: { siteId: true } });
+      if (taken && taken.siteId !== siteId) throw new ConflictException('Ese dominio ya está asignado a otro sitio');
+      await this.prisma.$transaction([
+        this.prisma.domain.deleteMany({ where: { siteId, type: 'custom', domain: { not: domain } } }),
+        this.prisma.domain.upsert({
+          where: { domain },
+          update: {},
+          create: { siteId, domain, type: 'custom', verificationStatus: 'pending', sslStatus: 'pending' },
+        }),
+      ]);
+    }
+    await this.audit.log({ action: 'SITE_DOMAIN_SET', userId, entityType: 'site', entityId: siteId, metadata: { domain: input.trim() }, ipAddress: ip });
+    return this.status(userId, siteId);
+  }
+
+  /** Qué sitio corresponde a un dominio propio. La web lo usa para servir el sitio en esa dirección. */
+  async resolveHost(rawHost: string): Promise<{ label: string } | null> {
+    const host = this.normalizeDomain(rawHost);
+    if (!host) return null;
+    const custom = await this.prisma.domain.findUnique({
+      where: { domain: host },
+      select: { type: true, site: { select: { status: true, domains: { where: { type: 'subdomain' }, select: { domain: true } } } } },
+    });
+    const sub = custom?.type === 'custom' ? custom.site.domains[0]?.domain : undefined;
+    if (!sub || custom?.site.status !== 'published') return null;
+    return { label: this.labelOf(sub) };
   }
 
   // ───────── publicar ─────────
@@ -176,7 +229,7 @@ export class PublishingService {
   async status(userId: string, siteId: string) {
     const site = await this.prisma.site.findFirst({
       where: { id: siteId, userId },
-      select: { status: true, domains: { where: { type: 'subdomain' }, select: { domain: true } }, pages: { select: { updatedAt: true } } },
+      select: { status: true, domains: { select: { domain: true, type: true } }, pages: { select: { updatedAt: true } } },
     });
     if (!site) throw new NotFoundException('Sitio no encontrado');
 
@@ -185,12 +238,15 @@ export class PublishingService {
       orderBy: { publishedAt: 'desc' },
       select: { id: true, publishedAt: true },
     });
-    const domain = site.domains[0]?.domain;
+    const domain = site.domains.find((d) => d.type === 'subdomain')?.domain;
+    const customDomain = site.domains.find((d) => d.type === 'custom')?.domain ?? null;
     const published = site.status === 'published' && !!last;
     const newestEdit = site.pages.reduce((max, p) => (p.updatedAt > max ? p.updatedAt : max), new Date(0));
     return {
       published,
       url: domain ? this.urlFor(this.labelOf(domain)) : null,
+      customDomain,
+      customUrl: customDomain ? `https://${customDomain}` : null,
       publishedAt: last?.publishedAt?.toISOString() ?? null,
       hasUnpublishedChanges: published && !!last?.publishedAt && newestEdit > last.publishedAt,
     };

@@ -6,6 +6,7 @@ import {
   publishSiteAction,
   savePackageAction,
   savePortfolioAction,
+  setCustomDomainAction,
   setDeliveryUrlAction,
   unpublishSiteAction,
   updateOrderAction,
@@ -84,7 +85,10 @@ export function PublishPanel({
 }) {
   const [publishState, publishAction] = useActionState(publishSiteAction, undefined);
   const [linkState, linkAction] = useActionState(setDeliveryUrlAction, undefined);
+  const [domainState, domainAction] = useActionState(setCustomDomainAction, undefined);
   const live = publication.published && publication.url;
+  // Con dominio propio, ese es el enlace que se entrega; si no, la dirección de 3R.
+  const deliveryCandidate = publication.customUrl ?? publication.url;
 
   return (
     <div className="space-y-4 border-t border-white/[0.06] pt-5">
@@ -117,10 +121,10 @@ export function PublishPanel({
         <SubmitButton pendingText="Publicando…">{live ? 'Publicar cambios' : 'Publicar en internet'}</SubmitButton>
       </form>
 
-      {live && deliveryUrl !== publication.url ? (
+      {live && deliveryUrl !== deliveryCandidate ? (
         <form action={linkAction} className="space-y-2">
           <input type="hidden" name="orderId" value={orderId} />
-          <input type="hidden" name="url" value={publication.url!} />
+          <input type="hidden" name="url" value={deliveryCandidate!} />
           {linkState?.error ? <Alert>{linkState.error}</Alert> : null}
           <button
             type="submit"
@@ -130,7 +134,29 @@ export function PublishPanel({
           </button>
         </form>
       ) : null}
-      {live && deliveryUrl === publication.url ? <p className="text-[13px] text-[#9df0c6]">Ya es el enlace de entrega del pedido.</p> : null}
+      {live && deliveryUrl === deliveryCandidate ? <p className="text-[13px] text-[#9df0c6]">Ya es el enlace de entrega del pedido.</p> : null}
+
+      <form action={domainAction} className="space-y-3 border-t border-white/[0.06] pt-4">
+        <input type="hidden" name="siteId" value={siteId} />
+        <Field
+          label="Dominio propio del cliente"
+          name="domain"
+          maxLength={255}
+          placeholder="tunegocio.com"
+          defaultValue={domainState?.values?.domain ?? publication.customDomain ?? ''}
+          hint="Déjalo vacío si el cliente no pagó el dominio propio."
+        />
+        {domainState?.error ? <Alert>{domainState.error}</Alert> : null}
+        <SubmitButton pendingText="Guardando…">Guardar dominio</SubmitButton>
+        {publication.customDomain ? (
+          <div className="space-y-1.5 rounded-2xl bg-white/[0.04] px-4 py-3 text-[13px] leading-relaxed text-muted-foreground">
+            <p className="text-foreground">Para que {publication.customDomain} abra este sitio:</p>
+            <p>1. En Vercel, en el proyecto de la web, agrega {publication.customDomain} y www.{publication.customDomain} como dominios.</p>
+            <p>2. En el DNS del dominio (donde se compró), crea los registros que Vercel te muestra. Normalmente un A en la raíz y un CNAME en www.</p>
+            <p>3. Cuando Vercel marque el dominio como válido, el sitio abre con https en esa dirección.</p>
+          </div>
+        ) : null}
+      </form>
 
       {live ? (
         <form

@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { createOrderAction } from '@/app/actions';
 import { formatMoney } from '@/lib/orders';
 import type { Package } from '@/lib/types';
@@ -27,9 +27,17 @@ export function OrderForm({ pkg }: { pkg: Package }) {
   const [state, action] = useActionState(createOrderAction, undefined);
   const [maintenance, setMaintenance] = useState(false);
   const [hasDomain, setHasDomain] = useState<'yes' | 'no' | ''>('');
+  const [address, setAddress] = useState<'sub' | 'own'>('sub');
+  const domainCents = pkg.domainAddonCents ?? 0;
+  const total = pkg.priceCents + (address === 'own' ? domainCents : 0);
   // Si el servidor rechaza el envío, React vacía el formulario: se restauran los valores escritos.
   // Casilla y radios no son "controlados": React los volvería a dejar desmarcados tras el reset.
   const v = state?.values ?? {};
+  // Tras un error del servidor, las opciones vuelven marcadas como estaban: el estado debe seguirlas.
+  useEffect(() => {
+    if (v.address === 'own') setAddress('own');
+    if (v.hasDomain === 'yes' || v.hasDomain === 'no') setHasDomain(v.hasDomain);
+  }, [v.address, v.hasDomain]);
 
   return (
     <form action={action} className="space-y-8">
@@ -78,20 +86,43 @@ export function OrderForm({ pkg }: { pkg: Package }) {
       <section className={`${card} space-y-5`}>
         <h2 className="font-display text-[20px] font-semibold">Tu página</h2>
         <fieldset>
-          <legend className="text-sm font-medium text-foreground">¿Ya tienes dominio (tunegocio.com)?</legend>
+          <legend className="text-sm font-medium text-foreground">¿En qué dirección quieres tu página?</legend>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <label className={radio}>
-              <input type="radio" name="hasDomain" value="yes" defaultChecked={v.hasDomain === 'yes'} onChange={() => setHasDomain('yes')} className="accent-[#8a9bff]" />
-              Sí, ya tengo uno
+              <input type="radio" name="address" value="sub" defaultChecked={v.address !== 'own'} onChange={() => setAddress('sub')} className="accent-[#8a9bff]" />
+              <span>
+                tunegocio.3rpaginas.com
+                <span className="block text-[13px] text-muted-foreground">Incluida en tu paquete</span>
+              </span>
             </label>
             <label className={radio}>
-              <input type="radio" name="hasDomain" value="no" defaultChecked={v.hasDomain === 'no'} onChange={() => setHasDomain('no')} className="accent-[#8a9bff]" />
-              No, necesito ayuda con eso
+              <input type="radio" name="address" value="own" defaultChecked={v.address === 'own'} onChange={() => setAddress('own')} className="accent-[#8a9bff]" />
+              <span>
+                Dominio propio: tunegocio.com
+                <span className="block text-[13px] text-muted-foreground">+ {formatMoney(domainCents, pkg.currency)} pago único</span>
+              </span>
             </label>
           </div>
         </fieldset>
-        {hasDomain === 'yes' ? <Field label="¿Cuál es tu dominio?" name="domainWanted" maxLength={255} placeholder="tunegocio.com" defaultValue={v.domainWanted} /> : null}
-        {hasDomain === 'no' ? <Field label="¿Qué nombre te gustaría? (opcional)" name="domainWanted" maxLength={255} placeholder="tunegocio.com" defaultValue={v.domainWanted} /> : null}
+        {address === 'own' ? (
+          <>
+            <fieldset>
+              <legend className="text-sm font-medium text-foreground">¿Ya tienes ese dominio?</legend>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className={radio}>
+                  <input type="radio" name="hasDomain" value="yes" defaultChecked={v.hasDomain === 'yes'} onChange={() => setHasDomain('yes')} className="accent-[#8a9bff]" />
+                  Sí, ya lo compré
+                </label>
+                <label className={radio}>
+                  <input type="radio" name="hasDomain" value="no" defaultChecked={v.hasDomain === 'no'} onChange={() => setHasDomain('no')} className="accent-[#8a9bff]" />
+                  No, ayúdenme a conseguirlo
+                </label>
+              </div>
+            </fieldset>
+            {hasDomain === 'yes' ? <Field label="¿Cuál es tu dominio?" name="domainWanted" maxLength={255} placeholder="tunegocio.com" defaultValue={v.domainWanted} /> : null}
+            {hasDomain === 'no' ? <Field label="¿Qué nombre te gustaría? (opcional)" name="domainWanted" maxLength={255} placeholder="tunegocio.com" defaultValue={v.domainWanted} /> : null}
+          </>
+        ) : null}
         <TextAreaField
           label="¿Qué secciones quieres? (opcional)"
           name="pagesWanted"
@@ -123,8 +154,13 @@ export function OrderForm({ pkg }: { pkg: Package }) {
       <section className={`${card} space-y-4`}>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <p className="text-[15px] text-muted-foreground">{pkg.name} · pago único</p>
-          <p className="font-display text-[28px] font-bold">{formatMoney(pkg.priceCents, pkg.currency)}</p>
+          <p className="font-display text-[28px] font-bold">{formatMoney(total, pkg.currency)}</p>
         </div>
+        {address === 'own' ? (
+          <p className="text-[14px] text-muted-foreground">
+            Incluye {formatMoney(pkg.priceCents, pkg.currency)} del paquete + {formatMoney(domainCents, pkg.currency)} del dominio propio.
+          </p>
+        ) : null}
         {maintenance && pkg.monthlyPriceCents !== null ? (
           <p className="text-[14px] text-muted-foreground">+ {formatMoney(pkg.monthlyPriceCents, pkg.currency)} al mes de hosting y mantenimiento.</p>
         ) : null}

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { CancelOrderButton } from '@/components/cancel-order-button';
 import { LeadStatusSelect } from '@/components/lead-status-select';
 import { MessageForm } from '@/components/message-form';
+import { PayButton } from '@/components/pay-button';
 import { Alert, PaymentBadge, Progress, StatusBadge, Timeline, card } from '@/components/shop';
 import { authedApi } from '@/lib/api';
 import { LEAD_DOT, LEAD_LABEL, formatDate, formatDateTime, formatMoney, orderCode } from '@/lib/orders';
@@ -34,10 +35,20 @@ export default async function OrderPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ nuevo?: string }>;
+  searchParams: Promise<{ nuevo?: string; pago?: string; id?: string }>;
 }) {
   const { id } = await params;
-  const { nuevo } = await searchParams;
+  const { nuevo, pago, id: transactionId } = await searchParams;
+  // Al volver de Wompi (?pago=wompi&id=…), se confirma la transacción antes de mostrar el pedido,
+  // para que el cliente vea su pago reflejado sin esperar el aviso de Wompi.
+  let paymentResult: string | null = null;
+  if (pago === 'wompi' && transactionId) {
+    const confirmed = await authedApi<{ status?: string }>(`/orders/${encodeURIComponent(id)}/payments/wompi/confirm`, {
+      method: 'POST',
+      body: { transactionId },
+    });
+    paymentResult = confirmed.ok ? (confirmed.data.status ?? 'pending') : 'unknown';
+  }
   const res = await authedApi<OrderDetail>(`/orders/${encodeURIComponent(id)}`);
   if (!res.ok) notFound();
   const order = res.data;
@@ -65,6 +76,20 @@ export default async function OrderPage({
         </div>
       </div>
 
+      {paymentResult === 'approved' ? (
+        <div className="mt-6">
+          <Alert tone="ok">¡Recibimos tu pago! Ya quedó registrado en tu pedido.</Alert>
+        </div>
+      ) : paymentResult === 'pending' || paymentResult === 'unknown' ? (
+        <div className="mt-6">
+          <Alert tone="ok">Tu pago está en proceso. Apenas Wompi lo confirme, lo verás aquí y te llegará un correo.</Alert>
+        </div>
+      ) : paymentResult ? (
+        <div className="mt-6">
+          <Alert>El pago no se completó. Puedes intentarlo de nuevo abajo o escribirnos si necesitas ayuda.</Alert>
+        </div>
+      ) : null}
+
       {nuevo ? (
         <div className="mt-6">
           <Alert tone="ok">¡Recibimos tu pedido! Abajo ves cómo pagar y el avance. Puedes escribirnos aquí cuando quieras.</Alert>
@@ -91,7 +116,7 @@ export default async function OrderPage({
 
       <section className={`${card} mt-8`}>
         <h2 className="font-display text-[20px] font-semibold text-foreground">Pago</h2>
-        <dl className="mt-4 grid grid-cols-3 gap-4 text-[14px]">
+        <dl className="mt-4 grid grid-cols-1 gap-4 text-[14px] min-[420px]:grid-cols-3">
           <div>
             <dt className="text-muted-foreground">Total</dt>
             <dd className="mt-1 font-display text-[20px] font-semibold text-foreground">{formatMoney(order.priceCents, order.currency)}</dd>
@@ -105,13 +130,26 @@ export default async function OrderPage({
             <dd className="mt-1 font-display text-[20px] font-semibold text-foreground">{formatMoney(pending, order.currency)}</dd>
           </div>
         </dl>
+        {order.domainPriceCents ? (
+          <p className="mt-4 text-[14px] text-muted-foreground">
+            El total incluye tu dominio propio: {formatMoney(order.domainPriceCents, order.currency)}.
+          </p>
+        ) : null}
         {order.monthlyPriceCents !== null ? (
           <p className="mt-4 text-[14px] text-muted-foreground">
             Incluye hosting y mantenimiento: {formatMoney(order.monthlyPriceCents, order.currency)} al mes.
           </p>
         ) : null}
+        {showPayment && order.onlinePayment && pending > 0 ? (
+          <div className="mt-5">
+            <PayButton orderId={order.id} amount={formatMoney(pending, order.currency)} />
+          </div>
+        ) : null}
         {showPayment ? (
-          <p className="mt-4 rounded-2xl bg-white/[0.04] px-4 py-3 text-[14.5px] leading-relaxed text-foreground/90">{PAYMENT_INSTRUCTIONS}</p>
+          <p className="mt-4 rounded-2xl bg-white/[0.04] px-4 py-3 text-[14.5px] leading-relaxed text-foreground/90">
+            {order.onlinePayment ? 'Si prefieres pagar por transferencia: ' : ''}
+            {PAYMENT_INSTRUCTIONS}
+          </p>
         ) : null}
       </section>
 

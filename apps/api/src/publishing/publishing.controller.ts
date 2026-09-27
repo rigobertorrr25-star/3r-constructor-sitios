@@ -1,10 +1,11 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, NotFoundException, Param, ParseUUIDPipe, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import type { AuthUser } from '../auth/auth.types.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { JwtAuthGuard } from '../auth/jwt.guard.js';
 import { ContactFormDto } from './dto/contact-form.dto.js';
+import { CustomDomainDto } from './dto/custom-domain.dto.js';
 import { PublishingService } from './publishing.service.js';
 
 /** Publicar y despublicar: solo el dueño del sitio. */
@@ -36,6 +37,30 @@ export class PublishingController {
   @Get('publication')
   status(@CurrentUser() user: AuthUser, @Param('siteId', ParseUUIDPipe) siteId: string) {
     return this.publishing.status(user.id, siteId);
+  }
+
+  /** Dominio propio del cliente (tunegocio.com). Con texto vacío se quita. */
+  @Put('domain')
+  setDomain(
+    @CurrentUser() user: AuthUser,
+    @Param('siteId', ParseUUIDPipe) siteId: string,
+    @Body() dto: CustomDomainDto,
+    @Req() req: { ip?: string },
+  ) {
+    return this.publishing.setCustomDomain(user.id, siteId, dto.domain, req.ip);
+  }
+}
+
+/** La web pregunta aquí qué sitio va en un dominio propio. Público: solo devuelve la etiqueta del sitio. */
+@Controller('public/domains')
+export class PublicDomainsController {
+  constructor(private readonly publishing: PublishingService) {}
+
+  @Get(':host')
+  async resolve(@Param('host') host: string) {
+    const found = await this.publishing.resolveHost(host);
+    if (!found) throw new NotFoundException('Dominio sin sitio');
+    return found;
   }
 }
 

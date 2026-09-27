@@ -163,11 +163,36 @@ Hecho (todo con pruebas: 98 de API, 23 del editor y recorridos completos en un C
   (`users.privacy_accepted_at`, y la versión en la auditoría). El formulario de contacto de los sitios publicados
   pide la autorización del visitante.
 
-Pendiente: edición de texto directamente en el lienzo, componentes galería/formulario, dominios propios del
-cliente con SSL, Stripe y webhooks, Redis/BullMQ (la publicación y los correos hoy son inmediatos y no usan cola).
+- **Pago en línea con Wompi:** el cliente paga lo que falta de su pedido desde su cuenta (tarjeta, PSE, Nequi…).
+  El botón va firmado (firma de integridad) para que nadie cambie el monto; los avisos de Wompi se verifican
+  con su firma y un mismo pago nunca se suma dos veces. Tabla `payments`, módulo `apps/api/src/payments`.
+- **Dominio propio del cliente (+$50.000):** el cliente lo elige al pedir (`DOMAIN_ADDON_CENTS` en
+  `orders.constants.ts`) y se suma al pago único. El equipo lo asigna al sitio desde el pedido en `/admin`, y la
+  web sirve el sitio en esa dirección (`apps/web/proxy.ts`, con o sin `www`).
+
+Pendiente: edición de texto directamente en el lienzo, componente galería, alta automática del dominio propio en
+Vercel (hoy se agrega a mano, ver abajo), mensualidad cobrada automáticamente, Redis/BullMQ (la publicación y los correos hoy son inmediatos y no usan cola).
 
 Notas de seguridad para producción: el renovador de tokens del proxy comparte una renovación por proceso
 (válido con una sola instancia web).
+
+## Cobrar con Wompi
+
+1. Crea tu cuenta en [Wompi](https://wompi.com) y entra a **Desarrolladores**. Ahí están las llaves de prueba
+   (sandbox) y, cuando la cuenta esté aprobada, las de producción.
+2. En Render, pon `WOMPI_PUBLIC_KEY`, `WOMPI_INTEGRITY_SECRET` y `WOMPI_EVENTS_SECRET`. Empieza con las de prueba
+   (`pub_test_…`): la API usa sola el entorno de pruebas o el de producción según la llave.
+3. En Wompi, en **URL de eventos**, pon `https://TU-API/api/v1/payments/wompi/events`.
+4. Haz un pedido de prueba y págalo con los datos de prueba que da Wompi. El pedido debe quedar "Pagado".
+5. Cuando todo funcione, cambia las tres variables por las de producción.
+
+## Dominio propio de un cliente
+
+1. El cliente elige "Dominio propio" al pedir (suma $50.000) y escribe su dominio, o pide ayuda para comprarlo.
+2. En `/admin`, en su pedido, escribe el dominio en **Dominio propio del cliente** y guarda.
+3. En Vercel (proyecto de la web) agrega `sudominio.com` y `www.sudominio.com` como dominios, y crea en el DNS del
+   dominio los registros que Vercel indique. Cuando Vercel lo marque como válido, el sitio abre con https ahí.
+4. En el pedido, "Usar como enlace de entrega" ya toma la dirección del dominio propio.
 
 ## Notas técnicas
 

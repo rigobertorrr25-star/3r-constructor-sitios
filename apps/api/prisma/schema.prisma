@@ -410,7 +410,10 @@ model Order {
   // unpaid | partial | paid | refunded
   paymentStatus     String    @default("unpaid") @map("payment_status") @db.VarChar(30)
   // Precios al momento de comprar: cambiar el paquete después no altera pedidos existentes.
+  // priceCents es el total del pago único: paquete + extras (como el dominio propio).
   priceCents        Int       @map("price_cents")
+  // Parte de priceCents que corresponde al dominio propio; null si el cliente no lo pidió.
+  domainPriceCents  Int?      @map("domain_price_cents")
   monthlyPriceCents Int?      @map("monthly_price_cents")
   currency          String    @db.VarChar(10)
   amountPaidCents   Int       @default(0) @map("amount_paid_cents")
@@ -427,10 +430,33 @@ model Order {
   package Package      @relation(fields: [packageId], references: [id])
   site    Site?        @relation(fields: [siteId], references: [id], onDelete: SetNull)
   events  OrderEvent[]
+  payments Payment[]
 
   @@index([userId], map: "idx_orders_user_id")
   @@index([status], map: "idx_orders_status")
   @@map("orders")
+}
+
+// Intentos de pago en línea (Wompi). Cada intento tiene su propia referencia; solo los aprobados suman
+// a Order.amountPaidCents, y un mismo pago nunca se cuenta dos veces.
+model Payment {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId               String   @map("order_id") @db.Uuid
+  provider              String   @default("wompi") @db.VarChar(20)
+  // Referencia que se le manda a Wompi (3R-0012-a1b2c3d4).
+  reference             String   @unique @db.VarChar(100)
+  amountCents           Int      @map("amount_cents")
+  currency              String   @db.VarChar(10)
+  // pending | approved | declined | voided | error
+  status                String   @default("pending") @db.VarChar(20)
+  providerTransactionId String?  @unique @map("provider_transaction_id") @db.VarChar(100)
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId], map: "idx_payments_order_id")
+  @@map("payments")
 }
 
 // Historial del pedido: cambios de estado, pagos, mensajes y notas internas.

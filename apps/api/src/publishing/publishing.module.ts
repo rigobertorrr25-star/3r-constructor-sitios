@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthModule } from '../auth/auth.module.js';
-import { PublicSitesController, PublishingController } from './publishing.controller.js';
+import { PublicDomainsController, PublicSitesController, PublishingController } from './publishing.controller.js';
 import { PublishingService } from './publishing.service.js';
 import { R2PublishStorage } from './r2-storage.js';
 import { LocalPublishStorage, PUBLISH_STORAGE } from './storage.js';
 
 @Module({
   imports: [AuthModule],
-  controllers: [PublishingController, PublicSitesController],
+  controllers: [PublishingController, PublicSitesController, PublicDomainsController],
   providers: [
     PublishingService,
     {

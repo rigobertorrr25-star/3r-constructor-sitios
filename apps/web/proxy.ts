@@ -75,10 +75,48 @@ function publishedLabel(request: NextRequest): string | null {
   return label && label !== 'www' && !label.includes('.') ? label : null;
 }
 
+const hostOf = (request: NextRequest) => (request.headers.get('host') ?? '').split(':')[0].toLowerCase();
+
+/** Direcciones de la propia aplicación: nunca se buscan como dominio de un cliente. */
+function isAppHost(host: string) {
+  return (
+    !host ||
+    host === SITES_ROOT_HOST ||
+    host === `www.${SITES_ROOT_HOST}` ||
+    host === 'localhost' ||
+    host.endsWith('.localhost') ||
+    host.endsWith('.vercel.app') ||
+    /^[\d.]+$/.test(host)
+  );
+}
+
+// Dominios propios de clientes (tunegocio.com → etiqueta del sitio). Se guardan un rato para no
+// preguntarle a la API en cada visita; un dominio sin sitio también se recuerda, por menos tiempo.
+const customDomains = new Map<string, { label: string | null; expires: number }>();
+
+async function customDomainLabel(host: string): Promise<string | null> {
+  const cached = customDomains.get(host);
+  if (cached && cached.expires > Date.now()) return cached.label;
+  let label: string | null = null;
+  let ok = true;
+  try {
+    const res = await fetch(`${API_URL}/public/domains/${encodeURIComponent(host)}`, { cache: 'no-store' });
+    if (res.ok) label = ((await res.json()) as { label?: string }).label ?? null;
+    else ok = res.status === 404;
+  } catch {
+    ok = false;
+  }
+  // Si la API falló, no se recuerda: la próxima visita vuelve a preguntar.
+  if (ok) customDomains.set(host, { label, expires: Date.now() + (label ? 5 * 60_000 : 60_000) });
+  return label;
+}
+
 /** Sirve los sitios publicados por su dirección y protege las áreas privadas (renovando el token si caducó). */
 export async function proxy(request: NextRequest) {
-  // 1. Dirección propia de un cliente: todo se reescribe a su sitio publicado; nunca a la aplicación.
-  const label = publishedLabel(request);
+  // 1. Dirección propia de un cliente (subdominio de 3R o su dominio propio): todo se reescribe a su
+  //    sitio publicado; nunca a la aplicación.
+  const host = hostOf(request);
+  const label = publishedLabel(request) ?? (isAppHost(host) ? null : await customDomainLabel(host));
   if (label) {
     const path = request.nextUrl.pathname;
     // El formulario de contacto usa una acción absoluta "/s/{label}/contact" (funciona igual con o sin

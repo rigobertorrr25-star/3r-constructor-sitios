@@ -72,6 +72,8 @@ export type Package = {
   deliveryDays: number | null;
   isFeatured: boolean;
   sortOrder: number;
+  /** Lo que suma el dominio propio al pago único (igual para todos los paquetes). */
+  domainAddonCents?: number;
   isActive?: boolean;
   _count?: { orders: number };
 };
@@ -109,6 +111,8 @@ export type OrderSummary = {
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   priceCents: number;
+  /** Parte del total que corresponde al dominio propio; null si no lo pidió. */
+  domainPriceCents?: number | null;
   monthlyPriceCents: number | null;
   currency: string;
   amountPaidCents: number;
@@ -135,6 +139,8 @@ export type OrderDetail = OrderSummary & {
   deliveredAt: string | null;
   events: OrderEvent[];
   formSubmissions: FormSubmission[];
+  /** Si el cliente puede pagar en línea con Wompi. */
+  onlinePayment?: boolean;
 };
 
 export type AdminOrderRow = OrderSummary & {
@@ -165,6 +171,9 @@ export type PortfolioItem = {
 export type PublicationStatus = {
   published: boolean;
   url: string | null;
+  /** Dominio propio del cliente (tunegocio.com), si se le asignó. */
+  customDomain?: string | null;
+  customUrl?: string | null;
   publishedAt: string | null;
   hasUnpublishedChanges: boolean;
 };

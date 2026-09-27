@@ -62,6 +62,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
             <h2 className="font-display text-[20px] font-semibold text-foreground">Lo que pidió</h2>
             <p className="mt-2 text-[14.5px] text-muted-foreground">
               {order.package.name} · {formatMoney(order.priceCents, order.currency)}
+              {order.domainPriceCents ? ` (incluye dominio propio: ${formatMoney(order.domainPriceCents, order.currency)})` : ''}
               {order.monthlyPriceCents !== null ? ` + ${formatMoney(order.monthlyPriceCents, order.currency)}/mes de mantenimiento` : ' · sin mensualidad'}
             </p>
             <dl className="mt-5 space-y-3 text-[14.5px]">

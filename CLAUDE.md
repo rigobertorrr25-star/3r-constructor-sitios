@@ -14,9 +14,13 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 - Instagram: se entregó foto de perfil, carrusel de presentación y el contenido de octubre 2026 (14 publicaciones,
   calendario en https://claude.ai/artifact/6A1HRPqkdhT4PwXqbvon6Q). No hay conexión para publicar directo: Rigoberto
   programa en Meta Business Suite.
-- Pendiente de Rigoberto: confirmar precios en `/admin/paquetes` (los del seed son de ejemplo), revisar que el
-  portafolio en vivo tenga capturas, datos de pago (`PAYMENT_INSTRUCTIONS` en Render) y su usuario de Instagram
-  (para poner el ícono en el pie de la página y en los datos estructurados).
+- Instagram de 3R: https://www.instagram.com/3r.paginas_/ (en el pie de la portada y en los datos para Google).
+- Precios de los paquetes: ya confirmados por Rigoberto en `/admin/paquetes`.
+- Dominio propio del cliente: +$50.000 (pago único, `DOMAIN_ADDON_CENTS`). El equipo lo asigna en el pedido en
+  `/admin` y lo agrega a mano en Vercel (ver README, "Dominio propio de un cliente").
+- Wompi: código listo (27 sep 2026). Faltan las llaves de Rigoberto en Render (`WOMPI_*`) y la URL de eventos en Wompi.
+- Pendiente de Rigoberto: datos de pago por transferencia (`PAYMENT_INSTRUCTIONS` en la web) y revisar que el
+  portafolio en vivo tenga capturas. Siguiente contenido: noviembre/diciembre para Instagram.
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto

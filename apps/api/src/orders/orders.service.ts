@@ -8,9 +8,10 @@ import {
 import type { Prisma } from '../generated/prisma/client.js';
 import { AuditService } from '../audit/audit.service.js';
 import { EmailService } from '../email/email.service.js';
+import { WompiConfig } from '../payments/wompi.config.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { CreateOrderDto } from './dto/order.dto.js';
-import { CLIENT_CANCELLABLE, MAX_OPEN_ORDERS_PER_USER, STATUS_LABELS, orderCode, type OrderStatus } from './orders.constants.js';
+import { CLIENT_CANCELLABLE, DOMAIN_ADDON_CENTS, MAX_OPEN_ORDERS_PER_USER, STATUS_LABELS, orderCode, type OrderStatus } from './orders.constants.js';
 
 const orderSummary = {
   id: true,
@@ -19,6 +20,7 @@ const orderSummary = {
   paymentStatus: true,
   priceCents: true,
   monthlyPriceCents: true,
+  domainPriceCents: true,
   currency: true,
   amountPaidCents: true,
   deliveryUrl: true,
@@ -33,6 +35,7 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly email: EmailService,
+    private readonly wompi: WompiConfig,
   ) {}
 
   async create(userId: string, dto: CreateOrderDto, ip?: string) {
@@ -60,12 +63,14 @@ export class OrdersService {
     }
 
     const maintenance = !!dto.maintenance && pkg.monthlyPriceCents !== null;
+    const domainPriceCents = dto.customDomain ? DOMAIN_ADDON_CENTS : null;
     const order = await this.prisma.order.create({
       data: {
         userId,
         packageId: pkg.id,
         status: 'new',
-        priceCents: pkg.priceCents,
+        priceCents: pkg.priceCents + (domainPriceCents ?? 0),
+        domainPriceCents,
         monthlyPriceCents: maintenance ? pkg.monthlyPriceCents : null,
         currency: pkg.currency,
         brief: JSON.parse(JSON.stringify(dto.brief)) as Prisma.InputJsonValue,
@@ -86,7 +91,7 @@ export class OrdersService {
       userId,
       entityType: 'order',
       entityId: order.id,
-      metadata: { package: pkg.slug, maintenance },
+      metadata: { package: pkg.slug, maintenance, customDomain: domainPriceCents !== null },
       ipAddress: ip,
     });
     await this.email.sendAdminNewOrder({
@@ -141,6 +146,8 @@ export class OrdersService {
       ...rest,
       events: events.map(({ actorId, ...event }) => ({ ...event, fromTeam: actorId !== userId })),
       formSubmissions: site?.formSubmissions ?? [],
+      // Si el cliente puede pagar en línea (Wompi configurado).
+      onlinePayment: this.wompi.enabled,
     };
   }
 
