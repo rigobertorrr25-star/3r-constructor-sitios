@@ -18,8 +18,8 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 - Precios de los paquetes: ya confirmados por Rigoberto en `/admin/paquetes`.
 - Dominio propio del cliente: +$50.000 (pago único, `DOMAIN_ADDON_CENTS`). El equipo lo asigna en el pedido en
   `/admin` y lo agrega a mano en Vercel (ver README, "Dominio propio de un cliente").
-- Wompi: publicado (27 sep 2026). Llaves de PRUEBA (sandbox) puestas en Render y URL de eventos configurada en
-  Wompi. Falta: pago de prueba y luego cambiar a llaves de producción (pub_prod_…).
+- Wompi: publicado (27 sep 2026). Pago de prueba (sandbox) hecho y funcionando. Falta cambiar en Render a las llaves
+  de producción (pub_prod_…, prod_integrity_…, prod_events_…) y poner la URL de eventos en el ambiente de producción.
 - Pendiente de Rigoberto: datos de pago por transferencia (`PAYMENT_INSTRUCTIONS` en la web) y revisar que el
   portafolio en vivo tenga capturas. Siguiente contenido: noviembre/diciembre para Instagram.
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
