@@ -117,7 +117,7 @@ describe('pago en línea con Wompi y dominio propio', () => {
     assert.equal(pkg.domainAddonCents, 5_000_000);
   });
 
-  it('con dominio propio, el pedido suma $50.000 al pago único', async () => {
+  it('con dominio propio, el pedido suma el primer año del dominio ($50.000)', async () => {
     const res = await call('POST', '/orders', { token: tokens.a, body: { packageSlug: 'negocio', customDomain: true, brief } });
     assert.equal(res.status, 201);
     order = res.body;

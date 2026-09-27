@@ -132,7 +132,7 @@ export default async function OrderPage({
         </dl>
         {order.domainPriceCents ? (
           <p className="mt-4 text-[14px] text-muted-foreground">
-            El total incluye tu dominio propio: {formatMoney(order.domainPriceCents, order.currency)}.
+            El total incluye el primer año de tu dominio propio: {formatMoney(order.domainPriceCents, order.currency)}. El dominio se renueva cada año.
           </p>
         ) : null}
         {order.monthlyPriceCents !== null ? (

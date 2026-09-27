@@ -84,7 +84,7 @@ export class CreateOrderDto {
   @IsBoolean()
   maintenance?: boolean;
 
-  /** Si quiere su página en un dominio propio (tunegocio.com). Suma DOMAIN_ADDON_CENTS al pago único. */
+  /** Si quiere su página en un dominio propio (tunegocio.com). Suma al pedido el primer año del dominio (DOMAIN_ADDON_CENTS); se renueva cada año. */
   @IsOptional()
   @IsBoolean()
   customDomain?: boolean;

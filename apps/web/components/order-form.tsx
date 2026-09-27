@@ -99,7 +99,7 @@ export function OrderForm({ pkg }: { pkg: Package }) {
               <input type="radio" name="address" value="own" defaultChecked={v.address === 'own'} onChange={() => setAddress('own')} className="accent-[#8a9bff]" />
               <span>
                 Dominio propio: tunegocio.com
-                <span className="block text-[13px] text-muted-foreground">+ {formatMoney(domainCents, pkg.currency)} pago único</span>
+                <span className="block text-[13px] text-muted-foreground">+ {formatMoney(domainCents, pkg.currency)} al año</span>
               </span>
             </label>
           </div>
@@ -158,7 +158,7 @@ export function OrderForm({ pkg }: { pkg: Package }) {
         </div>
         {address === 'own' ? (
           <p className="text-[14px] text-muted-foreground">
-            Incluye {formatMoney(pkg.priceCents, pkg.currency)} del paquete + {formatMoney(domainCents, pkg.currency)} del dominio propio.
+            Incluye {formatMoney(pkg.priceCents, pkg.currency)} del paquete + {formatMoney(domainCents, pkg.currency)} del primer año del dominio propio. Desde el segundo año, el dominio se renueva por {formatMoney(domainCents, pkg.currency)} al año.
           </p>
         ) : null}
         {maintenance && pkg.monthlyPriceCents !== null ? (

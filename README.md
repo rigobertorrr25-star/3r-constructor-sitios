@@ -188,7 +188,8 @@ Notas de seguridad para producción: el renovador de tokens del proxy comparte u
 
 ## Dominio propio de un cliente
 
-1. El cliente elige "Dominio propio" al pedir (suma $50.000) y escribe su dominio, o pide ayuda para comprarlo.
+1. El cliente elige "Dominio propio" al pedir (suma $50.000, el primer año; el dominio cuesta $50.000 al año) y escribe
+   su dominio, o pide ayuda para comprarlo. La renovación de cada año se cobra aparte, por ahora a mano.
 2. En `/admin`, en su pedido, escribe el dominio en **Dominio propio del cliente** y guarda.
 3. En Vercel (proyecto de la web) agrega `sudominio.com` y `www.sudominio.com` como dominios, y crea en el DNS del
    dominio los registros que Vercel indique. Cuando Vercel lo marque como válido, el sitio abre con https ahí.

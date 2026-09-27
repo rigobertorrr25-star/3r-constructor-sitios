@@ -72,7 +72,7 @@ export type Package = {
   deliveryDays: number | null;
   isFeatured: boolean;
   sortOrder: number;
-  /** Lo que suma el dominio propio al pago único (igual para todos los paquetes). */
+  /** Lo que cuesta el dominio propio por año; el primer año se suma al pago del pedido (igual para todos los paquetes). */
   domainAddonCents?: number;
   isActive?: boolean;
   _count?: { orders: number };
