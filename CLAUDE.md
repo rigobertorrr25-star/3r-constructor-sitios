@@ -6,21 +6,28 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 ## Estado (actualízalo cuando algo cambie: otras sesiones no recuerdan lo que se habló)
 
 - **Publicada en producción** en https://3rpaginas.com: base en Neon, API en Render, web en Vercel, archivos en
-  Cloudflare R2 y correos con Resend. `main` es lo que está en vivo.
+  Cloudflare R2 y correos con Resend. `main` es lo que está en vivo. API en Render: https://threer-api-79ux.onrender.com
+  (plan gratis: se duerme sin uso; no lanzar dos deploys a la vez o `prisma migrate deploy` falla por el bloqueo).
 - Política de privacidad en `/privacidad` (Ley 1581), completa. Datos del responsable en `RESPONSABLE` de
   `apps/web/app/privacidad/page.tsx`.
 - Portada (26 sep 2026): botón "Ver paquetes" fijo arriba, sección "Lo que pasa hoy" (problema del cliente), león
   recortado en cuadrado y fundido con el fondo, globo de la mascota que se cierra al hacer scroll.
-- Instagram: se entregó foto de perfil, carrusel de presentación y el contenido de octubre 2026 (14 publicaciones,
-  calendario en https://claude.ai/artifact/6A1HRPqkdhT4PwXqbvon6Q). No hay conexión para publicar directo: Rigoberto
-  programa en Meta Business Suite.
+- Instagram: se entregó foto de perfil, carrusel de presentación y el contenido de octubre 2026 (calendario en
+  https://claude.ai/artifact/6A1HRPqkdhT4PwXqbvon6Q). Rigoberto programó hasta el 15 oct. Segundo paquete (16 oct –
+  15 nov: piezas 8–14 de octubre + 6 nuevas de noviembre + 15 historias con sticker por día) en
+  https://claude.ai/artifact/LS8mhicvdzLWUUdHDGAMvp. El post del 14 nov (pago en línea) solo sale con Wompi en
+  producción. Siguiente: 16 nov – diciembre. No hay conexión para publicar directo: Rigoberto programa en Meta
+  Business Suite.
 - Instagram de 3R: https://www.instagram.com/3r.paginas_/ (en el pie de la portada y en los datos para Google).
 - Precios de los paquetes: ya confirmados por Rigoberto en `/admin/paquetes`.
-- Dominio propio del cliente: +$50.000 (pago único, `DOMAIN_ADDON_CENTS`). El equipo lo asigna en el pedido en
+- Dominio propio del cliente: $50.000 al año (`DOMAIN_ADDON_CENTS`); el pedido cobra el primer año. La renovación
+  se cobra aparte (a mano): 30 días antes de vencer, un cron diario de Vercel avisa al cliente (correo + mensaje en
+  su pedido) y al equipo; en `/admin` se marca "Renovado un año". Necesita `CRON_SECRET` en Render y en Vercel. El equipo lo asigna en el pedido en
   `/admin` y lo agrega a mano en Vercel (ver README, "Dominio propio de un cliente").
-- Wompi: código listo (27 sep 2026). Faltan las llaves de Rigoberto en Render (`WOMPI_*`) y la URL de eventos en Wompi.
+- Wompi: publicado (27 sep 2026). Pago de prueba (sandbox) hecho y funcionando. Falta cambiar en Render a las llaves
+  de producción (pub_prod_…, prod_integrity_…, prod_events_…) y poner la URL de eventos en el ambiente de producción.
 - Pendiente de Rigoberto: datos de pago por transferencia (`PAYMENT_INSTRUCTIONS` en la web) y revisar que el
-  portafolio en vivo tenga capturas. Siguiente contenido: noviembre/diciembre para Instagram.
+  portafolio en vivo tenga capturas. Siguiente contenido: 16 nov – diciembre para Instagram.
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto

@@ -117,6 +117,26 @@ export function clientMessage(data: { firstName?: string | null; orderCode: stri
   return { subject: `Nuevo mensaje sobre tu pedido ${sanitizeHeader(data.orderCode, 30)} — 3R`, html, text };
 }
 
+export function domainRenewal(data: {
+  firstName?: string | null;
+  domain: string;
+  expiresOn: string;
+  expired: boolean;
+  price: string;
+  orderUrl: string;
+}): RenderedEmail {
+  const when = data.expired ? `venció el ${data.expiresOn}` : `vence el ${data.expiresOn}`;
+  const { html, text } = layout(
+    `<p>${greeting(data.firstName)}</p>
+     <p>El dominio de tu página, <strong>${escapeHtml(data.domain)}</strong>, ${escapeHtml(when)}.</p>
+     <p>Renovarlo cuesta <strong>${escapeHtml(data.price)}</strong> por un año más. Si no se renueva, tu página deja de abrir en esa dirección.</p>
+     <p>Para renovarlo, escríbenos desde tu pedido y te decimos cómo pagar.</p>
+     ${button(data.orderUrl, 'Renovar mi dominio')}`,
+    `${greeting(data.firstName)}\n\nEl dominio de tu página, ${data.domain}, ${when}.\n\nRenovarlo cuesta ${data.price} por un año más. Si no se renueva, tu página deja de abrir en esa dirección.\n\nPara renovarlo, escríbenos desde tu pedido: ${data.orderUrl}`,
+  );
+  return { subject: `Tu dominio ${sanitizeHeader(data.domain, 80)} ${data.expired ? 'venció' : 'vence pronto'} — 3R`, html, text };
+}
+
 // ───────── al equipo (administrador) ─────────
 
 export function adminNewSignup(data: { email: string; firstName?: string | null }): RenderedEmail {
@@ -156,6 +176,18 @@ export function adminNewMessage(data: { orderCode: string; businessName: string;
     `Mensaje nuevo del cliente en el pedido ${data.orderCode} (${data.businessName}):\n"${data.body}"\n\n${data.adminUrl}`,
   );
   return { subject: `Mensaje de ${sanitizeHeader(data.businessName, 50)} — ${sanitizeHeader(data.orderCode, 30)}`, html, text };
+}
+
+export function adminDomainRenewal(data: { domain: string; expiresOn: string; expired: boolean; businessName: string; clientEmail: string | null; adminUrl: string | null }): RenderedEmail {
+  const when = data.expired ? `venció el ${data.expiresOn}` : `vence el ${data.expiresOn}`;
+  const who = data.clientEmail ? `Se le avisó al cliente (${data.clientEmail}).` : 'Este sitio no tiene pedido: no se le avisó a ningún cliente.';
+  const { html, text } = layout(
+    `<p>El dominio <strong>${escapeHtml(data.domain)}</strong> (${escapeHtml(data.businessName)}) ${escapeHtml(when)}.</p>
+     <p>${escapeHtml(who)} Cuando pague, renuévalo en el registrador y marca «Renovado un año» en el pedido.</p>
+     ${data.adminUrl ? button(data.adminUrl, 'Ver el pedido') : ''}`,
+    `El dominio ${data.domain} (${data.businessName}) ${when}.\n${who} Cuando pague, renuévalo en el registrador y marca «Renovado un año» en el pedido.${data.adminUrl ? `\n\n${data.adminUrl}` : ''}`,
+  );
+  return { subject: `Dominio por renovar: ${sanitizeHeader(data.domain, 80)}`, html, text };
 }
 
 // ───────── formulario de contacto de una página publicada ─────────

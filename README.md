@@ -188,11 +188,17 @@ Notas de seguridad para producción: el renovador de tokens del proxy comparte u
 
 ## Dominio propio de un cliente
 
-1. El cliente elige "Dominio propio" al pedir (suma $50.000) y escribe su dominio, o pide ayuda para comprarlo.
+1. El cliente elige "Dominio propio" al pedir (suma $50.000, el primer año; el dominio cuesta $50.000 al año) y escribe
+   su dominio, o pide ayuda para comprarlo. La renovación de cada año se cobra aparte, por ahora a mano.
 2. En `/admin`, en su pedido, escribe el dominio en **Dominio propio del cliente** y guarda.
 3. En Vercel (proyecto de la web) agrega `sudominio.com` y `www.sudominio.com` como dominios, y crea en el DNS del
    dominio los registros que Vercel indique. Cuando Vercel lo marque como válido, el sitio abre con https ahí.
 4. En el pedido, "Usar como enlace de entrega" ya toma la dirección del dominio propio.
+5. **Renovación anual.** Al asignarlo, el dominio queda pagado por un año (la fecha se cambia en el pedido si el
+   registrador dice otra). Todos los días a las 9:00 a. m. (hora de Colombia) el cron de Vercel revisa los dominios:
+   30 días antes de vencer, al cliente le llega un correo y un mensaje en su pedido, y al equipo un correo. Cuando el
+   cliente pague y se renueve en el registrador, en el pedido se toca **Renovado un año**. Requiere `CRON_SECRET`
+   (la misma clave) en Render y en Vercel.
 
 ## Notas técnicas
 

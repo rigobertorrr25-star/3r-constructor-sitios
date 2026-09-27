@@ -315,6 +315,27 @@ export async function setCustomDomainAction(_prev: FormState, formData: FormData
   return { ok: Date.now() };
 }
 
+/** Cambia la fecha de vencimiento del dominio propio (la que diga el registrador). */
+export async function setDomainExpiryAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const siteId = text(formData, 'siteId');
+  const res = await authedApi<ApiError>(`/sites/${encodeURIComponent(siteId)}/domain/expiry`, {
+    method: 'PUT',
+    body: { expiresOn: text(formData, 'expiresOn') },
+  });
+  if (!res.ok) return fail(errorText(res.data, 'No se pudo guardar la fecha.'), formData);
+  revalidatePath('/admin/pedidos/[id]', 'page');
+  return { ok: Date.now() };
+}
+
+/** El cliente pagó la renovación del dominio: un año más. */
+export async function renewDomainAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const siteId = text(formData, 'siteId');
+  const res = await authedApi<ApiError>(`/sites/${encodeURIComponent(siteId)}/domain/renew`, { method: 'POST' });
+  if (!res.ok) return fail(errorText(res.data, 'No se pudo renovar el dominio.'), formData);
+  revalidatePath('/admin/pedidos/[id]', 'page');
+  return { ok: Date.now() };
+}
+
 /** Usa la dirección publicada como el enlace que recibe el cliente al entregar. */
 export async function setDeliveryUrlAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const orderId = text(formData, 'orderId');

@@ -14,33 +14,33 @@ datasource db {
 // ───────────────────────── USUARIOS ─────────────────────────
 
 model User {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email           String    @unique @db.VarChar(255)
-  passwordHash    String    @map("password_hash")
-  firstName       String?   @map("first_name") @db.VarChar(100)
-  lastName        String?   @map("last_name") @db.VarChar(100)
-  avatarUrl       String?   @map("avatar_url")
-  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6)
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email             String    @unique @db.VarChar(255)
+  passwordHash      String    @map("password_hash")
+  firstName         String?   @map("first_name") @db.VarChar(100)
+  lastName          String?   @map("last_name") @db.VarChar(100)
+  avatarUrl         String?   @map("avatar_url")
+  emailVerifiedAt   DateTime? @map("email_verified_at") @db.Timestamptz(6)
   // Cuándo aceptó la política de tratamiento de datos (prueba de la autorización, Ley 1581).
   privacyAcceptedAt DateTime? @map("privacy_accepted_at") @db.Timestamptz(6)
   // active | suspended | deleted
-  status          String    @default("active") @db.VarChar(30)
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  status            String    @default("active") @db.VarChar(30)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  roles         UserRole[]
-  sessions      UserSession[]
-  sites         Site[]
-  pageVersions  PageVersion[]
-  assets        Asset[]
-  subscriptions Subscription[]
-  invoices      Invoice[]
-  auditLogs     AuditLog[]
+  roles              UserRole[]
+  sessions           UserSession[]
+  sites              Site[]
+  pageVersions       PageVersion[]
+  assets             Asset[]
+  subscriptions      Subscription[]
+  invoices           Invoice[]
+  auditLogs          AuditLog[]
   verificationTokens VerificationToken[]
-  tickets       SupportTicket[] @relation("TicketRequester")
-  assignedTickets SupportTicket[] @relation("TicketAssignee")
-  orders        Order[]
-  orderEvents   OrderEvent[]
+  tickets            SupportTicket[]     @relation("TicketRequester")
+  assignedTickets    SupportTicket[]     @relation("TicketAssignee")
+  orders             Order[]
+  orderEvents        OrderEvent[]
 
   @@map("users")
 }
@@ -89,9 +89,9 @@ model Site {
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  template         Template?     @relation(fields: [templateId], references: [id], onDelete: SetNull)
-  publishedVersion PageVersion?  @relation("SitePublishedVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template         Template?        @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  publishedVersion PageVersion?     @relation("SitePublishedVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
   pages            Page[]
   assets           Asset[]
   domains          Domain[]
@@ -183,22 +183,27 @@ model Template {
 // ───────────────────────── DOMINIOS ─────────────────────────
 
 model Domain {
-  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  siteId             String    @map("site_id") @db.Uuid
-  domain             String    @unique @db.VarChar(255)
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  siteId              String    @map("site_id") @db.Uuid
+  domain              String    @unique @db.VarChar(255)
   // subdomain | custom
-  type               String    @default("custom") @db.VarChar(30)
+  type                String    @default("custom") @db.VarChar(30)
   // pending | verified | failed
-  verificationStatus String    @default("pending") @map("verification_status") @db.VarChar(30)
+  verificationStatus  String    @default("pending") @map("verification_status") @db.VarChar(30)
   // pending | active | failed
-  sslStatus          String    @default("pending") @map("ssl_status") @db.VarChar(30)
-  verifiedAt         DateTime? @map("verified_at") @db.Timestamptz(6)
-  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  sslStatus           String    @default("pending") @map("ssl_status") @db.VarChar(30)
+  verifiedAt          DateTime? @map("verified_at") @db.Timestamptz(6)
+  // Solo dominios propios: hasta cuándo está pagado (se renueva cada año) y cuándo se avisó al cliente
+  // que se vence. Renovar vuelve a dejar el aviso en null.
+  expiresAt           DateTime? @map("expires_at") @db.Timestamptz(6)
+  renewalNoticeSentAt DateTime? @map("renewal_notice_sent_at") @db.Timestamptz(6)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
   @@index([siteId], map: "idx_domains_site_id")
+  @@index([expiresAt], map: "idx_domains_expires_at")
   @@map("domains")
 }
 
@@ -238,8 +243,8 @@ model Publication {
   publishedAt   DateTime? @map("published_at") @db.Timestamptz(6)
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  site    Site        @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  version PageVersion @relation(fields: [versionId], references: [id])
+  site    Site            @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  version PageVersion     @relation(fields: [versionId], references: [id])
   jobs    DeploymentJob[]
 
   @@index([siteId], map: "idx_publications_site_id")
@@ -426,10 +431,10 @@ model Order {
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user    User         @relation(fields: [userId], references: [id])
-  package Package      @relation(fields: [packageId], references: [id])
-  site    Site?        @relation(fields: [siteId], references: [id], onDelete: SetNull)
-  events  OrderEvent[]
+  user     User         @relation(fields: [userId], references: [id])
+  package  Package      @relation(fields: [packageId], references: [id])
+  site     Site?        @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  events   OrderEvent[]
   payments Payment[]
 
   @@index([userId], map: "idx_orders_user_id")
@@ -461,16 +466,16 @@ model Payment {
 
 // Historial del pedido: cambios de estado, pagos, mensajes y notas internas.
 model OrderEvent {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orderId          String   @map("order_id") @db.Uuid
-  actorId          String?  @map("actor_id") @db.Uuid
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId         String   @map("order_id") @db.Uuid
+  actorId         String?  @map("actor_id") @db.Uuid
   // status | payment | message | note | delivery
-  kind             String   @db.VarChar(30)
-  body             String?
-  metadata         Json?
+  kind            String   @db.VarChar(30)
+  body            String?
+  metadata        Json?
   // Las notas internas no las ve el cliente.
-  visibleToClient  Boolean  @default(true) @map("visible_to_client")
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  visibleToClient Boolean  @default(true) @map("visible_to_client")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
   actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
