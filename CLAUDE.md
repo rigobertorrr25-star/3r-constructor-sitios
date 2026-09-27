@@ -12,9 +12,12 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   `apps/web/app/privacidad/page.tsx`.
 - Portada (26 sep 2026): botón "Ver paquetes" fijo arriba, sección "Lo que pasa hoy" (problema del cliente), león
   recortado en cuadrado y fundido con el fondo, globo de la mascota que se cierra al hacer scroll.
-- Instagram: se entregó foto de perfil, carrusel de presentación y el contenido de octubre 2026 (14 publicaciones,
-  calendario en https://claude.ai/artifact/6A1HRPqkdhT4PwXqbvon6Q). No hay conexión para publicar directo: Rigoberto
-  programa en Meta Business Suite.
+- Instagram: se entregó foto de perfil, carrusel de presentación y el contenido de octubre 2026 (calendario en
+  https://claude.ai/artifact/6A1HRPqkdhT4PwXqbvon6Q). Rigoberto programó hasta el 15 oct. Segundo paquete (16 oct –
+  15 nov: piezas 8–14 de octubre + 6 nuevas de noviembre + 15 historias con sticker por día) en
+  https://claude.ai/artifact/LS8mhicvdzLWUUdHDGAMvp. El post del 14 nov (pago en línea) solo sale con Wompi en
+  producción. Siguiente: 16 nov – diciembre. No hay conexión para publicar directo: Rigoberto programa en Meta
+  Business Suite.
 - Instagram de 3R: https://www.instagram.com/3r.paginas_/ (en el pie de la portada y en los datos para Google).
 - Precios de los paquetes: ya confirmados por Rigoberto en `/admin/paquetes`.
 - Dominio propio del cliente: +$50.000 (pago único, `DOMAIN_ADDON_CENTS`). El equipo lo asigna en el pedido en
@@ -22,7 +25,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 - Wompi: publicado (27 sep 2026). Pago de prueba (sandbox) hecho y funcionando. Falta cambiar en Render a las llaves
   de producción (pub_prod_…, prod_integrity_…, prod_events_…) y poner la URL de eventos en el ambiente de producción.
 - Pendiente de Rigoberto: datos de pago por transferencia (`PAYMENT_INSTRUCTIONS` en la web) y revisar que el
-  portafolio en vivo tenga capturas. Siguiente contenido: noviembre/diciembre para Instagram.
+  portafolio en vivo tenga capturas. Siguiente contenido: 16 nov – diciembre para Instagram.
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto
