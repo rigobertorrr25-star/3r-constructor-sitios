@@ -28,9 +28,6 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   de producción (pub_prod_…, prod_integrity_…, prod_events_…) y poner la URL de eventos en el ambiente de producción.
 - Pendiente de Rigoberto: datos de pago por transferencia (`PAYMENT_INSTRUCTIONS` en la web) y revisar que el
   portafolio en vivo tenga capturas. Siguiente contenido: 16 nov – diciembre para Instagram.
-- Control de asistencia con QR (28 sep 2026): nuevo servicio en `/admin/asistencia` (ver README). Primer negocio:
-  Azul Caribe Lounge, 11 empleados, turnos 8am–3pm, 11am–6pm y 2pm–9pm. Falta que Rigoberto lo cree en producción, cargue
-  los empleados con su PIN y deje la tablet en la entrada.
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto

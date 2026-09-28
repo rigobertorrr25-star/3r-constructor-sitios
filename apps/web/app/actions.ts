@@ -10,7 +10,6 @@ import {
   rawApi,
   setSession,
 } from '@/lib/api';
-import { fromLocalInput, type PunchResult } from '@/lib/attendance';
 import { toCents } from '@/lib/orders';
 import { errorText, type ApiError } from '@/lib/types';
 
@@ -369,89 +368,4 @@ export async function deleteSiteAction(formData: FormData) {
   const siteId = text(formData, 'siteId');
   await authedApi(`/sites/${encodeURIComponent(siteId)}`, { method: 'DELETE' });
   revalidatePath('/admin/sitios');
-}
-
-// ───────── asistencia (control de entrada y salida con QR) ─────────
-
-export type PunchState = { error?: string; code?: string; result?: PunchResult } | undefined;
-
-/** Lo usa el empleado desde su celular, sin sesión: el código del QR y su PIN. */
-export async function punchAction(_prev: PunchState, formData: FormData): Promise<PunchState> {
-  const slug = text(formData, 'slug');
-  const pin = text(formData, 'pin');
-  if (!/^\d{4}$/.test(pin)) return { error: 'El PIN tiene 4 números.' };
-  try {
-    const res = await rawApi<PunchResult & ApiError>(`/attendance/${encodeURIComponent(slug)}/punch`, {
-      method: 'POST',
-      body: { code: text(formData, 'code'), pin },
-    });
-    if (res.status === 429) return { error: 'Demasiados intentos. Espera un minuto e intenta de nuevo.' };
-    if (!res.ok) return { error: errorText(res.data, 'No se pudo marcar. Intenta de nuevo.'), code: res.data?.code };
-    return { result: res.data };
-  } catch {
-    return { error: 'No hay conexión con el servidor. Intenta de nuevo en un momento.' };
-  }
-}
-
-export async function createAttendanceBusinessAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const res = await authedApi<{ id: string } & ApiError>('/admin/attendance', { method: 'POST', body: { name: text(formData, 'name') } });
-  if (!res.ok) return fail(errorText(res.data, 'No se pudo crear el negocio.'), formData);
-  redirect(`/admin/asistencia/${res.data.id}`);
-}
-
-export async function saveAttendanceEmployeeAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const businessId = text(formData, 'businessId');
-  const employeeId = optional(formData, 'employeeId');
-  const pin = text(formData, 'pin');
-  const body = {
-    name: text(formData, 'name'),
-    shiftStart: text(formData, 'shiftStart'),
-    shiftEnd: text(formData, 'shiftEnd'),
-    // En una edición, el PIN vacío deja el que tenía.
-    ...(pin || !employeeId ? { pin } : {}),
-    ...(employeeId ? { isActive: checked(formData, 'isActive') } : {}),
-  };
-  if ((body.shiftStart && !body.shiftEnd) || (!body.shiftStart && body.shiftEnd)) {
-    return fail('Pon la hora de inicio y la de fin del turno, o deja las dos vacías.', formData);
-  }
-  // Al crear, los campos vacíos se omiten para no chocar con las reglas de formato.
-  const payload = employeeId ? body : Object.fromEntries(Object.entries(body).filter(([, value]) => value !== ''));
-  const base = `/admin/attendance/${encodeURIComponent(businessId)}/employees`;
-  const res = await authedApi<ApiError>(employeeId ? `${base}/${encodeURIComponent(employeeId)}` : base, {
-    method: employeeId ? 'PATCH' : 'POST',
-    body: payload,
-  });
-  if (!res.ok) return fail(errorText(res.data, 'No se pudo guardar el empleado.'), formData);
-  revalidatePath(`/admin/asistencia/${businessId}`);
-  return { ok: Date.now() };
-}
-
-export async function rotateKioskAction(formData: FormData) {
-  const businessId = text(formData, 'businessId');
-  await authedApi(`/admin/attendance/${encodeURIComponent(businessId)}`, { method: 'PATCH', body: { rotateKiosk: true } });
-  revalidatePath(`/admin/asistencia/${businessId}`);
-}
-
-export async function updateAttendanceRecordAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const businessId = text(formData, 'businessId');
-  const recordId = text(formData, 'recordId');
-  const clockIn = fromLocalInput(text(formData, 'clockIn'));
-  if (!clockIn) return fail('Revisa la hora de entrada.', formData);
-  const exitText = text(formData, 'clockOut');
-  const clockOut = exitText ? fromLocalInput(exitText) : null;
-  if (exitText && !clockOut) return fail('Revisa la hora de salida.', formData);
-  const res = await authedApi<ApiError>(`/admin/attendance/${encodeURIComponent(businessId)}/records/${encodeURIComponent(recordId)}`, {
-    method: 'PATCH',
-    body: { clockIn, clockOut },
-  });
-  if (!res.ok) return fail(errorText(res.data, 'No se pudo corregir el registro.'), formData);
-  revalidatePath(`/admin/asistencia/${businessId}`);
-  return { ok: Date.now() };
-}
-
-export async function deleteAttendanceRecordAction(formData: FormData) {
-  const businessId = text(formData, 'businessId');
-  const recordId = text(formData, 'recordId');
-  await authedApi(`/admin/attendance/${encodeURIComponent(businessId)}/records/${encodeURIComponent(recordId)}`, { method: 'DELETE' });
-  revalidatePath(`/admin/asistencia/${businessId}`);
 }
