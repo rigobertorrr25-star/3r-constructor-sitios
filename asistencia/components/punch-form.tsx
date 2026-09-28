@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import { punchAction } from '@/app/actions';
+import { t, type Lang } from '@/lib/i18n';
 import { formatClock, formatMinutes } from '@/lib/report';
 import { Alert, Lion } from './ui';
 import { SubmitButton } from './submit-button';
@@ -37,7 +38,7 @@ function PinInput({ id, name, label, autoFocus }: { id: string; name: string; la
  * En el celular del empleado: toca su nombre y escribe su PIN (o lo crea, la primera vez). El celular
  * recuerda el nombre para la próxima.
  */
-export function PunchForm({ slug, code, employees }: { slug: string; code: string; employees: Employee[] }) {
+export function PunchForm({ slug, code, employees, lang }: { slug: string; code: string; employees: Employee[]; lang: Lang }) {
   const [state, action] = useActionState(punchAction, undefined);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const storageKey = `asistencia:${slug}:empleado`;
@@ -68,7 +69,7 @@ export function PunchForm({ slug, code, employees }: { slug: string; code: strin
     return (
       <div className="rise space-y-4 text-center" role="status">
         <div className="relative mx-auto w-fit">
-          <Lion size={96} />
+          <Lion size={96} alt={t(lang, 'lionAlt')} />
           <span
             className={`absolute -right-1 -bottom-1 flex size-9 items-center justify-center rounded-full text-[18px] font-bold ring-4 ring-card ${isIn ? 'bg-success text-primary-foreground' : 'bg-primary text-primary-foreground'}`}
             aria-hidden="true"
@@ -76,18 +77,18 @@ export function PunchForm({ slug, code, employees }: { slug: string; code: strin
             {isIn ? '→' : '←'}
           </span>
         </div>
-        <p className="font-display text-[26px] font-bold text-foreground">{isIn ? 'Entrada registrada' : 'Salida registrada'}</p>
+        <p className="font-display text-[26px] font-bold text-foreground">{isIn ? t(lang, 'entryRecorded') : t(lang, 'exitRecorded')}</p>
         <p className="text-[17px] text-muted-foreground">
-          {isIn ? `¡Hola, ${result.employeeName}! Buen turno.` : `¡Hasta luego, ${result.employeeName}!`}
+          {isIn ? t(lang, 'helloShift', { name: result.employeeName }) : t(lang, 'goodbye', { name: result.employeeName })}
         </p>
-        <p className="font-display text-[44px] font-semibold tabular-nums text-foreground">{formatClock(new Date(result.at))}</p>
+        <p className="font-display text-[44px] font-semibold tabular-nums text-foreground">{formatClock(new Date(result.at), lang)}</p>
         {result.workedMinutes !== null ? (
-          <p className="text-[16px] text-muted-foreground">Trabajaste {formatMinutes(result.workedMinutes)}.</p>
+          <p className="text-[16px] text-muted-foreground">{t(lang, 'youWorked', { time: formatMinutes(result.workedMinutes) })}</p>
         ) : null}
         {result.pinCreated ? (
-          <p className="rounded-2xl bg-success/10 px-4 py-3 text-[14px] text-[#9df0c6]">Tu PIN quedó guardado. No se lo digas a nadie.</p>
+          <p className="rounded-2xl bg-success/10 px-4 py-3 text-[14px] text-[#9df0c6]">{t(lang, 'pinSavedNote')}</p>
         ) : null}
-        <p className="pt-2 text-[14px] text-muted-foreground">Ya puedes cerrar esta página.</p>
+        <p className="pt-2 text-[14px] text-muted-foreground">{t(lang, 'closePage')}</p>
       </div>
     );
   }
@@ -104,11 +105,11 @@ export function PunchForm({ slug, code, employees }: { slug: string; code: strin
 
   if (!selected) {
     if (employees.length === 0) {
-      return <p className="text-center text-[15px] text-muted-foreground">Todavía no hay empleados registrados. Avísale al administrador.</p>;
+      return <p className="text-center text-[15px] text-muted-foreground">{t(lang, 'noEmployeesYet')}</p>;
     }
     return (
       <div className="space-y-4">
-        <p className="text-center text-[17px] font-medium text-foreground">Toca tu nombre</p>
+        <p className="text-center text-[17px] font-medium text-foreground">{t(lang, 'tapYourName')}</p>
         <ul className="grid gap-2">
           {employees.map((employee) => (
             <li key={employee.id}>
@@ -137,25 +138,25 @@ export function PunchForm({ slug, code, employees }: { slug: string; code: strin
       <div className="text-center">
         <p className="font-display text-[20px] font-semibold text-foreground">{selected.name}</p>
         <button type="button" onClick={() => choose(null)} className="mt-1 text-[14px] text-primary hover:underline">
-          No soy yo
+          {t(lang, 'notMe')}
         </button>
       </div>
 
       {creating ? (
         <>
           <p className="rounded-2xl bg-white/[0.04] px-4 py-3 text-center text-[14px] text-muted-foreground">
-            Es tu primera vez. Crea un PIN de 4 números que solo tú sepas; lo vas a usar cada vez que marques.
+            {t(lang, 'firstTimeNote')}
           </p>
-          <PinInput id="pin" name="pin" label="Crea tu PIN" autoFocus />
-          <PinInput id="pinConfirm" name="pinConfirm" label="Escríbelo otra vez" />
+          <PinInput id="pin" name="pin" label={t(lang, 'createPin')} autoFocus />
+          <PinInput id="pinConfirm" name="pinConfirm" label={t(lang, 'repeatPin')} />
         </>
       ) : (
-        <PinInput id="pin" name="pin" label="Escribe tu PIN" autoFocus />
+        <PinInput id="pin" name="pin" label={t(lang, 'enterPin')} autoFocus />
       )}
 
       {state?.error ? <Alert>{state.error}</Alert> : null}
-      <SubmitButton pendingText="Marcando…">{creating ? 'Guardar PIN y marcar' : 'Marcar'}</SubmitButton>
-      {creating ? null : <p className="text-center text-[13px] text-muted-foreground">¿Olvidaste tu PIN? Pide al administrador que lo reinicie.</p>}
+      <SubmitButton pendingText={t(lang, 'punching')}>{creating ? t(lang, 'savePinAndPunch') : t(lang, 'punch')}</SubmitButton>
+      {creating ? null : <p className="text-center text-[13px] text-muted-foreground">{t(lang, 'forgotPin')}</p>}
     </form>
   );
 }

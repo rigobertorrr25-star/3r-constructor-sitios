@@ -4,6 +4,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { SESSION_COOKIE, authConfigured, checkPassword, requireAdmin, sessionValue } from '@/lib/auth';
+import { t } from '@/lib/i18n';
+import { getLang } from '@/lib/lang';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { fromLocalInput } from '@/lib/report';
 import {
@@ -37,18 +39,22 @@ function fail(error: string, formData: FormData): FormState {
   return { error, values };
 }
 
-const messageOf = (error: unknown) => {
-  if (error instanceof AppError) return error.message;
+/** El error en el idioma de quien hizo el envío. */
+async function messageOf(error: unknown) {
+  const lang = await getLang();
+  if (error instanceof AppError) return t(lang, error.key, error.vars);
   console.error(error);
-  return 'Algo salió mal. Intenta de nuevo en un momento.';
-};
+  return t(lang, 'errGeneric');
+}
+
+const say = async (key: Parameters<typeof t>[1]) => t(await getLang(), key);
 
 // ───────── ingreso al panel ─────────
 
 export async function loginAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!allow(`login:${await clientIp()}`, 8, 60_000)) return { error: 'Demasiados intentos. Espera un minuto.' };
-  if (!authConfigured()) return { error: 'Falta configurar ADMIN_PASSWORD y SESSION_SECRET en el servidor.' };
-  if (!checkPassword(String(formData.get('password') ?? ''))) return { error: 'Clave incorrecta.' };
+  if (!allow(`login:${await clientIp()}`, 8, 60_000)) return { error: await say('errTooManyAttempts') };
+  if (!authConfigured()) return { error: await say('errAuthNotConfigured') };
+  if (!checkPassword(String(formData.get('password') ?? ''))) return { error: await say('errWrongPassword') };
   const session = sessionValue();
   (await cookies()).set(SESSION_COOKIE, session.value, {
     httpOnly: true,
@@ -72,16 +78,16 @@ export type PunchState = { error?: string; code?: string; result?: PunchResult }
 export async function punchAction(_prev: PunchState, formData: FormData): Promise<PunchState> {
   // Todos comparten el wifi del restaurante (la misma IP): el límite deja pasar un cambio de turno completo,
   // y adivinar un PIN igual exige un código vigente de la tablet.
-  if (!allow(`punch:${await clientIp()}`, 30, 60_000)) return { error: 'Demasiados intentos. Espera un minuto e intenta de nuevo.' };
+  if (!allow(`punch:${await clientIp()}`, 30, 60_000)) return { error: await say('errTooManyAttempts') };
   const pin = text(formData, 'pin');
   // Primera vez: el empleado crea su PIN y lo escribe dos veces.
   if (formData.get('creating') === '1' && pin !== text(formData, 'pinConfirm')) {
-    return { error: 'Los dos PIN no coinciden. Escríbelos otra vez.', code: 'PIN_MISMATCH' };
+    return { error: await say('errPinMismatch'), code: 'PIN_MISMATCH' };
   }
   try {
     return { result: await punch(text(formData, 'slug'), text(formData, 'code'), text(formData, 'employeeId'), pin) };
   } catch (error) {
-    return { error: messageOf(error), code: error instanceof AppError ? error.code : undefined };
+    return { error: await messageOf(error), code: error instanceof AppError ? error.code : undefined };
   }
 }
 
@@ -93,7 +99,7 @@ export async function createBusinessAction(_prev: FormState, formData: FormData)
   try {
     id = await createBusiness(text(formData, 'name'));
   } catch (error) {
-    return fail(messageOf(error), formData);
+    return fail(await messageOf(error), formData);
   }
   redirect(`/panel/${id}`);
 }
@@ -107,7 +113,7 @@ export async function saveEmployeeAction(_prev: FormState, formData: FormData): 
     if (employeeId) await updateEmployee(businessId, employeeId, { name, isActive: formData.get('isActive') === 'on' });
     else await createEmployee(businessId, { name });
   } catch (error) {
-    return fail(messageOf(error), formData);
+    return fail(await messageOf(error), formData);
   }
   revalidatePath(`/panel/${businessId}`);
   return { ok: Date.now() };
@@ -128,7 +134,7 @@ export async function saveShiftsAction(_prev: FormState, formData: FormData): Pr
   try {
     await updateShifts(businessId, rows);
   } catch (error) {
-    return fail(messageOf(error), formData);
+    return fail(await messageOf(error), formData);
   }
   revalidatePath(`/panel/${businessId}`);
   return { ok: Date.now() };
@@ -145,14 +151,14 @@ export async function updateRecordAction(_prev: FormState, formData: FormData): 
   await requireAdmin();
   const businessId = text(formData, 'businessId');
   const clockIn = fromLocalInput(text(formData, 'clockIn'));
-  if (!clockIn) return fail('Revisa la hora de entrada.', formData);
+  if (!clockIn) return fail(await say('errCheckClockIn'), formData);
   const exitText = text(formData, 'clockOut');
   const clockOut = exitText ? fromLocalInput(exitText) : null;
-  if (exitText && !clockOut) return fail('Revisa la hora de salida.', formData);
+  if (exitText && !clockOut) return fail(await say('errCheckClockOut'), formData);
   try {
     await updateRecord(businessId, text(formData, 'recordId'), new Date(clockIn), clockOut ? new Date(clockOut) : null);
   } catch (error) {
-    return fail(messageOf(error), formData);
+    return fail(await messageOf(error), formData);
   }
   revalidatePath(`/panel/${businessId}`);
   return { ok: Date.now() };

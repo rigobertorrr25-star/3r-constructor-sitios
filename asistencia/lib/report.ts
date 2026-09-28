@@ -1,5 +1,6 @@
 // Cálculos del reporte en hora de Colombia (UTC-5, sin horario de verano).
 
+import { locale, t, type Lang } from './i18n';
 import type { AttendanceRecord } from './store';
 
 const OFFSET_MS = -5 * 3_600_000;
@@ -49,15 +50,18 @@ export function weekOf(date: Date): { from: string; to: string } {
   return { from, to: addDays(from, 6) };
 }
 
-const clock = new Intl.DateTimeFormat('es-CO', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/Bogota' });
-const longDay = new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
-const shortDay = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const formats = (lang: Lang) => ({
+  clock: new Intl.DateTimeFormat(locale(lang), { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/Bogota' }),
+  longDay: new Intl.DateTimeFormat(locale(lang), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }),
+  shortDay: new Intl.DateTimeFormat(locale(lang), { day: 'numeric', month: 'short', timeZone: 'UTC' }),
+});
+const byLang = { es: formats('es'), en: formats('en') };
 
-/** "7:58 a. m." */
-export const formatClock = (date: Date) => clock.format(date);
-/** "lunes, 28 de septiembre" a partir de AAAA-MM-DD. */
-export const formatDay = (day: string) => longDay.format(new Date(`${day}T00:00:00Z`));
-export const formatShortDay = (day: string) => shortDay.format(new Date(`${day}T00:00:00Z`));
+/** "7:58 a. m." / "7:58 AM", siempre en hora de Colombia. */
+export const formatClock = (date: Date, lang: Lang = 'es') => byLang[lang].clock.format(date);
+/** "lunes, 28 de septiembre" / "Monday, September 28" a partir de AAAA-MM-DD. */
+export const formatDay = (day: string, lang: Lang = 'es') => byLang[lang].longDay.format(new Date(`${day}T00:00:00Z`));
+export const formatShortDay = (day: string, lang: Lang = 'es') => byLang[lang].shortDay.format(new Date(`${day}T00:00:00Z`));
 
 /** "7 h 05 min" */
 export function formatMinutes(minutes: number): string {
@@ -185,19 +189,22 @@ export function groupByDay(records: AttendanceRecord[]): { day: string; records:
   return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([day, list]) => ({ day, records: list }));
 }
 
-const csvCell = (value: string | number) => {
+const csvCell = (value: string | number, sep: string) => {
   const text = String(value);
   // Una celda que empieza con = + - @ se volvería fórmula en Excel.
   const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
-  return /[";\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+  return safe.includes(sep) || /["\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 };
 
 /**
- * Archivo para Excel: separado por punto y coma (el Excel en español de Colombia usa la coma para
- * decimales) y con BOM para que abra las tildes bien.
+ * Archivo para Excel, con BOM para que abra las tildes bien. En español va separado por punto y coma y con
+ * coma decimal (así lo espera el Excel de Colombia); en inglés, con coma y punto decimal (Excel de EE. UU.).
  */
-export function recordsCsv(records: AttendanceRecord[], shifts: Shift[]): string {
-  const header = ['Fecha', 'Empleado', 'Turno (por la hora de llegada)', 'Entrada', 'Salida', 'Horas trabajadas', 'Minutos tarde', 'Minutos de salida temprano', 'Corregido a mano'];
+export function recordsCsv(records: AttendanceRecord[], shifts: Shift[], lang: Lang = 'es'): string {
+  const sep = lang === 'en' ? ',' : ';';
+  const header = (['csvDate', 'csvEmployee', 'csvShift', 'csvIn', 'csvOut', 'csvHours', 'csvLate', 'csvEarly', 'csvEdited'] as const).map((key) =>
+    t(lang, key),
+  );
   const rows = records.map((record) => {
     const worked = workedMinutes(record);
     const shift = inferShift(record, shifts);
@@ -206,12 +213,12 @@ export function recordsCsv(records: AttendanceRecord[], shifts: Shift[]): string
       record.employee.name,
       shift ? shiftLabel(shift) : '',
       bogotaTime(new Date(record.clockIn)),
-      record.clockOut ? bogotaTime(new Date(record.clockOut)) : 'Sin salida',
-      worked === null ? '' : (worked / 60).toFixed(2).replace('.', ','),
+      record.clockOut ? bogotaTime(new Date(record.clockOut)) : t(lang, 'csvNoExit'),
+      worked === null ? '' : lang === 'en' ? (worked / 60).toFixed(2) : (worked / 60).toFixed(2).replace('.', ','),
       minutesLate(record, shifts) ?? 0,
       minutesEarlyExit(record, shifts) ?? 0,
-      record.editedAt ? 'Sí' : '',
+      record.editedAt ? t(lang, 'csvYes') : '',
     ];
   });
-  return '\uFEFF' + [header, ...rows].map((row) => row.map(csvCell).join(';')).join('\r\n') + '\r\n';
+  return '\uFEFF' + [header, ...rows].map((row) => row.map((cell) => csvCell(cell, sep)).join(sep)).join('\r\n') + '\r\n';
 }

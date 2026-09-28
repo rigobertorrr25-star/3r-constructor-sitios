@@ -18,6 +18,9 @@ datos ni direcciones con la tienda; solo el estilo visual (colores, tipografías
   (lo escribe dos veces) y en esa misma marcación queda su entrada. Con una jornada abierta marca la salida; si no, la
   entrada. Dos marcaciones en menos de 2 minutos se rechazan. Una entrada sin salida de más de 16 horas queda "sin salida"
   y la siguiente marcación abre otra jornada. 5 PIN equivocados seguidos bloquean a ese empleado 15 minutos.
+- **Español e inglés:** botón ES | EN en todas las pantallas (panel, reporte, Excel, ingreso, tablet y celular). Se guarda
+  en el navegador de cada persona; si nunca lo tocó, se usa el idioma de su navegador. Textos en `lib/i18n.ts`. El Excel en
+  inglés usa coma y punto decimal (Excel de EE. UU.); en español, punto y coma y coma decimal.
 - Todo en hora de Colombia. Las tablas se crean solas la primera vez que la app usa la base.
 
 ## Publicarla (una sola vez)
