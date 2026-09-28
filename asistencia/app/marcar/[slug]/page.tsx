@@ -1,15 +1,21 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { LangSwitch } from '@/components/lang-switch';
 import { PunchForm } from '@/components/punch-form';
 import { Alert, Lion, card } from '@/components/ui';
+import { t, type Lang } from '@/lib/i18n';
+import { getLang } from '@/lib/lang';
 import { AppError, getPublicBusiness, getPunchScreen } from '@/lib/store';
 
-export const metadata: Metadata = { title: 'Marcar asistencia' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: t(await getLang(), 'punchTitle') };
+}
 
-function Shell({ title, children }: { title: string; children: ReactNode }) {
+function Shell({ title, lang, children }: { title: string; lang: Lang; children: ReactNode }) {
   return (
-    <main className="flex min-h-dvh items-center justify-center px-4 py-10" style={{ backgroundImage: 'var(--gradient-hero)' }}>
+    <main className="relative flex min-h-dvh items-center justify-center px-4 py-14" style={{ backgroundImage: 'var(--gradient-hero)' }}>
+      <LangSwitch lang={lang} className="absolute top-4 right-4" />
       <div className={`${card} w-full max-w-[420px]`}>
         <h1 className="mb-6 text-center font-display text-[22px] font-bold tracking-tight text-foreground">{title}</h1>
         {children}
@@ -18,10 +24,10 @@ function Shell({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-const scanAgain = (
+const scanAgain = (lang: Lang) => (
   <div className="space-y-4 text-center">
-    <Lion size={72} className="mx-auto" />
-    <p className="text-[15px] text-muted-foreground">Escanea el código QR de la tablet de la entrada con la cámara de tu celular.</p>
+    <Lion size={72} className="mx-auto" alt={t(lang, 'lionAlt')} />
+    <p className="text-[15px] text-muted-foreground">{t(lang, 'scanPrompt')}</p>
   </div>
 );
 
@@ -35,6 +41,7 @@ export default async function PunchPage({
   const { slug } = await params;
   const { c } = await searchParams;
   const code = typeof c === 'string' ? c : '';
+  const lang = await getLang();
 
   // notFound() se llama fuera del try: por dentro lanza un error propio de Next que el catch atraparía.
   let business: { name: string } | null = null;
@@ -50,26 +57,26 @@ export default async function PunchPage({
 
   if (problem === 'offline') {
     return (
-      <Shell title="Marcar entrada o salida">
-        <p className="text-center text-[15px] text-muted-foreground">No hay conexión con el servidor. Intenta de nuevo en un momento.</p>
+      <Shell title={t(lang, 'punchFallbackTitle')} lang={lang}>
+        <p className="text-center text-[15px] text-muted-foreground">{t(lang, 'offline')}</p>
       </Shell>
     );
   }
   if (!business) notFound();
   if (problem === 'expired') {
     return (
-      <Shell title={business.name}>
+      <Shell title={business.name} lang={lang}>
         <div className="space-y-4">
-          <Alert>El código ya venció. Escanea otra vez el QR de la entrada.</Alert>
-          {scanAgain}
+          <Alert>{t(lang, 'errCodeExpired')}</Alert>
+          {scanAgain(lang)}
         </div>
       </Shell>
     );
   }
-  if (!screen) return <Shell title={business.name}>{scanAgain}</Shell>;
+  if (!screen) return <Shell title={business.name} lang={lang}>{scanAgain(lang)}</Shell>;
   return (
-    <Shell title={screen.name}>
-      <PunchForm slug={slug} code={code} employees={screen.employees} />
+    <Shell title={screen.name} lang={lang}>
+      <PunchForm slug={slug} code={code} employees={screen.employees} lang={lang} />
     </Shell>
   );
 }

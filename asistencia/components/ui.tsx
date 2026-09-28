@@ -4,17 +4,17 @@ import type { InputHTMLAttributes, ReactNode } from 'react';
 export const card = 'rounded-[32px] border border-white/[0.08] bg-card p-6 shadow-[var(--shadow-glass)]';
 
 export const quietButton =
-  'inline-flex items-center justify-center rounded-full border border-white/[0.1] px-4 py-2 text-[14px] transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]';
+  'inline-flex items-center justify-center whitespace-nowrap rounded-full border border-white/[0.1] px-4 py-2 text-[14px] transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]';
 
 export const inputClass =
   'w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground/70 transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
 
 /** El león de 3R, en círculo. */
-export function Lion({ size = 44, className = '' }: { size?: number; className?: string }) {
+export function Lion({ size = 44, className = '', alt = 'León de 3R' }: { size?: number; className?: string; alt?: string }) {
   return (
     <Image
       src="/avatar-lion.jpg"
-      alt="León de 3R"
+      alt={alt}
       width={size}
       height={size}
       className={`rounded-full ring-1 ring-white/10 ${className}`}

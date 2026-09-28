@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { PoolClient } from 'pg';
 import { currentCode, isValidCode, newKioskSecret, pinHash, CODE_WINDOW_MS } from './codes';
 import { query, transaction } from './db';
+import { t, type MessageKey, type Vars } from './i18n';
 import type { Shift } from './report';
 
 /** `hasPin` false = el empleado todavía no creó su PIN (lo crea la primera vez que escanea). */
@@ -33,13 +34,17 @@ export type AttendanceRecord = {
 
 export type PunchResult = { employeeName: string; type: 'in' | 'out'; at: string; workedMinutes: number | null; pinCreated: boolean };
 
-/** Error con un mensaje para mostrar tal cual y un código para decidir qué ofrecer en pantalla. */
+/**
+ * Error para mostrar en pantalla: `code` decide qué ofrecer, `key` y `vars` dan el texto en el idioma de
+ * quien lo ve (ver lib/i18n.ts). El `message` queda en español para los registros del servidor.
+ */
 export class AppError extends Error {
   constructor(
     readonly code: string,
-    message: string,
+    readonly key: MessageKey,
+    readonly vars?: Vars,
   ) {
-    super(message);
+    super(t('es', key, vars));
   }
 }
 
@@ -62,9 +67,9 @@ const isUuid = (value: string) => UUID.test(value);
 
 // ───────── validación ─────────
 
-function cleanName(name: string, what = 'el nombre'): string {
+function cleanName(name: string, what: MessageKey = 'errName'): string {
   const value = name.trim().replace(/\s+/g, ' ');
-  if (value.length < 2 || value.length > 120) throw new AppError('INVALID', `Escribe ${what} (entre 2 y 120 letras).`);
+  if (value.length < 2 || value.length > 120) throw new AppError('INVALID', what);
   return value;
 }
 
@@ -73,13 +78,13 @@ export function cleanShifts(input: { start: string; end: string }[]): Shift[] {
   const shifts: Shift[] = [];
   for (const { start, end } of input) {
     if (!start && !end) continue;
-    if (!start || !end) throw new AppError('INVALID', 'Cada turno necesita hora de inicio y de fin.');
-    if (!TIME.test(start) || !TIME.test(end)) throw new AppError('INVALID', 'Las horas deben tener el formato HH:MM (por ejemplo 08:00).');
-    if (start === end) throw new AppError('INVALID', 'Un turno no puede empezar y terminar a la misma hora.');
-    if (shifts.some((s) => s.start === start)) throw new AppError('INVALID', 'Dos turnos no pueden empezar a la misma hora.');
+    if (!start || !end) throw new AppError('INVALID', 'errShiftBoth');
+    if (!TIME.test(start) || !TIME.test(end)) throw new AppError('INVALID', 'errShiftFormat');
+    if (start === end) throw new AppError('INVALID', 'errShiftSame');
+    if (shifts.some((s) => s.start === start)) throw new AppError('INVALID', 'errShiftDuplicate');
     shifts.push({ start, end });
   }
-  if (shifts.length > MAX_SHIFTS) throw new AppError('INVALID', `Máximo ${MAX_SHIFTS} turnos.`);
+  if (shifts.length > MAX_SHIFTS) throw new AppError('INVALID', 'errShiftMax', { max: MAX_SHIFTS });
   return shifts.sort((a, b) => a.start.localeCompare(b.start));
 }
 
@@ -116,13 +121,13 @@ type PublicBusiness = { id: string; name: string; slug: string; kiosk_secret: st
 
 async function activeBusiness(slug: string): Promise<PublicBusiness> {
   const [business] = await query<PublicBusiness>('SELECT id, name, slug, kiosk_secret FROM businesses WHERE slug = $1 AND is_active', [slug]);
-  if (!business) throw new AppError('NOT_FOUND', 'Este negocio no existe.');
+  if (!business) throw new AppError('NOT_FOUND', 'errBusinessMissing');
   return business;
 }
 
 function checkCode(business: PublicBusiness, code: string, now: Date) {
   if (!code || code.length > 64 || !isValidCode(business.kiosk_secret, business.slug, code, now.getTime())) {
-    throw new AppError('CODE_EXPIRED', 'El código ya venció. Escanea otra vez el QR de la entrada.');
+    throw new AppError('CODE_EXPIRED', 'errCodeExpired');
   }
 }
 
@@ -152,8 +157,8 @@ export async function getPublicBusiness(slug: string): Promise<{ name: string } 
 export async function punch(slug: string, code: string, employeeId: string, pin: string, now = new Date()): Promise<PunchResult> {
   const business = await activeBusiness(slug);
   checkCode(business, code, now);
-  if (!isUuid(employeeId)) throw new AppError('EMPLOYEE', 'Toca tu nombre en la lista.');
-  if (!/^\d{4}$/.test(pin)) throw new AppError('PIN_INVALID', 'El PIN tiene 4 números.');
+  if (!isUuid(employeeId)) throw new AppError('EMPLOYEE', 'errChooseName');
+  if (!/^\d{4}$/.test(pin)) throw new AppError('PIN_INVALID', 'errPinFormat');
   const hash = pinHash(business.id, pin);
 
   // Un PIN equivocado se cuenta aunque la marcación falle: por eso el error sale después de guardar.
@@ -165,10 +170,10 @@ export async function punch(slug: string, code: string, employeeId: string, pin:
         [employeeId, business.id],
       )
     ).rows[0];
-    if (!employee) return new AppError('EMPLOYEE', 'Toca tu nombre en la lista.');
+    if (!employee) return new AppError('EMPLOYEE', 'errChooseName');
     if (employee.locked_until && employee.locked_until > now) {
       const minutes = Math.ceil((employee.locked_until.getTime() - now.getTime()) / MINUTE);
-      return new AppError('LOCKED', `Demasiados PIN equivocados. Intenta en ${minutes} min o pide al administrador que reinicie tu PIN.`);
+      return new AppError('LOCKED', 'errLocked', { minutes });
     }
 
     let pinCreated = false;
@@ -184,8 +189,8 @@ export async function punch(slug: string, code: string, employeeId: string, pin:
         employee.id,
       ]);
       return lock
-        ? new AppError('LOCKED', 'Demasiados PIN equivocados. Intenta en 15 min o pide al administrador que reinicie tu PIN.')
-        : new AppError('PIN_INVALID', 'PIN incorrecto. Revísalo e intenta de nuevo.');
+        ? new AppError('LOCKED', 'errLocked', { minutes: 15 })
+        : new AppError('PIN_INVALID', 'errPinWrong');
     } else if (employee.failed_pins > 0) {
       await client.query('UPDATE employees SET failed_pins = 0 WHERE id = $1', [employee.id]);
     }
@@ -199,12 +204,12 @@ export async function punch(slug: string, code: string, employeeId: string, pin:
     const elapsed = (from: Date) => now.getTime() - from.getTime();
 
     if (last && !last.clock_out && elapsed(last.clock_in) < FORGOTTEN_MS) {
-      if (elapsed(last.clock_in) < DOUBLE_SCAN_MS) return new AppError('DOUBLE_SCAN', 'Ya marcaste tu entrada hace un momento.');
+      if (elapsed(last.clock_in) < DOUBLE_SCAN_MS) return new AppError('DOUBLE_SCAN', 'errDoubleIn');
       await client.query('UPDATE records SET clock_out = $1 WHERE id = $2', [now, last.id]);
       return { employeeName: employee.name, type: 'out', at: now.toISOString(), workedMinutes: Math.round(elapsed(last.clock_in) / MINUTE), pinCreated };
     }
     if (last?.clock_out && elapsed(last.clock_out) < DOUBLE_SCAN_MS) {
-      return new AppError('DOUBLE_SCAN', 'Ya marcaste tu salida hace un momento.');
+      return new AppError('DOUBLE_SCAN', 'errDoubleOut');
     }
     await client.query('INSERT INTO records (business_id, employee_id, clock_in) VALUES ($1, $2, $3)', [business.id, employee.id, now]);
     return { employeeName: employee.name, type: 'in', at: now.toISOString(), workedMinutes: null, pinCreated };
@@ -247,7 +252,7 @@ export async function getBusiness(id: string): Promise<AttendanceBusiness | null
 }
 
 export async function createBusiness(name: string): Promise<string> {
-  const clean = cleanName(name, 'el nombre del negocio');
+  const clean = cleanName(name, 'errBusinessName');
   const base = slugify(clean);
   for (let n = 1; n < 50; n++) {
     const slug = n === 1 ? base : `${base}-${n}`;
@@ -262,50 +267,50 @@ export async function createBusiness(name: string): Promise<string> {
       if (!isUniqueViolation(error)) throw error;
     }
   }
-  throw new AppError('INVALID', 'No se pudo crear el negocio con ese nombre.');
+  throw new AppError('INVALID', 'errCreateBusiness');
 }
 
 /** Genera un enlace nuevo para la tablet; el anterior deja de funcionar. */
 export async function rotateKiosk(businessId: string) {
-  if (!isUuid(businessId)) throw new AppError('NOT_FOUND', 'Negocio no encontrado.');
+  if (!isUuid(businessId)) throw new AppError('NOT_FOUND', 'errBusinessNotFound');
   await query('UPDATE businesses SET kiosk_secret = $1 WHERE id = $2', [newKioskSecret(), businessId]);
 }
 
 export async function updateShifts(businessId: string, input: { start: string; end: string }[]) {
-  if (!isUuid(businessId)) throw new AppError('NOT_FOUND', 'Negocio no encontrado.');
+  if (!isUuid(businessId)) throw new AppError('NOT_FOUND', 'errBusinessNotFound');
   const shifts = cleanShifts(input);
   const rows = await query('UPDATE businesses SET shifts = $1 WHERE id = $2 RETURNING id', [JSON.stringify(shifts), businessId]);
-  if (rows.length === 0) throw new AppError('NOT_FOUND', 'Negocio no encontrado.');
+  if (rows.length === 0) throw new AppError('NOT_FOUND', 'errBusinessNotFound');
 }
 
 /** El empleado se crea sin PIN: lo crea él mismo la primera vez que escanea el QR. */
 export async function createEmployee(businessId: string, input: { name: string }) {
-  if (!(await getBusiness(businessId))) throw new AppError('NOT_FOUND', 'Negocio no encontrado.');
-  const name = cleanName(input.name, 'el nombre del empleado');
+  if (!(await getBusiness(businessId))) throw new AppError('NOT_FOUND', 'errBusinessNotFound');
+  const name = cleanName(input.name, 'errEmployeeName');
   const [row] = await query<{ id: string }>('INSERT INTO employees (business_id, name) VALUES ($1, $2) RETURNING id', [businessId, name]);
   return row.id;
 }
 
 export async function updateEmployee(businessId: string, employeeId: string, input: { name: string; isActive: boolean }) {
-  if (!isUuid(businessId) || !isUuid(employeeId)) throw new AppError('NOT_FOUND', 'Empleado no encontrado.');
-  const name = cleanName(input.name, 'el nombre del empleado');
+  if (!isUuid(businessId) || !isUuid(employeeId)) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
+  const name = cleanName(input.name, 'errEmployeeName');
   const rows = await query('UPDATE employees SET name = $1, is_active = $2 WHERE id = $3 AND business_id = $4 RETURNING id', [
     name,
     input.isActive,
     employeeId,
     businessId,
   ]);
-  if (rows.length === 0) throw new AppError('NOT_FOUND', 'Empleado no encontrado.');
+  if (rows.length === 0) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
 }
 
 /** Para un PIN olvidado: el empleado crea uno nuevo la próxima vez que escanee. */
 export async function resetPin(businessId: string, employeeId: string) {
-  if (!isUuid(businessId) || !isUuid(employeeId)) throw new AppError('NOT_FOUND', 'Empleado no encontrado.');
+  if (!isUuid(businessId) || !isUuid(employeeId)) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
   const rows = await query(
     'UPDATE employees SET pin_hash = NULL, failed_pins = 0, locked_until = NULL WHERE id = $1 AND business_id = $2 RETURNING id',
     [employeeId, businessId],
   );
-  if (rows.length === 0) throw new AppError('NOT_FOUND', 'Empleado no encontrado.');
+  if (rows.length === 0) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
 }
 
 type RecordRow = {
@@ -331,13 +336,13 @@ const dayStart = (day: string) => new Date(`${day}T00:00:00-05:00`);
 
 /** Jornadas que empezaron entre dos días (hora de Colombia), ambos incluidos. */
 export async function listRecords(businessId: string, fromDay: string, toDay: string): Promise<AttendanceRecord[]> {
-  if (!isUuid(businessId)) throw new AppError('NOT_FOUND', 'Negocio no encontrado.');
-  if (!DAY.test(fromDay) || !DAY.test(toDay)) throw new AppError('INVALID', 'Fechas inválidas.');
+  if (!isUuid(businessId)) throw new AppError('NOT_FOUND', 'errBusinessNotFound');
+  if (!DAY.test(fromDay) || !DAY.test(toDay)) throw new AppError('INVALID', 'errDates');
   const from = dayStart(fromDay);
   const to = new Date(dayStart(toDay).getTime() + 24 * 60 * MINUTE);
-  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || to <= from) throw new AppError('INVALID', 'Rango de fechas inválido.');
+  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || to <= from) throw new AppError('INVALID', 'errRange');
   if (to.getTime() - from.getTime() > MAX_RANGE_DAYS * 24 * 60 * MINUTE) {
-    throw new AppError('INVALID', `El rango no puede pasar de ${MAX_RANGE_DAYS} días.`);
+    throw new AppError('INVALID', 'errRangeMax', { max: MAX_RANGE_DAYS });
   }
   const rows = await query<RecordRow>(
     `SELECT r.id, r.employee_id, r.clock_in, r.clock_out, r.edited_at, e.name
@@ -350,14 +355,14 @@ export async function listRecords(businessId: string, fromDay: string, toDay: st
 }
 
 async function lockRecord(client: PoolClient, businessId: string, recordId: string) {
-  if (!isUuid(businessId) || !isUuid(recordId)) throw new AppError('NOT_FOUND', 'Registro no encontrado.');
+  if (!isUuid(businessId) || !isUuid(recordId)) throw new AppError('NOT_FOUND', 'errRecordNotFound');
   const record = (
     await client.query<{ employee_id: string; clock_in: Date; clock_out: Date | null }>(
       'SELECT employee_id, clock_in, clock_out FROM records WHERE id = $1 AND business_id = $2 FOR UPDATE',
       [recordId, businessId],
     )
   ).rows[0];
-  if (!record) throw new AppError('NOT_FOUND', 'Registro no encontrado.');
+  if (!record) throw new AppError('NOT_FOUND', 'errRecordNotFound');
   return record;
 }
 
@@ -369,9 +374,9 @@ const snapshot = (r: { employee_id: string; clock_in: Date; clock_out: Date | nu
 
 /** Corrección a mano: una salida olvidada o una hora mal marcada. `clockOut` null = sin salida. */
 export async function updateRecord(businessId: string, recordId: string, clockIn: Date, clockOut: Date | null) {
-  if (Number.isNaN(clockIn.getTime()) || (clockOut && Number.isNaN(clockOut.getTime()))) throw new AppError('INVALID', 'Revisa las horas.');
-  if (clockOut && clockOut <= clockIn) throw new AppError('INVALID', 'La salida debe ser después de la entrada.');
-  if (clockOut && clockOut.getTime() - clockIn.getTime() > MAX_SHIFT_MS) throw new AppError('INVALID', 'Una jornada no puede pasar de 24 horas.');
+  if (Number.isNaN(clockIn.getTime()) || (clockOut && Number.isNaN(clockOut.getTime()))) throw new AppError('INVALID', 'errTimes');
+  if (clockOut && clockOut <= clockIn) throw new AppError('INVALID', 'errExitBeforeEntry');
+  if (clockOut && clockOut.getTime() - clockIn.getTime() > MAX_SHIFT_MS) throw new AppError('INVALID', 'errShiftTooLong');
   await transaction(async (client) => {
     const before = await lockRecord(client, businessId, recordId);
     await client.query('UPDATE records SET clock_in = $1, clock_out = $2, edited_at = now() WHERE id = $3', [clockIn, clockOut, recordId]);

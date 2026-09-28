@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { locale, t, type Lang } from '@/lib/i18n';
 import { Lion } from './ui';
 
 type Data = { name: string; svg: string; expiresInMs: number };
 
-const clock = new Intl.DateTimeFormat('es-CO', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/Bogota' });
-const today = new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Bogota' });
 
 /** Pantalla de la tablet de la entrada: el QR se renueva solo cada 30 segundos. */
-export function Kiosk({ secret }: { secret: string }) {
+export function Kiosk({ secret, lang }: { secret: string; lang: Lang }) {
+  const clock = new Intl.DateTimeFormat(locale(lang), { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/Bogota' });
+  const today = new Intl.DateTimeFormat(locale(lang), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Bogota' });
   const [data, setData] = useState<Data | null>(null);
   const [problem, setProblem] = useState<'offline' | 'invalid' | null>(null);
   // El reloj arranca en el navegador: la hora del servidor no coincidiría con la de la tablet.
@@ -74,7 +75,7 @@ export function Kiosk({ secret }: { secret: string }) {
   if (problem === 'invalid') {
     return (
       <p className="max-w-md text-center text-[18px] text-muted-foreground">
-        Este enlace de tablet ya no funciona. Pide el enlace nuevo a quien administra la asistencia.
+        {t(lang, 'tabletInvalid')}
       </p>
     );
   }
@@ -82,13 +83,13 @@ export function Kiosk({ secret }: { secret: string }) {
   return (
     <div className="flex w-full max-w-[560px] flex-col items-center gap-6 text-center">
       <div className="flex flex-col items-center">
-        <Lion size={72} />
+        <Lion size={72} alt={t(lang, 'lionAlt')} />
         <p className="mt-3 font-display text-[clamp(28px,5vw,44px)] font-bold tracking-tight text-foreground">{data?.name ?? ' '}</p>
-        <p className="mt-1 text-[18px] text-muted-foreground">Escanea con la cámara de tu celular para marcar entrada o salida</p>
+        <p className="mt-1 text-[18px] text-muted-foreground">{t(lang, 'tabletScan')}</p>
       </div>
       <div className="w-full max-w-[420px] rounded-[32px] bg-white p-5 shadow-[var(--shadow-glow)]">
         {data ? (
-          <div className="aspect-square w-full [&>svg]:size-full" dangerouslySetInnerHTML={{ __html: data.svg }} aria-label="Código QR para marcar asistencia" role="img" />
+          <div className="aspect-square w-full [&>svg]:size-full" dangerouslySetInnerHTML={{ __html: data.svg }} aria-label={t(lang, 'tabletQrLabel')} role="img" />
         ) : (
           <div className="aspect-square w-full animate-pulse rounded-2xl bg-black/10" />
         )}
@@ -98,9 +99,9 @@ export function Kiosk({ secret }: { secret: string }) {
         <p className="text-[18px] first-letter:uppercase text-muted-foreground">{now ? today.format(now) : '\u00a0'}</p>
       </div>
       {problem === 'offline' ? (
-        <p className="rounded-2xl bg-warning/15 px-4 py-2 text-[15px] text-warning">Sin conexión. Revisa el wifi de la tablet; se reintenta solo.</p>
+        <p className="rounded-2xl bg-warning/15 px-4 py-2 text-[15px] text-warning">{t(lang, 'tabletOffline')}</p>
       ) : (
-        <p className="text-[14px] text-muted-foreground">El código cambia cada 30 segundos. Una foto del código no sirve después.</p>
+        <p className="text-[14px] text-muted-foreground">{t(lang, 'tabletNote')}</p>
       )}
     </div>
   );

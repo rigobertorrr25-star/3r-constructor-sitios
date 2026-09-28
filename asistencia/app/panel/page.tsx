@@ -2,20 +2,23 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CreateBusinessForm } from '@/components/panel-forms';
 import { card } from '@/components/ui';
+import { t } from '@/lib/i18n';
+import { getLang } from '@/lib/lang';
 import { listBusinesses } from '@/lib/store';
 
-export const metadata: Metadata = { title: 'Negocios — Asistencia 3R' };
+export async function generateMetadata(): Promise<Metadata> {
+  const lang = await getLang();
+  return { title: `${t(lang, 'businesses')} — ${t(lang, 'appName')}` };
+}
 
 export default async function PanelPage() {
+  const lang = await getLang();
   const businesses = await listBusinesses();
 
   return (
     <>
-      <h1 className="font-display text-[32px] font-bold tracking-tight text-foreground">Negocios</h1>
-      <p className="mt-1 max-w-2xl text-[15px] text-muted-foreground">
-        Una tablet en la entrada muestra un código QR que cambia cada 30 segundos. Cada empleado lo escanea con su celular y pone su
-        PIN para marcar entrada o salida.
-      </p>
+      <h1 className="font-display text-[32px] font-bold tracking-tight text-foreground">{t(lang, 'businesses')}</h1>
+      <p className="mt-1 max-w-2xl text-[15px] text-muted-foreground">{t(lang, 'businessesIntro')}</p>
 
       <div className="mt-8 space-y-4">
         {businesses.map((business) => (
@@ -26,15 +29,15 @@ export default async function PanelPage() {
           >
             <span className="font-display text-[20px] font-semibold text-foreground">{business.name}</span>
             <span className="text-[14px] text-muted-foreground">
-              {business.employees} {business.employees === 1 ? 'empleado' : 'empleados'}
+              {business.employees === 1 ? t(lang, 'employeesCountOne') : t(lang, 'employeesCount', { n: business.employees })}
             </span>
           </Link>
         ))}
 
         <details className={card} open={businesses.length === 0}>
-          <summary className="cursor-pointer font-display text-[20px] font-semibold text-foreground">+ Agregar un negocio</summary>
+          <summary className="cursor-pointer font-display text-[20px] font-semibold text-foreground">{t(lang, 'addBusiness')}</summary>
           <div className="mt-5 max-w-md">
-            <CreateBusinessForm />
+            <CreateBusinessForm lang={lang} />
           </div>
         </details>
       </div>
