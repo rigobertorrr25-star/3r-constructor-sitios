@@ -1,16 +1,68 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { punchAction } from '@/app/actions';
 import { formatClock, formatMinutes } from '@/lib/report';
 import { Alert, Lion } from './ui';
 import { SubmitButton } from './submit-button';
 
-/** En el celular del empleado: escribe su PIN y queda marcada la entrada o la salida. */
-export function PunchForm({ slug, code }: { slug: string; code: string }) {
-  const [state, action] = useActionState(punchAction, undefined);
-  const result = state?.result;
+type Employee = { id: string; name: string; hasPin: boolean };
 
+const pinClass =
+  'mx-auto block w-48 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-center font-display text-[36px] tracking-[0.5em] text-foreground transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
+
+function PinInput({ id, name, label, autoFocus }: { id: string; name: string; label: string; autoFocus?: boolean }) {
+  return (
+    <div className="space-y-2 text-center">
+      <label htmlFor={id} className="block text-[16px] font-medium text-foreground">
+        {label}
+      </label>
+      <input
+        id={id}
+        name={name}
+        type="password"
+        inputMode="numeric"
+        autoComplete="off"
+        pattern="\d{4}"
+        maxLength={4}
+        required
+        autoFocus={autoFocus}
+        className={pinClass}
+      />
+    </div>
+  );
+}
+
+/**
+ * En el celular del empleado: toca su nombre y escribe su PIN (o lo crea, la primera vez). El celular
+ * recuerda el nombre para la próxima.
+ */
+export function PunchForm({ slug, code, employees }: { slug: string; code: string; employees: Employee[] }) {
+  const [state, action] = useActionState(punchAction, undefined);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const storageKey = `asistencia:${slug}:empleado`;
+
+  // El nombre elegido la última vez en este celular (solo es una comodidad: el PIN sigue haciendo falta).
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved && employees.some((e) => e.id === saved)) setSelectedId(saved);
+    } catch {
+      // Sin almacenamiento del navegador: se elige el nombre cada vez.
+    }
+  }, [storageKey, employees]);
+
+  const choose = (id: string | null) => {
+    setSelectedId(id);
+    try {
+      if (id) localStorage.setItem(storageKey, id);
+      else localStorage.removeItem(storageKey);
+    } catch {
+      // Igual que arriba.
+    }
+  };
+
+  const result = state?.result;
   if (result) {
     const isIn = result.type === 'in';
     return (
@@ -32,36 +84,78 @@ export function PunchForm({ slug, code }: { slug: string; code: string }) {
         {result.workedMinutes !== null ? (
           <p className="text-[16px] text-muted-foreground">Trabajaste {formatMinutes(result.workedMinutes)}.</p>
         ) : null}
+        {result.pinCreated ? (
+          <p className="rounded-2xl bg-success/10 px-4 py-3 text-[14px] text-[#9df0c6]">Tu PIN quedó guardado. No se lo digas a nadie.</p>
+        ) : null}
         <p className="pt-2 text-[14px] text-muted-foreground">Ya puedes cerrar esta página.</p>
       </div>
     );
   }
 
-  const expired = state?.code === 'CODE_EXPIRED';
+  if (state?.code === 'CODE_EXPIRED') {
+    return (
+      <div className="space-y-4 text-center">
+        <Alert>{state.error}</Alert>
+      </div>
+    );
+  }
+
+  const selected = employees.find((e) => e.id === selectedId);
+
+  if (!selected) {
+    if (employees.length === 0) {
+      return <p className="text-center text-[15px] text-muted-foreground">Todavía no hay empleados registrados. Avísale al administrador.</p>;
+    }
+    return (
+      <div className="space-y-4">
+        <p className="text-center text-[17px] font-medium text-foreground">Toca tu nombre</p>
+        <ul className="grid gap-2">
+          {employees.map((employee) => (
+            <li key={employee.id}>
+              <button
+                type="button"
+                onClick={() => choose(employee.id)}
+                className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 text-left text-[16px] text-foreground transition hover:border-primary/50 hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+              >
+                {employee.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  const creating = !selected.hasPin;
   return (
     <form action={action} className="space-y-5">
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="code" value={code} />
-      <div className="space-y-2 text-center">
-        <label htmlFor="pin" className="block text-[17px] font-medium text-foreground">
-          Escribe tu PIN
-        </label>
-        <input
-          id="pin"
-          name="pin"
-          type="password"
-          inputMode="numeric"
-          autoComplete="off"
-          pattern="\d{4}"
-          maxLength={4}
-          required
-          autoFocus
-          className="mx-auto block w-48 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-center font-display text-[36px] tracking-[0.5em] text-foreground transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
-        />
-        <p className="text-[14px] text-muted-foreground">Son 4 números. Si no lo sabes, pídelo a tu jefe.</p>
+      <input type="hidden" name="employeeId" value={selected.id} />
+      {creating ? <input type="hidden" name="creating" value="1" /> : null}
+
+      <div className="text-center">
+        <p className="font-display text-[20px] font-semibold text-foreground">{selected.name}</p>
+        <button type="button" onClick={() => choose(null)} className="mt-1 text-[14px] text-primary hover:underline">
+          No soy yo
+        </button>
       </div>
+
+      {creating ? (
+        <>
+          <p className="rounded-2xl bg-white/[0.04] px-4 py-3 text-center text-[14px] text-muted-foreground">
+            Es tu primera vez. Crea un PIN de 4 números que solo tú sepas; lo vas a usar cada vez que marques.
+          </p>
+          <PinInput id="pin" name="pin" label="Crea tu PIN" autoFocus />
+          <PinInput id="pinConfirm" name="pinConfirm" label="Escríbelo otra vez" />
+        </>
+      ) : (
+        <PinInput id="pin" name="pin" label="Escribe tu PIN" autoFocus />
+      )}
+
       {state?.error ? <Alert>{state.error}</Alert> : null}
-      {expired ? null : <SubmitButton pendingText="Marcando…">Marcar</SubmitButton>}
+      <SubmitButton pendingText="Marcando…">{creating ? 'Guardar PIN y marcar' : 'Marcar'}</SubmitButton>
+      {creating ? null : <p className="text-center text-[13px] text-muted-foreground">¿Olvidaste tu PIN? Pide al administrador que lo reinicie.</p>}
     </form>
   );
 }

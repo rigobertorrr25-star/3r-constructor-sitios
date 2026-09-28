@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { EmployeeForm, KioskLink, RecordEditor } from '@/components/panel-forms';
+import { EmployeeForm, KioskLink, RecordEditor, ResetPinButton, ShiftsForm } from '@/components/panel-forms';
 import { card } from '@/components/ui';
 import {
   LATE_GRACE_MIN,
@@ -12,8 +12,11 @@ import {
   formatMinutes,
   formatShortDay,
   groupByDay,
+  inferShift,
   isDay,
+  minutesEarlyExit,
   minutesLate,
+  shiftLabel,
   totalsByEmployee,
   weekOf,
   workedMinutes,
@@ -42,7 +45,7 @@ export default async function AttendanceBusinessPage({
   const from = isDay(query.desde) ? query.desde : thisWeek.from;
   const to = isDay(query.hasta) && query.hasta >= from ? query.hasta : addDays(from, 6);
   const records = await listRecords(business.id, from, to);
-  const totals = totalsByEmployee(records);
+  const totals = totalsByEmployee(records, business.shifts);
   const days = groupByDay(records).reverse();
 
   const h = await headers();
@@ -95,13 +98,14 @@ export default async function AttendanceBusinessPage({
             <>
               <h3 className="mt-6 text-[12px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Totales</h3>
               <div className="mt-2 overflow-x-auto">
-                <table className="w-full min-w-[560px] border-collapse">
+                <table className="w-full min-w-[640px] border-collapse">
                   <thead>
                     <tr className="border-b border-white/[0.08]">
                       <th className={th}>Empleado</th>
                       <th className={th}>Días</th>
                       <th className={th}>Horas</th>
                       <th className={th}>Llegadas tarde</th>
+                      <th className={th}>Salidas temprano</th>
                       <th className={th}>Sin salida</th>
                     </tr>
                   </thead>
@@ -114,6 +118,7 @@ export default async function AttendanceBusinessPage({
                         <td className={`${td} ${row.lateCount ? 'text-warning' : ''}`}>
                           {row.lateCount ? `${row.lateCount} (${formatMinutes(row.lateMinutes)} en total)` : '—'}
                         </td>
+                        <td className={`${td} ${row.earlyExitCount ? 'text-warning' : ''}`}>{row.earlyExitCount || '—'}</td>
                         <td className={`${td} ${row.missingExit ? 'text-[#ffb4b5]' : ''}`}>{row.missingExit || '—'}</td>
                       </tr>
                     ))}
@@ -121,7 +126,8 @@ export default async function AttendanceBusinessPage({
                 </table>
               </div>
               <p className="mt-2 text-[13px] text-muted-foreground">
-                Llegar hasta {LATE_GRACE_MIN} minutos después del turno no cuenta como tarde. Las horas solo suman jornadas con salida.
+                El turno de cada jornada se deduce de la hora de llegada (y de salida, si ya marcó). Llegar o salir con {LATE_GRACE_MIN}{' '}
+                minutos de diferencia no cuenta. Las horas solo suman jornadas con salida.
               </p>
 
               <div className="mt-8 space-y-8">
@@ -131,7 +137,9 @@ export default async function AttendanceBusinessPage({
                     <ul className="mt-3 divide-y divide-white/[0.05]">
                       {dayRecords.map((record) => {
                         const worked = workedMinutes(record);
-                        const late = minutesLate(record);
+                        const shift = inferShift(record, business.shifts);
+                        const late = minutesLate(record, business.shifts);
+                        const early = minutesEarlyExit(record, business.shifts);
                         return (
                           <li key={record.id} className="py-3">
                             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -143,12 +151,9 @@ export default async function AttendanceBusinessPage({
                               </span>
                             </div>
                             <div className="mt-0.5 flex flex-wrap gap-x-3 text-[13px]">
-                              {record.employee.shiftStart ? (
-                                <span className={late ? 'text-warning' : 'text-muted-foreground'}>
-                                  Turno {record.employee.shiftStart}–{record.employee.shiftEnd}
-                                  {late ? ` · llegó ${formatMinutes(late)} tarde` : ''}
-                                </span>
-                              ) : null}
+                              {shift ? <span className="text-muted-foreground">Turno {shiftLabel(shift)}</span> : null}
+                              {late ? <span className="text-warning">llegó {formatMinutes(late)} tarde</span> : null}
+                              {early ? <span className="text-warning">salió {formatMinutes(early)} antes</span> : null}
                               {record.editedAt ? <span className="text-muted-foreground">corregido a mano</span> : null}
                             </div>
                             <RecordEditor businessId={business.id} record={record} />
@@ -167,7 +172,8 @@ export default async function AttendanceBusinessPage({
         <section className={card}>
           <h2 className={sectionTitle}>Empleados</h2>
           <p className="mt-1 text-[14px] text-muted-foreground">
-            {active.length} {active.length === 1 ? 'activo' : 'activos'}. Cada uno marca con su propio PIN de 4 números.
+            {active.length} {active.length === 1 ? 'activo' : 'activos'}. Cada uno crea su propio PIN de 4 números la primera vez que
+            escanea el QR. Si alguien lo olvida, reinícialo y creará uno nuevo.
           </p>
           <div className="mt-5 rounded-2xl border border-white/[0.08] p-4">
             <h3 className="mb-4 text-[15px] font-medium text-foreground">Agregar empleado</h3>
@@ -181,17 +187,30 @@ export default async function AttendanceBusinessPage({
                     <span className={`text-[15px] font-medium ${employee.isActive ? 'text-foreground' : 'text-muted-foreground line-through'}`}>
                       {employee.name}
                     </span>
-                    <span className="text-[13px] text-muted-foreground">
-                      {employee.shiftStart ? `Turno ${employee.shiftStart}–${employee.shiftEnd}` : 'Sin turno fijo'}
+                    <span className={`text-[13px] ${employee.hasPin ? 'text-muted-foreground' : 'text-warning'}`}>
+                      {employee.hasPin ? 'PIN creado' : 'Falta crear su PIN'}
                     </span>
                   </summary>
-                  <div className="mt-4">
+                  <div className="mt-4 space-y-4">
                     <EmployeeForm businessId={business.id} employee={employee} />
+                    {employee.hasPin ? <ResetPinButton businessId={business.id} employee={employee} /> : null}
                   </div>
                 </details>
               </li>
             ))}
           </ul>
+        </section>
+
+        {/* Turnos */}
+        <section className={card}>
+          <h2 className={sectionTitle}>Turnos</h2>
+          <p className="mt-1 max-w-2xl text-[14px] text-muted-foreground">
+            No se asignan por empleado: cada jornada toma el turno cuya hora de entrada está más cerca de cuando la persona marcó.
+            {business.shifts.length === 0 ? ' Mientras no haya turnos, el reporte no muestra llegadas tarde.' : ''}
+          </p>
+          <div className="mt-4 max-w-md">
+            <ShiftsForm businessId={business.id} shifts={business.shifts} />
+          </div>
         </section>
 
         {/* Tablet */}

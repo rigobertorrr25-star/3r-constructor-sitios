@@ -32,7 +32,8 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   que no aparezca nada en 3rpaginas.com: no enlazarlo desde la tienda ni compartir base, clave o despliegue. Usa el estilo
   3R y el león. Primer negocio: Azul Caribe Lounge (11 empleados; turnos 8am–3pm, 11am–6pm, 2pm–9pm). Publicado en
   https://3r-constructor-sitios.vercel.app (proyecto propio de Vercel, Root Directory `asistencia`; base en el proyecto
-  ASISTENCIA de Neon). Falta: crear el negocio y los empleados en el panel y dejar la tablet en la entrada.
+  ASISTENCIA de Neon). El turno no se asigna por empleado: se deduce de la hora de llegada (turnos del negocio en
+  el panel). Cada empleado crea su propio PIN la primera vez que escanea. Falta: cargar empleados y dejar la tablet en la entrada.
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto

@@ -6,6 +6,8 @@ import {
   bogotaTime,
   fromLocalInput,
   groupByDay,
+  inferShift,
+  minutesEarlyExit,
   minutesLate,
   recordsCsv,
   toLocalInput,
@@ -15,15 +17,21 @@ import {
 } from '../lib/report';
 import type { AttendanceRecord } from '../lib/store';
 
-const ana = { name: 'Ana', shiftStart: '08:00', shiftEnd: '15:00' };
-const record = (id: string, employeeId: string, clockIn: string, clockOut: string | null, employee: AttendanceRecord['employee'] = ana): AttendanceRecord => ({
+const record = (id: string, name: string, clockIn: string, clockOut: string | null): AttendanceRecord => ({
   id,
-  employeeId,
+  employeeId: name,
   clockIn,
   clockOut,
   editedAt: null,
-  employee,
+  employee: { name },
 });
+
+// Los turnos de Azul Caribe Lounge.
+const shifts = [
+  { start: '08:00', end: '15:00' },
+  { start: '11:00', end: '18:00' },
+  { start: '14:00', end: '21:00' },
+];
 
 describe('asistencia: hora de Colombia', () => {
   it('lee día y hora en UTC-5', () => {
@@ -47,32 +55,68 @@ describe('asistencia: hora de Colombia', () => {
   });
 });
 
+describe('asistencia: turno deducido por la hora de llegada', () => {
+  const at = (dayTime: string) => new Date(`${dayTime}:00-05:00`).toISOString();
+
+  it('toma el turno que empieza más cerca de la llegada', () => {
+    assert.deepEqual(inferShift(record('1', 'Ana', at('2026-09-28T07:58'), null), shifts), shifts[0]);
+    assert.deepEqual(inferShift(record('2', 'Ana', at('2026-09-28T08:10'), null), shifts), shifts[0]);
+    assert.deepEqual(inferShift(record('3', 'Beto', at('2026-09-28T11:04'), null), shifts), shifts[1]);
+    assert.deepEqual(inferShift(record('4', 'Carla', at('2026-09-28T13:50'), null), shifts), shifts[2]);
+    assert.equal(inferShift(record('5', 'Ana', at('2026-09-28T08:10'), null), []), null);
+  });
+
+  it('con la salida marcada, también cuenta a qué hora salió', () => {
+    // Llega 9:45: sin salida parece el de las 11 (llegó temprano)…
+    const open = record('6', 'Dani', at('2026-09-28T09:45'), null);
+    assert.deepEqual(inferShift(open, shifts), shifts[1]);
+    assert.equal(minutesLate(open, shifts), null);
+    // …pero si salió a las 3:00 p. m., era el de la mañana y llegó 1 h 45 min tarde.
+    const closed = record('6', 'Dani', at('2026-09-28T09:45'), at('2026-09-28T15:00'));
+    assert.deepEqual(inferShift(closed, shifts), shifts[0]);
+    assert.equal(minutesLate(closed, shifts), 105);
+  });
+
+  it('llegadas tarde y salidas temprano, con 5 minutos de gracia', () => {
+    assert.equal(minutesLate(record('1', 'Ana', at('2026-09-28T08:10'), null), shifts), 10);
+    assert.equal(minutesLate(record('1', 'Ana', at('2026-09-28T08:05'), null), shifts), null);
+    assert.equal(minutesLate(record('1', 'Ana', at('2026-09-28T07:40'), null), shifts), null);
+    const edu = record('7', 'Edu', at('2026-09-28T11:10'), at('2026-09-28T16:00'));
+    assert.deepEqual(inferShift(edu, shifts), shifts[1]);
+    assert.equal(minutesLate(edu, shifts), 10);
+    assert.equal(minutesEarlyExit(edu, shifts), 120);
+    assert.equal(minutesEarlyExit(record('8', 'Ana', at('2026-09-28T08:00'), at('2026-09-28T14:57')), shifts), null);
+    assert.equal(minutesEarlyExit(record('9', 'Ana', at('2026-09-28T08:00'), null), shifts), null);
+  });
+
+  it('un turno que cruza la medianoche', () => {
+    const night = [{ start: '22:00', end: '06:00' }, ...shifts];
+    const r = record('10', 'Nico', at('2026-09-28T22:15'), at('2026-09-29T06:00'));
+    assert.deepEqual(inferShift(r, night), night[0]);
+    assert.equal(minutesLate(r, night), 15);
+    assert.equal(minutesEarlyExit(r, night), null);
+  });
+});
+
 describe('asistencia: reporte', () => {
   const records = [
     // Ana llega 7:58 (a tiempo) y sale 3:02 p. m.
-    record('1', 'a', '2026-09-28T12:58:00Z', '2026-09-28T20:02:00Z'),
+    record('1', 'Ana', '2026-09-28T12:58:00Z', '2026-09-28T20:02:00Z'),
     // Ana llega 8:20 (20 min tarde) y olvida marcar la salida.
-    record('2', 'a', '2026-09-29T13:20:00Z', null),
-    // Beto (11 a. m.) llega 11:04: dentro de la gracia.
-    record('3', 'b', '2026-09-28T16:04:00Z', '2026-09-28T23:00:00Z', { name: 'Beto', shiftStart: '11:00', shiftEnd: '18:00' }),
-    // Carla sin turno fijo.
-    record('4', 'c', '2026-09-28T19:00:00Z', '2026-09-29T02:00:00Z', { name: 'Carla', shiftStart: null, shiftEnd: null }),
+    record('2', 'Ana', '2026-09-29T13:20:00Z', null),
+    // Beto llega 11:04 (dentro de la gracia) y sale 4:00 p. m. (2 h antes).
+    record('3', 'Beto', '2026-09-28T16:04:00Z', '2026-09-28T21:00:00Z'),
+    // Carla, turno de 2 a 9 p. m.
+    record('4', 'Carla', '2026-09-28T19:00:00Z', '2026-09-29T02:00:00Z'),
   ];
 
-  it('horas trabajadas y llegadas tarde', () => {
-    assert.equal(workedMinutes(records[0]), 424);
-    assert.equal(workedMinutes(records[1]), null);
-    assert.equal(minutesLate(records[0]), null);
-    assert.equal(minutesLate(records[1]), 20);
-    assert.equal(minutesLate(records[2]), null);
-    assert.equal(minutesLate(records[3]), null);
-  });
-
   it('totales por empleado', () => {
-    const totals = totalsByEmployee(records);
+    const totals = totalsByEmployee(records, shifts);
     assert.deepEqual(totals.map((t) => t.name), ['Ana', 'Beto', 'Carla']);
-    assert.deepEqual(totals[0], { employeeId: 'a', name: 'Ana', days: 2, minutes: 424, lateCount: 1, lateMinutes: 20, missingExit: 1 });
-    assert.equal(totals[1].minutes, 416);
+    assert.deepEqual(totals[0], { employeeId: 'Ana', name: 'Ana', days: 2, minutes: 424, lateCount: 1, lateMinutes: 20, earlyExitCount: 0, missingExit: 1 });
+    assert.equal(totals[1].earlyExitCount, 1);
+    assert.equal(totals[2].minutes, 420);
+    assert.equal(workedMinutes(records[1]), null);
   });
 
   it('agrupa por día de entrada en Colombia', () => {
@@ -81,11 +125,12 @@ describe('asistencia: reporte', () => {
   });
 
   it('el archivo para Excel usa punto y coma, coma decimal y no deja pasar fórmulas', () => {
-    const csv = recordsCsv([...records, record('5', 'd', '2026-09-28T13:00:00Z', null, { name: '=HYPERLINK("x")', shiftStart: null, shiftEnd: null })]);
-    assert.ok(csv.startsWith('﻿Fecha;Empleado;'));
+    const csv = recordsCsv([...records, record('5', '=HYPERLINK("x")', '2026-09-28T13:00:00Z', null)], shifts);
+    assert.ok(csv.startsWith('\uFEFFFecha;Empleado;Turno (por la hora de llegada);'));
     const lines = csv.trim().split('\r\n');
-    assert.equal(lines[1], '2026-09-28;Ana;08:00–15:00;07:58;15:02;7,07;0;');
-    assert.equal(lines[2], '2026-09-29;Ana;08:00–15:00;08:20;Sin salida;;20;');
+    assert.equal(lines[1], '2026-09-28;Ana;08:00–15:00;07:58;15:02;7,07;0;0;');
+    assert.equal(lines[2], '2026-09-29;Ana;08:00–15:00;08:20;Sin salida;;20;0;');
+    assert.equal(lines[3], '2026-09-28;Beto;11:00–18:00;11:04;16:00;4,93;0;120;');
     assert.ok(lines[5].includes(`"'=HYPERLINK(""x"")"`));
   });
 });

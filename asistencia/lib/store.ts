@@ -1,15 +1,12 @@
 // Datos de la asistencia: negocios, empleados y jornadas.
+import { timingSafeEqual } from 'node:crypto';
 import type { PoolClient } from 'pg';
 import { currentCode, isValidCode, newKioskSecret, pinHash, CODE_WINDOW_MS } from './codes';
 import { query, transaction } from './db';
+import type { Shift } from './report';
 
-export type AttendanceEmployee = {
-  id: string;
-  name: string;
-  shiftStart: string | null;
-  shiftEnd: string | null;
-  isActive: boolean;
-};
+/** `hasPin` false = el empleado todavía no creó su PIN (lo crea la primera vez que escanea). */
+export type AttendanceEmployee = { id: string; name: string; isActive: boolean; hasPin: boolean };
 
 export type AttendanceBusinessSummary = { id: string; name: string; slug: string; isActive: boolean; employees: number };
 
@@ -19,6 +16,8 @@ export type AttendanceBusiness = {
   slug: string;
   kioskSecret: string;
   isActive: boolean;
+  /** Turnos del negocio; el de cada jornada se deduce de la hora de llegada. */
+  shifts: Shift[];
   employees: AttendanceEmployee[];
 };
 
@@ -29,10 +28,10 @@ export type AttendanceRecord = {
   clockIn: string;
   clockOut: string | null;
   editedAt: string | null;
-  employee: { name: string; shiftStart: string | null; shiftEnd: string | null };
+  employee: { name: string };
 };
 
-export type PunchResult = { employeeName: string; type: 'in' | 'out'; at: string; workedMinutes: number | null };
+export type PunchResult = { employeeName: string; type: 'in' | 'out'; at: string; workedMinutes: number | null; pinCreated: boolean };
 
 /** Error con un mensaje para mostrar tal cual y un código para decidir qué ofrecer en pantalla. */
 export class AppError extends Error {
@@ -51,6 +50,10 @@ const DOUBLE_SCAN_MS = 2 * MINUTE;
 const FORGOTTEN_MS = 16 * 60 * MINUTE;
 const MAX_SHIFT_MS = 24 * 60 * MINUTE;
 const MAX_RANGE_DAYS = 62;
+const MAX_SHIFTS = 6;
+/** PIN equivocados seguidos antes de bloquear a ese empleado un rato (nadie adivina el PIN de otro probando). */
+const MAX_FAILED_PINS = 5;
+const LOCK_MS = 15 * MINUTE;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -65,17 +68,19 @@ function cleanName(name: string, what = 'el nombre'): string {
   return value;
 }
 
-function cleanPin(pin: string): string {
-  if (!/^\d{4}$/.test(pin)) throw new AppError('INVALID', 'El PIN debe tener exactamente 4 números.');
-  return pin;
-}
-
-/** Turno: las dos horas o ninguna. */
-function cleanShift(start: string, end: string): { shiftStart: string | null; shiftEnd: string | null } {
-  if (!start && !end) return { shiftStart: null, shiftEnd: null };
-  if (!start || !end) throw new AppError('INVALID', 'Pon la hora de inicio y la de fin del turno, o deja las dos vacías.');
-  if (!TIME.test(start) || !TIME.test(end)) throw new AppError('INVALID', 'La hora del turno debe tener el formato HH:MM (por ejemplo 08:00).');
-  return { shiftStart: start, shiftEnd: end };
+/** Turnos del negocio: cada uno con inicio y fin, sin repetir la hora de inicio; se ordenan por inicio. */
+export function cleanShifts(input: { start: string; end: string }[]): Shift[] {
+  const shifts: Shift[] = [];
+  for (const { start, end } of input) {
+    if (!start && !end) continue;
+    if (!start || !end) throw new AppError('INVALID', 'Cada turno necesita hora de inicio y de fin.');
+    if (!TIME.test(start) || !TIME.test(end)) throw new AppError('INVALID', 'Las horas deben tener el formato HH:MM (por ejemplo 08:00).');
+    if (start === end) throw new AppError('INVALID', 'Un turno no puede empezar y terminar a la misma hora.');
+    if (shifts.some((s) => s.start === start)) throw new AppError('INVALID', 'Dos turnos no pueden empezar a la misma hora.');
+    shifts.push({ start, end });
+  }
+  if (shifts.length > MAX_SHIFTS) throw new AppError('INVALID', `Máximo ${MAX_SHIFTS} turnos.`);
+  return shifts.sort((a, b) => a.start.localeCompare(b.start));
 }
 
 function slugify(input: string): string {
@@ -91,7 +96,8 @@ function slugify(input: string): string {
 }
 
 const isUniqueViolation = (error: unknown) => (error as { code?: string } | null)?.code === '23505';
-const pinTaken = () => new AppError('PIN_TAKEN', 'Ese PIN ya lo tiene otro empleado de este negocio.');
+
+const sameHash = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
 // ───────── público: tablet y celular del empleado ─────────
 
@@ -106,32 +112,83 @@ export async function getKiosk(secret: string) {
   return { name: business.name, slug: business.slug, windowMs: CODE_WINDOW_MS, ...currentCode(business.kiosk_secret, business.slug) };
 }
 
+type PublicBusiness = { id: string; name: string; slug: string; kiosk_secret: string };
+
+async function activeBusiness(slug: string): Promise<PublicBusiness> {
+  const [business] = await query<PublicBusiness>('SELECT id, name, slug, kiosk_secret FROM businesses WHERE slug = $1 AND is_active', [slug]);
+  if (!business) throw new AppError('NOT_FOUND', 'Este negocio no existe.');
+  return business;
+}
+
+function checkCode(business: PublicBusiness, code: string, now: Date) {
+  if (!code || code.length > 64 || !isValidCode(business.kiosk_secret, business.slug, code, now.getTime())) {
+    throw new AppError('CODE_EXPIRED', 'El código ya venció. Escanea otra vez el QR de la entrada.');
+  }
+}
+
+/**
+ * Lo que ve el empleado al escanear: el nombre del negocio y la lista de empleados para tocar el suyo.
+ * Solo con un código vigente de la tablet: la lista de nombres no queda a la vista de cualquiera.
+ */
+export async function getPunchScreen(slug: string, code: string, now = new Date()) {
+  const business = await activeBusiness(slug);
+  checkCode(business, code, now);
+  const employees = await query<{ id: string; name: string; has_pin: boolean }>(
+    'SELECT id, name, pin_hash IS NOT NULL AS has_pin FROM employees WHERE business_id = $1 AND is_active ORDER BY name',
+    [business.id],
+  );
+  return { name: business.name, employees: employees.map((e) => ({ id: e.id, name: e.name, hasPin: e.has_pin })) };
+}
+
 export async function getPublicBusiness(slug: string): Promise<{ name: string } | null> {
   const [business] = await query<{ name: string }>('SELECT name FROM businesses WHERE slug = $1 AND is_active', [slug]);
   return business ?? null;
 }
 
-/** Marca entrada o salida: si el empleado tiene una jornada abierta, la cierra; si no, abre una. */
-export async function punch(slug: string, code: string, pin: string, now = new Date()): Promise<PunchResult> {
-  const [business] = await query<{ id: string; slug: string; kiosk_secret: string }>(
-    'SELECT id, slug, kiosk_secret FROM businesses WHERE slug = $1 AND is_active',
-    [slug],
-  );
-  if (!business) throw new AppError('NOT_FOUND', 'Este negocio no existe.');
-  if (!code || code.length > 64 || !isValidCode(business.kiosk_secret, business.slug, code, now.getTime())) {
-    throw new AppError('CODE_EXPIRED', 'El código ya venció. Escanea otra vez el QR de la entrada.');
-  }
+/**
+ * Marca entrada o salida: si el empleado tiene una jornada abierta, la cierra; si no, abre una.
+ * Si el empleado todavía no tiene PIN, `pin` es el que está creando y queda guardado en esta misma marcación.
+ */
+export async function punch(slug: string, code: string, employeeId: string, pin: string, now = new Date()): Promise<PunchResult> {
+  const business = await activeBusiness(slug);
+  checkCode(business, code, now);
+  if (!isUuid(employeeId)) throw new AppError('EMPLOYEE', 'Toca tu nombre en la lista.');
   if (!/^\d{4}$/.test(pin)) throw new AppError('PIN_INVALID', 'El PIN tiene 4 números.');
+  const hash = pinHash(business.id, pin);
 
-  return transaction(async (client) => {
+  // Un PIN equivocado se cuenta aunque la marcación falle: por eso el error sale después de guardar.
+  const outcome = await transaction(async (client): Promise<PunchResult | AppError> => {
     // Bloquea al empleado: dos toques seguidos no pueden abrir dos jornadas.
     const employee = (
-      await client.query<{ id: string; name: string }>(
-        'SELECT id, name FROM employees WHERE business_id = $1 AND pin_hash = $2 AND is_active FOR UPDATE',
-        [business.id, pinHash(business.id, pin)],
+      await client.query<{ id: string; name: string; pin_hash: string | null; failed_pins: number; locked_until: Date | null }>(
+        'SELECT id, name, pin_hash, failed_pins, locked_until FROM employees WHERE id = $1 AND business_id = $2 AND is_active FOR UPDATE',
+        [employeeId, business.id],
       )
     ).rows[0];
-    if (!employee) throw new AppError('PIN_INVALID', 'PIN incorrecto. Revísalo e intenta de nuevo.');
+    if (!employee) return new AppError('EMPLOYEE', 'Toca tu nombre en la lista.');
+    if (employee.locked_until && employee.locked_until > now) {
+      const minutes = Math.ceil((employee.locked_until.getTime() - now.getTime()) / MINUTE);
+      return new AppError('LOCKED', `Demasiados PIN equivocados. Intenta en ${minutes} min o pide al administrador que reinicie tu PIN.`);
+    }
+
+    let pinCreated = false;
+    if (!employee.pin_hash) {
+      await client.query('UPDATE employees SET pin_hash = $1, failed_pins = 0, locked_until = NULL WHERE id = $2', [hash, employee.id]);
+      pinCreated = true;
+    } else if (!sameHash(employee.pin_hash, hash)) {
+      const failed = employee.failed_pins + 1;
+      const lock = failed >= MAX_FAILED_PINS;
+      await client.query('UPDATE employees SET failed_pins = $1, locked_until = $2 WHERE id = $3', [
+        lock ? 0 : failed,
+        lock ? new Date(now.getTime() + LOCK_MS) : null,
+        employee.id,
+      ]);
+      return lock
+        ? new AppError('LOCKED', 'Demasiados PIN equivocados. Intenta en 15 min o pide al administrador que reinicie tu PIN.')
+        : new AppError('PIN_INVALID', 'PIN incorrecto. Revísalo e intenta de nuevo.');
+    } else if (employee.failed_pins > 0) {
+      await client.query('UPDATE employees SET failed_pins = 0 WHERE id = $1', [employee.id]);
+    }
 
     const last = (
       await client.query<{ id: string; clock_in: Date; clock_out: Date | null }>(
@@ -142,16 +199,18 @@ export async function punch(slug: string, code: string, pin: string, now = new D
     const elapsed = (from: Date) => now.getTime() - from.getTime();
 
     if (last && !last.clock_out && elapsed(last.clock_in) < FORGOTTEN_MS) {
-      if (elapsed(last.clock_in) < DOUBLE_SCAN_MS) throw new AppError('DOUBLE_SCAN', 'Ya marcaste tu entrada hace un momento.');
+      if (elapsed(last.clock_in) < DOUBLE_SCAN_MS) return new AppError('DOUBLE_SCAN', 'Ya marcaste tu entrada hace un momento.');
       await client.query('UPDATE records SET clock_out = $1 WHERE id = $2', [now, last.id]);
-      return { employeeName: employee.name, type: 'out', at: now.toISOString(), workedMinutes: Math.round(elapsed(last.clock_in) / MINUTE) };
+      return { employeeName: employee.name, type: 'out', at: now.toISOString(), workedMinutes: Math.round(elapsed(last.clock_in) / MINUTE), pinCreated };
     }
     if (last?.clock_out && elapsed(last.clock_out) < DOUBLE_SCAN_MS) {
-      throw new AppError('DOUBLE_SCAN', 'Ya marcaste tu salida hace un momento.');
+      return new AppError('DOUBLE_SCAN', 'Ya marcaste tu salida hace un momento.');
     }
     await client.query('INSERT INTO records (business_id, employee_id, clock_in) VALUES ($1, $2, $3)', [business.id, employee.id, now]);
-    return { employeeName: employee.name, type: 'in', at: now.toISOString(), workedMinutes: null };
+    return { employeeName: employee.name, type: 'in', at: now.toISOString(), workedMinutes: null, pinCreated };
   });
+  if (outcome instanceof AppError) throw outcome;
+  return outcome;
 }
 
 // ───────── panel ─────────
@@ -167,13 +226,13 @@ export async function listBusinesses(): Promise<AttendanceBusinessSummary[]> {
 
 export async function getBusiness(id: string): Promise<AttendanceBusiness | null> {
   if (!isUuid(id)) return null;
-  const [business] = await query<{ id: string; name: string; slug: string; kiosk_secret: string; is_active: boolean }>(
-    'SELECT id, name, slug, kiosk_secret, is_active FROM businesses WHERE id = $1',
+  const [business] = await query<{ id: string; name: string; slug: string; kiosk_secret: string; is_active: boolean; shifts: Shift[] }>(
+    'SELECT id, name, slug, kiosk_secret, is_active, shifts FROM businesses WHERE id = $1',
     [id],
   );
   if (!business) return null;
-  const employees = await query<{ id: string; name: string; shift_start: string | null; shift_end: string | null; is_active: boolean }>(
-    'SELECT id, name, shift_start, shift_end, is_active FROM employees WHERE business_id = $1 ORDER BY is_active DESC, name',
+  const employees = await query<{ id: string; name: string; is_active: boolean; has_pin: boolean }>(
+    'SELECT id, name, is_active, pin_hash IS NOT NULL AS has_pin FROM employees WHERE business_id = $1 ORDER BY is_active DESC, name',
     [id],
   );
   return {
@@ -182,7 +241,8 @@ export async function getBusiness(id: string): Promise<AttendanceBusiness | null
     slug: business.slug,
     kioskSecret: business.kiosk_secret,
     isActive: business.is_active,
-    employees: employees.map((e) => ({ id: e.id, name: e.name, shiftStart: e.shift_start, shiftEnd: e.shift_end, isActive: e.is_active })),
+    shifts: business.shifts,
+    employees: employees.map((e) => ({ id: e.id, name: e.name, isActive: e.is_active, hasPin: e.has_pin })),
   };
 }
 
@@ -211,44 +271,41 @@ export async function rotateKiosk(businessId: string) {
   await query('UPDATE businesses SET kiosk_secret = $1 WHERE id = $2', [newKioskSecret(), businessId]);
 }
 
-export async function createEmployee(businessId: string, input: { name: string; pin: string; shiftStart: string; shiftEnd: string }) {
-  if (!(await getBusiness(businessId))) throw new AppError('NOT_FOUND', 'Negocio no encontrado.');
-  const name = cleanName(input.name, 'el nombre del empleado');
-  const pin = cleanPin(input.pin);
-  const { shiftStart, shiftEnd } = cleanShift(input.shiftStart, input.shiftEnd);
-  try {
-    const [row] = await query<{ id: string }>(
-      'INSERT INTO employees (business_id, name, pin_hash, shift_start, shift_end) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [businessId, name, pinHash(businessId, pin), shiftStart, shiftEnd],
-    );
-    return row.id;
-  } catch (error) {
-    if (isUniqueViolation(error)) throw pinTaken();
-    throw error;
-  }
+export async function updateShifts(businessId: string, input: { start: string; end: string }[]) {
+  if (!isUuid(businessId)) throw new AppError('NOT_FOUND', 'Negocio no encontrado.');
+  const shifts = cleanShifts(input);
+  const rows = await query('UPDATE businesses SET shifts = $1 WHERE id = $2 RETURNING id', [JSON.stringify(shifts), businessId]);
+  if (rows.length === 0) throw new AppError('NOT_FOUND', 'Negocio no encontrado.');
 }
 
-/** PIN vacío = deja el que tenía. */
-export async function updateEmployee(
-  businessId: string,
-  employeeId: string,
-  input: { name: string; pin: string; shiftStart: string; shiftEnd: string; isActive: boolean },
-) {
+/** El empleado se crea sin PIN: lo crea él mismo la primera vez que escanea el QR. */
+export async function createEmployee(businessId: string, input: { name: string }) {
+  if (!(await getBusiness(businessId))) throw new AppError('NOT_FOUND', 'Negocio no encontrado.');
+  const name = cleanName(input.name, 'el nombre del empleado');
+  const [row] = await query<{ id: string }>('INSERT INTO employees (business_id, name) VALUES ($1, $2) RETURNING id', [businessId, name]);
+  return row.id;
+}
+
+export async function updateEmployee(businessId: string, employeeId: string, input: { name: string; isActive: boolean }) {
   if (!isUuid(businessId) || !isUuid(employeeId)) throw new AppError('NOT_FOUND', 'Empleado no encontrado.');
   const name = cleanName(input.name, 'el nombre del empleado');
-  const pin = input.pin ? cleanPin(input.pin) : null;
-  const { shiftStart, shiftEnd } = cleanShift(input.shiftStart, input.shiftEnd);
-  try {
-    const rows = await query(
-      `UPDATE employees SET name = $1, shift_start = $2, shift_end = $3, is_active = $4, pin_hash = COALESCE($5, pin_hash)
-        WHERE id = $6 AND business_id = $7 RETURNING id`,
-      [name, shiftStart, shiftEnd, input.isActive, pin ? pinHash(businessId, pin) : null, employeeId, businessId],
-    );
-    if (rows.length === 0) throw new AppError('NOT_FOUND', 'Empleado no encontrado.');
-  } catch (error) {
-    if (isUniqueViolation(error)) throw pinTaken();
-    throw error;
-  }
+  const rows = await query('UPDATE employees SET name = $1, is_active = $2 WHERE id = $3 AND business_id = $4 RETURNING id', [
+    name,
+    input.isActive,
+    employeeId,
+    businessId,
+  ]);
+  if (rows.length === 0) throw new AppError('NOT_FOUND', 'Empleado no encontrado.');
+}
+
+/** Para un PIN olvidado: el empleado crea uno nuevo la próxima vez que escanee. */
+export async function resetPin(businessId: string, employeeId: string) {
+  if (!isUuid(businessId) || !isUuid(employeeId)) throw new AppError('NOT_FOUND', 'Empleado no encontrado.');
+  const rows = await query(
+    'UPDATE employees SET pin_hash = NULL, failed_pins = 0, locked_until = NULL WHERE id = $1 AND business_id = $2 RETURNING id',
+    [employeeId, businessId],
+  );
+  if (rows.length === 0) throw new AppError('NOT_FOUND', 'Empleado no encontrado.');
 }
 
 type RecordRow = {
@@ -258,8 +315,6 @@ type RecordRow = {
   clock_out: Date | null;
   edited_at: Date | null;
   name: string;
-  shift_start: string | null;
-  shift_end: string | null;
 };
 
 const toRecord = (r: RecordRow): AttendanceRecord => ({
@@ -268,7 +323,7 @@ const toRecord = (r: RecordRow): AttendanceRecord => ({
   clockIn: r.clock_in.toISOString(),
   clockOut: r.clock_out?.toISOString() ?? null,
   editedAt: r.edited_at?.toISOString() ?? null,
-  employee: { name: r.name, shiftStart: r.shift_start, shiftEnd: r.shift_end },
+  employee: { name: r.name },
 });
 
 /** Inicio del día AAAA-MM-DD en Colombia (UTC-5, sin horario de verano). */
@@ -285,7 +340,7 @@ export async function listRecords(businessId: string, fromDay: string, toDay: st
     throw new AppError('INVALID', `El rango no puede pasar de ${MAX_RANGE_DAYS} días.`);
   }
   const rows = await query<RecordRow>(
-    `SELECT r.id, r.employee_id, r.clock_in, r.clock_out, r.edited_at, e.name, e.shift_start, e.shift_end
+    `SELECT r.id, r.employee_id, r.clock_in, r.clock_out, r.edited_at, e.name
        FROM records r JOIN employees e ON e.id = r.employee_id
       WHERE r.business_id = $1 AND r.clock_in >= $2 AND r.clock_in < $3
       ORDER BY r.clock_in`,
