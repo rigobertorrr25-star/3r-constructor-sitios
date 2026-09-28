@@ -212,3 +212,26 @@ export const XIcon = (p: IconProps) => (
     <path d="m6 6 12 12" />
   </Icon>
 );
+
+export const QrIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3" />
+  </Icon>
+);
+
+export const ClockIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </Icon>
+);
+
+export const SheetIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="4" y="3" width="16" height="18" rx="2" />
+    <path d="M4 9h16M4 15h16M10 3v18" />
+  </Icon>
+);

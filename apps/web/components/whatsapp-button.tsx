@@ -2,8 +2,11 @@
 const PHONE = '573107907194'; // Colombia (+57) + número, sin espacios ni signos (formato que exige wa.me.
 const MESSAGE = 'Hola, quiero una página web para mi negocio';
 
+/** Enlace a nuestro WhatsApp con un mensaje ya escrito. */
+export const whatsappLink = (message: string) => `https://wa.me/${PHONE}?text=${encodeURIComponent(message)}`;
+
 export function WhatsAppButton() {
-  const href = `https://wa.me/${PHONE}?text=${encodeURIComponent(MESSAGE)}`;
+  const href = whatsappLink(MESSAGE);
   return (
     <a
       href={href}

@@ -4,13 +4,16 @@ import type { ReactNode } from 'react';
 import {
   ArrowRightIcon,
   ChatIcon,
+  ClockIcon,
   DevicesIcon,
   GlobeIcon,
   HistoryIcon,
   InstagramIcon,
   PhoneIcon,
   PointerIcon,
+  QrIcon,
   SearchIcon,
+  SheetIcon,
   ShoppingBagIcon,
   TemplateIcon,
   UtensilsIcon,
@@ -19,6 +22,7 @@ import { Logo } from '@/components/logo';
 import { MascotGreeter } from '@/components/mascot-greeter';
 import { Reveal } from '@/components/reveal';
 import { SpotlightCard } from '@/components/spotlight-card';
+import { whatsappLink } from '@/components/whatsapp-button';
 import { currentUserOrNull, rawApi } from '@/lib/api';
 import { formatMoney } from '@/lib/orders';
 import type { CurrentUser, Package, PortfolioItem } from '@/lib/types';
@@ -74,6 +78,19 @@ const faqs = [
   { q: '¿Qué es la mensualidad?', a: 'Es opcional: mantiene tu página en línea y cubre soporte y pequeños cambios. Puedes decidirlo al pedir o después.' },
   { q: '¿Puedo pedir cambios?', a: 'Sí. Desde tu pedido nos escribes lo que quieras ajustar y lo vemos contigo.' },
   { q: '¿Necesito tener un dominio?', a: 'No. Si todavía no tienes uno, te ayudamos a elegirlo y conectarlo.' },
+];
+
+// Servicio aparte de las páginas: control de entrada y salida de empleados con QR. Solo se anuncia aquí;
+// el sistema vive en otra dirección y el botón lleva a WhatsApp, no a la app.
+const ATTENDANCE_PRICE = '$90.000';
+const ATTENDANCE_SETUP = '$300.000';
+// Instalación con descuento para quien también compra su página con nosotros.
+const ATTENDANCE_SETUP_WITH_PAGE = '$150.000';
+const attendanceFeatures: { hue: number; icon: ReactNode; text: string }[] = [
+  { hue: 275, icon: <QrIcon />, text: 'Una tablet en la entrada muestra un QR que cambia cada 30 segundos: solo se puede marcar estando en el local.' },
+  { hue: 150, icon: <PhoneIcon />, text: 'Cada empleado marca con su celular y su propio PIN. Nada que instalar.' },
+  { hue: 25, icon: <ClockIcon />, text: 'Ves quién llegó tarde, quién salió antes y las horas trabajadas de cada uno.' },
+  { hue: 200, icon: <SheetIcon />, text: 'Descargas la semana en Excel y le das acceso de solo lectura a los dueños o socios.' },
 ];
 
 const INSTAGRAM_URL = 'https://www.instagram.com/3r.paginas_/';
@@ -449,6 +466,59 @@ export default async function HomePage() {
               </Reveal>
             ))}
           </ul>
+        </section>
+
+        <section id="asistencia" aria-labelledby="h-asistencia" className="mx-auto max-w-[1224px] scroll-mt-8 px-4 pb-24 sm:px-[34px]">
+          <Reveal>
+            <div className={`${card} grid gap-8 p-[26px] sm:p-10 lg:grid-cols-[1.4fr_1fr] lg:items-center`}>
+              <div>
+                <span className="rounded-full bg-primary/15 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.2em] text-primary">
+                  Nuevo para restaurantes
+                </span>
+                <h2 id="h-asistencia" className="mt-5 font-display text-[30px] font-bold leading-[1.15] tracking-tight text-foreground sm:text-[38px]">
+                  Control de asistencia con QR
+                </h2>
+                <p className="mt-3 max-w-xl text-[16px] text-muted-foreground">
+                  Sabe a qué hora llega y sale cada empleado, sin reloj de huella ni planillas en papel.
+                </p>
+                <ul className="mt-7 grid gap-4 sm:grid-cols-2">
+                  {attendanceFeatures.map((item) => (
+                    <li key={item.text} className="flex items-start gap-3">
+                      <span
+                        className="flex size-9 shrink-0 items-center justify-center rounded-full"
+                        style={{ backgroundColor: `oklch(0.3 0.12 ${item.hue} / 0.5)`, color: `oklch(0.92 0.08 ${item.hue})` }}
+                      >
+                        {item.icon}
+                      </span>
+                      <span className="text-[14.5px] leading-snug text-foreground/90">{item.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-6 text-center">
+                <p className="font-display text-[44px] font-bold leading-none tracking-tight text-foreground">{ATTENDANCE_PRICE}</p>
+                <p className="mt-2 text-[14px] text-muted-foreground">al mes</p>
+                <div className="mt-5 space-y-1.5 border-t border-white/[0.08] pt-5 text-[14px]">
+                  <p className="text-muted-foreground">
+                    Instalación: <span className="text-foreground">{ATTENDANCE_SETUP}</span>
+                  </p>
+                  <p className="rounded-2xl bg-primary/10 px-3.5 py-2.5 text-primary">
+                    Solo {ATTENDANCE_SETUP_WITH_PAGE} si compras tu página con nosotros
+                  </p>
+                </div>
+                <a
+                  href={whatsappLink('Hola, me interesa el control de asistencia con QR para mi negocio')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${pill} shine mt-6 w-full bg-primary font-medium text-primary-foreground hover:shadow-[var(--shadow-glow)]`}
+                >
+                  Lo quiero para mi negocio
+                  <ArrowRightIcon />
+                </a>
+                <p className="mt-3 text-[13px] text-muted-foreground">Te escribimos por WhatsApp y lo dejamos funcionando.</p>
+              </div>
+            </div>
+          </Reveal>
         </section>
 
         <section id="preguntas" aria-labelledby="h-faq" className="mx-auto max-w-[760px] scroll-mt-8 px-4 pb-24 sm:px-[34px]">
