@@ -48,6 +48,15 @@ CREATE TABLE IF NOT EXISTS records (
 CREATE INDEX IF NOT EXISTS idx_records_business_clock_in ON records (business_id, clock_in);
 CREATE INDEX IF NOT EXISTS idx_records_employee_clock_in ON records (employee_id, clock_in);
 
+-- Jefes: ven el reporte de su negocio (solo lectura). La clave va con scrypt y sal.
+CREATE TABLE IF NOT EXISTS managers (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id   UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  name          VARCHAR(120) NOT NULL,
+  password_hash VARCHAR(200) NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Rastro de las correcciones a mano, por si hay un reclamo.
 CREATE TABLE IF NOT EXISTS record_changes (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),

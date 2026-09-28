@@ -4,6 +4,8 @@ import { CreateBusinessForm } from '@/components/panel-forms';
 import { card } from '@/components/ui';
 import { t } from '@/lib/i18n';
 import { getLang } from '@/lib/lang';
+import { redirect } from 'next/navigation';
+import { requireViewer } from '@/lib/auth';
 import { listBusinesses } from '@/lib/store';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -12,6 +14,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PanelPage() {
+  const viewer = await requireViewer();
+  // Un jefe solo tiene su negocio: va directo a su reporte.
+  if (viewer.role === 'manager') redirect(`/panel/${viewer.businessId}`);
   const lang = await getLang();
   const businesses = await listBusinesses();
 

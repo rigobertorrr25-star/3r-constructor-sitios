@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { EmployeeForm, KioskLink, RecordEditor, ResetPinButton, ShiftsForm } from '@/components/panel-forms';
+import { DeleteManagerButton, EmployeeForm, KioskLink, ManagerForm, RecordEditor, ResetPinButton, ShiftsForm } from '@/components/panel-forms';
 import { card } from '@/components/ui';
+import { canView, requireViewer } from '@/lib/auth';
 import { t } from '@/lib/i18n';
 import { getLang } from '@/lib/lang';
 import {
@@ -23,7 +24,7 @@ import {
   weekOf,
   workedMinutes,
 } from '@/lib/report';
-import { getBusiness, listRecords } from '@/lib/store';
+import { getBusiness, listManagers, listRecords } from '@/lib/store';
 
 export async function generateMetadata(): Promise<Metadata> {
   const lang = await getLang();
@@ -43,9 +44,13 @@ export default async function AttendanceBusinessPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
+  const viewer = await requireViewer();
   const business = await getBusiness(id);
-  if (!business) notFound();
+  // Un jefe solo abre su propio negocio; los demás, como si no existieran.
+  if (!business || !canView(viewer, business.id)) notFound();
+  const isAdmin = viewer.role === 'admin';
   const lang = await getLang();
+  const managers = isAdmin ? await listManagers(business.id) : [];
 
   const thisWeek = weekOf(new Date());
   const from = isDay(query.desde) ? query.desde : thisWeek.from;
@@ -65,9 +70,13 @@ export default async function AttendanceBusinessPage({
 
   return (
     <>
-      <Link href="/panel" className="text-[14px] text-muted-foreground transition hover:text-foreground">
-        {t(lang, 'backToBusinesses')}
-      </Link>
+      {isAdmin ? (
+        <Link href="/panel" className="text-[14px] text-muted-foreground transition hover:text-foreground">
+          {t(lang, 'backToBusinesses')}
+        </Link>
+      ) : (
+        <p className="text-[14px] text-muted-foreground">{t(lang, 'managerGreeting', { name: viewer.name })}</p>
+      )}
       <h1 className="mt-2 font-display text-[32px] font-bold tracking-tight text-foreground">{business.name}</h1>
 
       <div className="mt-8 space-y-6">
@@ -133,6 +142,7 @@ export default async function AttendanceBusinessPage({
               </div>
               <p className="mt-2 text-[13px] text-muted-foreground">
                 {t(lang, 'reportNote', { grace: LATE_GRACE_MIN })}
+                {business.shifts.length ? ` ${t(lang, 'shiftsReadOnly')}: ${business.shifts.map(shiftLabel).join(' · ')}.` : ''}
               </p>
 
               <div className="mt-8 space-y-8">
@@ -161,7 +171,7 @@ export default async function AttendanceBusinessPage({
                               {early ? <span className="text-warning">{t(lang, 'leftEarly', { time: formatMinutes(early) })}</span> : null}
                               {record.editedAt ? <span className="text-muted-foreground">{t(lang, 'editedByHand')}</span> : null}
                             </div>
-                            <RecordEditor businessId={business.id} record={record} lang={lang} />
+                            {isAdmin ? <RecordEditor businessId={business.id} record={record} lang={lang} /> : null}
                           </li>
                         );
                       })}
@@ -173,6 +183,8 @@ export default async function AttendanceBusinessPage({
           )}
         </section>
 
+        {isAdmin ? (
+          <>
         {/* Empleados */}
         <section className={card}>
           <h2 className={sectionTitle}>{t(lang, 'employees')}</h2>
@@ -227,6 +239,27 @@ export default async function AttendanceBusinessPage({
             <KioskLink url={kioskUrl} businessId={business.id} lang={lang} />
           </div>
         </section>
+
+        {/* Jefes */}
+        <section className={card}>
+          <h2 className={sectionTitle}>{t(lang, 'managers')}</h2>
+          <p className="mt-1 max-w-2xl text-[14px] text-muted-foreground">{t(lang, 'managersIntro')}</p>
+          <ul className="mt-4 space-y-2">
+            {managers.length === 0 ? <li className="text-[14px] text-muted-foreground">{t(lang, 'noManagers')}</li> : null}
+            {managers.map((manager) => (
+              <li key={manager.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/[0.06] px-4 py-3">
+                <span className="text-[15px] font-medium text-foreground">{manager.name}</span>
+                <DeleteManagerButton businessId={business.id} manager={manager} lang={lang} />
+              </li>
+            ))}
+          </ul>
+          <div className="mt-5 max-w-md rounded-2xl border border-white/[0.08] p-4">
+            <h3 className="mb-4 text-[15px] font-medium text-foreground">{t(lang, 'addManager')}</h3>
+            <ManagerForm businessId={business.id} lang={lang} signInUrl={`${proto}://${host}/entrar`} />
+          </div>
+        </section>
+          </>
+        ) : null}
       </div>
     </>
   );

@@ -196,6 +196,26 @@ const es = {
   errTimes: 'Revisa las horas.',
   errExitBeforeEntry: 'La salida debe ser después de la entrada.',
   errShiftTooLong: 'Una jornada no puede pasar de 24 horas.',
+
+  // Jefes
+  managers: 'Jefes',
+  managersIntro:
+    'Cada jefe entra con su propia clave en la misma página de ingreso y ve solo el reporte de este negocio: puede descargar el Excel, pero no cambiar nada.',
+  noManagers: 'Todavía no hay jefes con acceso.',
+  addManager: 'Dar acceso a un jefe',
+  managerName: 'Nombre del jefe',
+  managerPassword: 'Clave para el jefe',
+  managerPasswordHint: 'Mínimo 8 caracteres. Anótala y dásela al jefe: después no se puede ver.',
+  managerAdded: 'Acceso creado. El jefe entra en {url} con esa clave.',
+  deleteManager: 'Quitar acceso',
+  deleteManagerConfirm: '¿Quitar el acceso de {name}? Deja de entrar de inmediato.',
+  viewOnly: 'Solo lectura',
+  managerGreeting: 'Hola, {name}',
+  shiftsReadOnly: 'Turnos del negocio',
+  errManagerName: 'Escribe el nombre del jefe (entre 2 y 120 letras).',
+  errManagerPassword: 'La clave debe tener al menos {min} caracteres.',
+  errPasswordInUse: 'Esa clave ya está en uso. Elige otra.',
+  errManagerNotFound: 'Acceso no encontrado.',
 };
 
 export type MessageKey = keyof typeof es;
@@ -371,6 +391,25 @@ const en: Record<MessageKey, string> = {
   errTimes: 'Check the times.',
   errExitBeforeEntry: 'The clock-out must be after the clock-in.',
   errShiftTooLong: 'A workday cannot be longer than 24 hours.',
+
+  managers: 'Managers',
+  managersIntro:
+    'Each manager signs in with their own password on the same sign-in page and only sees this business report: they can download the Excel file but cannot change anything.',
+  noManagers: 'No managers have access yet.',
+  addManager: 'Give a manager access',
+  managerName: 'Manager name',
+  managerPassword: 'Password for the manager',
+  managerPasswordHint: 'At least 8 characters. Write it down and give it to the manager: it cannot be viewed later.',
+  managerAdded: 'Access created. The manager signs in at {url} with that password.',
+  deleteManager: 'Remove access',
+  deleteManagerConfirm: 'Remove access for {name}? They will be signed out immediately.',
+  viewOnly: 'View only',
+  managerGreeting: 'Hi, {name}',
+  shiftsReadOnly: 'Business shifts',
+  errManagerName: 'Enter the manager name (2 to 120 characters).',
+  errManagerPassword: 'The password must be at least {min} characters.',
+  errPasswordInUse: 'That password is already in use. Choose another one.',
+  errManagerNotFound: 'Access not found.',
 };
 
 const messages: Record<Lang, Record<MessageKey, string>> = { es, en };

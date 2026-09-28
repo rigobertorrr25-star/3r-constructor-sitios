@@ -3,6 +3,8 @@
 import { useActionState, useState } from 'react';
 import {
   createBusinessAction,
+  createManagerAction,
+  deleteManagerAction,
   deleteRecordAction,
   resetPinAction,
   rotateKioskAction,
@@ -12,7 +14,7 @@ import {
 } from '@/app/actions';
 import { t, type Lang } from '@/lib/i18n';
 import { toLocalInput, type Shift } from '@/lib/report';
-import type { AttendanceEmployee, AttendanceRecord } from '@/lib/store';
+import type { AttendanceEmployee, AttendanceRecord, Manager } from '@/lib/store';
 import { SubmitButton } from './submit-button';
 import { Alert, CheckField, Field, quietButton } from './ui';
 
@@ -181,5 +183,46 @@ export function RecordEditor({ businessId, record, lang }: { businessId: string;
         </button>
       </form>
     </details>
+  );
+}
+
+/** Dar acceso de solo lectura a un jefe: nombre y una clave que el administrador le entrega. */
+export function ManagerForm({ businessId, lang, signInUrl }: { businessId: string; lang: Lang; signInUrl: string }) {
+  const [state, action] = useActionState(createManagerAction, undefined);
+  return (
+    <form key={`manager-${state?.ok ?? 0}`} action={action} className="space-y-4">
+      <input type="hidden" name="businessId" value={businessId} />
+      <Field label={t(lang, 'managerName')} name="name" required minLength={2} maxLength={120} defaultValue={state?.values?.name ?? ''} />
+      <Field
+        label={t(lang, 'managerPassword')}
+        name="password"
+        type="text"
+        required
+        minLength={8}
+        maxLength={200}
+        autoComplete="off"
+        hint={t(lang, 'managerPasswordHint')}
+      />
+      {state?.error ? <Alert>{state.error}</Alert> : null}
+      {state?.ok ? <Alert tone="ok">{t(lang, 'managerAdded', { url: signInUrl })}</Alert> : null}
+      <SubmitButton pendingText={t(lang, 'saving')}>{t(lang, 'addManager')}</SubmitButton>
+    </form>
+  );
+}
+
+export function DeleteManagerButton({ businessId, manager, lang }: { businessId: string; manager: Manager; lang: Lang }) {
+  return (
+    <form
+      action={deleteManagerAction}
+      onSubmit={(event) => {
+        if (!window.confirm(t(lang, 'deleteManagerConfirm', { name: manager.name }))) event.preventDefault();
+      }}
+    >
+      <input type="hidden" name="businessId" value={businessId} />
+      <input type="hidden" name="managerId" value={manager.id} />
+      <button type="submit" className="text-[13px] text-muted-foreground transition hover:text-[#ffb4b5]">
+        {t(lang, 'deleteManager')}
+      </button>
+    </form>
   );
 }

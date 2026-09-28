@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { LangSwitch } from '@/components/lang-switch';
 import { LoginForm } from '@/components/login-form';
 import { card } from '@/components/ui';
-import { isLoggedIn } from '@/lib/auth';
+import { getViewer } from '@/lib/auth';
 import { t } from '@/lib/i18n';
 import { getLang } from '@/lib/lang';
 
@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function LoginPage() {
-  if (await isLoggedIn()) redirect('/panel');
+  if (await getViewer()) redirect('/panel');
   const lang = await getLang();
   return (
     <main className="relative flex min-h-dvh items-center justify-center px-4 py-10" style={{ backgroundImage: 'var(--gradient-hero)' }}>
