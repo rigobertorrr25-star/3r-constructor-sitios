@@ -12,9 +12,11 @@ import {
   createEmployee,
   deleteRecord,
   punch,
+  resetPin,
   rotateKiosk,
   updateEmployee,
   updateRecord,
+  updateShifts,
   type PunchResult,
 } from '@/lib/store';
 
@@ -71,8 +73,13 @@ export async function punchAction(_prev: PunchState, formData: FormData): Promis
   // Todos comparten el wifi del restaurante (la misma IP): el límite deja pasar un cambio de turno completo,
   // y adivinar un PIN igual exige un código vigente de la tablet.
   if (!allow(`punch:${await clientIp()}`, 30, 60_000)) return { error: 'Demasiados intentos. Espera un minuto e intenta de nuevo.' };
+  const pin = text(formData, 'pin');
+  // Primera vez: el empleado crea su PIN y lo escribe dos veces.
+  if (formData.get('creating') === '1' && pin !== text(formData, 'pinConfirm')) {
+    return { error: 'Los dos PIN no coinciden. Escríbelos otra vez.', code: 'PIN_MISMATCH' };
+  }
   try {
-    return { result: await punch(text(formData, 'slug'), text(formData, 'code'), text(formData, 'pin')) };
+    return { result: await punch(text(formData, 'slug'), text(formData, 'code'), text(formData, 'employeeId'), pin) };
   } catch (error) {
     return { error: messageOf(error), code: error instanceof AppError ? error.code : undefined };
   }
@@ -95,15 +102,31 @@ export async function saveEmployeeAction(_prev: FormState, formData: FormData): 
   await requireAdmin();
   const businessId = text(formData, 'businessId');
   const employeeId = text(formData, 'employeeId');
-  const input = {
-    name: text(formData, 'name'),
-    pin: text(formData, 'pin'),
-    shiftStart: text(formData, 'shiftStart'),
-    shiftEnd: text(formData, 'shiftEnd'),
-  };
+  const name = text(formData, 'name');
   try {
-    if (employeeId) await updateEmployee(businessId, employeeId, { ...input, isActive: formData.get('isActive') === 'on' });
-    else await createEmployee(businessId, input);
+    if (employeeId) await updateEmployee(businessId, employeeId, { name, isActive: formData.get('isActive') === 'on' });
+    else await createEmployee(businessId, { name });
+  } catch (error) {
+    return fail(messageOf(error), formData);
+  }
+  revalidatePath(`/panel/${businessId}`);
+  return { ok: Date.now() };
+}
+
+export async function resetPinAction(formData: FormData) {
+  await requireAdmin();
+  const businessId = text(formData, 'businessId');
+  await resetPin(businessId, text(formData, 'employeeId'));
+  revalidatePath(`/panel/${businessId}`);
+}
+
+/** Turnos del negocio: filas start0/end0, start1/end1…; las vacías se ignoran. */
+export async function saveShiftsAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const businessId = text(formData, 'businessId');
+  const rows = Array.from({ length: 6 }, (_, i) => ({ start: text(formData, `start${i}`), end: text(formData, `end${i}`) }));
+  try {
+    await updateShifts(businessId, rows);
   } catch (error) {
     return fail(messageOf(error), formData);
   }

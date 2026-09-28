@@ -1,8 +1,16 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { createBusinessAction, deleteRecordAction, rotateKioskAction, saveEmployeeAction, updateRecordAction } from '@/app/actions';
-import { toLocalInput } from '@/lib/report';
+import {
+  createBusinessAction,
+  deleteRecordAction,
+  resetPinAction,
+  rotateKioskAction,
+  saveEmployeeAction,
+  saveShiftsAction,
+  updateRecordAction,
+} from '@/app/actions';
+import { toLocalInput, type Shift } from '@/lib/report';
 import type { AttendanceEmployee, AttendanceRecord } from '@/lib/store';
 import { SubmitButton } from './submit-button';
 import { Alert, CheckField, Field, quietButton } from './ui';
@@ -28,21 +36,15 @@ export function EmployeeForm({ businessId, employee }: { businessId: string; emp
     <form key={formKey} action={action} className="space-y-4">
       <input type="hidden" name="businessId" value={businessId} />
       {employee ? <input type="hidden" name="employeeId" value={employee.id} /> : null}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Nombre" name="name" required minLength={2} maxLength={120} defaultValue={v?.name ?? employee?.name ?? ''} />
-        <Field
-          label={employee ? 'PIN nuevo (opcional)' : 'PIN de 4 números'}
-          name="pin"
-          inputMode="numeric"
-          pattern="\d{4}"
-          maxLength={4}
-          required={!employee}
-          autoComplete="off"
-          hint={employee ? 'Déjalo vacío para mantener el que tiene.' : 'Díselo solo a esta persona. No se puede repetir.'}
-        />
-        <Field label="Turno: entra" name="shiftStart" type="time" defaultValue={v?.shiftStart ?? employee?.shiftStart ?? ''} hint="Para ver las llegadas tarde." />
-        <Field label="Turno: sale" name="shiftEnd" type="time" defaultValue={v?.shiftEnd ?? employee?.shiftEnd ?? ''} />
-      </div>
+      <Field
+        label="Nombre"
+        name="name"
+        required
+        minLength={2}
+        maxLength={120}
+        defaultValue={v?.name ?? employee?.name ?? ''}
+        hint={employee ? undefined : 'Así lo verá en la lista al escanear. Su PIN lo crea él mismo la primera vez.'}
+      />
       {employee ? (
         <CheckField
           label="Activo"
@@ -55,6 +57,47 @@ export function EmployeeForm({ businessId, employee }: { businessId: string; emp
       {state?.ok && employee ? <Alert tone="ok">Cambios guardados.</Alert> : null}
       {state?.ok && !employee ? <Alert tone="ok">Empleado agregado.</Alert> : null}
       <SubmitButton pendingText="Guardando…">{employee ? 'Guardar cambios' : 'Agregar empleado'}</SubmitButton>
+    </form>
+  );
+}
+
+/** Para un PIN olvidado: el empleado crea uno nuevo la próxima vez que escanee. */
+export function ResetPinButton({ businessId, employee }: { businessId: string; employee: AttendanceEmployee }) {
+  return (
+    <form
+      action={resetPinAction}
+      onSubmit={(event) => {
+        if (!window.confirm(`¿Reiniciar el PIN de ${employee.name}? La próxima vez que escanee, creará uno nuevo.`)) event.preventDefault();
+      }}
+    >
+      <input type="hidden" name="businessId" value={businessId} />
+      <input type="hidden" name="employeeId" value={employee.id} />
+      <button type="submit" className={quietButton}>
+        Reiniciar PIN
+      </button>
+    </form>
+  );
+}
+
+/** Turnos del negocio. El de cada jornada se deduce solo de la hora de llegada. */
+export function ShiftsForm({ businessId, shifts }: { businessId: string; shifts: Shift[] }) {
+  const [state, action] = useActionState(saveShiftsAction, undefined);
+  const v = state?.values;
+  const rows = Array.from({ length: Math.max(3, Math.min(6, shifts.length + 1)) }, (_, i) => i);
+  return (
+    <form action={action} className="space-y-4">
+      <input type="hidden" name="businessId" value={businessId} />
+      <div className="space-y-3">
+        {rows.map((i) => (
+          <div key={i} className="grid grid-cols-2 gap-3">
+            <Field label={`Turno ${i + 1}: entra`} name={`start${i}`} type="time" defaultValue={v?.[`start${i}`] ?? shifts[i]?.start ?? ''} />
+            <Field label="sale" name={`end${i}`} type="time" defaultValue={v?.[`end${i}`] ?? shifts[i]?.end ?? ''} />
+          </div>
+        ))}
+      </div>
+      {state?.error ? <Alert>{state.error}</Alert> : null}
+      {state?.ok ? <Alert tone="ok">Turnos guardados.</Alert> : null}
+      <SubmitButton pendingText="Guardando…">Guardar turnos</SubmitButton>
     </form>
   );
 }

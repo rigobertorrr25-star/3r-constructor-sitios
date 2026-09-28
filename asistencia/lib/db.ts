@@ -17,15 +17,22 @@ CREATE TABLE IF NOT EXISTS employees (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
   name        VARCHAR(120) NOT NULL,
-  -- HMAC del PIN con el id del negocio: el PIN nunca se guarda tal cual.
-  pin_hash    VARCHAR(64) NOT NULL,
-  -- Turno habitual en hora de Colombia, "HH:MM".
-  shift_start VARCHAR(5),
-  shift_end   VARCHAR(5),
   is_active   BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (business_id, pin_hash)
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- HMAC del PIN con el id del negocio: el PIN nunca se guarda tal cual. Vacío = el empleado todavía no lo creó
+-- (lo crea él mismo al escanear). Puede repetirse entre empleados: al marcar, cada uno toca primero su nombre.
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS pin_hash VARCHAR(64);
+ALTER TABLE employees ALTER COLUMN pin_hash DROP NOT NULL;
+ALTER TABLE employees DROP CONSTRAINT IF EXISTS employees_business_id_pin_hash_key;
+-- PIN equivocados seguidos; a los 5 el empleado queda bloqueado 15 minutos.
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS failed_pins INT NOT NULL DEFAULT 0;
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ;
+
+-- Turnos del negocio, en hora de Colombia: [{"start":"08:00","end":"15:00"}, …]. El turno de cada jornada
+-- se deduce de la hora de llegada (y de salida, si la hay); no se asigna por empleado.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS shifts JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 -- Una jornada: entrada y, cuando marca otra vez, salida.
 CREATE TABLE IF NOT EXISTS records (

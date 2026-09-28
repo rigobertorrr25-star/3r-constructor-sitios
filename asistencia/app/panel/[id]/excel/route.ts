@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   if (!business) return NextResponse.json({ message: 'No encontrado' }, { status: 404 });
   try {
     const records = await listRecords(business.id, from, to);
-    return new NextResponse(recordsCsv(records), {
+    return new NextResponse(recordsCsv(records, business.shifts), {
       headers: {
         'content-type': 'text/csv; charset=utf-8',
         'content-disposition': `attachment; filename="asistencia-${business.slug}-${from}-a-${to}.csv"`,

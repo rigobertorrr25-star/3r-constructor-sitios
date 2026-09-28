@@ -30,8 +30,10 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   portafolio en vivo tenga capturas. Siguiente contenido: 16 nov – diciembre para Instagram.
 - Asistencia con QR (28 sep 2026): sistema **aparte** de la tienda en `asistencia/` (ver su README). Rigoberto pidió
   que no aparezca nada en 3rpaginas.com: no enlazarlo desde la tienda ni compartir base, clave o despliegue. Usa el estilo
-  3R y el león. Primer negocio: Azul Caribe Lounge (11 empleados; turnos 8am–3pm, 11am–6pm, 2pm–9pm). Falta publicarlo:
-  proyecto nuevo en Vercel (Root Directory `asistencia`) con su propia base en Neon.
+  3R y el león. Primer negocio: Azul Caribe Lounge (11 empleados; turnos 8am–3pm, 11am–6pm, 2pm–9pm). Publicado en
+  https://3r-constructor-sitios.vercel.app (proyecto propio de Vercel, Root Directory `asistencia`; base en el proyecto
+  ASISTENCIA de Neon). El turno no se asigna por empleado: se deduce de la hora de llegada (turnos del negocio en
+  el panel). Cada empleado crea su propio PIN la primera vez que escanea. Falta: cargar empleados y dejar la tablet en la entrada.
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto

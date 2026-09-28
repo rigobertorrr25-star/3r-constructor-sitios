@@ -6,14 +6,18 @@ datos ni direcciones con la tienda; solo el estilo visual (colores, tipografías
 
 ## Cómo funciona
 
-- **Panel** (`/panel`, con clave): creas el negocio y agregas a cada empleado con un PIN de 4 números (no se repite en el
-  negocio y no se guarda tal cual) y su turno. Ves el reporte por semana (horas, llegadas tarde con 5 minutos de gracia,
-  jornadas sin salida), corriges o borras jornadas (queda rastro en `record_changes`) y descargas el reporte para Excel.
+- **Panel** (`/panel`, con clave): creas el negocio, sus **turnos** (por ejemplo 8:00–15:00, 11:00–18:00, 14:00–21:00) y
+  agregas a cada empleado **solo con su nombre**. Ves el reporte por semana (horas, llegadas tarde y salidas temprano con
+  5 minutos de gracia, jornadas sin salida), corriges o borras jornadas (queda rastro en `record_changes`), reinicias el
+  PIN de quien lo olvide y descargas el reporte para Excel.
+- **Turno de cada jornada:** no se asigna por empleado. Se deduce de la hora de llegada (el turno que empieza más cerca) y,
+  si ya marcó la salida, también de la hora de salida: quien llega 9:45 y sale a las 3:00 p. m. queda en el de la mañana.
 - **Tablet de la entrada** (`/tablet/{secreto}`, el enlace está en el panel): muestra un QR que cambia cada 30 segundos. El
   código se acepta unos 2 minutos, así que una foto del QR no sirve desde la casa. "Cambiar enlace" invalida la tablet anterior.
-- **Empleado**: escanea el QR, se abre `/marcar/{negocio}?c=…` y pone su PIN. Con una jornada abierta marca la salida; si no,
-  la entrada. Dos marcaciones en menos de 2 minutos se rechazan. Una entrada sin salida de más de 16 horas queda "sin salida"
-  y la siguiente marcación abre otra jornada.
+- **Empleado**: escanea el QR, toca su nombre (el celular lo recuerda) y pone su PIN. **La primera vez crea su propio PIN**
+  (lo escribe dos veces) y en esa misma marcación queda su entrada. Con una jornada abierta marca la salida; si no, la
+  entrada. Dos marcaciones en menos de 2 minutos se rechazan. Una entrada sin salida de más de 16 horas queda "sin salida"
+  y la siguiente marcación abre otra jornada. 5 PIN equivocados seguidos bloquean a ese empleado 15 minutos.
 - Todo en hora de Colombia. Las tablas se crean solas la primera vez que la app usa la base.
 
 ## Publicarla (una sola vez)
