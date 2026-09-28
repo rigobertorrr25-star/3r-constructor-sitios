@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { SESSION_COOKIE, authConfigured, checkPassword, requireAdmin, sessionValue } from '@/lib/auth';
+import { SESSION_COOKIE, authConfigured, checkPassword, requireAdmin, sessionValue, type SessionSubject } from '@/lib/auth';
 import { t } from '@/lib/i18n';
 import { getLang } from '@/lib/lang';
 import { allow, clientIp } from '@/lib/rate-limit';
@@ -11,6 +11,9 @@ import { fromLocalInput } from '@/lib/report';
 import {
   AppError,
   createBusiness,
+  createManager,
+  deleteManager,
+  findManagerByPassword,
   createEmployee,
   deleteRecord,
   punch,
@@ -54,8 +57,15 @@ const say = async (key: Parameters<typeof t>[1]) => t(await getLang(), key);
 export async function loginAction(_prev: FormState, formData: FormData): Promise<FormState> {
   if (!allow(`login:${await clientIp()}`, 8, 60_000)) return { error: await say('errTooManyAttempts') };
   if (!authConfigured()) return { error: await say('errAuthNotConfigured') };
-  if (!checkPassword(String(formData.get('password') ?? ''))) return { error: await say('errWrongPassword') };
-  const session = sessionValue();
+  const password = String(formData.get('password') ?? '');
+  let subject: SessionSubject;
+  if (checkPassword(password)) subject = 'admin';
+  else {
+    const manager = await findManagerByPassword(password);
+    if (!manager) return { error: await say('errWrongPassword') };
+    subject = `m-${manager.id}`;
+  }
+  const session = sessionValue(subject);
   (await cookies()).set(SESSION_COOKIE, session.value, {
     httpOnly: true,
     sameSite: 'lax',
@@ -168,5 +178,26 @@ export async function deleteRecordAction(formData: FormData) {
   await requireAdmin();
   const businessId = text(formData, 'businessId');
   await deleteRecord(businessId, text(formData, 'recordId'));
+  revalidatePath(`/panel/${businessId}`);
+}
+
+// ───────── jefes ─────────
+
+export async function createManagerAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const businessId = text(formData, 'businessId');
+  try {
+    await createManager(businessId, { name: text(formData, 'name'), password: String(formData.get('password') ?? '') }, process.env.ADMIN_PASSWORD ?? '');
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+  revalidatePath(`/panel/${businessId}`);
+  return { ok: Date.now() };
+}
+
+export async function deleteManagerAction(formData: FormData) {
+  await requireAdmin();
+  const businessId = text(formData, 'businessId');
+  await deleteManager(businessId, text(formData, 'managerId'));
   revalidatePath(`/panel/${businessId}`);
 }

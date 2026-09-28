@@ -153,6 +153,25 @@ describe('asistencia con base de datos', { skip: url ? false : 'sin TEST_DATABAS
     await assert.rejects(store.resetPin(other, anaId), { code: 'NOT_FOUND' }, 'otro negocio no reinicia PIN ajenos');
   });
 
+  it('jefes: acceso de solo lectura a su negocio, con clave propia', async () => {
+    await assert.rejects(store.createManager(businessId, { name: 'Boss', password: 'corta' }, 'admin-pass'), { code: 'INVALID' });
+    await assert.rejects(store.createManager(businessId, { name: 'Boss', password: 'admin-pass-123' }, 'admin-pass-123'), { code: 'INVALID' });
+    const id = await store.createManager(businessId, { name: ' John  Smith ', password: 'boss-password-1' }, 'admin-pass');
+    await assert.rejects(store.createManager(businessId, { name: 'Otro', password: 'boss-password-1' }, 'admin-pass'), { code: 'INVALID' }, 'clave repetida');
+
+    const found = await store.findManagerByPassword('boss-password-1');
+    assert.deepEqual(found, { id, businessId, name: 'John Smith' });
+    assert.equal(await store.findManagerByPassword('no-es'), null);
+    assert.deepEqual((await store.getManager(id))?.businessId, businessId);
+    assert.deepEqual((await store.listManagers(businessId)).map((m) => m.name), ['John Smith']);
+
+    const other = await store.createBusiness(`Prueba ${stamp} Otro jefe`);
+    await assert.rejects(store.deleteManager(other, id), { code: 'NOT_FOUND' }, 'otro negocio no lo borra');
+    await store.deleteManager(businessId, id);
+    assert.equal(await store.getManager(id), null, 'borrado deja de entrar');
+    assert.equal(await store.findManagerByPassword('boss-password-1'), null);
+  });
+
   it('un empleado desactivado o un enlace de tablet cambiado ya no sirven', async () => {
     await store.updateEmployee(businessId, anaId, { name: 'Ana Gómez', isActive: false });
     await assert.rejects(store.punch(slug, code(), anaId, '4321'), { code: 'EMPLOYEE' });

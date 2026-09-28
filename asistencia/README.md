@@ -10,6 +10,10 @@ datos ni direcciones con la tienda; solo el estilo visual (colores, tipografías
   agregas a cada empleado **solo con su nombre**. Ves el reporte por semana (horas, llegadas tarde y salidas temprano con
   5 minutos de gracia, jornadas sin salida), corriges o borras jornadas (queda rastro en `record_changes`), reinicias el
   PIN de quien lo olvide y descargas el reporte para Excel.
+- **Jefes (solo lectura):** en la página del negocio, sección "Jefes", el administrador crea un acceso con nombre y clave
+  (mínimo 8 caracteres, no puede repetir otra clave). El jefe entra en la misma página `/entrar` con esa clave y solo ve el
+  reporte de su negocio y el Excel; no ve empleados, turnos ni el enlace de la tablet, y no puede cambiar nada. "Quitar
+  acceso" lo saca de inmediato. Las claves se guardan con scrypt (tabla `managers`).
 - **Turno de cada jornada:** no se asigna por empleado. Se deduce de la hora de llegada (el turno que empieza más cerca) y,
   si ya marcó la salida, también de la hora de salida: quien llega 9:45 y sale a las 3:00 p. m. queda en el de la mañana.
 - **Tablet de la entrada** (`/tablet/{secreto}`, el enlace está en el panel): muestra un QR que cambia cada 30 segundos. El

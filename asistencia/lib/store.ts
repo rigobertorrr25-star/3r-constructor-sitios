@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { PoolClient } from 'pg';
 import { currentCode, isValidCode, newKioskSecret, pinHash, CODE_WINDOW_MS } from './codes';
 import { query, transaction } from './db';
+import { hashPassword, verifyPassword } from './passwords';
 import { t, type MessageKey, type Vars } from './i18n';
 import type { Shift } from './report';
 
@@ -390,4 +391,69 @@ export async function deleteRecord(businessId: string, recordId: string) {
     await client.query('DELETE FROM records WHERE id = $1', [recordId]);
     await client.query("INSERT INTO record_changes (record_id, action, before) VALUES ($1, 'deleted', $2)", [recordId, snapshot(before)]);
   });
+}
+
+// ───────── jefes (solo lectura) ─────────
+
+export type Manager = { id: string; businessId: string; name: string };
+
+const MIN_MANAGER_PASSWORD = 8;
+
+export async function listManagers(businessId: string): Promise<Manager[]> {
+  if (!isUuid(businessId)) return [];
+  const rows = await query<{ id: string; business_id: string; name: string }>(
+    'SELECT id, business_id, name FROM managers WHERE business_id = $1 ORDER BY name',
+    [businessId],
+  );
+  return rows.map((r) => ({ id: r.id, businessId: r.business_id, name: r.name }));
+}
+
+export async function getManager(id: string): Promise<Manager | null> {
+  if (!isUuid(id)) return null;
+  const [row] = await query<{ id: string; business_id: string; name: string }>(
+    'SELECT m.id, m.business_id, m.name FROM managers m JOIN businesses b ON b.id = m.business_id WHERE m.id = $1 AND b.is_active',
+    [id],
+  );
+  return row ? { id: row.id, businessId: row.business_id, name: row.name } : null;
+}
+
+/** El jefe dueño de esta clave, si hay uno (son pocos: se revisan todos). */
+export async function findManagerByPassword(password: string): Promise<Manager | null> {
+  if (!password) return null;
+  const rows = await query<{ id: string; business_id: string; name: string; password_hash: string }>(
+    'SELECT m.id, m.business_id, m.name, m.password_hash FROM managers m JOIN businesses b ON b.id = m.business_id WHERE b.is_active',
+  );
+  for (const row of rows) {
+    if (await verifyPassword(password, row.password_hash)) return { id: row.id, businessId: row.business_id, name: row.name };
+  }
+  return null;
+}
+
+/**
+ * Crea el acceso de un jefe. La clave identifica a quien entra, así que no puede repetir la del
+ * administrador ni la de otro jefe.
+ */
+export async function createManager(businessId: string, input: { name: string; password: string }, adminPassword: string) {
+  if (!(await getBusiness(businessId))) throw new AppError('NOT_FOUND', 'errBusinessNotFound');
+  const name = cleanName(input.name, 'errManagerName');
+  const password = input.password;
+  if (password.length < MIN_MANAGER_PASSWORD || password.length > 200) throw new AppError('INVALID', 'errManagerPassword', { min: MIN_MANAGER_PASSWORD });
+  if (password === adminPassword) throw new AppError('INVALID', 'errPasswordInUse');
+  const all = await query<{ password_hash: string }>('SELECT password_hash FROM managers');
+  for (const row of all) {
+    if (await verifyPassword(password, row.password_hash)) throw new AppError('INVALID', 'errPasswordInUse');
+  }
+  const [row] = await query<{ id: string }>('INSERT INTO managers (business_id, name, password_hash) VALUES ($1, $2, $3) RETURNING id', [
+    businessId,
+    name,
+    await hashPassword(password),
+  ]);
+  return row.id;
+}
+
+/** Quita el acceso: el jefe queda fuera de inmediato (la sesión se revisa en cada visita). */
+export async function deleteManager(businessId: string, managerId: string) {
+  if (!isUuid(businessId) || !isUuid(managerId)) throw new AppError('NOT_FOUND', 'errManagerNotFound');
+  const rows = await query('DELETE FROM managers WHERE id = $1 AND business_id = $2 RETURNING id', [managerId, businessId]);
+  if (rows.length === 0) throw new AppError('NOT_FOUND', 'errManagerNotFound');
 }
