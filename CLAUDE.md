@@ -28,10 +28,15 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   de producción (pub_prod_…, prod_integrity_…, prod_events_…) y poner la URL de eventos en el ambiente de producción.
 - Pendiente de Rigoberto: datos de pago por transferencia (`PAYMENT_INSTRUCTIONS` en la web) y revisar que el
   portafolio en vivo tenga capturas. Siguiente contenido: 16 nov – diciembre para Instagram.
+- Asistencia con QR (28 sep 2026): sistema **aparte** de la tienda en `asistencia/` (ver su README). Rigoberto pidió
+  que no aparezca nada en 3rpaginas.com: no enlazarlo desde la tienda ni compartir base, clave o despliegue. Usa el estilo
+  3R y el león. Primer negocio: Azul Caribe Lounge (11 empleados; turnos 8am–3pm, 11am–6pm, 2pm–9pm). Falta publicarlo:
+  proyecto nuevo en Vercel (Root Directory `asistencia`) con su propia base en Neon.
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto
 
+- `asistencia/`: app independiente (control de asistencia con QR), con su propio `package.json`; no es workspace.
 - Monorepo: `apps/web` (Next.js 16 + Tailwind 4) y `apps/api` (NestJS 12 + Prisma 7 + PostgreSQL).
   Detalles, variables y despliegue en `README.md`.
 - Diseño: sigue `design/REFERENCIA-LOVABLE.md` (modo oscuro, Sora + Manrope, tokens de color). Aquí los botones
