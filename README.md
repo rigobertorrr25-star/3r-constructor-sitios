@@ -200,6 +200,21 @@ Notas de seguridad para producción: el renovador de tokens del proxy comparte u
    cliente pague y se renueve en el registrador, en el pedido se toca **Renovado un año**. Requiere `CRON_SECRET`
    (la misma clave) en Render y en Vercel.
 
+## Control de asistencia con QR (para restaurantes clientes)
+
+Servicio aparte de las páginas web: los empleados de un negocio marcan entrada y salida con su celular.
+
+- **Equipo:** en `/admin/asistencia` crea el negocio, agrega a cada empleado con un PIN de 4 números (no se repite en el
+  negocio y no se guarda tal cual) y su turno (para ver llegadas tarde; 5 minutos de gracia). Ve el reporte por semana
+  (horas, llegadas tarde, jornadas sin salida), corrige o borra jornadas y descarga el reporte para Excel.
+- **Tablet de la entrada:** abre `/asistencia/kiosco/{secreto}` (el enlace está en el panel del negocio). Muestra un QR que
+  cambia cada 30 segundos; el código se acepta unos 2 minutos, así una foto del QR no sirve desde la casa. "Cambiar enlace"
+  invalida la tablet anterior.
+- **Empleado:** escanea el QR, se abre `/marcar/{negocio}?c=…` y pone su PIN. Si tiene una jornada abierta, marca la salida;
+  si no, la entrada. Dos marcaciones en menos de 2 minutos se rechazan (doble escaneo). Una entrada sin salida de más de 16
+  horas se da por olvidada: queda "sin salida" en el reporte y la siguiente marcación abre otra jornada.
+- Todo en hora de Colombia. No usa variables de entorno nuevas; la migración `20260928120000_attendance` crea las tablas.
+
 ## Notas técnicas
 
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.

@@ -11,6 +11,7 @@ const nav = [
   { href: '/admin/paquetes', label: 'Paquetes' },
   { href: '/admin/portafolio', label: 'Portafolio' },
   { href: '/admin/sitios', label: 'Sitios' },
+  { href: '/admin/asistencia', label: 'Asistencia' },
 ];
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
@@ -26,7 +27,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <Logo size={36} />
             <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary">Equipo</span>
           </Link>
-          <nav aria-label="Administración" className="flex items-center gap-5">
+          <nav aria-label="Administración" className="flex flex-wrap items-center gap-x-5 gap-y-2">
             {nav.map((item) => (
               <Link key={item.href} href={item.href} className="text-[14.875px] text-muted-foreground transition hover:text-foreground">
                 {item.label}
