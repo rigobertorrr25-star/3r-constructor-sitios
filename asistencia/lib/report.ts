@@ -76,6 +76,19 @@ export function workedMinutes(record: Pick<AttendanceRecord, 'clockIn' | 'clockO
   return Math.round((Date.parse(record.clockOut) - Date.parse(record.clockIn)) / 60_000);
 }
 
+/**
+ * Una entrada sin salida de más de esto se da por olvidada: la próxima marcación abre otra jornada y el
+ * reporte la muestra como "sin salida". Antes de eso, la persona sigue trabajando.
+ */
+export const FORGOTTEN_MS = 16 * 60 * 60_000;
+
+/** Minutos que lleva trabajando quien marcó entrada y todavía no sale; null si ya salió u olvidó marcar. */
+export function ongoingMinutes(record: Pick<AttendanceRecord, 'clockIn' | 'clockOut'>, now = Date.now()): number | null {
+  if (record.clockOut) return null;
+  const elapsed = now - Date.parse(record.clockIn);
+  return elapsed >= 0 && elapsed < FORGOTTEN_MS ? Math.floor(elapsed / 60_000) : null;
+}
+
 export type Shift = { start: string; end: string };
 
 const DAY_MIN = 24 * 60;
@@ -142,11 +155,14 @@ export type EmployeeTotals = {
   lateCount: number;
   lateMinutes: number;
   earlyExitCount: number;
+  /** Tiempo de quien está trabajando ahora mismo (jornada abierta, todavía no cuenta en `minutes`). */
+  ongoingMinutes: number;
+  /** Salidas olvidadas (más de 16 h sin marcar). */
   missingExit: number;
 };
 
 /** Totales por empleado en el periodo del reporte. */
-export function totalsByEmployee(records: AttendanceRecord[], shifts: Shift[]): EmployeeTotals[] {
+export function totalsByEmployee(records: AttendanceRecord[], shifts: Shift[], now = Date.now()): EmployeeTotals[] {
   const byId = new Map<string, EmployeeTotals & { dayset: Set<string> }>();
   for (const record of records) {
     const row =
@@ -159,13 +175,16 @@ export function totalsByEmployee(records: AttendanceRecord[], shifts: Shift[]): 
         lateCount: 0,
         lateMinutes: 0,
         earlyExitCount: 0,
+        ongoingMinutes: 0,
         missingExit: 0,
         dayset: new Set<string>(),
       };
     row.dayset.add(bogotaDay(new Date(record.clockIn)));
     const worked = workedMinutes(record);
-    if (worked === null) row.missingExit += 1;
-    else row.minutes += worked;
+    const ongoing = ongoingMinutes(record, now);
+    if (worked !== null) row.minutes += worked;
+    else if (ongoing !== null) row.ongoingMinutes += ongoing;
+    else row.missingExit += 1;
     const late = minutesLate(record, shifts);
     if (late !== null) {
       row.lateCount += 1;
@@ -200,7 +219,7 @@ const csvCell = (value: string | number, sep: string) => {
  * Archivo para Excel, con BOM para que abra las tildes bien. En español va separado por punto y coma y con
  * coma decimal (así lo espera el Excel de Colombia); en inglés, con coma y punto decimal (Excel de EE. UU.).
  */
-export function recordsCsv(records: AttendanceRecord[], shifts: Shift[], lang: Lang = 'es'): string {
+export function recordsCsv(records: AttendanceRecord[], shifts: Shift[], lang: Lang = 'es', now = Date.now()): string {
   const sep = lang === 'en' ? ',' : ';';
   const header = (['csvDate', 'csvEmployee', 'csvShift', 'csvIn', 'csvOut', 'csvHours', 'csvLate', 'csvEarly', 'csvEdited'] as const).map((key) =>
     t(lang, key),
@@ -213,7 +232,7 @@ export function recordsCsv(records: AttendanceRecord[], shifts: Shift[], lang: L
       record.employee.name,
       shift ? shiftLabel(shift) : '',
       bogotaTime(new Date(record.clockIn)),
-      record.clockOut ? bogotaTime(new Date(record.clockOut)) : t(lang, 'csvNoExit'),
+      record.clockOut ? bogotaTime(new Date(record.clockOut)) : ongoingMinutes(record, now) !== null ? t(lang, 'csvOngoing') : t(lang, 'csvNoExit'),
       worked === null ? '' : lang === 'en' ? (worked / 60).toFixed(2) : (worked / 60).toFixed(2).replace('.', ','),
       minutesLate(record, shifts) ?? 0,
       minutesEarlyExit(record, shifts) ?? 0,

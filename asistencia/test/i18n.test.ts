@@ -31,7 +31,7 @@ describe('idiomas', () => {
       { id: '1', employeeId: 'a', clockIn: '2026-09-28T12:58:00Z', clockOut: '2026-09-28T20:02:00Z', editedAt: '2026-09-29T00:00:00Z', employee: { name: 'Pérez, Ana' } },
       { id: '2', employeeId: 'a', clockIn: '2026-09-29T13:20:00Z', clockOut: null, editedAt: null, employee: { name: 'Ana' } },
     ];
-    const lines = recordsCsv(records, [{ start: '08:00', end: '15:00' }], 'en').replace('﻿', '').trim().split('\r\n');
+    const lines = recordsCsv(records, [{ start: '08:00', end: '15:00' }], 'en', Date.parse('2026-10-29T00:00:00Z')).replace('﻿', '').trim().split('\r\n');
     assert.equal(lines[0], 'Date,Employee,Shift (by clock-in time),Clock-in,Clock-out,Hours worked,Minutes late,Minutes left early,Edited manually');
     assert.equal(lines[1], '2026-09-28,"Pérez, Ana",08:00–15:00,07:58,15:02,7.07,0,0,Yes');
     assert.equal(lines[2], '2026-09-29,Ana,08:00–15:00,08:20,No clock-out,,20,0,');

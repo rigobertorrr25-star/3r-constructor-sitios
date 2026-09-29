@@ -59,6 +59,9 @@ const es = {
   reportNote:
     'El turno de cada jornada se deduce de la hora de llegada (y de salida, si ya marcó). Llegar o salir con {grace} minutos de diferencia no cuenta. Las horas solo suman jornadas con salida.',
   noExit: 'sin salida',
+  workingNow: 'trabajando ahora · lleva {time}',
+  ongoingTotal: '+ {time} en curso',
+  autoRefresh: 'Se actualiza solo cada minuto.',
   shiftLabel: 'Turno {shift}',
   arrivedLate: 'llegó {time} tarde',
   leftEarly: 'salió {time} antes',
@@ -159,6 +162,7 @@ const es = {
   csvEarly: 'Minutos de salida temprano',
   csvEdited: 'Corregido a mano',
   csvNoExit: 'Sin salida',
+  csvOngoing: 'En turno',
   csvYes: 'Sí',
   csvFile: 'asistencia',
 
@@ -262,6 +266,9 @@ const en: Record<MessageKey, string> = {
   reportNote:
     'Each shift is inferred from the clock-in time (and the clock-out time, if any). Arriving or leaving within {grace} minutes does not count. Hours only include shifts with a clock-out.',
   noExit: 'no clock-out',
+  workingNow: 'working now · {time} so far',
+  ongoingTotal: '+ {time} in progress',
+  autoRefresh: 'Updates automatically every minute.',
   shiftLabel: 'Shift {shift}',
   arrivedLate: '{time} late',
   leftEarly: 'left {time} early',
@@ -355,6 +362,7 @@ const en: Record<MessageKey, string> = {
   csvEarly: 'Minutes left early',
   csvEdited: 'Edited manually',
   csvNoExit: 'No clock-out',
+  csvOngoing: 'On shift',
   csvYes: 'Yes',
   csvFile: 'attendance',
 

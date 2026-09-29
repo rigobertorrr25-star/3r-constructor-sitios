@@ -5,7 +5,7 @@ import { currentCode, isValidCode, newKioskSecret, pinHash, CODE_WINDOW_MS } fro
 import { query, transaction } from './db';
 import { hashPassword, verifyPassword } from './passwords';
 import { t, type MessageKey, type Vars } from './i18n';
-import type { Shift } from './report';
+import { FORGOTTEN_MS as FORGOTTEN_HOURS_MS, type Shift } from './report';
 
 /** `hasPin` false = el empleado todavía no creó su PIN (lo crea la primera vez que escanea). */
 export type AttendanceEmployee = { id: string; name: string; isActive: boolean; hasPin: boolean };
@@ -53,7 +53,8 @@ const MINUTE = 60_000;
 /** Dos marcaciones seguidas en menos de esto son un doble escaneo, no una entrada y una salida. */
 const DOUBLE_SCAN_MS = 2 * MINUTE;
 /** Una entrada sin salida más vieja que esto se da por olvidada: la próxima marcación abre otra jornada. */
-const FORGOTTEN_MS = 16 * 60 * MINUTE;
+// Mismo límite que usa el reporte para distinguir "trabajando" de "salida olvidada".
+const FORGOTTEN_MS = FORGOTTEN_HOURS_MS;
 const MAX_SHIFT_MS = 24 * 60 * MINUTE;
 const MAX_RANGE_DAYS = 62;
 const MAX_SHIFTS = 6;
