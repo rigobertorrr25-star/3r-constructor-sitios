@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DeleteManagerButton, EmployeeForm, KioskLink, ManagerForm, RecordEditor, ResetPinButton, ShiftsForm } from '@/components/panel-forms';
+import { AutoRefresh } from '@/components/auto-refresh';
 import { card } from '@/components/ui';
 import { canView, requireViewer } from '@/lib/auth';
 import { t } from '@/lib/i18n';
@@ -19,6 +20,7 @@ import {
   isDay,
   minutesEarlyExit,
   minutesLate,
+  ongoingMinutes,
   shiftLabel,
   totalsByEmployee,
   weekOf,
@@ -56,7 +58,8 @@ export default async function AttendanceBusinessPage({
   const from = isDay(query.desde) ? query.desde : thisWeek.from;
   const to = isDay(query.hasta) && query.hasta >= from ? query.hasta : addDays(from, 6);
   const records = await listRecords(business.id, from, to);
-  const totals = totalsByEmployee(records, business.shifts);
+  const now = Date.now();
+  const totals = totalsByEmployee(records, business.shifts, now);
   const days = groupByDay(records).reverse();
 
   const h = await headers();
@@ -79,6 +82,7 @@ export default async function AttendanceBusinessPage({
       )}
       <h1 className="mt-2 font-display text-[32px] font-bold tracking-tight text-foreground">{business.name}</h1>
 
+      <AutoRefresh />
       <div className="mt-8 space-y-6">
         {/* Reporte */}
         <section className={card}>
@@ -129,7 +133,12 @@ export default async function AttendanceBusinessPage({
                       <tr key={row.employeeId} className="border-b border-white/[0.04]">
                         <td className={td}>{row.name}</td>
                         <td className={td}>{row.days}</td>
-                        <td className={td}>{formatMinutes(row.minutes)}</td>
+                        <td className={td}>
+                          {formatMinutes(row.minutes)}
+                          {row.ongoingMinutes ? (
+                            <span className="block text-[12.5px] text-success">{t(lang, 'ongoingTotal', { time: formatMinutes(row.ongoingMinutes) })}</span>
+                          ) : null}
+                        </td>
                         <td className={`${td} ${row.lateCount ? 'text-warning' : ''}`}>
                           {row.lateCount ? t(lang, 'lateTotal', { count: row.lateCount, time: formatMinutes(row.lateMinutes) }) : '—'}
                         </td>
@@ -141,7 +150,7 @@ export default async function AttendanceBusinessPage({
                 </table>
               </div>
               <p className="mt-2 text-[13px] text-muted-foreground">
-                {t(lang, 'reportNote', { grace: LATE_GRACE_MIN })}
+                {t(lang, 'reportNote', { grace: LATE_GRACE_MIN })} {t(lang, 'autoRefresh')}
                 {business.shifts.length ? ` ${t(lang, 'shiftsReadOnly')}: ${business.shifts.map(shiftLabel).join(' · ')}.` : ''}
               </p>
 
@@ -152,6 +161,7 @@ export default async function AttendanceBusinessPage({
                     <ul className="mt-3 divide-y divide-white/[0.05]">
                       {dayRecords.map((record) => {
                         const worked = workedMinutes(record);
+                        const ongoing = ongoingMinutes(record, now);
                         const shift = inferShift(record, business.shifts);
                         const late = minutesLate(record, business.shifts);
                         const early = minutesEarlyExit(record, business.shifts);
@@ -161,7 +171,13 @@ export default async function AttendanceBusinessPage({
                               <span className="text-[15px] font-medium text-foreground">{record.employee.name}</span>
                               <span className="text-[14px] tabular-nums text-muted-foreground">
                                 {formatClock(new Date(record.clockIn), lang)} →{' '}
-                                {record.clockOut ? formatClock(new Date(record.clockOut), lang) : <span className="text-[#ffb4b5]">{t(lang, 'noExit')}</span>}
+                                {record.clockOut ? (
+                                  formatClock(new Date(record.clockOut), lang)
+                                ) : ongoing !== null ? (
+                                  <span className="text-success">{t(lang, 'workingNow', { time: formatMinutes(ongoing) })}</span>
+                                ) : (
+                                  <span className="text-[#ffb4b5]">{t(lang, 'noExit')}</span>
+                                )}
                                 {worked !== null ? <span className="text-foreground"> · {formatMinutes(worked)}</span> : null}
                               </span>
                             </div>
