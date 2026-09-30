@@ -16,7 +16,9 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   https://claude.ai/artifact/6A1HRPqkdhT4PwXqbvon6Q). Rigoberto programó hasta el 15 oct. Segundo paquete (16 oct –
   15 nov: piezas 8–14 de octubre + 6 nuevas de noviembre + 15 historias con sticker por día) en
   https://claude.ai/artifact/LS8mhicvdzLWUUdHDGAMvp. El post del 14 nov (pago en línea) ya puede salir (Wompi en
-  producción). Siguiente: 16 nov – diciembre. No hay conexión para publicar directo: Rigoberto programa en Meta
+  producción). Tercer paquete (16 nov – 31 dic: 20 publicaciones con 4 reels de asistencia QR, cuenta
+  del cliente y Azul Caribe en 3 pantallas, 17 historias) en https://claude.ai/artifact/Kef33AtRmyGxDg6XH14CUy.
+  Siguiente: enero 2027. No hay conexión para publicar directo: Rigoberto programa en Meta
   Business Suite.
 - Instagram de 3R: https://www.instagram.com/3r.paginas_/ (en el pie de la portada y en los datos para Google).
 - Precios de los paquetes: ya confirmados por Rigoberto en `/admin/paquetes`.
@@ -28,7 +30,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   el pago de prueba en sandbox había funcionado. Datos de transferencia (`PAYMENT_INSTRUCTIONS`) puestos en Vercel.
   Rigoberto dice que también configuró `CRON_SECRET`; no se ha podido comprobar desde la sesión (sin acceso de red a
   3rpaginas.com ni a Render).
-- Pendiente de Rigoberto: revisar que el portafolio en vivo tenga capturas. Siguiente contenido: 16 nov – diciembre para Instagram.
+- Pendiente de Rigoberto: revisar que el portafolio en vivo tenga capturas. Siguiente contenido: enero 2027 para Instagram.
 - Asistencia con QR (28 sep 2026): sistema **aparte** de la tienda en `asistencia/` (ver su README). Rigoberto pidió
   que no aparezca nada en 3rpaginas.com: no enlazarlo desde la tienda ni compartir base, clave o despliegue. Usa el estilo
   3R y el león. Primer negocio: Azul Caribe Lounge (11 empleados; turnos 8am–3pm, 11am–6pm, 2pm–9pm). Publicado en
