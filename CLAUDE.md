@@ -40,6 +40,10 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 - Portada: aviso del control de asistencia (sección `#asistencia`, antes de las preguntas): $90.000/mes, instalación
   $300.000 o $150.000 si también compra su página. El botón va a WhatsApp, nunca a la app de asistencia (precios en
   `ATTENDANCE_*` de `apps/web/app/page.tsx`).
+- Cuenta del cliente (`/dashboard`, 30 sep 2026): sin pedidos ve una introducción (qué es 3R, "un día normal de tu
+  negocio" con y sin página, por qué dar el paso), luego los paquetes (`components/package-grid.tsx`, el mismo de la
+  portada) y "Más servicios" (asistencia QR, asistencia mensual, dominio; botones a WhatsApp). Con pedidos: sus pedidos
+  y "Más servicios". Precios de la asistencia QR en `apps/web/lib/services.ts`.
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto
