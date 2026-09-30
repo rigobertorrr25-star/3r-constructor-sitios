@@ -15,8 +15,8 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 - Instagram: se entregó foto de perfil, carrusel de presentación y el contenido de octubre 2026 (calendario en
   https://claude.ai/artifact/6A1HRPqkdhT4PwXqbvon6Q). Rigoberto programó hasta el 15 oct. Segundo paquete (16 oct –
   15 nov: piezas 8–14 de octubre + 6 nuevas de noviembre + 15 historias con sticker por día) en
-  https://claude.ai/artifact/LS8mhicvdzLWUUdHDGAMvp. El post del 14 nov (pago en línea) solo sale con Wompi en
-  producción. Siguiente: 16 nov – diciembre. No hay conexión para publicar directo: Rigoberto programa en Meta
+  https://claude.ai/artifact/LS8mhicvdzLWUUdHDGAMvp. El post del 14 nov (pago en línea) ya puede salir (Wompi en
+  producción). Siguiente: 16 nov – diciembre. No hay conexión para publicar directo: Rigoberto programa en Meta
   Business Suite.
 - Instagram de 3R: https://www.instagram.com/3r.paginas_/ (en el pie de la portada y en los datos para Google).
 - Precios de los paquetes: ya confirmados por Rigoberto en `/admin/paquetes`.
@@ -24,10 +24,11 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   se cobra aparte (a mano): 30 días antes de vencer, un cron diario de Vercel avisa al cliente (correo + mensaje en
   su pedido) y al equipo; en `/admin` se marca "Renovado un año". Necesita `CRON_SECRET` en Render y en Vercel. El equipo lo asigna en el pedido en
   `/admin` y lo agrega a mano en Vercel (ver README, "Dominio propio de un cliente").
-- Wompi: publicado (27 sep 2026). Pago de prueba (sandbox) hecho y funcionando. Falta cambiar en Render a las llaves
-  de producción (pub_prod_…, prod_integrity_…, prod_events_…) y poner la URL de eventos en el ambiente de producción.
-- Pendiente de Rigoberto: datos de pago por transferencia (`PAYMENT_INSTRUCTIONS` en la web) y revisar que el
-  portafolio en vivo tenga capturas. Siguiente contenido: 16 nov – diciembre para Instagram.
+- Wompi: en producción (27 sep 2026). Rigoberto puso las llaves de producción en Render y la URL de eventos en Wompi;
+  el pago de prueba en sandbox había funcionado. Datos de transferencia (`PAYMENT_INSTRUCTIONS`) puestos en Vercel.
+  Rigoberto dice que también configuró `CRON_SECRET`; no se ha podido comprobar desde la sesión (sin acceso de red a
+  3rpaginas.com ni a Render).
+- Pendiente de Rigoberto: revisar que el portafolio en vivo tenga capturas. Siguiente contenido: 16 nov – diciembre para Instagram.
 - Asistencia con QR (28 sep 2026): sistema **aparte** de la tienda en `asistencia/` (ver su README). Rigoberto pidió
   que no aparezca nada en 3rpaginas.com: no enlazarlo desde la tienda ni compartir base, clave o despliegue. Usa el estilo
   3R y el león. Primer negocio: Azul Caribe Lounge (11 empleados; turnos 8am–3pm, 11am–6pm, 2pm–9pm). Publicado en
@@ -39,6 +40,10 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 - Portada: aviso del control de asistencia (sección `#asistencia`, antes de las preguntas): $90.000/mes, instalación
   $300.000 o $150.000 si también compra su página. El botón va a WhatsApp, nunca a la app de asistencia (precios en
   `ATTENDANCE_*` de `apps/web/app/page.tsx`).
+- Cuenta del cliente (`/dashboard`, 30 sep 2026): sin pedidos ve una introducción (qué es 3R, "un día normal de tu
+  negocio" con y sin página, por qué dar el paso), luego los paquetes (`components/package-grid.tsx`, el mismo de la
+  portada) y "Más servicios" (asistencia QR, asistencia mensual, dominio; botones a WhatsApp). Con pedidos: sus pedidos
+  y "Más servicios". Precios de la asistencia QR en `apps/web/lib/services.ts`.
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto
