@@ -348,6 +348,20 @@ Campanita en el encabezado de la empresa y `/empresa/[id]/alertas` (tabla `notif
 - Con el CRM: se puede hacer desde la ficha del cliente; al enviarla, el cliente pasa a «Cotización»; al aceptarla, a
   «Ganado»; todo queda en su historial. PDF tamaño carta con `pdf-lib`.
 
+### Suscripciones (cobro de la plataforma)
+
+- **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir
+  (no se cobra y la empresa sale con aviso en `/admin`); 0 = incluido gratis.
+- **Plan** de cada empresa (`/admin/empresas/[id]` → Plan y facturación, tabla `company_subscriptions`): estado
+  (en prueba, activa, con pagos atrasados, cancelada), fin de la prueba y día de cobro (1–28). Notas internas.
+- **Facturas** (`company_invoices`, FAC-1, FAC-2…): una por periodo con los módulos activos y sus precios de ese día;
+  vencen a los 10 días. Se generan a mano en `/admin` o solas el día de cobro (cron diario,
+  `POST /internal/billing/run`, el mismo de dominios y alertas). Al dueño y administradores les llega correo y alerta.
+- **Pago**: en `/empresa/[id]/facturacion` (dueño y administradores) con Wompi (tabla `invoice_payments`, referencia
+  `FAC-…`; el aviso de Wompi de siempre las reconoce) o por transferencia (`PAYMENT_INSTRUCTIONS`), que el equipo marca
+  como pagada en `/admin`. Una factura vencida deja la suscripción "con pagos atrasados" (no suspende a nadie: eso lo
+  decide el equipo) y vuelve a "activa" al pagar.
+
 ## Notas técnicas
 
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.

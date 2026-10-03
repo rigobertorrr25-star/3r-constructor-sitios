@@ -146,6 +146,15 @@ export class EmailService {
     return this.safeSend(to, templates.quoteResponded(data));
   }
 
+  sendInvoiceIssued(to: string, data: { companyId: string; companyName: string; code: string; period: string; total: string; dueDate: string; items: { name: string; price: string }[] }) {
+    return this.safeSend(to, templates.invoiceIssued({ ...data, billingUrl: `${this.webOrigin}/empresa/${data.companyId}/facturacion` }));
+  }
+
+  sendAdminInvoicePaid(data: { companyId: string; companyName: string; code: string; amount: string; method: string }) {
+    if (!this.adminEmail) return Promise.resolve();
+    return this.safeSend(this.adminEmail, templates.adminInvoicePaid({ ...data, adminUrl: `${this.webOrigin}/admin/empresas/${data.companyId}` }));
+  }
+
   // ───────── al equipo ─────────
 
   sendAdminNewSignup(data: { email: string; firstName?: string | null }) {

@@ -247,6 +247,27 @@ export function quoteResponded(data: { code: string; clientName: string; verdict
   return { subject: `${sanitizeHeader(data.clientName, 60)} ${sanitizeHeader(data.verdict, 30)} la cotización ${sanitizeHeader(data.code, 20)}`, html, text };
 }
 
+export function invoiceIssued(data: { companyName: string; code: string; period: string; total: string; dueDate: string; items: { name: string; price: string }[]; billingUrl: string }): RenderedEmail {
+  const rows = data.items.map((i) => `<li>${escapeHtml(i.name)}: ${escapeHtml(i.price)}</li>`).join('');
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p>Ya está la factura <strong>${escapeHtml(data.code)}</strong> de <strong>${escapeHtml(data.companyName)}</strong> en 3R, por el periodo ${escapeHtml(data.period)}.</p>
+     <ul style="padding-left:18px">${rows}</ul>
+     <p><strong>Total: ${escapeHtml(data.total)}</strong>. Vence el ${escapeHtml(data.dueDate)}.</p>
+     ${button(data.billingUrl, 'Ver y pagar')}`,
+    `Hola,\n\nYa está la factura ${data.code} de ${data.companyName} en 3R, por el periodo ${data.period}.\n${data.items.map((i) => `- ${i.name}: ${i.price}`).join('\n')}\n\nTotal: ${data.total}. Vence el ${data.dueDate}.\n\nVer y pagar: ${data.billingUrl}`,
+  );
+  return { subject: `Factura ${sanitizeHeader(data.code, 20)} de 3R — ${sanitizeHeader(data.companyName, 60)}`, html, text };
+}
+
+export function adminInvoicePaid(data: { companyName: string; code: string; amount: string; method: string; adminUrl: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Pago recibido: factura <strong>${escapeHtml(data.code)}</strong> de <strong>${escapeHtml(data.companyName)}</strong> por ${escapeHtml(data.amount)} (${escapeHtml(data.method)}).</p>${button(data.adminUrl, 'Ver la empresa')}`,
+    `Pago recibido: factura ${data.code} de ${data.companyName} por ${data.amount} (${data.method}).\n${data.adminUrl}`,
+  );
+  return { subject: `Pago de la factura ${sanitizeHeader(data.code, 20)} — ${sanitizeHeader(data.companyName, 60)}`, html, text };
+}
+
 // ───────── al equipo (administrador) ─────────
 
 export function adminNewSignup(data: { email: string; firstName?: string | null }): RenderedEmail {

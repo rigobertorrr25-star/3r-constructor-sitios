@@ -35,7 +35,15 @@ export function CompanyTabs({
     { label: 'Inteligencia artificial', links: byArea('ia') },
     {
       label: 'Ajustes',
-      links: [{ href: `${base}/equipo`, label: 'Personas y roles' }, ...(canEdit ? [{ href: `${base}/datos`, label: 'Datos de la empresa' }] : [])],
+      links: [
+        { href: `${base}/equipo`, label: 'Personas y roles' },
+        ...(canEdit
+          ? [
+              { href: `${base}/datos`, label: 'Datos de la empresa' },
+              { href: `${base}/facturacion`, label: 'Plan y facturación' },
+            ]
+          : []),
+      ],
     },
   ].filter((g) => g.links.length > 0);
   const isActive = (href: string) => (href === base ? path === base : path === href || path.startsWith(`${href}/`));

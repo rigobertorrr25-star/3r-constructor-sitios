@@ -2,7 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { adminSetCompanyStatusAction } from '@/app/empresa/actions';
+import { markInvoicePaidAction, voidInvoiceAction } from '@/app/admin/billing-actions';
+import { GenerateInvoiceButton, SubscriptionForm } from '@/components/billing-forms';
 import { AdminModulesForm } from '@/components/company-forms';
+import { InvoiceList } from '@/components/invoice-list';
+import { SUBSCRIPTION_LABEL, pesos, type BillingOverview } from '@/lib/billing';
 import { authedApi } from '@/lib/api';
 import type { AdminCompany } from '@/lib/companies';
 
@@ -13,8 +17,12 @@ const card = 'rounded-[28px] border border-white/[0.08] bg-card p-6 shadow-[var(
 export default async function AdminCompanyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const res = await authedApi<AdminCompany>(`/admin/companies/${id}`);
+  const [res, billingRes] = await Promise.all([
+    authedApi<AdminCompany>(`/admin/companies/${id}`),
+    authedApi<BillingOverview>(`/admin/companies/${id}/billing`),
+  ]);
   if (!res.ok) notFound();
+  const billing = billingRes.data;
   const c = res.data;
   const suspended = c.status === 'suspended';
   return (
@@ -48,6 +56,62 @@ export default async function AdminCompanyPage({ params }: { params: Promise<{ i
           </form>
         </section>
       </div>
+      <section className={`${card} mt-6`} aria-labelledby="h-plan">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 id="h-plan" className="font-display text-[20px] font-semibold text-foreground">
+              Plan y facturación
+            </h2>
+            <p className="mt-1 text-[14px] text-muted-foreground">
+              {billing.subscription ? SUBSCRIPTION_LABEL[billing.subscription.status] : 'Sin plan configurado'} · {pesos(billing.plan.total)} al mes
+              {billing.plan.items.length ? ` (${billing.plan.items.map((i) => `${i.name} ${pesos(i.price)}`).join(', ')})` : ''}
+            </p>
+            {billing.plan.unpriced.length ? (
+              <p className="mt-1 text-[13px] text-[#ffd27a]">
+                Sin precio: {billing.plan.unpriced.join(', ')}. Ponlo en{' '}
+                <Link href="/admin/modulos" className="underline underline-offset-2">
+                  Precios
+                </Link>
+                .
+              </p>
+            ) : null}
+          </div>
+          <GenerateInvoiceButton companyId={c.id} />
+        </div>
+        <div className="mt-6 grid gap-8 lg:grid-cols-2">
+          <SubscriptionForm companyId={c.id} subscription={billing.subscription} />
+          <InvoiceList
+            invoices={billing.invoices}
+            actions={(i) =>
+              i.status === 'pending' ? (
+                <div className="flex flex-col items-end gap-2">
+                  <form action={markInvoicePaidAction} className="flex items-center gap-2">
+                    <input type="hidden" name="companyId" value={c.id} />
+                    <input type="hidden" name="invoiceId" value={i.id} />
+                    <input type="hidden" name="method" value="transfer" />
+                    <input
+                      name="note"
+                      placeholder="Referencia"
+                      aria-label={`Referencia del pago de ${i.code}`}
+                      className="w-28 rounded-full border border-white/[0.1] bg-transparent px-3 py-1.5 text-[12.5px]"
+                    />
+                    <button type="submit" className="rounded-full bg-primary px-3 py-1.5 text-[12.5px] font-medium text-primary-foreground">
+                      Pagada
+                    </button>
+                  </form>
+                  <form action={voidInvoiceAction}>
+                    <input type="hidden" name="companyId" value={c.id} />
+                    <input type="hidden" name="invoiceId" value={i.id} />
+                    <button type="submit" className="text-[12px] text-muted-foreground hover:text-[#ffb4b5]">
+                      Anular
+                    </button>
+                  </form>
+                </div>
+              ) : null
+            }
+          />
+        </div>
+      </section>
     </>
   );
 }

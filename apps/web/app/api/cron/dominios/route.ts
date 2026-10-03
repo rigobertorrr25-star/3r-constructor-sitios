@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
         method: 'POST',
         headers: { authorization: `Bearer ${secret}` },
         cache: 'no-store',
-        signal: AbortSignal.timeout(27_000),
+        signal: AbortSignal.timeout(18_000),
       });
       return { ok: res.ok, body: await res.json().catch(() => null) };
     } catch {
@@ -27,5 +27,9 @@ export async function GET(request: NextRequest) {
   };
   const domains = await run('/internal/domain-renewals/run');
   const alerts = await run('/internal/alerts/run');
-  return NextResponse.json({ domains: domains.body, alerts: alerts.body }, { status: domains.ok && alerts.ok ? 200 : 502 });
+  const billing = await run('/internal/billing/run');
+  return NextResponse.json(
+    { domains: domains.body, alerts: alerts.body, billing: billing.body },
+    { status: domains.ok && alerts.ok && billing.ok ? 200 : 502 },
+  );
 }

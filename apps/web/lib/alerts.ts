@@ -12,4 +12,5 @@ export const KIND_LABEL: Record<string, string> = {
   birthday: 'Cumpleaños',
   reminder: 'Recordatorio',
   quote: 'Cotización',
+  invoice: 'Factura',
 };

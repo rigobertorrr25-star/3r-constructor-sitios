@@ -600,6 +600,8 @@ model Company {
   calendarEvents   CalendarEvent[]
   notifications    Notification[]
   quotes           Quote[]
+  subscription     CompanySubscription?
+  invoices         CompanyInvoice[]
 
   @@map("companies")
 }
@@ -1017,4 +1019,77 @@ model QuoteItem {
 
   @@index([quoteId], map: "idx_quote_items_quote")
   @@map("quote_items")
+}
+
+// ───────────────────────── SUSCRIPCIONES (cobro de la plataforma) ─────────────────────────
+
+// Precio mensual de cada módulo, en pesos. Lo pone el equipo de 3R en /admin. Sin fila: precio por definir.
+model ModulePrice {
+  key          String   @id @db.VarChar(40)
+  monthlyPrice Int      @map("monthly_price")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("module_prices")
+}
+
+// Plan de una empresa: se cobra cada mes lo de los módulos activos.
+model CompanySubscription {
+  companyId   String    @id @map("company_id") @db.Uuid
+  // trial | active | past_due | cancelled
+  status      String    @default("trial") @db.VarChar(20)
+  trialEndsAt DateTime? @map("trial_ends_at") @db.Date
+  // Día del mes en que se genera la factura (1 a 28).
+  billingDay  Int       @default(1) @map("billing_day")
+  notes       String?   @db.VarChar(1000)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_subscriptions")
+}
+
+// Factura mensual de la plataforma (FAC-1, FAC-2…).
+model CompanyInvoice {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  number      Int       @unique @default(autoincrement())
+  companyId   String    @map("company_id") @db.Uuid
+  periodStart DateTime  @map("period_start") @db.Date
+  periodEnd   DateTime  @map("period_end") @db.Date
+  // [{ key, name, price }] en el momento de facturar.
+  items       Json
+  total       Int
+  dueDate     DateTime  @map("due_date") @db.Date
+  // pending | paid | void
+  status      String    @default("pending") @db.VarChar(10)
+  paidAt      DateTime? @map("paid_at") @db.Timestamptz(6)
+  // transfer | wompi | other
+  method      String?   @db.VarChar(20)
+  paymentNote String?   @map("payment_note") @db.VarChar(300)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company  Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  payments InvoicePayment[]
+
+  @@unique([companyId, periodStart])
+  @@index([companyId, status], map: "idx_company_invoices_company_status")
+  @@map("company_invoices")
+}
+
+// Intento de pago con Wompi de una factura (como `payments` para los pedidos).
+model InvoicePayment {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId             String   @map("invoice_id") @db.Uuid
+  reference             String   @unique @db.VarChar(100)
+  amountCents           Int      @map("amount_cents")
+  currency              String   @default("COP") @db.VarChar(10)
+  status                String   @default("pending") @db.VarChar(20)
+  providerTransactionId String?  @unique @map("provider_transaction_id") @db.VarChar(100)
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  invoice CompanyInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId], map: "idx_invoice_payments_invoice")
+  @@map("invoice_payments")
 }
