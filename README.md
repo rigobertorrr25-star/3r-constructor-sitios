@@ -200,6 +200,25 @@ Notas de seguridad para producción: el renovador de tokens del proxy comparte u
    cliente pague y se renueve en el registrador, en el pedido se toca **Renovado un año**. Requiere `CRON_SECRET`
    (la misma clave) en Render y en Vercel.
 
+## Plataforma empresarial (módulos por empresa)
+
+3R no solo vende páginas: cada cliente puede crear su **empresa** en `/empresa` y usar la plataforma con su equipo.
+
+- **Empresa** (`companies`): nombre, NIT, ciudad, teléfono, sector. Quien la crea queda como dueño (máximo 5 por persona;
+  necesita el correo confirmado).
+- **Miembros** (`company_members`) con un rol: `owner` (dueño) > `admin` > `hr` (RR. HH.) > `supervisor` > `employee`. Cada
+  rol puede lo del de abajo. Solo admin invita, cambia roles o deshabilita; RR. HH. edita cargo, área y fecha de ingreso;
+  nadie toca al dueño ni a alguien de su mismo rango. Cualquiera se puede salir (menos el dueño).
+- **Invitaciones** (`company_invites`): por correo, con enlace `/invitacion?token=…` que vence en 7 días; solo se acepta con
+  la cuenta de ese mismo correo. El token se guarda como hash.
+- **Módulos** (`company_modules`): el catálogo está en `apps/api/src/companies/companies.constants.ts` (`MODULES`) y sus
+  nombres en `apps/web/lib/companies.ts` (`MODULE_INFO`). El equipo de 3R los activa en `/admin/empresas`. Solo se pueden
+  activar los que tienen `ready: true`.
+- **Para construir un módulo nuevo:** en su servicio, empezar cada acción con
+  `companies.requireMember(userId, companyId, rolMínimo)` y `companies.requireModule(companyId, 'clave')` (importar
+  `CompaniesModule`); al terminarlo, poner `ready: true` en el catálogo.
+- Alguien de afuera recibe 404 (no sabe que la empresa existe). Una empresa suspendida no deja entrar a nadie.
+
 ## Notas técnicas
 
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.

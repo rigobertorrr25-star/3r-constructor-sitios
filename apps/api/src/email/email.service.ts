@@ -76,6 +76,11 @@ export class EmailService {
     return this.safeSend(to, templates.domainRenewal({ ...data, orderUrl: this.orderUrl(data.orderId) }));
   }
 
+  sendCompanyInvite(to: string, data: { companyName: string; inviterName: string; roleLabel: string; token: string }) {
+    const inviteUrl = `${this.webOrigin}/invitacion?token=${encodeURIComponent(data.token)}`;
+    return this.safeSend(to, templates.companyInvite({ companyName: data.companyName, inviterName: data.inviterName, roleLabel: data.roleLabel, inviteUrl }));
+  }
+
   // ───────── al equipo ─────────
 
   sendAdminNewSignup(data: { email: string; firstName?: string | null }) {

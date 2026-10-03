@@ -137,6 +137,17 @@ export function domainRenewal(data: {
   return { subject: `Tu dominio ${sanitizeHeader(data.domain, 80)} ${data.expired ? 'venció' : 'vence pronto'} — 3R`, html, text };
 }
 
+export function companyInvite(data: { companyName: string; inviterName: string; roleLabel: string; inviteUrl: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p><strong>${escapeHtml(data.inviterName)}</strong> te invitó a unirte a <strong>${escapeHtml(data.companyName)}</strong> en 3R como ${escapeHtml(data.roleLabel)}.</p>
+     <p>La invitación vence en 7 días. Si no tienes cuenta, la creas con este mismo correo.</p>
+     ${button(data.inviteUrl, 'Aceptar la invitación')}`,
+    `Hola,\n\n${data.inviterName} te invitó a unirte a ${data.companyName} en 3R como ${data.roleLabel}.\nLa invitación vence en 7 días. Si no tienes cuenta, la creas con este mismo correo.\n\nAceptar: ${data.inviteUrl}`,
+  );
+  return { subject: `Te invitaron a ${sanitizeHeader(data.companyName, 80)} — 3R`, html, text };
+}
+
 // ───────── al equipo (administrador) ─────────
 
 export function adminNewSignup(data: { email: string; firstName?: string | null }): RenderedEmail {

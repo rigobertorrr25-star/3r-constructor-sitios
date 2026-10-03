@@ -10,7 +10,7 @@ const REFRESH_MAX_AGE = 30 * 24 * 60 * 60;
 const SITES_ROOT_HOST = (process.env.SITES_ROOT_HOST ?? 'localhost').toLowerCase();
 
 // Áreas que exigen sesión.
-const PROTECTED = ['/dashboard', '/pedir', '/admin', '/editor', '/api/bff'];
+const PROTECTED = ['/dashboard', '/pedir', '/admin', '/editor', '/empresa', '/api/bff'];
 
 type Tokens = { accessToken: string; refreshToken: string };
 

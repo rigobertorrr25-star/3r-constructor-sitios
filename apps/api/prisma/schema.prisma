@@ -30,6 +30,7 @@ model User {
 
   roles              UserRole[]
   sessions           UserSession[]
+  memberships        CompanyMember[]
   sites              Site[]
   pageVersions       PageVersion[]
   assets             Asset[]
@@ -562,4 +563,81 @@ model SupportTicket {
   @@index([userId], map: "idx_support_tickets_user_id")
   @@index([status], map: "idx_support_tickets_status")
   @@map("support_tickets")
+}
+
+// ───────────────────────── PLATAFORMA EMPRESARIAL ─────────────────────────
+// Cada empresa cliente tiene miembros con un rol y activa los módulos que contrata (CRM, tickets, empleados…).
+
+model Company {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(150)
+  slug      String   @unique @db.VarChar(150)
+  // NIT o cédula del responsable, opcional.
+  taxId     String?  @map("tax_id") @db.VarChar(30)
+  city      String?  @db.VarChar(100)
+  phone     String?  @db.VarChar(50)
+  industry  String?  @db.VarChar(60)
+  // active | suspended (suspendida: nadie entra, los datos se conservan)
+  status    String   @default("active") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  members CompanyMember[]
+  modules CompanyModule[]
+  invites CompanyInvite[]
+
+  @@map("companies")
+}
+
+model CompanyMember {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String    @map("company_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  // owner | admin | hr | supervisor | employee (ver companies.constants.ts)
+  role      String    @db.VarChar(20)
+  jobTitle  String?   @map("job_title") @db.VarChar(120)
+  area      String?   @db.VarChar(120)
+  hiredAt   DateTime? @map("hired_at") @db.Date
+  // active | disabled (deshabilitado: no entra, pero queda su historial)
+  status    String    @default("active") @db.VarChar(20)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId])
+  @@index([userId], map: "idx_company_members_user_id")
+  @@map("company_members")
+}
+
+// Módulo activo en una empresa. Sin fila = no lo tiene.
+model CompanyModule {
+  companyId String   @map("company_id") @db.Uuid
+  // crm | tickets | employees | … (ver MODULES en companies.constants.ts)
+  key       String   @db.VarChar(40)
+  enabledAt DateTime @default(now()) @map("enabled_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@id([companyId, key])
+  @@map("company_modules")
+}
+
+model CompanyInvite {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId  String    @map("company_id") @db.Uuid
+  email      String    @db.VarChar(255)
+  role       String    @db.VarChar(20)
+  // Solo el hash del token que va en el enlace del correo.
+  tokenHash  String    @unique @map("token_hash") @db.VarChar(64)
+  invitedBy  String?   @map("invited_by") @db.Uuid
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  acceptedAt DateTime? @map("accepted_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId], map: "idx_company_invites_company_id")
+  @@map("company_invites")
 }
