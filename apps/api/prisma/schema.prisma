@@ -594,34 +594,35 @@ model Company {
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  members          CompanyMember[]
-  modules          CompanyModule[]
-  invites          CompanyInvite[]
-  crmContacts      CrmContact[]
-  crmActivities    CrmActivity[]
-  tickets          Ticket[]
-  ticketEvents     TicketEvent[]
-  employeeProfiles EmployeeProfile[]
-  leaveRequests    LeaveRequest[]
-  announcements    Announcement[]
-  documents        CompanyDocument[]
-  calendarEvents   CalendarEvent[]
-  notifications    Notification[]
-  quotes           Quote[]
-  subscription     CompanySubscription?
-  invoices         CompanyInvoice[]
-  surveys          Survey[]
-  courses          Course[]
-  articles         KnowledgeArticle[]
-  inventoryItems   InventoryItem[]
-  companyAssets    CompanyAsset[]
-  store            StoreSettings?
-  storeProducts    StoreProduct[]
-  storeCoupons     StoreCoupon[]
-  storeOrders      StoreOrder[]
-  automations      Automation[]
-  campaigns        Campaign[]
-  site             Site?                @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  members            CompanyMember[]
+  modules            CompanyModule[]
+  invites            CompanyInvite[]
+  crmContacts        CrmContact[]
+  crmActivities      CrmActivity[]
+  tickets            Ticket[]
+  ticketEvents       TicketEvent[]
+  employeeProfiles   EmployeeProfile[]
+  leaveRequests      LeaveRequest[]
+  announcements      Announcement[]
+  documents          CompanyDocument[]
+  assistantQuestions AssistantQuestion[]
+  calendarEvents     CalendarEvent[]
+  notifications      Notification[]
+  quotes             Quote[]
+  subscription       CompanySubscription?
+  invoices           CompanyInvoice[]
+  surveys            Survey[]
+  courses            Course[]
+  articles           KnowledgeArticle[]
+  inventoryItems     InventoryItem[]
+  companyAssets      CompanyAsset[]
+  store              StoreSettings?
+  storeProducts      StoreProduct[]
+  storeCoupons       StoreCoupon[]
+  storeOrders        StoreOrder[]
+  automations        Automation[]
+  campaigns          Campaign[]
+  site               Site?                @relation(fields: [siteId], references: [id], onDelete: SetNull)
 
   @@map("companies")
 }
@@ -927,10 +928,15 @@ model CompanyDocument {
   // Vencimiento (licencia, contrato, certificado), para avisos.
   expiresOn    DateTime? @map("expires_on") @db.Date
   uploadedById String?   @map("uploaded_by_id") @db.Uuid
+  // Asistente con IA: si puede leerlo (solo documentos de la empresa en PDF o Word) y cómo quedó la lectura.
+  aiEnabled    Boolean   @default(false) @map("ai_enabled")
+  // none | ready | empty (no se encontró texto, p. ej. un escaneo) | error
+  aiStatus     String    @default("none") @map("ai_status") @db.VarChar(10)
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  company Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  member  CompanyMember? @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  company Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  member  CompanyMember?  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  chunks  DocumentChunk[]
 
   @@index([companyId, memberId], map: "idx_company_documents_company_member")
   @@map("company_documents")
@@ -1648,4 +1654,45 @@ model CampaignRecipient {
 
   @@index([campaignId, status], map: "idx_campaign_recipients_status")
   @@map("campaign_recipients")
+}
+
+// ───────────────────────── MÓDULO: ASISTENTE CON IA ─────────────────────────
+
+// Texto de un documento partido en pedazos, para buscar qué mandarle a la IA.
+model DocumentChunk {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId String @map("document_id") @db.Uuid
+  companyId  String @map("company_id") @db.Uuid
+  position   Int
+  text       String @db.Text
+  // Minúsculas y sin tildes, para buscar.
+  searchText String @map("search_text") @db.Text
+
+  document CompanyDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([companyId], map: "idx_document_chunks_company")
+  @@map("document_chunks")
+}
+
+model AssistantQuestion {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String   @map("company_id") @db.Uuid
+  memberId     String?  @map("member_id") @db.Uuid
+  question     String   @db.VarChar(1000)
+  answer       String   @db.Text
+  // [{ type: 'article' | 'document', id, title }]
+  sources      Json     @default("[]")
+  // false: la IA no encontró la respuesta en los documentos (sirve para saber qué falta escribir).
+  answered     Boolean  @default(true)
+  // Lo que dijo quien preguntó: true (sirvió), false (no sirvió), null (no dijo).
+  helpful      Boolean?
+  inputTokens  Int      @default(0) @map("input_tokens")
+  outputTokens Int      @default(0) @map("output_tokens")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt], map: "idx_assistant_questions_company")
+  @@index([memberId, createdAt], map: "idx_assistant_questions_member")
+  @@map("assistant_questions")
 }

@@ -17,11 +17,17 @@ export class R2DocumentStorage implements DocumentStorage {
     accessKeyId: string,
     secretAccessKey: string,
   ) {
-    this.client = new S3Client({ region: 'auto', endpoint: `https://${accountId}.r2.cloudflarestorage.com`, credentials: { accessKeyId, secretAccessKey } });
+    this.client = new S3Client({
+      region: 'auto',
+      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      credentials: { accessKeyId, secretAccessKey },
+    });
   }
 
   async presignUpload(key: string, contentType: string): Promise<SignedUrl> {
-    const url = await getSignedUrl(this.client, new PutObjectCommand({ Bucket: this.bucket, Key: PREFIX + key, ContentType: contentType }), { expiresIn: 300 });
+    const url = await getSignedUrl(this.client, new PutObjectCommand({ Bucket: this.bucket, Key: PREFIX + key, ContentType: contentType }), {
+      expiresIn: 300,
+    });
     return { url, method: 'PUT', headers: { 'content-type': contentType } };
   }
 
@@ -45,6 +51,12 @@ export class R2DocumentStorage implements DocumentStorage {
 
   async save(key: string, buffer: Buffer, contentType: string) {
     await this.client.send(new PutObjectCommand({ Bucket: this.bucket, Key: PREFIX + key, Body: buffer, ContentType: contentType }));
+  }
+
+  async read(key: string) {
+    const res = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: PREFIX + key }));
+    if (!res.Body) throw new Error('Archivo vacío');
+    return Buffer.from(await res.Body.transformToByteArray());
   }
 
   async remove(key: string) {

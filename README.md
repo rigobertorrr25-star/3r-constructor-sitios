@@ -494,6 +494,21 @@ descripción en la misma pantalla (con vista previa como en Google), textos y fo
 - **Enlace para suscribirse** (`/suscribirse/[token]`, lo crea un administrador): el cliente deja nombre y correo y
   acepta; queda en el CRM con origen "Página web" y el permiso marcado.
 
+### Módulo Asistente con IA (`ai_assistant`)
+
+`/empresa/[id]/asistente` (tablas `document_chunks` y `assistant_questions`). El equipo pregunta y la IA responde
+solo con los artículos publicados del Centro de conocimiento y los documentos de la empresa que un administrador
+marque (PDF o Word; se saca el texto con `unpdf` y `mammoth`). Cada respuesta dice de qué fuente salió.
+
+- **Llave**: `ANTHROPIC_API_KEY` en Render (de console.anthropic.com; se cobra por uso) y, opcional, `AI_MODEL`
+  (por defecto `claude-sonnet-5-5`; `claude-haiku-4-5-20251001` sale más barato). Sin llave en producción la pantalla
+  dice que el asistente no está activado; en desarrollo y pruebas responde un cliente falso que no llama a nadie.
+- **Qué lee**: los documentos «solo RR. HH.» solo se usan cuando pregunta alguien de RR. HH. en adelante; los
+  documentos personales de los empleados, nunca. Antes de llamar a la IA se buscan los pedazos que tienen que ver con
+  la pregunta (máx. ~18.000 letras); si no hay ninguno, responde que no lo encontró sin gastar una llamada.
+- **Topes**: 200 preguntas por empresa y 40 por persona en 24 horas. Los administradores ven lo que no supo
+  responder o no sirvió (sin el nombre de quien preguntó) para escribir lo que falta.
+
 ### Suscripciones (cobro de la plataforma)
 
 - **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir

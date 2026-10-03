@@ -17,6 +17,8 @@ export interface DocumentStorage {
   /** Tamaño del archivo ya subido, o null si no está. */
   size(key: string): Promise<number | null>;
   remove(key: string): Promise<void>;
+  /** Leer el archivo desde el propio servidor (p. ej. para que el asistente con IA saque el texto). */
+  read(key: string): Promise<Buffer>;
   /** Guardar desde el propio servidor (p. ej. un PDF generado). */
   save(key: string, buffer: Buffer, contentType: string): Promise<void>;
 }
