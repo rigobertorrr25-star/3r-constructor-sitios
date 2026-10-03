@@ -145,9 +145,17 @@ describe('módulo CRM', () => {
     assert.equal((await as('owner')('GET', `${crm}/contacts/${contact.id}`)).status, 404);
   });
 
+  it('acepta negocios grandes (más de 21 millones de pesos)', async () => {
+    const res = await as('owner')('POST', `${crm}/contacts`, { name: 'Constructora del Caribe', value: 250000000 });
+    assert.equal(res.status, 201);
+    assert.equal(res.body.valueCents, 25000000000);
+    assert.equal((await as('owner')('GET', `${crm}/contacts/${res.body.id}`)).body.valueCents, 25000000000);
+    assert.ok((await as('owner')('GET', `${crm}/summary`)).body.openValueCents >= 25000000000);
+  });
+
   it('si 3R le quita el módulo, el CRM se cierra pero los datos quedan', async () => {
     await as('staff')('PUT', `/admin/companies/${company.id}/modules`, { keys: [] });
     assert.equal((await as('owner')('GET', `${crm}/contacts`)).status, 403);
-    assert.equal(await prisma.crmContact.count({ where: { companyId: company.id } }), 2);
+    assert.equal(await prisma.crmContact.count({ where: { companyId: company.id } }), 3);
   });
 });

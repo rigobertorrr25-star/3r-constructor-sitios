@@ -242,6 +242,21 @@ alta, urgente) y estado (abierto → asignado → en proceso → resuelto → ce
 - Cada comentario y cambio queda en el historial (`ticket_events`). Cifras: pendientes, urgentes, sin responsable,
   a mi cargo y tiempo promedio para resolver (últimos 30 días).
 
+### Módulo Portal del empleado (`employees`)
+
+`/empresa/[id]/personal`: directorio del equipo, cumpleaños y aniversarios del mes, y la ficha de cada persona
+(`/empresa/[id]/personal/[memberId]`, tabla `employee_profiles`, una fila por miembro; se borra si sale de la empresa).
+
+- Datos personales (documento, celular, nacimiento, dirección, EPS, pensión, contacto de emergencia): los llena el
+  empleado o RR. HH. en adelante sobre alguien de menor rango.
+- Contrato (tipo, fin, salario en pesos, horario, notas de RR. HH.): solo RR. HH. en adelante sobre alguien de menor
+  rango (el dueño también el suyo). El empleado ve su contrato y salario, pero no las notas. Cada cambio de contrato
+  queda en la auditoría (`EMPLOYEE_WORK_UPDATED`, sin el valor).
+- El directorio no muestra datos privados: cumpleaños sin año y el celular solo si la persona lo permite.
+- Cifras: personas y cumpleaños del mes; para RR. HH., fichas incompletas (sin documento o sin contacto de emergencia)
+  y contratos que vencen en 30 días.
+- Cargo, área y fecha de ingreso siguen en `company_members` y se editan en Equipo.
+
 ## Notas técnicas
 
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.

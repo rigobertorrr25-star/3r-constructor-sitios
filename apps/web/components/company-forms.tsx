@@ -12,6 +12,7 @@ import {
 } from '@/app/empresa/actions';
 import { MODULE_INFO, ROLE_LABEL, assignableBy, type CompanyDetail, type CompanyMember, type CompanyRole } from '@/lib/companies';
 import { Field, SelectField } from './field';
+import { formKey } from './form-key';
 import { Alert } from './shop';
 import { SubmitButton } from './submit-button';
 
@@ -135,7 +136,7 @@ export function MemberRow({
       {open ? (
         <div className="mt-4 space-y-4 rounded-2xl bg-white/[0.03] p-4">
           {canEditProfile || canEditRole ? (
-            <form action={action} className="space-y-4">
+            <form action={action} className="space-y-4" key={formKey(`${member.role}|${member.status}`, state)}>
               <input type="hidden" name="companyId" value={companyId} />
               <input type="hidden" name="memberId" value={member.id} />
               {canEditProfile ? (

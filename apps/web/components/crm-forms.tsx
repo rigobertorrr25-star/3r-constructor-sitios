@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react';
 import { addActivityAction, createContactAction, updateContactAction } from '@/app/empresa/crm-actions';
 import { ACTIVITY_LABEL, CRM_STAGES, SOURCE_LABEL, STAGE_LABEL, type CrmContact } from '@/lib/crm';
+import { formKey } from './form-key';
 import { Field, SelectField, TextAreaField } from './field';
 import { Alert } from './shop';
 import { SubmitButton } from './submit-button';
@@ -16,7 +17,7 @@ export function ContactForm({ companyId, contact, members }: { companyId: string
   const [state, action] = useActionState(contact ? updateContactAction : createContactAction, undefined);
   const v = state?.error ? state.values : undefined;
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} className="space-y-5" key={formKey(contact?.updatedAt ?? null, state)}>
       <input type="hidden" name="companyId" value={companyId} />
       {contact ? <input type="hidden" name="contactId" value={contact.id} /> : null}
       <div className="grid gap-5 sm:grid-cols-2">

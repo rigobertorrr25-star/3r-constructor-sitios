@@ -22,7 +22,9 @@ const contactSelect = {
 
 /** Sale vacío como null, y el valor de pesos a centavos. */
 const clean = (v: string | undefined) => (v === undefined ? undefined : v || null);
-const cents = (pesos: number | null | undefined) => (pesos === undefined ? undefined : pesos === null ? null : pesos * 100);
+const cents = (pesos: number | null | undefined) => (pesos === undefined ? undefined : pesos === null ? null : BigInt(pesos) * 100n);
+/** El valor se guarda como BIGINT (negocios grandes) y sale como número. */
+const out = <T extends { valueCents: bigint | null }>(c: T) => ({ ...c, valueCents: c.valueCents === null ? null : Number(c.valueCents) });
 
 @Injectable()
 export class CrmService {
@@ -47,7 +49,7 @@ export class CrmService {
   async list(userId: string, companyId: string, filters: { stage?: string; q?: string }) {
     await this.access(userId, companyId);
     const q = filters.q?.trim();
-    return this.prisma.crmContact.findMany({
+    const rows = await this.prisma.crmContact.findMany({
       where: {
         companyId,
         ...(filters.stage && (CRM_STAGES as readonly string[]).includes(filters.stage) ? { stage: filters.stage } : {}),
@@ -66,6 +68,7 @@ export class CrmService {
       take: 500,
       select: contactSelect,
     });
+    return rows.map(out);
   }
 
   /** Cuántos clientes y cuánto valor hay en cada etapa. Lo usa el tablero y el inicio de la empresa. */
@@ -74,7 +77,7 @@ export class CrmService {
     const groups = await this.prisma.crmContact.groupBy({ by: ['stage'], where: { companyId }, _count: { _all: true }, _sum: { valueCents: true } });
     const stages = CRM_STAGES.map((stage) => {
       const g = groups.find((x) => x.stage === stage);
-      return { stage, count: g?._count._all ?? 0, valueCents: g?._sum.valueCents ?? 0 };
+      return { stage, count: g?._count._all ?? 0, valueCents: Number(g?._sum.valueCents ?? 0) };
     });
     const open = stages.filter((s) => s.stage !== 'won' && s.stage !== 'lost');
     return {
@@ -89,7 +92,7 @@ export class CrmService {
   async create(userId: string, companyId: string, dto: CreateContactDto) {
     await this.access(userId, companyId);
     await this.checkOwner(companyId, dto.ownerMemberId);
-    return this.prisma.crmContact.create({
+    const contact = await this.prisma.crmContact.create({
       data: {
         companyId,
         name: dto.name,
@@ -105,6 +108,7 @@ export class CrmService {
       },
       select: contactSelect,
     });
+    return out(contact);
   }
 
   async get(userId: string, companyId: string, contactId: string) {
@@ -125,7 +129,7 @@ export class CrmService {
     const ids = [...new Set(contact.activities.map((a) => a.userId).filter((x): x is string => !!x))];
     const users = ids.length ? await this.prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, firstName: true, email: true } }) : [];
     const who = new Map(users.map((u) => [u.id, u.firstName || u.email]));
-    return { ...contact, activities: contact.activities.map((a) => ({ ...a, author: a.userId ? (who.get(a.userId) ?? null) : null, userId: undefined })) };
+    return { ...out(contact), activities: contact.activities.map((a) => ({ ...a, author: a.userId ? (who.get(a.userId) ?? null) : null, userId: undefined })) };
   }
 
   async update(userId: string, companyId: string, contactId: string, dto: UpdateContactDto) {
@@ -159,7 +163,7 @@ export class CrmService {
           ]
         : []),
     ]);
-    return contact;
+    return out(contact);
   }
 
   async remove(userId: string, companyId: string, contactId: string) {

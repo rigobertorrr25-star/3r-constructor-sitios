@@ -50,7 +50,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   empleados, clientes, automatización, IA), no solo venta de páginas, y construir los 25 módulos uno por uno. **No mezclar
   con `asistencia/` ni con otros proyectos salvo que él lo pida.** Hecho: núcleo de empresas, miembros con roles,
   invitaciones y módulos por empresa (`/empresa`, `/admin/empresas`; ver README, "Plataforma empresarial"). Módulos
-  listos: CRM (`/empresa/[id]/crm`) y Tickets (`/empresa/[id]/tickets`). Orden acordado en PENDIENTES.md: dashboard, CRM, tickets, portal del empleado,
+  listos: CRM (`/empresa/[id]/crm`), Tickets (`/empresa/[id]/tickets`) y Portal del empleado (`/empresa/[id]/personal`). Orden acordado en PENDIENTES.md: dashboard, CRM, tickets, portal del empleado,
   permisos y vacaciones, comunicados, documentos, generador de documentos, calendario, alertas, cotizaciones,
   suscripciones, encuestas, capacitaciones, conocimiento, inventario, tienda, constructor web, analítica, SEO,
   automatizaciones, marketing, IA (asistente y textos), WhatsApp (API de Meta). Precios por módulo: pendientes de Rigoberto.

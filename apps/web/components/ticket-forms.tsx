@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react';
 import { commentTicketAction, createTicketAction, manageTicketAction } from '@/app/empresa/tickets-actions';
 import { CATEGORY_LABEL, PRIORITY_LABEL, type Ticket } from '@/lib/tickets';
+import { formKey } from './form-key';
 import { Field, SelectField, TextAreaField } from './field';
 import { Alert } from './shop';
 import { SubmitButton } from './submit-button';
@@ -63,7 +64,7 @@ export function ManageTicketForm({ companyId, ticket, members }: { companyId: st
   const [state, action] = useActionState(manageTicketAction, undefined);
   const v = state?.error ? state.values : undefined;
   return (
-    <form action={action} className="space-y-4">
+    <form action={action} className="space-y-4" key={formKey(ticket.updatedAt, state)}>
       <input type="hidden" name="companyId" value={companyId} />
       <input type="hidden" name="ticketId" value={ticket.id} />
       <SelectField
