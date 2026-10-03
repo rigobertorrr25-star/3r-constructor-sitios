@@ -18,7 +18,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
+import { AnalyticsService, type VisitInfo } from '../analytics/analytics.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { JwtAuthGuard } from '../auth/jwt.guard.js';
@@ -155,16 +156,39 @@ const PUBLIC_HEADERS: Record<string, string> = {
 /** Sirve los archivos de un sitio publicado. Público: no exige sesión. */
 @Controller('public/sites')
 export class PublicSitesController {
-  constructor(private readonly publishing: PublishingService) {}
+  private readonly visitKey: string;
+
+  constructor(
+    private readonly publishing: PublishingService,
+    private readonly analytics: AnalyticsService,
+    config: ConfigService,
+  ) {
+    this.visitKey = config.get<string>('CRON_SECRET') ?? '';
+  }
 
   @Get(':label')
-  root(@Param('label') label: string, @Res() res: Response) {
-    return this.send(label, '', res);
+  root(@Param('label') label: string, @Req() req: Request, @Res() res: Response) {
+    return this.send(label, '', req, res);
   }
 
   @Get(':label/*path')
-  page(@Param('label') label: string, @Param('path') path: string | string[], @Res() res: Response) {
-    return this.send(label, Array.isArray(path) ? path.join('/') : path, res);
+  page(@Param('label') label: string, @Param('path') path: string | string[], @Req() req: Request, @Res() res: Response) {
+    return this.send(label, Array.isArray(path) ? path.join('/') : path, req, res);
+  }
+
+  /**
+   * Datos del visitante para la analítica. La web los reenvía firmados con CRON_SECRET (si no, cualquiera podría
+   * inflar las visitas llamando a la API). Sin CRON_SECRET configurado (desarrollo), se aceptan tal cual.
+   */
+  private visit(req: Request): VisitInfo | null {
+    const h = (name: string) => String(req.headers[name] ?? '').slice(0, 1000);
+    if (req.headers['purpose'] === 'prefetch' || req.headers['sec-purpose']?.toString().includes('prefetch')) return null;
+    if (this.visitKey) {
+      const given = Buffer.from(h('x-3r-visit'));
+      const expected = Buffer.from(this.visitKey);
+      if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null;
+    }
+    return { ua: h('x-3r-ua'), referer: h('x-3r-referer'), ip: h('x-3r-ip'), query: h('x-3r-query'), host: h('x-3r-host') };
   }
 
   /** El formulario de contacto de un sitio publicado postea aquí (ver render.ts, caso 'form'). */
@@ -175,10 +199,16 @@ export class PublicSitesController {
     return this.publishing.submitContact(label, dto);
   }
 
-  private async send(label: string, path: string, res: Response) {
+  private async send(label: string, path: string, req: Request, res: Response) {
     const file = await this.publishing.serve(label, path);
     res.status(file.status).set({ ...PUBLIC_HEADERS, 'Content-Type': file.contentType });
     if (file.status !== 200) res.set('Cache-Control', 'no-store');
+    if (file.page) {
+      // Las páginas no se guardan en la caché compartida: así cada visita llega y se cuenta.
+      res.set('Cache-Control', 'public, max-age=0, no-cache');
+      const visit = this.visit(req);
+      if (visit) void this.analytics.record(file.page, visit);
+    }
     res.send(file.body);
   }
 }

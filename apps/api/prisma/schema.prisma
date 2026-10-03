@@ -30,6 +30,7 @@ model User {
 
   roles              UserRole[]
   sessions           UserSession[]
+  memberships        CompanyMember[]
   sites              Site[]
   pageVersions       PageVersion[]
   assets             Asset[]
@@ -100,6 +101,8 @@ model Site {
   tickets          SupportTicket[]
   order            Order?
   formSubmissions  FormSubmission[]
+  company          Company?
+  pageViews        PageView[]
 
   @@unique([userId, slug])
   @@index([userId], map: "idx_sites_user_id")
@@ -562,4 +565,1031 @@ model SupportTicket {
   @@index([userId], map: "idx_support_tickets_user_id")
   @@index([status], map: "idx_support_tickets_status")
   @@map("support_tickets")
+}
+
+// ───────────────────────── PLATAFORMA EMPRESARIAL ─────────────────────────
+// Cada empresa cliente tiene miembros con un rol y activa los módulos que contrata (CRM, tickets, empleados…).
+
+model Company {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(150)
+  slug      String   @unique @db.VarChar(150)
+  // NIT o cédula del responsable, opcional.
+  taxId     String?  @map("tax_id") @db.VarChar(30)
+  city      String?  @db.VarChar(100)
+  phone     String?  @db.VarChar(50)
+  industry  String?  @db.VarChar(60)
+  // active | suspended (suspendida: nadie entra, los datos se conservan)
+  status    String   @default("active") @db.VarChar(20)
+  // Último número de ticket usado (los tickets se numeran por empresa: #1, #2…).
+  ticketSeq Int      @default(0) @map("ticket_seq")
+  // Último número de cotización usado (COT-1, COT-2…).
+  quoteSeq  Int      @default(0) @map("quote_seq")
+  // Enlace público del centro de ayuda (/ayuda/[token]). Vacío = apagado.
+  helpToken String?  @unique @map("help_token") @db.VarChar(64)
+  // Página de 3R de la empresa: sus administradores cambian textos y fotos (módulo Constructor web).
+  siteId    String?  @unique @map("site_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  members          CompanyMember[]
+  modules          CompanyModule[]
+  invites          CompanyInvite[]
+  crmContacts      CrmContact[]
+  crmActivities    CrmActivity[]
+  tickets          Ticket[]
+  ticketEvents     TicketEvent[]
+  employeeProfiles EmployeeProfile[]
+  leaveRequests    LeaveRequest[]
+  announcements    Announcement[]
+  documents        CompanyDocument[]
+  calendarEvents   CalendarEvent[]
+  notifications    Notification[]
+  quotes           Quote[]
+  subscription     CompanySubscription?
+  invoices         CompanyInvoice[]
+  surveys          Survey[]
+  courses          Course[]
+  articles         KnowledgeArticle[]
+  inventoryItems   InventoryItem[]
+  companyAssets    CompanyAsset[]
+  store            StoreSettings?
+  storeProducts    StoreProduct[]
+  storeCoupons     StoreCoupon[]
+  storeOrders      StoreOrder[]
+  automations      Automation[]
+  site             Site?               @relation(fields: [siteId], references: [id], onDelete: SetNull)
+
+  @@map("companies")
+}
+
+model CompanyMember {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String    @map("company_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  // owner | admin | hr | supervisor | employee (ver companies.constants.ts)
+  role      String    @db.VarChar(20)
+  jobTitle  String?   @map("job_title") @db.VarChar(120)
+  area      String?   @db.VarChar(120)
+  hiredAt   DateTime? @map("hired_at") @db.Date
+  // active | disabled (deshabilitado: no entra, pero queda su historial)
+  status    String    @default("active") @db.VarChar(20)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile           EmployeeProfile?
+  leaveRequests     LeaveRequest[]
+  courseProgress    CourseProgress[]
+  knowledgeVotes    KnowledgeVote[]
+  assignedAssets    CompanyAsset[]
+  announcementReads AnnouncementRead[]
+  documents         CompanyDocument[]
+  notifications     Notification[]
+
+  @@unique([companyId, userId])
+  @@index([userId], map: "idx_company_members_user_id")
+  @@map("company_members")
+}
+
+// Módulo activo en una empresa. Sin fila = no lo tiene.
+model CompanyModule {
+  companyId String   @map("company_id") @db.Uuid
+  // crm | tickets | employees | … (ver MODULES en companies.constants.ts)
+  key       String   @db.VarChar(40)
+  enabledAt DateTime @default(now()) @map("enabled_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@id([companyId, key])
+  @@map("company_modules")
+}
+
+model CompanyInvite {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId  String    @map("company_id") @db.Uuid
+  email      String    @db.VarChar(255)
+  role       String    @db.VarChar(20)
+  // Solo el hash del token que va en el enlace del correo.
+  tokenHash  String    @unique @map("token_hash") @db.VarChar(64)
+  invitedBy  String?   @map("invited_by") @db.Uuid
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  acceptedAt DateTime? @map("accepted_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId], map: "idx_company_invites_company_id")
+  @@map("company_invites")
+}
+
+// ───────────────────────── MÓDULO: CRM ─────────────────────────
+
+model CrmContact {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId     String    @map("company_id") @db.Uuid
+  name          String    @db.VarChar(150)
+  // Empresa o negocio del contacto (si es un cliente empresarial).
+  organization  String?   @db.VarChar(150)
+  email         String?   @db.VarChar(255)
+  phone         String?   @db.VarChar(50)
+  // lead | contacted | quote | negotiation | won | lost (ver crm.constants.ts)
+  stage         String    @default("lead") @db.VarChar(20)
+  // Valor potencial del negocio, en centavos de COP.
+  valueCents    BigInt?   @map("value_cents")
+  // manual | web | whatsapp | referral | social | other
+  source        String    @default("manual") @db.VarChar(20)
+  notes         String?   @db.VarChar(4000)
+  // Responsable dentro de la empresa (miembro). Si sale de la empresa, queda sin responsable.
+  ownerMemberId String?   @map("owner_member_id") @db.Uuid
+  lastContactAt DateTime? @map("last_contact_at") @db.Timestamptz(6)
+  createdById   String?   @map("created_by_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  activities CrmActivity[]
+  quotes     Quote[]
+
+  @@index([companyId, stage], map: "idx_crm_contacts_company_stage")
+  @@map("crm_contacts")
+}
+
+model CrmActivity {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  contactId String   @map("contact_id") @db.Uuid
+  // Quién la registró (usuario). Null si ya no existe.
+  userId    String?  @map("user_id") @db.Uuid
+  // note | call | email | whatsapp | meeting | stage (cambio de etapa, automático)
+  kind      String   @db.VarChar(20)
+  body      String   @db.VarChar(4000)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contact CrmContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([contactId, createdAt], map: "idx_crm_activities_contact")
+  @@map("crm_activities")
+}
+
+// ───────────────────────── MÓDULO: TICKETS ─────────────────────────
+
+model Ticket {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId         String    @map("company_id") @db.Uuid
+  // Número visible dentro de la empresa (#1, #2…).
+  number            Int
+  title             String    @db.VarChar(150)
+  description       String    @db.VarChar(8000)
+  // support | hr | maintenance | admin | accounting | purchases | other (ver tickets.constants.ts)
+  category          String    @db.VarChar(20)
+  // low | medium | high | urgent
+  priority          String    @default("medium") @db.VarChar(10)
+  // open | assigned | in_progress | resolved | closed
+  status            String    @default("open") @db.VarChar(20)
+  // Quién lo pidió y quién lo atiende (miembros). Si salen de la empresa, quedan en null.
+  requesterMemberId String?   @map("requester_member_id") @db.Uuid
+  assigneeMemberId  String?   @map("assignee_member_id") @db.Uuid
+  resolvedAt        DateTime? @map("resolved_at") @db.Timestamptz(6)
+  closedAt          DateTime? @map("closed_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  events  TicketEvent[]
+
+  @@unique([companyId, number])
+  @@index([companyId, status], map: "idx_tickets_company_status")
+  @@map("tickets")
+}
+
+// Historial del ticket: comentarios y cambios (estado, responsable, prioridad), en orden.
+model TicketEvent {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  ticketId  String   @map("ticket_id") @db.Uuid
+  // Quién lo hizo (usuario). Null si ya no existe.
+  userId    String?  @map("user_id") @db.Uuid
+  // comment | status | assign | priority
+  kind      String   @db.VarChar(20)
+  body      String   @db.VarChar(4000)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  ticket  Ticket  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt], map: "idx_ticket_events_ticket")
+  @@map("ticket_events")
+}
+
+// ───────────────────────── MÓDULO: PORTAL DEL EMPLEADO ─────────────────────────
+
+// Ficha de un miembro de la empresa. Datos personales (los llena el empleado o RR. HH.) y laborales (solo RR. HH.).
+// Cargo, área y fecha de ingreso viven en company_members.
+model EmployeeProfile {
+  memberId          String    @id @map("member_id") @db.Uuid
+  companyId         String    @map("company_id") @db.Uuid
+  // CC | CE | PPT | PA | TI
+  documentType      String?   @map("document_type") @db.VarChar(5)
+  documentNumber    String?   @map("document_number") @db.VarChar(30)
+  phone             String?   @db.VarChar(50)
+  // Si el empleado deja ver su teléfono en el directorio del equipo.
+  showPhone         Boolean   @default(false) @map("show_phone")
+  birthDate         DateTime? @map("birth_date") @db.Date
+  address           String?   @db.VarChar(200)
+  city              String?   @db.VarChar(100)
+  emergencyName     String?   @map("emergency_name") @db.VarChar(150)
+  emergencyPhone    String?   @map("emergency_phone") @db.VarChar(50)
+  emergencyRelation String?   @map("emergency_relation") @db.VarChar(60)
+  eps               String?   @db.VarChar(100)
+  pensionFund       String?   @map("pension_fund") @db.VarChar(100)
+  // indefinite | fixed | project | services | apprentice
+  contractType      String?   @map("contract_type") @db.VarChar(20)
+  contractEnd       DateTime? @map("contract_end") @db.Date
+  // Salario mensual en pesos (sin centavos).
+  salary            Int?
+  schedule          String?   @db.VarChar(150)
+  // Notas internas de RR. HH. (el empleado no las ve).
+  hrNotes           String?   @map("hr_notes") @db.VarChar(4000)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  member  CompanyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId], map: "idx_employee_profiles_company")
+  @@map("employee_profiles")
+}
+
+// ───────────────────────── MÓDULO: PERMISOS Y VACACIONES ─────────────────────────
+
+// Solicitud de un empleado: vacaciones, permiso, incapacidad, certificado u otra.
+// Flujo: pending (espera al supervisor) → supervisor_ok (espera a RR. HH.) → approved; o rejected / cancelled.
+model LeaveRequest {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String    @map("company_id") @db.Uuid
+  // Quien pide (miembro). Si sale de la empresa, la solicitud se borra con su ficha.
+  memberId       String    @map("member_id") @db.Uuid
+  // vacation | permission | sick_leave | certificate | other (ver requests.constants.ts)
+  type           String    @db.VarChar(20)
+  startDate      DateTime? @map("start_date") @db.Date
+  endDate        DateTime? @map("end_date") @db.Date
+  // Días sin contar domingos, calculados al crear.
+  days           Int       @default(0)
+  reason         String    @db.VarChar(2000)
+  status         String    @default("pending") @db.VarChar(20)
+  supervisorById String?   @map("supervisor_by_id") @db.Uuid
+  supervisorAt   DateTime? @map("supervisor_at") @db.Timestamptz(6)
+  supervisorNote String?   @map("supervisor_note") @db.VarChar(1000)
+  hrById         String?   @map("hr_by_id") @db.Uuid
+  hrAt           DateTime? @map("hr_at") @db.Timestamptz(6)
+  hrNote         String?   @map("hr_note") @db.VarChar(1000)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  member  CompanyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, status], map: "idx_leave_requests_company_status")
+  @@index([memberId], map: "idx_leave_requests_member")
+  @@map("leave_requests")
+}
+
+// ───────────────────────── MÓDULO: COMUNICADOS ─────────────────────────
+
+model Announcement {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId  String    @map("company_id") @db.Uuid
+  // news | notice | event (ver announcements.constants.ts)
+  kind       String    @default("news") @db.VarChar(20)
+  title      String    @db.VarChar(150)
+  body       String    @db.VarChar(10000)
+  // Para eventos: cuándo es.
+  eventAt    DateTime? @map("event_at") @db.Timestamptz(6)
+  eventPlace String?   @map("event_place") @db.VarChar(150)
+  // Fijado arriba de la lista.
+  pinned     Boolean   @default(false)
+  authorId   String?   @map("author_id") @db.Uuid
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  reads   AnnouncementRead[]
+
+  @@index([companyId, createdAt], map: "idx_announcements_company")
+  @@map("announcements")
+}
+
+// Quién leyó cada comunicado (una fila por persona).
+model AnnouncementRead {
+  announcementId String   @map("announcement_id") @db.Uuid
+  memberId       String   @map("member_id") @db.Uuid
+  readAt         DateTime @default(now()) @map("read_at") @db.Timestamptz(6)
+
+  announcement Announcement  @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  member       CompanyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@id([announcementId, memberId])
+  @@index([memberId], map: "idx_announcement_reads_member")
+  @@map("announcement_reads")
+}
+
+// ───────────────────────── MÓDULO: DOCUMENTOS ─────────────────────────
+
+// Archivo privado de la empresa (políticas, manuales) o de un empleado (contrato, cédula, soportes).
+model CompanyDocument {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String    @map("company_id") @db.Uuid
+  // Null: documento de la empresa. Con valor: documento de ese empleado (se borra si sale de la empresa).
+  memberId     String?   @map("member_id") @db.Uuid
+  // contract | id | certificate | payroll | medical | resume | policy | manual | other (ver documents.constants.ts)
+  category     String    @db.VarChar(20)
+  title        String    @db.VarChar(150)
+  fileName     String    @map("file_name") @db.VarChar(200)
+  contentType  String    @map("content_type") @db.VarChar(100)
+  size         Int       @default(0)
+  // Clave en el almacenamiento privado (nunca pública).
+  storageKey   String    @unique @map("storage_key") @db.VarChar(120)
+  // pending (pedido el enlace, falta subir) | ready
+  status       String    @default("pending") @db.VarChar(10)
+  // De la empresa: all (todo el equipo) | hr (solo RR. HH. en adelante). Del empleado: él y RR. HH.
+  audience     String    @default("all") @db.VarChar(10)
+  // Vencimiento (licencia, contrato, certificado), para avisos.
+  expiresOn    DateTime? @map("expires_on") @db.Date
+  uploadedById String?   @map("uploaded_by_id") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  member  CompanyMember? @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, memberId], map: "idx_company_documents_company_member")
+  @@map("company_documents")
+}
+
+// ───────────────────────── MÓDULO: CALENDARIO ─────────────────────────
+
+// Reunión, evento o recordatorio. Los de la empresa (`personal` = false) los ve todo el equipo; un recordatorio
+// personal solo quien lo creó. Vacaciones, cumpleaños y vencimientos no se guardan aquí: salen de sus módulos.
+model CalendarEvent {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String    @map("company_id") @db.Uuid
+  // meeting | event | reminder | deadline
+  kind        String    @default("meeting") @db.VarChar(20)
+  title       String    @db.VarChar(150)
+  description String?   @db.VarChar(2000)
+  location    String?   @db.VarChar(150)
+  startsAt    DateTime  @map("starts_at") @db.Timestamptz(6)
+  endsAt      DateTime? @map("ends_at") @db.Timestamptz(6)
+  allDay      Boolean   @default(false) @map("all_day")
+  personal    Boolean   @default(false)
+  createdById String    @map("created_by_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, startsAt], map: "idx_calendar_events_company_start")
+  @@map("calendar_events")
+}
+
+// ───────────────────────── MÓDULO: ALERTAS ─────────────────────────
+
+// Aviso para una persona de la empresa (campanita). Los manda cada módulo y la revisión diaria (vencimientos,
+// cumpleaños, solicitudes sin responder). `dedupeKey` evita repetir el mismo aviso.
+model Notification {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String    @map("company_id") @db.Uuid
+  memberId  String    @map("member_id") @db.Uuid
+  // ticket | request | announcement | document | contract | birthday | reminder
+  kind      String    @db.VarChar(20)
+  title     String    @db.VarChar(200)
+  body      String?   @db.VarChar(500)
+  // Ruta dentro de /empresa/[id].
+  href      String?   @db.VarChar(200)
+  dedupeKey String?   @map("dedupe_key") @db.VarChar(120)
+  readAt    DateTime? @map("read_at") @db.Timestamptz(6)
+  // Ya salió en el resumen diario por correo.
+  emailedAt DateTime? @map("emailed_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  member  CompanyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, dedupeKey])
+  @@index([memberId, createdAt], map: "idx_notifications_member")
+  @@map("notifications")
+}
+
+// ───────────────────────── MÓDULO: COTIZACIONES ─────────────────────────
+
+// Cotización para un cliente. Se manda con un enlace (token) donde el cliente la acepta, la rechaza o pide cambios.
+model Quote {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId       String    @map("company_id") @db.Uuid
+  number          Int
+  // Cliente del CRM (opcional). Si se borra del CRM, la cotización queda con los datos copiados.
+  contactId       String?   @map("contact_id") @db.Uuid
+  clientName      String    @map("client_name") @db.VarChar(150)
+  clientCompany   String?   @map("client_company") @db.VarChar(150)
+  clientEmail     String?   @map("client_email") @db.VarChar(255)
+  clientPhone     String?   @map("client_phone") @db.VarChar(50)
+  title           String    @db.VarChar(150)
+  notes           String?   @db.VarChar(4000)
+  // Valores en pesos (sin centavos).
+  discount        BigInt    @default(0)
+  // Porcentaje de IVA: 0, 5 o 19.
+  taxRate         Int       @default(0) @map("tax_rate")
+  subtotal        BigInt    @default(0)
+  tax             BigInt    @default(0)
+  total           BigInt    @default(0)
+  validUntil      DateTime? @map("valid_until") @db.Date
+  // draft | sent | accepted | rejected | changes_requested
+  status          String    @default("draft") @db.VarChar(20)
+  // Solo el hash del token del enlace público.
+  tokenHash       String?   @unique @map("token_hash") @db.VarChar(64)
+  sentAt          DateTime? @map("sent_at") @db.Timestamptz(6)
+  viewedAt        DateTime? @map("viewed_at") @db.Timestamptz(6)
+  respondedAt     DateTime? @map("responded_at") @db.Timestamptz(6)
+  responseName    String?   @map("response_name") @db.VarChar(150)
+  responseMessage String?   @map("response_message") @db.VarChar(2000)
+  createdById     String?   @map("created_by_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contact CrmContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  items   QuoteItem[]
+
+  @@unique([companyId, number])
+  @@index([companyId, status], map: "idx_quotes_company_status")
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  quoteId     String @map("quote_id") @db.Uuid
+  position    Int
+  description String @db.VarChar(300)
+  quantity    Int
+  // Pesos por unidad.
+  unitPrice   BigInt @map("unit_price")
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId], map: "idx_quote_items_quote")
+  @@map("quote_items")
+}
+
+// ───────────────────────── SUSCRIPCIONES (cobro de la plataforma) ─────────────────────────
+
+// Precio mensual de cada módulo, en pesos. Lo pone el equipo de 3R en /admin. Sin fila: precio por definir.
+model ModulePrice {
+  key          String   @id @db.VarChar(40)
+  monthlyPrice Int      @map("monthly_price")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("module_prices")
+}
+
+// Plan de una empresa: se cobra cada mes lo de los módulos activos.
+model CompanySubscription {
+  companyId   String    @id @map("company_id") @db.Uuid
+  // trial | active | past_due | cancelled
+  status      String    @default("trial") @db.VarChar(20)
+  trialEndsAt DateTime? @map("trial_ends_at") @db.Date
+  // Día del mes en que se genera la factura (1 a 28).
+  billingDay  Int       @default(1) @map("billing_day")
+  notes       String?   @db.VarChar(1000)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_subscriptions")
+}
+
+// Factura mensual de la plataforma (FAC-1, FAC-2…).
+model CompanyInvoice {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  number      Int       @unique @default(autoincrement())
+  companyId   String    @map("company_id") @db.Uuid
+  periodStart DateTime  @map("period_start") @db.Date
+  periodEnd   DateTime  @map("period_end") @db.Date
+  // [{ key, name, price }] en el momento de facturar.
+  items       Json
+  total       Int
+  dueDate     DateTime  @map("due_date") @db.Date
+  // pending | paid | void
+  status      String    @default("pending") @db.VarChar(10)
+  paidAt      DateTime? @map("paid_at") @db.Timestamptz(6)
+  // transfer | wompi | other
+  method      String?   @db.VarChar(20)
+  paymentNote String?   @map("payment_note") @db.VarChar(300)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company  Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  payments InvoicePayment[]
+
+  @@unique([companyId, periodStart])
+  @@index([companyId, status], map: "idx_company_invoices_company_status")
+  @@map("company_invoices")
+}
+
+// Intento de pago con Wompi de una factura (como `payments` para los pedidos).
+model InvoicePayment {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId             String   @map("invoice_id") @db.Uuid
+  reference             String   @unique @db.VarChar(100)
+  amountCents           Int      @map("amount_cents")
+  currency              String   @default("COP") @db.VarChar(10)
+  status                String   @default("pending") @db.VarChar(20)
+  providerTransactionId String?  @unique @map("provider_transaction_id") @db.VarChar(100)
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  invoice CompanyInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId], map: "idx_invoice_payments_invoice")
+  @@map("invoice_payments")
+}
+
+// ───────────────────────── MÓDULO: ENCUESTAS ─────────────────────────
+
+// Encuesta del equipo (clima laboral; puede ser anónima) o para clientes (enlace público).
+model Survey {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String    @map("company_id") @db.Uuid
+  title       String    @db.VarChar(150)
+  description String?   @db.VarChar(2000)
+  // team | public
+  audience    String    @db.VarChar(10)
+  // Del equipo: no se guarda quién respondió.
+  anonymous   Boolean   @default(false)
+  // draft | open | closed
+  status      String    @default("draft") @db.VarChar(10)
+  closesAt    DateTime? @map("closes_at") @db.Timestamptz(6)
+  // Para las de clientes: el enlace /encuesta/[token].
+  publicToken String?   @unique @map("public_token") @db.VarChar(64)
+  createdById String?   @map("created_by_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company   Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  questions SurveyQuestion[]
+  responses SurveyResponse[]
+
+  @@index([companyId, status], map: "idx_surveys_company_status")
+  @@map("surveys")
+}
+
+model SurveyQuestion {
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  surveyId String  @map("survey_id") @db.Uuid
+  position Int
+  // rating (1 a 5) | nps (0 a 10) | choice (una) | multi (varias) | text
+  kind     String  @db.VarChar(10)
+  text     String  @db.VarChar(300)
+  // Opciones de choice/multi.
+  options  Json?
+  required Boolean @default(true)
+
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  @@index([surveyId], map: "idx_survey_questions_survey")
+  @@map("survey_questions")
+}
+
+model SurveyResponse {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  surveyId      String   @map("survey_id") @db.Uuid
+  // Solo si la encuesta del equipo no es anónima.
+  memberId      String?  @map("member_id") @db.Uuid
+  // Del equipo: hash de encuesta + persona, para que nadie responda dos veces (aunque sea anónima).
+  respondentKey String?  @map("respondent_key") @db.VarChar(64)
+  // De clientes: nombre si lo quiso dejar.
+  name          String?  @db.VarChar(150)
+  // { [questionId]: number | string | string[] }
+  answers       Json
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  @@unique([surveyId, respondentKey])
+  @@index([surveyId, createdAt], map: "idx_survey_responses_survey")
+  @@map("survey_responses")
+}
+
+// ───────── Capacitaciones ─────────
+
+model Course {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String    @map("company_id") @db.Uuid
+  title       String    @db.VarChar(150)
+  description String?   @db.VarChar(2000)
+  // draft | published | archived
+  status      String    @default("draft") @db.VarChar(10)
+  // Obligatorio: le sale como pendiente a todo el equipo.
+  required    Boolean   @default(false)
+  dueAt       DateTime? @map("due_at") @db.Date
+  // Porcentaje mínimo para aprobar el quiz.
+  passScore   Int       @default(70) @map("pass_score")
+  createdById String?   @map("created_by_id") @db.Uuid
+  publishedAt DateTime? @map("published_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company   Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  lessons   CourseLesson[]
+  questions CourseQuestion[]
+  progress  CourseProgress[]
+
+  @@index([companyId, status], map: "idx_courses_company_status")
+  @@map("courses")
+}
+
+model CourseLesson {
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId String  @map("course_id") @db.Uuid
+  position Int
+  title    String  @db.VarChar(150)
+  body     String  @db.Text
+  // Enlace a un video (YouTube, Vimeo, Drive…) o material de apoyo.
+  videoUrl String? @map("video_url") @db.VarChar(500)
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId], map: "idx_course_lessons_course")
+  @@map("course_lessons")
+}
+
+model CourseQuestion {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId String @map("course_id") @db.Uuid
+  position Int
+  text     String @db.VarChar(300)
+  options  Json
+  // Índice de la opción correcta (nunca se manda a quien toma el curso).
+  correct  Int
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId], map: "idx_course_questions_course")
+  @@map("course_questions")
+}
+
+// Avance de una persona en un curso.
+model CourseProgress {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId      String    @map("course_id") @db.Uuid
+  memberId      String    @map("member_id") @db.Uuid
+  // Ids de las lecciones vistas.
+  lessonsDone   Json      @default("[]") @map("lessons_done")
+  attempts      Int       @default(0)
+  // Mejor puntaje del quiz (0 a 100).
+  score         Int?
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz(6)
+  startedAt     DateTime  @default(now()) @map("started_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  course Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  member CompanyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, memberId])
+  @@index([memberId], map: "idx_course_progress_member")
+  @@map("course_progress")
+}
+
+// ───────── Centro de conocimiento ─────────
+
+model KnowledgeArticle {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String   @map("company_id") @db.Uuid
+  title       String   @db.VarChar(150)
+  // Texto con formato sencillo: párrafos, "## " títulos y "- " listas.
+  body        String   @db.Text
+  category    String?  @db.VarChar(60)
+  // team (manuales y procesos internos) | public (preguntas para clientes)
+  audience    String   @default("team") @db.VarChar(10)
+  // draft | published
+  status      String   @default("draft") @db.VarChar(10)
+  pinned      Boolean  @default(false)
+  views       Int      @default(0)
+  // Título, texto y categoría en minúsculas y sin tildes, para buscar.
+  searchText  String   @default("") @map("search_text") @db.Text
+  authorId    String?  @map("author_id") @db.Uuid
+  updatedById String?  @map("updated_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  votes   KnowledgeVote[]
+
+  @@index([companyId, status], map: "idx_knowledge_company_status")
+  @@map("knowledge_articles")
+}
+
+// "¿Te sirvió?": uno por persona del equipo; los de clientes llegan sin persona.
+model KnowledgeVote {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  articleId String   @map("article_id") @db.Uuid
+  memberId  String?  @map("member_id") @db.Uuid
+  helpful   Boolean
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  article KnowledgeArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  member  CompanyMember?   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, memberId])
+  @@index([articleId], map: "idx_knowledge_votes_article")
+  @@map("knowledge_votes")
+}
+
+// ───────── Inventario y activos ─────────
+
+// Producto o insumo con existencias (café en grano, vasos, servilletas…).
+model InventoryItem {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId  String   @map("company_id") @db.Uuid
+  name       String   @db.VarChar(150)
+  sku        String?  @db.VarChar(60)
+  category   String?  @db.VarChar(60)
+  // unidad, kg, g, litro, ml, caja, paquete…
+  unit       String   @default("unidad") @db.VarChar(20)
+  stock      Decimal  @default(0) @db.Decimal(14, 3)
+  // Por debajo de esto, avisa.
+  minStock   Decimal? @map("min_stock") @db.Decimal(14, 3)
+  // Costo de una unidad, en centavos.
+  costCents  BigInt?  @map("cost_cents")
+  location   String?  @db.VarChar(100)
+  notes      String?  @db.VarChar(2000)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company   Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  movements InventoryMovement[]
+
+  @@index([companyId, active], map: "idx_inventory_items_company")
+  @@map("inventory_items")
+}
+
+model InventoryMovement {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  itemId     String   @map("item_id") @db.Uuid
+  // in (entrada) | out (salida) | count (conteo: deja el inventario en la cantidad contada)
+  type       String   @db.VarChar(10)
+  quantity   Decimal  @db.Decimal(14, 3)
+  // Cuánto quedó después del movimiento.
+  stockAfter Decimal  @map("stock_after") @db.Decimal(14, 3)
+  note       String?  @db.VarChar(300)
+  userId     String?  @map("user_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  item InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId, createdAt], map: "idx_inventory_movements_item")
+  @@map("inventory_movements")
+}
+
+// Equipo o bien de la empresa que se le entrega a alguien (computador, datáfono, uniforme, llaves…).
+model CompanyAsset {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String    @map("company_id") @db.Uuid
+  name             String    @db.VarChar(150)
+  // Código interno (placa o etiqueta).
+  code             String?   @db.VarChar(60)
+  category         String?   @db.VarChar(60)
+  serial           String?   @db.VarChar(100)
+  // available | assigned | repair | retired
+  status           String    @default("available") @db.VarChar(12)
+  assignedMemberId String?   @map("assigned_member_id") @db.Uuid
+  assignedAt       DateTime? @map("assigned_at") @db.Timestamptz(6)
+  valueCents       BigInt?   @map("value_cents")
+  purchasedAt      DateTime? @map("purchased_at") @db.Date
+  notes            String?   @db.VarChar(2000)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company        Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  assignedMember CompanyMember? @relation(fields: [assignedMemberId], references: [id], onDelete: SetNull)
+  events         CompanyAssetEvent[]
+
+  @@index([companyId, status], map: "idx_company_assets_status")
+  @@index([assignedMemberId], map: "idx_company_assets_member")
+  @@map("company_assets")
+}
+
+model CompanyAssetEvent {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetId   String   @map("asset_id") @db.Uuid
+  // created | assigned | returned | repair | retired | available
+  kind      String   @db.VarChar(12)
+  // A quién se le entregó o quién lo devolvió (nombre guardado por si la persona sale).
+  memberId  String?  @map("member_id") @db.Uuid
+  person    String?  @db.VarChar(150)
+  note      String?  @db.VarChar(300)
+  userId    String?  @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  asset CompanyAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, createdAt], map: "idx_company_asset_events")
+  @@map("company_asset_events")
+}
+
+// ───────── Tienda online ─────────
+
+model StoreSettings {
+  companyId        String   @id @map("company_id") @db.Uuid
+  // La tienda pública queda en /tienda/[slug].
+  slug             String   @unique @db.VarChar(60)
+  name             String   @db.VarChar(120)
+  tagline          String?  @db.VarChar(300)
+  // Número al que llegan los pedidos por WhatsApp.
+  whatsapp         String?  @db.VarChar(30)
+  // Recibiendo pedidos (si no, el catálogo se ve pero no se puede pedir).
+  open             Boolean  @default(true)
+  pickupEnabled    Boolean  @default(true) @map("pickup_enabled")
+  pickupNote       String?  @map("pickup_note") @db.VarChar(200)
+  deliveryEnabled  Boolean  @default(false) @map("delivery_enabled")
+  deliveryFeeCents BigInt   @default(0) @map("delivery_fee_cents")
+  // Domicilio gratis desde este valor (vacío = nunca).
+  freeFromCents    BigInt?  @map("free_from_cents")
+  deliveryNote     String?  @map("delivery_note") @db.VarChar(200)
+  // Cómo se paga (transferencia, Nequi, efectivo…).
+  paymentNote      String?  @map("payment_note") @db.VarChar(500)
+  orderSeq         Int      @default(0) @map("order_seq")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("store_settings")
+}
+
+model StoreProduct {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  name           String   @db.VarChar(150)
+  description    String?  @db.VarChar(5000)
+  priceCents     BigInt   @map("price_cents")
+  // Precio "antes" para mostrar descuento.
+  compareAtCents BigInt?  @map("compare_at_cents")
+  imageUrl       String?  @map("image_url") @db.VarChar(500)
+  category       String?  @db.VarChar(60)
+  // Con existencias: se descuentan con cada pedido y se agota en 0.
+  trackStock     Boolean  @default(false) @map("track_stock")
+  stock          Int?
+  active         Boolean  @default(true)
+  featured       Boolean  @default(false)
+  position       Int      @default(0)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company  Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  variants StoreVariant[]
+
+  @@index([companyId, active], map: "idx_store_products_company")
+  @@map("store_products")
+}
+
+// Opción de un producto (tamaño, sabor, talla…). Si tiene, el cliente elige una.
+model StoreVariant {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId  String  @map("product_id") @db.Uuid
+  name       String  @db.VarChar(80)
+  // Vacío = el precio del producto.
+  priceCents BigInt? @map("price_cents")
+  stock      Int?
+  active     Boolean @default(true)
+  position   Int     @default(0)
+
+  product StoreProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId], map: "idx_store_variants_product")
+  @@map("store_variants")
+}
+
+model StoreCoupon {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId     String    @map("company_id") @db.Uuid
+  // En mayúsculas.
+  code          String    @db.VarChar(30)
+  // Uno de los dos: porcentaje o valor fijo.
+  percent       Int?
+  amountCents   BigInt?   @map("amount_cents")
+  minOrderCents BigInt?   @map("min_order_cents")
+  maxUses       Int?      @map("max_uses")
+  used          Int       @default(0)
+  expiresAt     DateTime? @map("expires_at") @db.Date
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, code])
+  @@map("store_coupons")
+}
+
+model StoreOrder {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId     String   @map("company_id") @db.Uuid
+  number        Int
+  // Para que el cliente vea su pedido en /tienda/[slug]/pedido/[token].
+  publicToken   String   @unique @map("public_token") @db.VarChar(40)
+  customerName  String   @map("customer_name") @db.VarChar(150)
+  customerPhone String   @map("customer_phone") @db.VarChar(30)
+  customerEmail String?  @map("customer_email") @db.VarChar(255)
+  // pickup | delivery
+  delivery      String   @db.VarChar(10)
+  address       String?  @db.VarChar(300)
+  notes         String?  @db.VarChar(1000)
+  // [{ productId, variantId, name, variant, unitCents, qty, lineCents }] como quedaron al pedir.
+  items         Json
+  subtotalCents BigInt   @map("subtotal_cents")
+  discountCents BigInt   @default(0) @map("discount_cents")
+  shippingCents BigInt   @default(0) @map("shipping_cents")
+  totalCents    BigInt   @map("total_cents")
+  couponCode    String?  @map("coupon_code") @db.VarChar(30)
+  // new | confirmed | preparing | ready | on_way | delivered | cancelled
+  status        String   @default("new") @db.VarChar(12)
+  paid          Boolean  @default(false)
+  staffNote     String?  @map("staff_note") @db.VarChar(1000)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, number])
+  @@index([companyId, status, createdAt], map: "idx_store_orders_company")
+  @@map("store_orders")
+}
+
+// ───────── Analítica web ─────────
+
+// Una visita a una página publicada. Sin cookies y sin guardar la IP: `visitor` es un código que cambia cada día.
+model PageView {
+  id        BigInt   @id @default(autoincrement())
+  siteId    String   @map("site_id") @db.Uuid
+  // Día en Colombia.
+  day       DateTime @db.Date
+  path      String   @db.VarChar(200)
+  // google | instagram | facebook | whatsapp | tiktok | otros buscadores | direct | <dominio>
+  source    String   @db.VarChar(60)
+  // mobile | tablet | desktop
+  device    String   @db.VarChar(10)
+  visitor   String   @db.VarChar(16)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId, day], map: "idx_page_views_site_day")
+  @@map("page_views")
+}
+
+// ───────── Automatizaciones ─────────
+
+// "Si pasa X, hacer Y": un disparador, una condición opcional y una lista de acciones.
+model Automation {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String    @map("company_id") @db.Uuid
+  name           String    @db.VarChar(120)
+  // store_order | site_contact | quote_accepted | quote_rejected | ticket_created | low_stock (ver automations.constants.ts)
+  trigger        String    @db.VarChar(30)
+  // Condición opcional: solo si el valor es al menos esto (pedidos y cotizaciones).
+  minAmountCents BigInt?   @map("min_amount_cents")
+  // [{ type: notify | email | crm_contact | ticket, ... }]
+  actions        Json
+  active         Boolean   @default(true)
+  runCount       Int       @default(0) @map("run_count")
+  lastRunAt      DateTime? @map("last_run_at") @db.Timestamptz(6)
+  createdById    String?   @map("created_by_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  runs    AutomationRun[]
+
+  @@index([companyId, trigger, active], map: "idx_automations_company_trigger")
+  @@map("automations")
+}
+
+model AutomationRun {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  automationId String   @map("automation_id") @db.Uuid
+  companyId    String   @map("company_id") @db.Uuid
+  // ok | error | skipped
+  status       String   @db.VarChar(10)
+  // Qué pasó, en una línea ("Pedido #12 de Ana").
+  summary      String   @db.VarChar(300)
+  // Resultado de cada acción: [{ type, ok, message }]
+  results      Json
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  automation Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  @@index([automationId, createdAt], map: "idx_automation_runs_automation")
+  @@index([companyId, createdAt], map: "idx_automation_runs_company")
+  @@map("automation_runs")
 }
