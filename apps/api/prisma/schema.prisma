@@ -102,6 +102,7 @@ model Site {
   order            Order?
   formSubmissions  FormSubmission[]
   company          Company?
+  pageViews        PageView[]
 
   @@unique([userId, slug])
   @@index([userId], map: "idx_sites_user_id")
@@ -1522,4 +1523,26 @@ model StoreOrder {
   @@unique([companyId, number])
   @@index([companyId, status, createdAt], map: "idx_store_orders_company")
   @@map("store_orders")
+}
+
+// ───────── Analítica web ─────────
+
+// Una visita a una página publicada. Sin cookies y sin guardar la IP: `visitor` es un código que cambia cada día.
+model PageView {
+  id        BigInt   @id @default(autoincrement())
+  siteId    String   @map("site_id") @db.Uuid
+  // Día en Colombia.
+  day       DateTime @db.Date
+  path      String   @db.VarChar(200)
+  // google | instagram | facebook | whatsapp | tiktok | otros buscadores | direct | <dominio>
+  source    String   @db.VarChar(60)
+  // mobile | tablet | desktop
+  device    String   @db.VarChar(10)
+  visitor   String   @db.VarChar(16)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId, day], map: "idx_page_views_site_day")
+  @@map("page_views")
 }

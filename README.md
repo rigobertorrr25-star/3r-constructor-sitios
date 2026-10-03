@@ -439,6 +439,22 @@ Rigoberto, 3 oct 2026).
 - Publicar usa la misma publicación de siempre (`PublishingService.publish` con la revisión de dueño apagada, porque
   ya la hizo la empresa). Fotos: `POST …/web/images/presign` (PNG/JPG/WEBP) al almacenamiento público.
 
+### Módulo Analítica web (`analytics`)
+
+`/empresa/[id]/analitica` (supervisor en adelante; tabla `page_views`). Usa la página vinculada en el módulo Página web.
+
+- Cada visita a una página publicada se cuenta cuando la API la entrega. La web (`app/s/[label]/…`) le reenvía el
+  navegador, el sitio de origen, la IP, la consulta y el dominio en encabezados `x-3r-*`, **firmados con
+  `CRON_SECRET`** (si la API tiene `CRON_SECRET` y la firma no coincide, no se cuenta: nadie puede inflar visitas
+  llamando a la API directo). Sin cookies y sin guardar la IP: `visitor` es un hash que cambia cada día.
+- No cuentan robots, vistas previas de enlaces (WhatsApp, Facebook…) ni precargas. La navegación dentro de la misma
+  página cuenta como visita pero no como llegada. `?utm_source=` manda sobre el origen (la pantalla da los enlaces
+  para Instagram y WhatsApp).
+- Para que cada visita llegue, las páginas (HTML) ya no se guardan en la caché compartida
+  (`Cache-Control: public, max-age=0, no-cache`); robots.txt y sitemap siguen igual.
+- Informe de 7, 30 o 90 días: personas, visitas, mensajes del formulario, por día, origen, dispositivo, páginas, y
+  pedidos y ventas de la tienda si la empresa la tiene, comparado con el periodo anterior.
+
 ### Suscripciones (cobro de la plataforma)
 
 - **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir

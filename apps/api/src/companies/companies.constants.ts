@@ -36,7 +36,7 @@ export interface ModuleInfo {
 export const MODULES: ModuleInfo[] = [
   { key: 'web', area: 'web', ready: true },
   { key: 'store', area: 'web', ready: true },
-  { key: 'analytics', area: 'web', ready: false },
+  { key: 'analytics', area: 'web', ready: true },
   { key: 'seo', area: 'web', ready: false },
   { key: 'employees', area: 'empresa', ready: true },
   { key: 'requests', area: 'empresa', ready: true },

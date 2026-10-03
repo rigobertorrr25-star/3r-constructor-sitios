@@ -22,6 +22,8 @@ export interface PublishedFile {
   status: number;
   contentType: string;
   body: string;
+  /** Solo en las páginas (HTML) servidas: para contar la visita. */
+  page?: { siteId: string; path: string };
 }
 
 interface Manifest {
@@ -325,7 +327,9 @@ export class PublishingService {
     if (!entry) return missing(domain.site.name);
 
     const body = await this.storage.get(dir, entry.file);
-    return body === null ? missing(domain.site.name) : { status: 200, contentType: 'text/html; charset=utf-8', body };
+    return body === null
+      ? missing(domain.site.name)
+      : { status: 200, contentType: 'text/html; charset=utf-8', body, page: { siteId: domain.site.id, path: entry.path } };
   }
 
   // ───────── formulario de contacto ─────────
