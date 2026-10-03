@@ -202,6 +202,28 @@ export function companyAnnouncement(data: { companyName: string; kindLabel: stri
   return { subject: `${sanitizeHeader(data.title, 100)} — ${sanitizeHeader(data.companyName, 60)}`, html, text };
 }
 
+export function alertsDigest(data: {
+  firstName?: string | null;
+  companyName: string;
+  items: { title: string; body?: string | null; url: string }[];
+  more: number;
+  alertsUrl: string;
+}): RenderedEmail {
+  const list = data.items
+    .map((i) => `<li style="margin:0 0 10px"><a href="${escapeHtml(i.url)}"><strong>${escapeHtml(i.title)}</strong></a>${i.body ? `<br>${escapeHtml(i.body)}` : ''}</li>`)
+    .join('');
+  const { html, text } = layout(
+    `<p>Hola${data.firstName ? ` ${escapeHtml(data.firstName)}` : ''},</p>
+     <p>Esto es lo nuevo para ti en <strong>${escapeHtml(data.companyName)}</strong>:</p>
+     <ul style="padding-left:18px">${list}</ul>
+     ${data.more ? `<p>Y ${data.more} más.</p>` : ''}
+     ${button(data.alertsUrl, 'Ver todas mis alertas')}`,
+    `Hola${data.firstName ? ` ${data.firstName}` : ''},\n\nEsto es lo nuevo para ti en ${data.companyName}:\n\n${data.items.map((i) => `- ${i.title}${i.body ? ` (${i.body})` : ''}\n  ${i.url}`).join('\n')}${data.more ? `\n\nY ${data.more} más.` : ''}\n\nVer todas: ${data.alertsUrl}`,
+  );
+  const n = data.items.length + data.more;
+  return { subject: `${n} ${n === 1 ? 'aviso nuevo' : 'avisos nuevos'} en ${sanitizeHeader(data.companyName, 60)} — 3R`, html, text };
+}
+
 // ───────── al equipo (administrador) ─────────
 
 export function adminNewSignup(data: { email: string; firstName?: string | null }): RenderedEmail {

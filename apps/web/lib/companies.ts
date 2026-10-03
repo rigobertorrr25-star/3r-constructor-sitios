@@ -76,7 +76,7 @@ export const assignableBy = (actor: CompanyRole): CompanyRole[] =>
 export const outranks = (actor: CompanyRole, target: CompanyRole) => actor === 'owner' || RANK[actor] > RANK[target];
 
 /** Ruta dentro de /empresa/[id] de cada módulo ya construido. */
-export const MODULE_ROUTE: Record<string, string> = { crm: 'crm', tickets: 'tickets', employees: 'personal', requests: 'solicitudes', announcements: 'comunicados', documents: 'documentos', doc_generator: 'generador', calendar: 'calendario' };
+export const MODULE_ROUTE: Record<string, string> = { crm: 'crm', tickets: 'tickets', employees: 'personal', requests: 'solicitudes', announcements: 'comunicados', documents: 'documentos', doc_generator: 'generador', calendar: 'calendario', alerts: 'alertas' };
 
 export const AREA_LABEL: Record<ModuleArea, string> = {
   web: 'Web',

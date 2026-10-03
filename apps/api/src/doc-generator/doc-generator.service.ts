@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { AlertsService } from '../alerts/alerts.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { roleRank } from '../companies/companies.constants.js';
 import { CompaniesService } from '../companies/companies.service.js';
@@ -33,6 +34,7 @@ export class DocGeneratorService {
     private readonly companies: CompaniesService,
     private readonly audit: AuditService,
     @Inject(DOCUMENT_STORAGE) private readonly storage: DocumentStorage,
+    private readonly alerts: AlertsService,
   ) {}
 
   /** RR. HH. en adelante genera documentos de quienes tienen menor rango (el dueño, de todos y el suyo). */
@@ -218,6 +220,9 @@ export class DocGeneratorService {
         select: { id: true },
       });
       savedDocumentId = saved.id;
+      if (t.id !== me.id) {
+        await this.alerts.notify(companyId, [t.id], { kind: 'document', title: `Tienes un documento nuevo: ${title}`, href: `documentos?member=${t.id}` });
+      }
     }
     await this.audit.log({
       action: 'COMPANY_DOCUMENT_GENERATED',

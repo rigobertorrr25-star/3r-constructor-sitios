@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '../generated/prisma/client.js';
+import { AlertsService } from '../alerts/alerts.service.js';
 import { atLeast } from '../companies/companies.constants.js';
 import { CompaniesService } from '../companies/companies.service.js';
 import { EmailService } from '../email/email.service.js';
@@ -43,6 +44,7 @@ export class TicketsService {
     private readonly prisma: PrismaService,
     private readonly companies: CompaniesService,
     private readonly email: EmailService,
+    private readonly alerts: AlertsService,
   ) {}
 
   private async access(userId: string, companyId: string, min: 'employee' | 'admin' = 'employee') {
@@ -123,7 +125,7 @@ export class TicketsService {
 
   async create(userId: string, companyId: string, dto: CreateTicketDto) {
     const me = await this.access(userId, companyId);
-    return this.prisma.$transaction(async (tx) => {
+    const created = await this.prisma.$transaction(async (tx) => {
       // Número consecutivo por empresa, sin choques aunque dos personas creen a la vez.
       const { ticketSeq } = await tx.company.update({ where: { id: companyId }, data: { ticketSeq: { increment: 1 } }, select: { ticketSeq: true } });
       return tx.ticket.create({
@@ -139,6 +141,15 @@ export class TicketsService {
         select: ticketSelect,
       });
     });
+    if (created.priority === 'urgent' || created.priority === 'high') {
+      await this.alerts.notify(companyId, await this.alerts.membersAbove(companyId, 'supervisor', undefined, me.id), {
+        kind: 'ticket',
+        title: `Nuevo ticket ${created.priority === 'urgent' ? 'urgente' : 'de prioridad alta'}: #${created.number}`,
+        body: created.title,
+        href: `tickets/${created.id}`,
+      });
+    }
+    return created;
   }
 
   async get(userId: string, companyId: string, ticketId: string) {
@@ -251,6 +262,7 @@ export class TicketsService {
     // Avisos por correo, sin avisarle a quien hizo el cambio.
     const url = this.email.ticketUrl(companyId, t.id);
     if (assigneeChangedTo && assigneeChangedTo !== me.id) {
+      await this.alerts.notify(companyId, [assigneeChangedTo], { kind: 'ticket', title: `Te asignaron el ticket #${t.number}`, body: t.title, href: `tickets/${t.id}` });
       const to = await this.memberEmail(assigneeChangedTo);
       if (to)
         void this.email.sendTicketAssigned(to, {
@@ -262,6 +274,7 @@ export class TicketsService {
         });
     }
     if (status === 'resolved' && t.status !== 'resolved' && t.requesterMemberId && t.requesterMemberId !== me.id) {
+      await this.alerts.notify(companyId, [t.requesterMemberId], { kind: 'ticket', title: `Tu ticket #${t.number} quedó resuelto`, body: 'Ciérralo si todo está bien, o ábrelo de nuevo.', href: `tickets/${t.id}` });
       const to = await this.memberEmail(t.requesterMemberId);
       if (to) void this.email.sendTicketResolved(to, { companyName: me.company.name, number: t.number, title: t.title, ticketUrl: url });
     }
@@ -284,6 +297,12 @@ export class TicketsService {
       }),
       this.prisma.ticket.update({ where: { id: t.id }, data: { updatedAt: new Date() } }),
     ]);
+    // A la otra parte (quien pidió o quien atiende), no a quien comenta.
+    await this.alerts.notify(
+      companyId,
+      [t.requesterMemberId, t.assigneeMemberId].filter((x) => x !== me.id),
+      { kind: 'ticket', title: `Nuevo comentario en el ticket #${t.number}`, body: dto.body.slice(0, 140), href: `tickets/${t.id}` },
+    );
     return event;
   }
 

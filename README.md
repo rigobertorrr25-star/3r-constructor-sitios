@@ -323,6 +323,18 @@ reuniones, eventos, fechas límite y recordatorios; lo demás sale de los otros 
 - Supervisor en adelante crea eventos para el equipo; cualquiera crea recordatorios personales (solo los ve él).
   Cambia o borra quien lo creó, o un administrador. `GET …/calendar/upcoming` da los próximos 14 días.
 
+### Módulo Alertas (`alerts`)
+
+Campanita en el encabezado de la empresa y `/empresa/[id]/alertas` (tabla `notifications`). Solo con el módulo activo.
+
+- Avisos al momento: ticket urgente o de prioridad alta (supervisores), ticket asignado, comentario y ticket resuelto;
+  solicitud por decidir y decisión; comunicado nuevo; documento subido a mi carpeta o generado para mí.
+- Revisión diaria (el mismo cron de Vercel de dominios, `/api/cron/dominios`, llama también a
+  `POST /internal/alerts/run` con `CRON_SECRET`): cumpleaños de hoy, contratos y documentos que vencen en 30, 7 y 0
+  días, solicitudes con más de 2 días sin respuesta y tickets urgentes sin responsable. `dedupe_key` evita repetir.
+- Después, un correo por persona con sus avisos nuevos sin leer de las últimas 24 horas (una sola vez cada aviso).
+- Abrir un aviso lo marca leído y lleva a lo que avisa; "Marcar todo como leído".
+
 ## Notas técnicas
 
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.

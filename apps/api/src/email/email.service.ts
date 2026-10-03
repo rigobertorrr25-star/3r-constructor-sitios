@@ -113,6 +113,23 @@ export class EmailService {
     return this.safeSend(to, templates.companyAnnouncement(data));
   }
 
+  sendAlertsDigest(
+    to: string,
+    data: { firstName?: string | null; companyName: string; companyId: string; items: { title: string; body?: string | null; href?: string | null }[]; more: number },
+  ) {
+    const companyUrl = `${this.webOrigin}/empresa/${data.companyId}`;
+    return this.safeSend(
+      to,
+      templates.alertsDigest({
+        firstName: data.firstName,
+        companyName: data.companyName,
+        items: data.items.map((i) => ({ title: i.title, body: i.body, url: i.href ? `${companyUrl}/${i.href}` : companyUrl })),
+        more: data.more,
+        alertsUrl: `${companyUrl}/alertas`,
+      }),
+    );
+  }
+
   // ───────── al equipo ─────────
 
   sendAdminNewSignup(data: { email: string; firstName?: string | null }) {

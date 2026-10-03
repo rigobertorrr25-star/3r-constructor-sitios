@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { AlertsService } from '../alerts/alerts.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { atLeast, roleRank } from '../companies/companies.constants.js';
 import { CompaniesService } from '../companies/companies.service.js';
@@ -48,6 +49,7 @@ export class DocumentsService {
     private readonly companies: CompaniesService,
     private readonly audit: AuditService,
     @Inject(DOCUMENT_STORAGE) private readonly storage: DocumentStorage,
+    private readonly alerts: AlertsService,
   ) {}
 
   private async access(userId: string, companyId: string) {
@@ -216,6 +218,10 @@ export class DocumentsService {
       throw new BadRequestException('El archivo pesa más de 20 MB.');
     }
     const ready = await this.prisma.companyDocument.update({ where: { id: d.id }, data: { status: 'ready', size }, select: docSelect });
+    // Si RR. HH. le sube algo a un empleado, el empleado se entera.
+    if (ready.memberId && ready.memberId !== me.id) {
+      await this.alerts.notify(companyId, [ready.memberId], { kind: 'document', title: `Nuevo documento en tu carpeta: ${ready.title}`, href: `documentos?member=${ready.memberId}` });
+    }
     return this.shape(me, ready, userId, await this.uploaders([ready.uploadedById]));
   }
 

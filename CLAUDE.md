@@ -53,7 +53,8 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   listos: CRM (`/empresa/[id]/crm`), Tickets (`/empresa/[id]/tickets`) Portal del empleado (`/empresa/[id]/personal`),
   Permisos y vacaciones (`/empresa/[id]/solicitudes`) Comunicados (`/empresa/[id]/comunicados`) y
   Documentos (`/empresa/[id]/documentos`, archivos privados; recomendado crear un bucket R2 privado `R2_DOCS_BUCKET`) ,
-  Generador de documentos (`/empresa/[id]/generador`, PDF con `pdf-lib`) y Calendario (`/empresa/[id]/calendario`). Orden acordado en PENDIENTES.md: dashboard, CRM, tickets, portal del empleado,
+  Generador de documentos (`/empresa/[id]/generador`, PDF con `pdf-lib`), Calendario (`/empresa/[id]/calendario`) y
+  Alertas (campanita + resumen diario por correo; usa el cron diario de dominios y `CRON_SECRET`). Tablero en `/empresa/[id]`. Orden acordado en PENDIENTES.md: dashboard, CRM, tickets, portal del empleado,
   permisos y vacaciones, comunicados, documentos, generador de documentos, calendario, alertas, cotizaciones,
   suscripciones, encuestas, capacitaciones, conocimiento, inventario, tienda, constructor web, analítica, SEO,
   automatizaciones, marketing, IA (asistente y textos), WhatsApp (API de Meta). Precios por módulo: pendientes de Rigoberto.

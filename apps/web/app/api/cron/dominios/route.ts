@@ -1,4 +1,4 @@
-// Revisión diaria de dominios propios por vencer (cron de Vercel, ver vercel.json). Vercel llama aquí con
+// Revisión diaria (cron de Vercel, ver vercel.json): dominios propios por vencer y alertas de la plataforma empresarial. Vercel llama aquí con
 // `Authorization: Bearer <CRON_SECRET>`, y se le pasa la misma clave a la API, que manda los avisos.
 import { NextResponse, type NextRequest } from 'next/server';
 import { API_URL } from '@/lib/api';
@@ -11,16 +11,21 @@ export async function GET(request: NextRequest) {
   if (!secret) return NextResponse.json({ message: 'CRON_SECRET sin configurar' }, { status: 503 });
   if (request.headers.get('authorization') !== `Bearer ${secret}`) return NextResponse.json({ message: 'No autorizado' }, { status: 401 });
 
-  try {
-    const res = await fetch(`${API_URL}/internal/domain-renewals/run`, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${secret}` },
-      cache: 'no-store',
-      signal: AbortSignal.timeout(55_000),
-    });
-    const body = await res.json().catch(() => null);
-    return NextResponse.json(body ?? { message: 'Respuesta vacía de la API' }, { status: res.ok ? 200 : 502 });
-  } catch {
-    return NextResponse.json({ message: 'La API no respondió' }, { status: 502 });
-  }
+  // Una tarea tras otra: la primera despierta la API si estaba dormida.
+  const run = async (path: string) => {
+    try {
+      const res = await fetch(`${API_URL}${path}`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${secret}` },
+        cache: 'no-store',
+        signal: AbortSignal.timeout(27_000),
+      });
+      return { ok: res.ok, body: await res.json().catch(() => null) };
+    } catch {
+      return { ok: false, body: { message: 'La API no respondió' } };
+    }
+  };
+  const domains = await run('/internal/domain-renewals/run');
+  const alerts = await run('/internal/alerts/run');
+  return NextResponse.json({ domains: domains.body, alerts: alerts.body }, { status: domains.ok && alerts.ok ? 200 : 502 });
 }

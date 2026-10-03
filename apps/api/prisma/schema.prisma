@@ -596,6 +596,7 @@ model Company {
   announcements    Announcement[]
   documents        CompanyDocument[]
   calendarEvents   CalendarEvent[]
+  notifications    Notification[]
 
   @@map("companies")
 }
@@ -620,6 +621,7 @@ model CompanyMember {
   leaveRequests     LeaveRequest[]
   announcementReads AnnouncementRead[]
   documents         CompanyDocument[]
+  notifications     Notification[]
 
   @@unique([companyId, userId])
   @@index([userId], map: "idx_company_members_user_id")
@@ -923,4 +925,32 @@ model CalendarEvent {
 
   @@index([companyId, startsAt], map: "idx_calendar_events_company_start")
   @@map("calendar_events")
+}
+
+// ───────────────────────── MÓDULO: ALERTAS ─────────────────────────
+
+// Aviso para una persona de la empresa (campanita). Los manda cada módulo y la revisión diaria (vencimientos,
+// cumpleaños, solicitudes sin responder). `dedupeKey` evita repetir el mismo aviso.
+model Notification {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String    @map("company_id") @db.Uuid
+  memberId  String    @map("member_id") @db.Uuid
+  // ticket | request | announcement | document | contract | birthday | reminder
+  kind      String    @db.VarChar(20)
+  title     String    @db.VarChar(200)
+  body      String?   @db.VarChar(500)
+  // Ruta dentro de /empresa/[id].
+  href      String?   @db.VarChar(200)
+  dedupeKey String?   @map("dedupe_key") @db.VarChar(120)
+  readAt    DateTime? @map("read_at") @db.Timestamptz(6)
+  // Ya salió en el resumen diario por correo.
+  emailedAt DateTime? @map("emailed_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  member  CompanyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, dedupeKey])
+  @@index([memberId, createdAt], map: "idx_notifications_member")
+  @@map("notifications")
 }

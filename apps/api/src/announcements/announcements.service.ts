@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { AlertsService } from '../alerts/alerts.service.js';
 import { atLeast } from '../companies/companies.constants.js';
 import { CompaniesService } from '../companies/companies.service.js';
 import { EmailService } from '../email/email.service.js';
@@ -30,6 +31,7 @@ export class AnnouncementsService {
     private readonly prisma: PrismaService,
     private readonly companies: CompaniesService,
     private readonly email: EmailService,
+    private readonly alerts: AlertsService,
   ) {}
 
   /** Todos leen; publicar, editar y borrar es de RR. HH. en adelante. */
@@ -95,6 +97,12 @@ export class AnnouncementsService {
       },
       select: baseSelect,
     });
+    const team = await this.prisma.companyMember.findMany({ where: { companyId, status: 'active', id: { not: me.id } }, select: { id: true } });
+    await this.alerts.notify(
+      companyId,
+      team.map((m) => m.id),
+      { kind: 'announcement', title: `${KIND_LABEL[created.kind] ?? 'Comunicado'}: ${created.title}`, body: excerpt(created.body, 140), href: `comunicados/${created.id}` },
+    );
     if (dto.notify) await this.notifyTeam(me, created);
     return created;
   }

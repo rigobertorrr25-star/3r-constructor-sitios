@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { AlertsService } from '../alerts/alerts.service.js';
 import { COMPANY_ROLES, atLeast, roleRank } from '../companies/companies.constants.js';
 import { CompaniesService } from '../companies/companies.service.js';
 import { EmailService } from '../email/email.service.js';
@@ -52,6 +53,7 @@ export class RequestsService {
     private readonly prisma: PrismaService,
     private readonly companies: CompaniesService,
     private readonly email: EmailService,
+    private readonly alerts: AlertsService,
   ) {}
 
   private async access(userId: string, companyId: string) {
@@ -191,10 +193,15 @@ export class RequestsService {
       where: { companyId: me.company.id, status: 'active', role: { in: roles }, id: { not: r.memberId } },
       orderBy: { createdAt: 'asc' },
       take: 10,
-      select: { user: { select: { email: true } } },
+      select: { id: true, user: { select: { email: true } } },
     });
     const dates = r.startDate ? (r.endDate && +r.endDate !== +r.startDate ? `${shortDate(r.startDate)} al ${shortDate(r.endDate)}` : shortDate(r.startDate)) : '';
     const url = this.email.requestUrl(me.company.id, r.id);
+    await this.alerts.notify(
+      me.company.id,
+      deciders.map((d) => d.id),
+      { kind: 'request', title: `${name(r.member.user)} pidió ${TYPE_LABEL[r.type].toLowerCase()}`, body: dates || r.reason.slice(0, 140), href: `solicitudes/${r.id}`, dedupeKey: `request:${r.id}:${r.status}` },
+    );
     for (const d of deciders) {
       void this.email.sendLeaveRequestPending(d.user.email, {
         companyName: me.company.name,
@@ -253,6 +260,14 @@ export class RequestsService {
     if (updated.status === 'supervisor_ok') await this.notifyDeciders(me, updated);
     else {
       const requester = await this.prisma.companyMember.findFirst({ where: { id: r.memberId, status: 'active' }, select: { user: { select: { email: true } } } });
+      if (r.memberId !== me.id) {
+        await this.alerts.notify(companyId, [r.memberId], {
+          kind: 'request',
+          title: `Tu solicitud de ${TYPE_LABEL[r.type].toLowerCase()} ${updated.status === 'approved' ? 'quedó aprobada' : 'no fue aprobada'}`,
+          body: note,
+          href: `solicitudes/${r.id}`,
+        });
+      }
       if (requester && r.memberId !== me.id) {
         void this.email.sendLeaveRequestDecided(requester.user.email, {
           companyName: me.company.name,

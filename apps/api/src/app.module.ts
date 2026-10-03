@@ -14,6 +14,7 @@ import { AnnouncementsModule } from './announcements/announcements.module.js';
 import { DocumentsModule } from './documents/documents.module.js';
 import { DocGeneratorModule } from './doc-generator/doc-generator.module.js';
 import { CalendarModule } from './calendar/calendar.module.js';
+import { AlertsModule } from './alerts/alerts.module.js';
 import { EmailModule } from './email/email.module.js';
 import { HealthController } from './health/health.controller.js';
 import { MediaModule } from './media/media.module.js';
@@ -59,6 +60,7 @@ import { UsersModule } from './users/users.module.js';
     DocumentsModule,
     DocGeneratorModule,
     CalendarModule,
+    AlertsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
