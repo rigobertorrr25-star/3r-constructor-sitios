@@ -22,6 +22,7 @@ import { InventoryModule } from './inventory/inventory.module.js';
 import { StoreModule } from './store/store.module.js';
 import { CompanyWebModule } from './company-web/company-web.module.js';
 import { AnalyticsModule } from './analytics/analytics.module.js';
+import { SeoModule } from './seo/seo.module.js';
 import { KnowledgeModule } from './knowledge/knowledge.module.js';
 import { TrainingModule } from './training/training.module.js';
 import { EmailModule } from './email/email.module.js';
@@ -79,6 +80,7 @@ import { UsersModule } from './users/users.module.js';
     StoreModule,
     CompanyWebModule,
     AnalyticsModule,
+    SeoModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

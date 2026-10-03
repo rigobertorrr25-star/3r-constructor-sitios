@@ -455,6 +455,15 @@ Rigoberto, 3 oct 2026).
 - Informe de 7, 30 o 90 días: personas, visitas, mensajes del formulario, por día, origen, dispositivo, páginas, y
   pedidos y ventas de la tienda si la empresa la tiene, comparado con el periodo anterior.
 
+### Módulo SEO (`seo`)
+
+`/empresa/[id]/seo` (ven supervisores en adelante; cambian administradores). Revisa la página vinculada sobre su
+contenido guardado, sin salir a internet (`src/seo/seo-audit.ts`): publicada, dominio propio, cómo contactar
+(WhatsApp, teléfono, correo o formulario), dirección o mapa, y por página título y descripción para Google (largos
+ideales 25–65 y 70–160), título principal, fotos sin descripción, botones que no llevan a ningún lado y cuánto texto
+tiene el inicio. Nota de 0 a 100 (bien = 1, mejorar = ½, arreglar = 0). Cada punto dice dónde se arregla: título y
+descripción en la misma pantalla (con vista previa como en Google), textos y fotos en Página web, el resto lo hace 3R.
+
 ### Suscripciones (cobro de la plataforma)
 
 - **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir
