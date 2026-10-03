@@ -609,6 +609,10 @@ model Company {
   articles         KnowledgeArticle[]
   inventoryItems   InventoryItem[]
   companyAssets    CompanyAsset[]
+  store            StoreSettings?
+  storeProducts    StoreProduct[]
+  storeCoupons     StoreCoupon[]
+  storeOrders      StoreOrder[]
 
   @@map("companies")
 }
@@ -1386,4 +1390,132 @@ model CompanyAssetEvent {
 
   @@index([assetId, createdAt], map: "idx_company_asset_events")
   @@map("company_asset_events")
+}
+
+// ───────── Tienda online ─────────
+
+model StoreSettings {
+  companyId        String   @id @map("company_id") @db.Uuid
+  // La tienda pública queda en /tienda/[slug].
+  slug             String   @unique @db.VarChar(60)
+  name             String   @db.VarChar(120)
+  tagline          String?  @db.VarChar(300)
+  // Número al que llegan los pedidos por WhatsApp.
+  whatsapp         String?  @db.VarChar(30)
+  // Recibiendo pedidos (si no, el catálogo se ve pero no se puede pedir).
+  open             Boolean  @default(true)
+  pickupEnabled    Boolean  @default(true) @map("pickup_enabled")
+  pickupNote       String?  @map("pickup_note") @db.VarChar(200)
+  deliveryEnabled  Boolean  @default(false) @map("delivery_enabled")
+  deliveryFeeCents BigInt   @default(0) @map("delivery_fee_cents")
+  // Domicilio gratis desde este valor (vacío = nunca).
+  freeFromCents    BigInt?  @map("free_from_cents")
+  deliveryNote     String?  @map("delivery_note") @db.VarChar(200)
+  // Cómo se paga (transferencia, Nequi, efectivo…).
+  paymentNote      String?  @map("payment_note") @db.VarChar(500)
+  orderSeq         Int      @default(0) @map("order_seq")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("store_settings")
+}
+
+model StoreProduct {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  name           String   @db.VarChar(150)
+  description    String?  @db.VarChar(5000)
+  priceCents     BigInt   @map("price_cents")
+  // Precio "antes" para mostrar descuento.
+  compareAtCents BigInt?  @map("compare_at_cents")
+  imageUrl       String?  @map("image_url") @db.VarChar(500)
+  category       String?  @db.VarChar(60)
+  // Con existencias: se descuentan con cada pedido y se agota en 0.
+  trackStock     Boolean  @default(false) @map("track_stock")
+  stock          Int?
+  active         Boolean  @default(true)
+  featured       Boolean  @default(false)
+  position       Int      @default(0)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company  Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  variants StoreVariant[]
+
+  @@index([companyId, active], map: "idx_store_products_company")
+  @@map("store_products")
+}
+
+// Opción de un producto (tamaño, sabor, talla…). Si tiene, el cliente elige una.
+model StoreVariant {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId  String  @map("product_id") @db.Uuid
+  name       String  @db.VarChar(80)
+  // Vacío = el precio del producto.
+  priceCents BigInt? @map("price_cents")
+  stock      Int?
+  active     Boolean @default(true)
+  position   Int     @default(0)
+
+  product StoreProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId], map: "idx_store_variants_product")
+  @@map("store_variants")
+}
+
+model StoreCoupon {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId     String    @map("company_id") @db.Uuid
+  // En mayúsculas.
+  code          String    @db.VarChar(30)
+  // Uno de los dos: porcentaje o valor fijo.
+  percent       Int?
+  amountCents   BigInt?   @map("amount_cents")
+  minOrderCents BigInt?   @map("min_order_cents")
+  maxUses       Int?      @map("max_uses")
+  used          Int       @default(0)
+  expiresAt     DateTime? @map("expires_at") @db.Date
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, code])
+  @@map("store_coupons")
+}
+
+model StoreOrder {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId     String   @map("company_id") @db.Uuid
+  number        Int
+  // Para que el cliente vea su pedido en /tienda/[slug]/pedido/[token].
+  publicToken   String   @unique @map("public_token") @db.VarChar(40)
+  customerName  String   @map("customer_name") @db.VarChar(150)
+  customerPhone String   @map("customer_phone") @db.VarChar(30)
+  customerEmail String?  @map("customer_email") @db.VarChar(255)
+  // pickup | delivery
+  delivery      String   @db.VarChar(10)
+  address       String?  @db.VarChar(300)
+  notes         String?  @db.VarChar(1000)
+  // [{ productId, variantId, name, variant, unitCents, qty, lineCents }] como quedaron al pedir.
+  items         Json
+  subtotalCents BigInt   @map("subtotal_cents")
+  discountCents BigInt   @default(0) @map("discount_cents")
+  shippingCents BigInt   @default(0) @map("shipping_cents")
+  totalCents    BigInt   @map("total_cents")
+  couponCode    String?  @map("coupon_code") @db.VarChar(30)
+  // new | confirmed | preparing | ready | on_way | delivered | cancelled
+  status        String   @default("new") @db.VarChar(12)
+  paid          Boolean  @default(false)
+  staffNote     String?  @map("staff_note") @db.VarChar(1000)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, number])
+  @@index([companyId, status, createdAt], map: "idx_store_orders_company")
+  @@map("store_orders")
 }

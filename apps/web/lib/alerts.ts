@@ -17,4 +17,5 @@ export const KIND_LABEL: Record<string, string> = {
   training: 'Capacitación',
   inventory: 'Inventario',
   asset: 'Equipo',
+  store: 'Tienda',
 };

@@ -13,6 +13,7 @@ import { formatMoney } from '@/lib/orders';
 import { TYPE_LABEL as LEAVE_LABEL, type RequestsSummary } from '@/lib/requests';
 import type { SurveysSummary } from '@/lib/surveys';
 import type { InventorySummary } from '@/lib/inventory';
+import type { StoreSummary } from '@/lib/store';
 import type { TrainingSummary } from '@/lib/training';
 import type { TicketSummary } from '@/lib/tickets';
 import { loadCompany } from './company';
@@ -38,7 +39,7 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
   const c = `/companies/${id}`;
 
   // Cada módulo activo aporta sus cifras y pendientes: el tablero crece con cada módulo.
-  const [crm, tickets, people, requests, news, docs, upcoming, surveys, training, stock] = await Promise.all([
+  const [crm, tickets, people, requests, news, docs, upcoming, surveys, training, stock, shop] = await Promise.all([
     get<CrmSummary>(enabled('crm'), `${c}/crm/summary`),
     get<TicketSummary>(enabled('tickets'), `${c}/tickets/summary`),
     get<EmployeesSummary>(enabled('employees'), `${c}/employees/summary`),
@@ -49,6 +50,7 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
     get<SurveysSummary>(enabled('surveys'), `${c}/surveys/summary`),
     get<TrainingSummary>(enabled('training'), `${c}/training/summary`),
     get<InventorySummary>(enabled('inventory'), `${c}/inventory/summary`),
+    get<StoreSummary>(enabled('store') && atLeast(role, 'supervisor'), `${c}/store/summary`),
   ]);
 
   const todos: Todo[] = [];
@@ -70,6 +72,7 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
       text: `${plural(training.pending, 'curso obligatorio', 'cursos obligatorios')} por terminar`,
       tone: training.courses.some((t) => t.overdue) ? 'warn' : undefined,
     });
+  if (shop?.newOrders) todos.push({ href: `${base}/tienda`, text: `${plural(shop.newOrders, 'pedido nuevo', 'pedidos nuevos')} en la tienda` });
   if (stock?.lowStock)
     todos.push({
       href: `${base}/inventario?filter=low`,

@@ -30,5 +30,6 @@ import { R2MediaStorage } from './r2-media-storage.js';
       },
     },
   ],
+  exports: [MEDIA_STORAGE],
 })
 export class MediaModule {}

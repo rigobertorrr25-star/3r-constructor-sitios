@@ -405,6 +405,25 @@ los nombres `assets` ya eran del constructor de páginas).
   pasar a otra, devolver, a reparación o de baja, con historial que guarda el nombre de quien lo tuvo. Cada persona
   ve los equipos a su cargo; `GET …/inventory/members/:id/assets` sirve para el paz y salvo.
 
+### Módulo Tienda online (`store`)
+
+Panel en `/empresa/[id]/tienda` (supervisor en adelante; los ajustes, administradores). Tablas `store_settings`,
+`store_products`, `store_variants`, `store_coupons` y `store_orders`.
+
+- **Ajustes**: dirección pública `/tienda/[slug]` (única), WhatsApp de pedidos, recoger en el local y/o domicilio
+  (valor, gratis desde un monto, zonas), cómo se paga y "Recibiendo pedidos" (apagado: se ve, pero no deja pedir).
+- **Productos**: foto (se sube directo al almacenamiento público con `POST …/store/images/presign`, PNG/JPG/WEBP de
+  hasta 5 MB), precio y precio "antes", categoría, destacados, opciones con su propio precio y existencias opcionales
+  (por producto o por opción). Al editar, las opciones conservan su id.
+- **Cupones**: porcentaje o valor fijo, compra mínima, usos máximos y vencimiento; se pueden pausar.
+- **Pedidos**: el navegador guarda el carrito (`localStorage`), pero la API recalcula todo (`pricing.ts`). Al pedir,
+  en una sola transacción se descuentan existencias (nunca quedan en negativo, ni con dos clientes al tiempo), se usa
+  el cupón y se numera el pedido (#1, #2… sin huecos). Avisa a supervisores en adelante y sale en el tablero.
+  El cliente ve el estado en `/tienda/[slug]/pedido/[token]` y puede mandar el resumen por WhatsApp. Estados: nuevo,
+  confirmado, en preparación, listo (recoge) o en camino (domicilio), entregado; cancelar devuelve existencias y cupón.
+- Sin pago en línea por ahora: el dinero debe llegar a la cuenta de cada negocio, no a la de 3R (se cobra por
+  transferencia, Nequi o efectivo, según "Cómo te pagan").
+
 ### Suscripciones (cobro de la plataforma)
 
 - **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir
