@@ -362,6 +362,23 @@ Campanita en el encabezado de la empresa y `/empresa/[id]/alertas` (tabla `notif
 - Resultados (`/encuestas/[id]/resultados`): barras por respuesta, promedio, índice de recomendación (NPS: % que da
   9–10 menos % que da 0–6), textos y participación del equipo (con quién falta, si no es anónima).
 
+### Módulo Capacitaciones (`training`)
+
+`/empresa/[id]/capacitaciones` (tablas `courses`, `course_lessons`, `course_questions` y `course_progress`).
+
+- RR. HH. en adelante crea cursos (hay plantilla de inducción): lecciones con texto y enlace opcional a un video o
+  material (`https://`), y una evaluación opcional de selección con puntaje para aprobar. Puede marcarlo obligatorio
+  y ponerle fecha límite.
+- Al publicarlo, alerta a todo el equipo. Los obligatorios sin terminar salen en el tablero ("N cursos obligatorios por
+  terminar", en amarillo si se venció la fecha).
+- Cada persona ve las lecciones en orden y las marca como vistas; al terminar todas se abre la evaluación (se califica
+  en la API: las respuestas correctas nunca llegan al navegador; se puede repetir y queda el mejor puntaje). Sin
+  evaluación, el curso termina al ver la última lección. Quien creó el curso recibe aviso.
+- Certificado en PDF horizontal con código (`/capacitaciones/[id]/certificado`). Supervisores en adelante ven el avance
+  de cada persona (`/equipo`) y descargan sus certificados.
+- Al editar, las lecciones que siguen conservan su id, así nadie pierde el avance. Archivado: solo lo ven quienes ya
+  lo terminaron (por su certificado).
+
 ### Suscripciones (cobro de la plataforma)
 
 - **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir

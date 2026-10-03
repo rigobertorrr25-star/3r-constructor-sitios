@@ -13,7 +13,7 @@ export type Letter = {
 };
 
 /** Las fuentes estándar del PDF solo traen Latin-1: se cambian comillas, guiones y lo que no tenga equivalente. */
-const latin1 = (text: string) =>
+export const latin1 = (text: string) =>
   text
     .replace(/[“”«»]/g, '"')
     .replace(/[‘’]/g, "'")
@@ -22,7 +22,7 @@ const latin1 = (text: string) =>
     .replace(/→/g, '->')
     .replace(/[^\u0009\u000a -~ -ÿ]/g, '');
 
-function wrap(text: string, font: PDFFont, size: number, width: number): string[] {
+export function wrap(text: string, font: PDFFont, size: number, width: number): string[] {
   const lines: string[] = [];
   for (const paragraph of text.split('\n')) {
     let line = '';

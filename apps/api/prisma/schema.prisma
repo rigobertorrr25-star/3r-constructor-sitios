@@ -603,6 +603,7 @@ model Company {
   subscription     CompanySubscription?
   invoices         CompanyInvoice[]
   surveys          Survey[]
+  courses          Course[]
 
   @@map("companies")
 }
@@ -625,6 +626,7 @@ model CompanyMember {
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   profile           EmployeeProfile?
   leaveRequests     LeaveRequest[]
+  courseProgress    CourseProgress[]
   announcementReads AnnouncementRead[]
   documents         CompanyDocument[]
   notifications     Notification[]
@@ -1159,4 +1161,84 @@ model SurveyResponse {
   @@unique([surveyId, respondentKey])
   @@index([surveyId, createdAt], map: "idx_survey_responses_survey")
   @@map("survey_responses")
+}
+
+// ───────── Capacitaciones ─────────
+
+model Course {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String    @map("company_id") @db.Uuid
+  title       String    @db.VarChar(150)
+  description String?   @db.VarChar(2000)
+  // draft | published | archived
+  status      String    @default("draft") @db.VarChar(10)
+  // Obligatorio: le sale como pendiente a todo el equipo.
+  required    Boolean   @default(false)
+  dueAt       DateTime? @map("due_at") @db.Date
+  // Porcentaje mínimo para aprobar el quiz.
+  passScore   Int       @default(70) @map("pass_score")
+  createdById String?   @map("created_by_id") @db.Uuid
+  publishedAt DateTime? @map("published_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company   Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  lessons   CourseLesson[]
+  questions CourseQuestion[]
+  progress  CourseProgress[]
+
+  @@index([companyId, status], map: "idx_courses_company_status")
+  @@map("courses")
+}
+
+model CourseLesson {
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId String  @map("course_id") @db.Uuid
+  position Int
+  title    String  @db.VarChar(150)
+  body     String  @db.Text
+  // Enlace a un video (YouTube, Vimeo, Drive…) o material de apoyo.
+  videoUrl String? @map("video_url") @db.VarChar(500)
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId], map: "idx_course_lessons_course")
+  @@map("course_lessons")
+}
+
+model CourseQuestion {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId String @map("course_id") @db.Uuid
+  position Int
+  text     String @db.VarChar(300)
+  options  Json
+  // Índice de la opción correcta (nunca se manda a quien toma el curso).
+  correct  Int
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId], map: "idx_course_questions_course")
+  @@map("course_questions")
+}
+
+// Avance de una persona en un curso.
+model CourseProgress {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId      String    @map("course_id") @db.Uuid
+  memberId      String    @map("member_id") @db.Uuid
+  // Ids de las lecciones vistas.
+  lessonsDone   Json      @default("[]") @map("lessons_done")
+  attempts      Int       @default(0)
+  // Mejor puntaje del quiz (0 a 100).
+  score         Int?
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz(6)
+  startedAt     DateTime  @default(now()) @map("started_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  course Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  member CompanyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, memberId])
+  @@index([memberId], map: "idx_course_progress_member")
+  @@map("course_progress")
 }

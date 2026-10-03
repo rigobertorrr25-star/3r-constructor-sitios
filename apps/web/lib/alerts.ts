@@ -14,4 +14,5 @@ export const KIND_LABEL: Record<string, string> = {
   quote: 'Cotización',
   invoice: 'Factura',
   survey: 'Encuesta',
+  training: 'Capacitación',
 };
