@@ -221,6 +221,13 @@ Notas de seguridad para producción: el renovador de tokens del proxy comparte u
 - En la web, cada módulo listo tiene su ruta en `MODULE_ROUTE` (`apps/web/lib/companies.ts`): aparece como pestaña y
   como botón «Abrir» en el inicio de la empresa, y suma sus cifras al inicio.
 
+### Tablero de la empresa (`/empresa/[id]`)
+
+Menú lateral agrupado por área (en celular, un menú que se abre) y un inicio que junta lo de cada módulo activo:
+cifras, **Pendientes** (solicitudes por decidir, tickets a mi cargo o sin responsable, comunicados sin leer, documentos
+y contratos por vencer, fichas incompletas), **Próximos días** (calendario), **Hoy no están** y el último comunicado.
+El catálogo de módulos (activar por WhatsApp) solo lo ven los administradores. Un módulo nuevo suma aquí sus cifras.
+
 ### Módulo CRM (`crm`)
 
 `/empresa/[id]/crm`: tablero con las 6 etapas (nuevo, contactado, cotización, negociación, ganado, perdido), búsqueda,

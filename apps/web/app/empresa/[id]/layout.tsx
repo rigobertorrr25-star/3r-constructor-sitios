@@ -34,16 +34,18 @@ export default async function CompanyLayout({ children, params }: { children: Re
           Tu rol: {ROLE_LABEL[company.me.role]}
         </span>
       </div>
-      <div className="mt-6">
-        <CompanyTabs
-          companyId={company.id}
-          canEdit={atLeast(company.me.role, 'admin')}
-          modules={company.modules
-            .filter((m) => m.enabled && MODULE_ROUTE[m.key])
-            .map((m) => ({ route: MODULE_ROUTE[m.key], label: MODULE_INFO[m.key]?.name ?? m.key }))}
-        />
+      <div className="mt-6 grid gap-6 lg:mt-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10">
+        <aside className="lg:sticky lg:top-6 lg:self-start">
+          <CompanyTabs
+            companyId={company.id}
+            canEdit={atLeast(company.me.role, 'admin')}
+            modules={company.modules
+              .filter((m) => m.enabled && MODULE_ROUTE[m.key])
+              .map((m) => ({ route: MODULE_ROUTE[m.key], label: MODULE_INFO[m.key]?.name ?? m.key, area: m.area }))}
+          />
+        </aside>
+        <div className="min-w-0">{children}</div>
       </div>
-      <div className="mt-8">{children}</div>
     </>
   );
 }
