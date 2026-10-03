@@ -38,8 +38,8 @@ export class AnthropicAiClient implements AiClient {
 }
 
 /**
- * Sin llave, en desarrollo y en las pruebas: no llama a nadie. Responde con la primera fuente que le mandaron, o dice
- * que no sabe si no hay fuentes. `requests` deja ver qué se le habría mandado a la IA.
+ * Sin llave, en desarrollo y en las pruebas: no llama a nadie. Para el asistente responde con la primera fuente que le
+ * mandaron (o dice que no sabe); para los textos, tres opciones con el tema. `requests` deja ver qué se le habría mandado a la IA.
  */
 export class FakeAiClient implements AiClient {
   static readonly requests: AiRequest[] = [];
@@ -48,6 +48,12 @@ export class FakeAiClient implements AiClient {
     FakeAiClient.requests.push(request);
     if (FakeAiClient.requests.length > 50) FakeAiClient.requests.shift();
     const last = request.messages[request.messages.length - 1]?.content ?? '';
+    const topic = /<tema>([\s\S]*?)<\/tema>/.exec(last);
+    if (topic) {
+      const t = topic[1].trim().slice(0, 80);
+      const text = [1, 2, 3].map((n) => `Opción ${n}: ${t}`).join('\n---\n');
+      return { text, inputTokens: Math.ceil(last.length / 4), outputTokens: Math.ceil(text.length / 4) };
+    }
     const source = /<fuente n="(\d+)"[^>]*>\n?([\s\S]*?)<\/fuente>/.exec(last);
     const text = source
       ? `Según los documentos: ${source[2].trim().slice(0, 200)} [${source[1]}]`

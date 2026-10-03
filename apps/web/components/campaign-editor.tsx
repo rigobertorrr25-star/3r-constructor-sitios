@@ -4,7 +4,9 @@ import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { audienceAction, saveCampaignAction, sendCampaignAction, testCampaignAction, type MarketingResult } from '@/app/empresa/marketing-actions';
 import { CRM_STAGES, SOURCE_LABEL, STAGE_LABEL } from '@/lib/crm';
+import { splitSubject } from '@/lib/ai-content';
 import { people, type CampaignDetail, type Segment } from '@/lib/marketing';
+import { AiSuggest } from './ai-writer';
 import { ArticleBody } from './article-body';
 import { Field, TextAreaField } from './field';
 import { Alert } from './shop';
@@ -55,6 +57,7 @@ export function CampaignEditor({
   campaign,
   canSend = false,
   remainingToday = 0,
+  ai = false,
 }: {
   companyId: string;
   companyName: string;
@@ -62,6 +65,8 @@ export function CampaignEditor({
   campaign?: CampaignDetail;
   canSend?: boolean;
   remainingToday?: number;
+  /** La empresa tiene Textos con IA. */
+  ai?: boolean;
 }) {
   const router = useRouter();
   const [name, setName] = useState(campaign?.name ?? '');
@@ -131,6 +136,18 @@ export function CampaignEditor({
           onChange={(e) => setSubject(e.target.value)}
           placeholder="Este fin de semana: 2x1 en café"
         />
+        {ai ? (
+          <AiSuggest
+            companyId={companyId}
+            kind="email"
+            label="Escribir el correo con IA"
+            onPick={(text) => {
+              const r = splitSubject(text);
+              if (r.subject) setSubject(r.subject.slice(0, 150));
+              setBody(r.body);
+            }}
+          />
+        ) : null}
         <TextAreaField
           label="Mensaje"
           name="body"

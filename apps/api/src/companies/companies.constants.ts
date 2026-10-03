@@ -56,7 +56,7 @@ export const MODULES: ModuleInfo[] = [
   { key: 'alerts', area: 'automatizacion', ready: true },
   { key: 'automations', area: 'automatizacion', ready: true },
   { key: 'ai_assistant', area: 'ia', ready: true },
-  { key: 'ai_content', area: 'ia', ready: false },
+  { key: 'ai_content', area: 'ia', ready: true },
 ];
 
 export const MODULE_KEYS = MODULES.map((m) => m.key);

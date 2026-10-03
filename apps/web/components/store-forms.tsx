@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState, useTransition } from 'react';
 import { createCouponAction, presignStoreImageAction, saveProductAction, saveStoreSettingsAction } from '@/app/empresa/store-actions';
 import type { Product, StoreSettings } from '@/lib/store';
+import { AiSuggest } from './ai-writer';
 import { CheckField, Field, SelectField, TextAreaField, inputClass } from './field';
 import { formKey } from './form-key';
 import { Alert } from './shop';
@@ -151,7 +152,18 @@ async function uploadPhoto(companyId: string, file: File) {
   return res.presign.publicUrl;
 }
 
-export function ProductEditor({ companyId, product, categories }: { companyId: string; product?: Product; categories: string[] }) {
+export function ProductEditor({
+  companyId,
+  product,
+  categories,
+  ai = false,
+}: {
+  companyId: string;
+  product?: Product;
+  categories: string[];
+  /** La empresa tiene Textos con IA. */
+  ai?: boolean;
+}) {
   const [name, setName] = useState(product?.name ?? '');
   const [description, setDescription] = useState(product?.description ?? '');
   const [price, setPrice] = useState(pesos(product?.price));
@@ -303,6 +315,15 @@ export function ProductEditor({ companyId, product, categories }: { companyId: s
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
+          {ai ? (
+            <AiSuggest
+              companyId={companyId}
+              kind="product"
+              label="Escribir la descripción con IA"
+              context={name ? `Producto: ${name}` : undefined}
+              onPick={setDescription}
+            />
+          ) : null}
         </div>
       </div>
 

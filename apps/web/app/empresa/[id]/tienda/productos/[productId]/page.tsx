@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { deleteProductAction } from '@/app/empresa/store-actions';
 import { ProductEditor } from '@/components/store-forms';
 import { authedApi } from '@/lib/api';
+import { canUseAiText } from '@/lib/companies';
 import type { Product } from '@/lib/store';
 import { loadCompany } from '../../../company';
 import { storeGate } from '../../store-gate';
@@ -32,6 +33,7 @@ export default async function EditStoreProductPage({ params }: { params: Promise
         <ProductEditor
           companyId={id}
           product={res.data}
+          ai={canUseAiText(company)}
           categories={list.ok ? [...new Set(list.data.map((p) => p.category).filter((c): c is string => !!c))] : []}
         />
       </div>

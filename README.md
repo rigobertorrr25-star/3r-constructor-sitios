@@ -509,6 +509,18 @@ marque (PDF o Word; se saca el texto con `unpdf` y `mammoth`). Cada respuesta di
 - **Topes**: 200 preguntas por empresa y 40 por persona en 24 horas. Los administradores ven lo que no supo
   responder o no sirvió (sin el nombre de quien preguntó) para escribir lo que falta.
 
+### Módulo Textos con IA (`ai_content`)
+
+`/empresa/[id]/textos` (supervisores en adelante; tabla `ai_generations`). La empresa escoge qué necesita (publicación
+para Instagram o Facebook, descripción de producto, correo de promoción, texto para la página, título y descripción
+para Google, mensaje de WhatsApp), escribe de qué se trata y el tono, y la IA devuelve 3 opciones para copiar. Usa la
+misma llave que el asistente (`ANTHROPIC_API_KEY`, `AI_MODEL`). No inventa precios ni fechas: deja espacios como
+`[precio]`. Topes: 100 por empresa y 30 por persona en 24 horas.
+
+- También hay un botón «Escribir con IA» en el editor de campañas de Marketing (llena asunto y mensaje) y en la
+  descripción de los productos de la tienda, si la empresa tiene el módulo.
+- El diseño de la página sigue siendo de 3R: la IA solo propone textos, que la empresa pega en Página web.
+
 ### Suscripciones (cobro de la plataforma)
 
 - **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir

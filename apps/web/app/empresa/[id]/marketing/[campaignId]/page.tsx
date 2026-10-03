@@ -6,6 +6,7 @@ import { ArticleBody } from '@/components/article-body';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { CampaignEditor } from '@/components/campaign-editor';
 import { authedApi } from '@/lib/api';
+import { canUseAiText } from '@/lib/companies';
 import { STATUS_CLASS, STATUS_LABEL, people, type CampaignDetail, type MarketingOverview } from '@/lib/marketing';
 import { loadCompany } from '../../company';
 
@@ -54,6 +55,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
             campaign={c}
             canSend={c.canSend}
             remainingToday={c.remainingToday}
+            ai={canUseAiText(company)}
           />
         </div>
       </div>

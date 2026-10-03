@@ -76,7 +76,7 @@ export const assignableBy = (actor: CompanyRole): CompanyRole[] =>
 export const outranks = (actor: CompanyRole, target: CompanyRole) => actor === 'owner' || RANK[actor] > RANK[target];
 
 /** Ruta dentro de /empresa/[id] de cada módulo ya construido. */
-export const MODULE_ROUTE: Record<string, string> = { crm: 'crm', tickets: 'tickets', employees: 'personal', requests: 'solicitudes', announcements: 'comunicados', documents: 'documentos', doc_generator: 'generador', calendar: 'calendario', alerts: 'alertas', quotes: 'cotizaciones', surveys: 'encuestas', training: 'capacitaciones', knowledge: 'conocimiento', inventory: 'inventario', store: 'tienda', web: 'pagina-web', analytics: 'analitica', seo: 'seo', automations: 'automatizaciones', marketing: 'marketing', ai_assistant: 'asistente' };
+export const MODULE_ROUTE: Record<string, string> = { crm: 'crm', tickets: 'tickets', employees: 'personal', requests: 'solicitudes', announcements: 'comunicados', documents: 'documentos', doc_generator: 'generador', calendar: 'calendario', alerts: 'alertas', quotes: 'cotizaciones', surveys: 'encuestas', training: 'capacitaciones', knowledge: 'conocimiento', inventory: 'inventario', store: 'tienda', web: 'pagina-web', analytics: 'analitica', seo: 'seo', automations: 'automatizaciones', marketing: 'marketing', ai_assistant: 'asistente', ai_content: 'textos' };
 
 export const AREA_LABEL: Record<ModuleArea, string> = {
   web: 'Web',
@@ -111,3 +111,7 @@ export const MODULE_INFO: Record<string, { name: string; text: string }> = {
   ai_assistant: { name: 'Asistente con IA', text: 'Responde preguntas con los manuales y documentos de tu empresa.' },
   ai_content: { name: 'Textos con IA', text: 'Textos para tu página, productos, publicaciones y correos.' },
 };
+
+/** Si puede usar los botones de «Escribir con IA» (módulo Textos con IA, supervisor en adelante). */
+export const canUseAiText = (company: { me: { role: CompanyRole }; modules: { key: string; enabled: boolean }[] }) =>
+  atLeast(company.me.role, 'supervisor') && !!company.modules.find((m) => m.key === 'ai_content')?.enabled;

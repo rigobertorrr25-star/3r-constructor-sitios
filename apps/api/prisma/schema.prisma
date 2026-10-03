@@ -606,6 +606,7 @@ model Company {
   announcements      Announcement[]
   documents          CompanyDocument[]
   assistantQuestions AssistantQuestion[]
+  aiGenerations      AiGeneration[]
   calendarEvents     CalendarEvent[]
   notifications      Notification[]
   quotes             Quote[]
@@ -1695,4 +1696,26 @@ model AssistantQuestion {
   @@index([companyId, createdAt], map: "idx_assistant_questions_company")
   @@index([memberId, createdAt], map: "idx_assistant_questions_member")
   @@map("assistant_questions")
+}
+
+// ───────────────────────── MÓDULO: TEXTOS CON IA ─────────────────────────
+
+model AiGeneration {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String   @map("company_id") @db.Uuid
+  memberId     String?  @map("member_id") @db.Uuid
+  // social | product | email | page | seo | whatsapp (ver ai-content.constants.ts)
+  kind         String   @db.VarChar(20)
+  tone         String   @db.VarChar(20)
+  topic        String   @db.VarChar(1000)
+  // Las opciones que escribió la IA.
+  options      Json     @default("[]")
+  inputTokens  Int      @default(0) @map("input_tokens")
+  outputTokens Int      @default(0) @map("output_tokens")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt], map: "idx_ai_generations_company")
+  @@map("ai_generations")
 }
