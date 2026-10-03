@@ -18,6 +18,7 @@ import { AlertsModule } from './alerts/alerts.module.js';
 import { QuotesModule } from './quotes/quotes.module.js';
 import { BillingModule } from './billing/billing.module.js';
 import { SurveysModule } from './surveys/surveys.module.js';
+import { KnowledgeModule } from './knowledge/knowledge.module.js';
 import { TrainingModule } from './training/training.module.js';
 import { EmailModule } from './email/email.module.js';
 import { HealthController } from './health/health.controller.js';
@@ -69,6 +70,7 @@ import { UsersModule } from './users/users.module.js';
     BillingModule,
     SurveysModule,
     TrainingModule,
+    KnowledgeModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

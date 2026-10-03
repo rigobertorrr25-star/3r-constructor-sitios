@@ -379,6 +379,18 @@ Campanita en el encabezado de la empresa y `/empresa/[id]/alertas` (tabla `notif
 - Al editar, las lecciones que siguen conservan su id, así nadie pierde el avance. Archivado: solo lo ven quienes ya
   lo terminaron (por su certificado).
 
+### Módulo Centro de conocimiento (`knowledge`)
+
+`/empresa/[id]/conocimiento` (tablas `knowledge_articles` y `knowledge_votes`; `companies.help_token`).
+
+- Supervisores en adelante escriben artículos con formato sencillo («## » subtítulo, «- » lista, línea en blanco entre
+  párrafos), con categoría, fijados arriba y en borrador o publicados. Todo el equipo lee y busca.
+- Buscador sin importar mayúsculas ni tildes: se guarda una copia del texto en minúsculas y sin tildes
+  (`search_text`) al guardar, así funciona igual con cualquier codificación de la base.
+- "¿Te sirvió?": un voto por persona (se puede cambiar); quien escribe ve vistas y votos.
+- **Ayuda para clientes**: los artículos marcados «Clientes» salen en `/ayuda/[token]` (con buscador y temas, sin
+  cuenta). Los administradores crean, copian o apagan el enlace. Los clientes también votan (10 por minuto).
+
 ### Suscripciones (cobro de la plataforma)
 
 - **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir

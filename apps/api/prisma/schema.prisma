@@ -583,6 +583,8 @@ model Company {
   ticketSeq Int      @default(0) @map("ticket_seq")
   // Último número de cotización usado (COT-1, COT-2…).
   quoteSeq  Int      @default(0) @map("quote_seq")
+  // Enlace público del centro de ayuda (/ayuda/[token]). Vacío = apagado.
+  helpToken String?  @unique @map("help_token") @db.VarChar(64)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -604,6 +606,7 @@ model Company {
   invoices         CompanyInvoice[]
   surveys          Survey[]
   courses          Course[]
+  articles         KnowledgeArticle[]
 
   @@map("companies")
 }
@@ -627,6 +630,7 @@ model CompanyMember {
   profile           EmployeeProfile?
   leaveRequests     LeaveRequest[]
   courseProgress    CourseProgress[]
+  knowledgeVotes    KnowledgeVote[]
   announcementReads AnnouncementRead[]
   documents         CompanyDocument[]
   notifications     Notification[]
@@ -1241,4 +1245,49 @@ model CourseProgress {
   @@unique([courseId, memberId])
   @@index([memberId], map: "idx_course_progress_member")
   @@map("course_progress")
+}
+
+// ───────── Centro de conocimiento ─────────
+
+model KnowledgeArticle {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String   @map("company_id") @db.Uuid
+  title       String   @db.VarChar(150)
+  // Texto con formato sencillo: párrafos, "## " títulos y "- " listas.
+  body        String   @db.Text
+  category    String?  @db.VarChar(60)
+  // team (manuales y procesos internos) | public (preguntas para clientes)
+  audience    String   @default("team") @db.VarChar(10)
+  // draft | published
+  status      String   @default("draft") @db.VarChar(10)
+  pinned      Boolean  @default(false)
+  views       Int      @default(0)
+  // Título, texto y categoría en minúsculas y sin tildes, para buscar.
+  searchText  String   @default("") @map("search_text") @db.Text
+  authorId    String?  @map("author_id") @db.Uuid
+  updatedById String?  @map("updated_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  votes   KnowledgeVote[]
+
+  @@index([companyId, status], map: "idx_knowledge_company_status")
+  @@map("knowledge_articles")
+}
+
+// "¿Te sirvió?": uno por persona del equipo; los de clientes llegan sin persona.
+model KnowledgeVote {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  articleId String   @map("article_id") @db.Uuid
+  memberId  String?  @map("member_id") @db.Uuid
+  helpful   Boolean
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  article KnowledgeArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  member  CompanyMember?   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, memberId])
+  @@index([articleId], map: "idx_knowledge_votes_article")
+  @@map("knowledge_votes")
 }
