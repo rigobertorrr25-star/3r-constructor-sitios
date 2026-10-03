@@ -52,7 +52,7 @@ export class LocalDocumentStorage implements DocumentStorage {
     return full;
   }
 
-  async save(key: string, buffer: Buffer) {
+  async save(key: string, buffer: Buffer, _contentType?: string) {
     await mkdir(this.root, { recursive: true });
     await writeFile(this.path(key), buffer);
   }

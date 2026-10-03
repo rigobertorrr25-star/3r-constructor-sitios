@@ -115,6 +115,15 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
             {r.status === 'cancelled' ? <p className="mt-4 text-[13.5px] text-muted-foreground">Quien la pidió la canceló.</p> : null}
           </section>
 
+          {r.type === 'certificate' && company.modules.some((m) => m.key === 'doc_generator' && m.enabled) && r.can.decide ? (
+            <Link
+              href={`/empresa/${id}/generador?member=${r.member.id}&template=employment_certificate`}
+              className="inline-flex w-full justify-center rounded-full border border-primary/50 px-5 py-3 text-[14px] font-medium text-foreground transition hover:bg-primary/10"
+            >
+              Generar el certificado laboral
+            </Link>
+          ) : null}
+
           {r.can.decide ? (
             <section className={card} aria-labelledby="h-decidir">
               <h3 id="h-decidir" className="mb-4 font-display text-[18px] font-semibold text-foreground">

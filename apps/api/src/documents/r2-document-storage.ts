@@ -43,6 +43,10 @@ export class R2DocumentStorage implements DocumentStorage {
     }
   }
 
+  async save(key: string, buffer: Buffer, contentType: string) {
+    await this.client.send(new PutObjectCommand({ Bucket: this.bucket, Key: PREFIX + key, Body: buffer, ContentType: contentType }));
+  }
+
   async remove(key: string) {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: PREFIX + key }));
   }

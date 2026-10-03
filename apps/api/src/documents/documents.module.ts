@@ -28,5 +28,7 @@ import { R2DocumentStorage } from './r2-document-storage.js';
       },
     },
   ],
+  // El generador de documentos guarda sus PDF en la carpeta del empleado.
+  exports: [DOCUMENT_STORAGE],
 })
 export class DocumentsModule {}

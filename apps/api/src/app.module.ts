@@ -12,6 +12,7 @@ import { EmployeesModule } from './employees/employees.module.js';
 import { RequestsModule } from './requests/requests.module.js';
 import { AnnouncementsModule } from './announcements/announcements.module.js';
 import { DocumentsModule } from './documents/documents.module.js';
+import { DocGeneratorModule } from './doc-generator/doc-generator.module.js';
 import { EmailModule } from './email/email.module.js';
 import { HealthController } from './health/health.controller.js';
 import { MediaModule } from './media/media.module.js';
@@ -55,6 +56,7 @@ import { UsersModule } from './users/users.module.js';
     RequestsModule,
     AnnouncementsModule,
     DocumentsModule,
+    DocGeneratorModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

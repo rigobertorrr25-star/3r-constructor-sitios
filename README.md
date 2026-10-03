@@ -294,6 +294,17 @@ cada empleado (contrato, cédula, nómina, incapacidades, hoja de vida). Tabla `
   carpeta y borra solo lo que él subió. Las descargas de documentos de otra persona quedan en la auditoría.
 - PDF, imágenes, Word y Excel; máximo 20 MB. Fecha de vencimiento opcional: RR. HH. ve "Vencen pronto" (30 días).
 
+### Módulo Generador de documentos (`doc_generator`)
+
+`/empresa/[id]/generador` (RR. HH. en adelante): certificado laboral (con salario en letras y números si se quiere),
+constancia de vacaciones (de una solicitud aprobada) y carta libre con campos `{nombre}`, `{documento}`, `{cargo}`,
+`{area}`, `{fecha_ingreso}`, `{salario}`, `{empresa}`, `{nit}`, `{ciudad}`, `{fecha}`.
+
+- PDF tamaño carta hecho en la API con `pdf-lib` (membrete con nombre, NIT, ciudad y teléfono de la empresa, firma).
+- Los datos salen de `company_members`, `employee_profiles` y `companies`; si falta algo, dice qué y dónde llenarlo.
+- Opción de guardar copia en la carpeta del empleado (módulo Documentos). Cada documento generado queda en la
+  auditoría (`COMPANY_DOCUMENT_GENERATED`). Una solicitud de certificado trae el botón "Generar el certificado laboral".
+
 ## Notas técnicas
 
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.
