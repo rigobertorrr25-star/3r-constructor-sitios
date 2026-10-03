@@ -77,6 +77,7 @@ que ese sistema no defina, no uses estos patrones de fábrica:
 - Etiquetas de sección numeradas tipo «01 / 02 / 03».
 - Etiquetas o textos pequeños en letra monoespaciada.
 - Botones en forma de píldora.
+- Reels o videos armados como diapositivas: foto de producto en una tarjeta centrada sobre fondo de degradado, con el título debajo y la misma plantilla en cada escena (se ve genérico).
 
 (Esta lista crece por vueltas: cuando te diga que algo no me gusta, agrégalo aquí.)
 
