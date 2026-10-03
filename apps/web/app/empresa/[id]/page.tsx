@@ -12,6 +12,7 @@ import { monthName, todayBogota, type EmployeesSummary } from '@/lib/employees';
 import { formatMoney } from '@/lib/orders';
 import { TYPE_LABEL as LEAVE_LABEL, type RequestsSummary } from '@/lib/requests';
 import type { SurveysSummary } from '@/lib/surveys';
+import type { InventorySummary } from '@/lib/inventory';
 import type { TrainingSummary } from '@/lib/training';
 import type { TicketSummary } from '@/lib/tickets';
 import { loadCompany } from './company';
@@ -37,7 +38,7 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
   const c = `/companies/${id}`;
 
   // Cada módulo activo aporta sus cifras y pendientes: el tablero crece con cada módulo.
-  const [crm, tickets, people, requests, news, docs, upcoming, surveys, training] = await Promise.all([
+  const [crm, tickets, people, requests, news, docs, upcoming, surveys, training, stock] = await Promise.all([
     get<CrmSummary>(enabled('crm'), `${c}/crm/summary`),
     get<TicketSummary>(enabled('tickets'), `${c}/tickets/summary`),
     get<EmployeesSummary>(enabled('employees'), `${c}/employees/summary`),
@@ -47,6 +48,7 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
     get<CalendarItem[]>(enabled('calendar'), `${c}/calendar/upcoming`),
     get<SurveysSummary>(enabled('surveys'), `${c}/surveys/summary`),
     get<TrainingSummary>(enabled('training'), `${c}/training/summary`),
+    get<InventorySummary>(enabled('inventory'), `${c}/inventory/summary`),
   ]);
 
   const todos: Todo[] = [];
@@ -67,6 +69,12 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
       href: training.pending === 1 ? `${base}/capacitaciones/${training.courses[0].id}` : `${base}/capacitaciones`,
       text: `${plural(training.pending, 'curso obligatorio', 'cursos obligatorios')} por terminar`,
       tone: training.courses.some((t) => t.overdue) ? 'warn' : undefined,
+    });
+  if (stock?.lowStock)
+    todos.push({
+      href: `${base}/inventario?filter=low`,
+      text: `${plural(stock.lowStock, 'producto', 'productos')} con poco inventario`,
+      tone: 'warn',
     });
   if (news?.unread) todos.push({ href: `${base}/comunicados`, text: `${plural(news.unread, 'comunicado', 'comunicados')} sin leer` });
   if (docs?.expiring.length)

@@ -15,4 +15,6 @@ export const KIND_LABEL: Record<string, string> = {
   invoice: 'Factura',
   survey: 'Encuesta',
   training: 'Capacitación',
+  inventory: 'Inventario',
+  asset: 'Equipo',
 };

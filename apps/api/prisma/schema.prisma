@@ -607,6 +607,8 @@ model Company {
   surveys          Survey[]
   courses          Course[]
   articles         KnowledgeArticle[]
+  inventoryItems   InventoryItem[]
+  companyAssets    CompanyAsset[]
 
   @@map("companies")
 }
@@ -631,6 +633,7 @@ model CompanyMember {
   leaveRequests     LeaveRequest[]
   courseProgress    CourseProgress[]
   knowledgeVotes    KnowledgeVote[]
+  assignedAssets    CompanyAsset[]
   announcementReads AnnouncementRead[]
   documents         CompanyDocument[]
   notifications     Notification[]
@@ -1290,4 +1293,97 @@ model KnowledgeVote {
   @@unique([articleId, memberId])
   @@index([articleId], map: "idx_knowledge_votes_article")
   @@map("knowledge_votes")
+}
+
+// ───────── Inventario y activos ─────────
+
+// Producto o insumo con existencias (café en grano, vasos, servilletas…).
+model InventoryItem {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId  String   @map("company_id") @db.Uuid
+  name       String   @db.VarChar(150)
+  sku        String?  @db.VarChar(60)
+  category   String?  @db.VarChar(60)
+  // unidad, kg, g, litro, ml, caja, paquete…
+  unit       String   @default("unidad") @db.VarChar(20)
+  stock      Decimal  @default(0) @db.Decimal(14, 3)
+  // Por debajo de esto, avisa.
+  minStock   Decimal? @map("min_stock") @db.Decimal(14, 3)
+  // Costo de una unidad, en centavos.
+  costCents  BigInt?  @map("cost_cents")
+  location   String?  @db.VarChar(100)
+  notes      String?  @db.VarChar(2000)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company   Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  movements InventoryMovement[]
+
+  @@index([companyId, active], map: "idx_inventory_items_company")
+  @@map("inventory_items")
+}
+
+model InventoryMovement {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  itemId     String   @map("item_id") @db.Uuid
+  // in (entrada) | out (salida) | count (conteo: deja el inventario en la cantidad contada)
+  type       String   @db.VarChar(10)
+  quantity   Decimal  @db.Decimal(14, 3)
+  // Cuánto quedó después del movimiento.
+  stockAfter Decimal  @map("stock_after") @db.Decimal(14, 3)
+  note       String?  @db.VarChar(300)
+  userId     String?  @map("user_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  item InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId, createdAt], map: "idx_inventory_movements_item")
+  @@map("inventory_movements")
+}
+
+// Equipo o bien de la empresa que se le entrega a alguien (computador, datáfono, uniforme, llaves…).
+model CompanyAsset {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String    @map("company_id") @db.Uuid
+  name             String    @db.VarChar(150)
+  // Código interno (placa o etiqueta).
+  code             String?   @db.VarChar(60)
+  category         String?   @db.VarChar(60)
+  serial           String?   @db.VarChar(100)
+  // available | assigned | repair | retired
+  status           String    @default("available") @db.VarChar(12)
+  assignedMemberId String?   @map("assigned_member_id") @db.Uuid
+  assignedAt       DateTime? @map("assigned_at") @db.Timestamptz(6)
+  valueCents       BigInt?   @map("value_cents")
+  purchasedAt      DateTime? @map("purchased_at") @db.Date
+  notes            String?   @db.VarChar(2000)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company        Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  assignedMember CompanyMember? @relation(fields: [assignedMemberId], references: [id], onDelete: SetNull)
+  events         CompanyAssetEvent[]
+
+  @@index([companyId, status], map: "idx_company_assets_status")
+  @@index([assignedMemberId], map: "idx_company_assets_member")
+  @@map("company_assets")
+}
+
+model CompanyAssetEvent {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetId   String   @map("asset_id") @db.Uuid
+  // created | assigned | returned | repair | retired | available
+  kind      String   @db.VarChar(12)
+  // A quién se le entregó o quién lo devolvió (nombre guardado por si la persona sale).
+  memberId  String?  @map("member_id") @db.Uuid
+  person    String?  @db.VarChar(150)
+  note      String?  @db.VarChar(300)
+  userId    String?  @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  asset CompanyAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, createdAt], map: "idx_company_asset_events")
+  @@map("company_asset_events")
 }

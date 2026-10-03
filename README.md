@@ -391,6 +391,20 @@ Campanita en el encabezado de la empresa y `/empresa/[id]/alertas` (tabla `notif
 - **Ayuda para clientes**: los artículos marcados «Clientes» salen en `/ayuda/[token]` (con buscador y temas, sin
   cuenta). Los administradores crean, copian o apagan el enlace. Los clientes también votan (10 por minuto).
 
+### Módulo Inventario y activos (`inventory`)
+
+`/empresa/[id]/inventario` (tablas `inventory_items`, `inventory_movements`, `company_assets` y `company_asset_events`;
+los nombres `assets` ya eran del constructor de páginas).
+
+- **Productos e insumos** (supervisor en adelante): unidad (kg, litro, unidad…), mínimo, costo y lugar. Entradas,
+  salidas y conteos con historial; la salida no deja el inventario en negativo (se bloquea la fila mientras se
+  registra). Cantidades con hasta 3 decimales, guardadas como `DECIMAL(14,3)` y calculadas en milésimas.
+- Cuando un producto baja del mínimo, alerta a supervisores en adelante (una vez al día por producto) y sale en el
+  tablero. Valor en bodega = existencias × costo.
+- **Equipos entregados**: código único por empresa, serial, valor y fecha de compra. Entregar (alerta a la persona),
+  pasar a otra, devolver, a reparación o de baja, con historial que guarda el nombre de quien lo tuvo. Cada persona
+  ve los equipos a su cargo; `GET …/inventory/members/:id/assets` sirve para el paz y salvo.
+
 ### Suscripciones (cobro de la plataforma)
 
 - **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir
