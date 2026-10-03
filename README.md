@@ -521,6 +521,29 @@ misma llave que el asistente (`ANTHROPIC_API_KEY`, `AI_MODEL`). No inventa preci
   descripción de los productos de la tienda, si la empresa tiene el módulo.
 - El diseño de la página sigue siendo de 3R: la IA solo propone textos, que la empresa pega en Página web.
 
+### Módulo WhatsApp empresarial (`whatsapp`)
+
+`/empresa/[id]/whatsapp` (supervisores en adelante; tablas `whatsapp_accounts`, `whatsapp_conversations`,
+`whatsapp_messages` y `whatsapp_templates`). Usa la API oficial de Meta (WhatsApp Cloud API).
+
+- **Conectar** (equipo de 3R, en `/admin/empresas/[id]` → WhatsApp de la empresa): identificador del número, de la
+  cuenta de WhatsApp Business, número visible y token de acceso permanente de Meta. El token se guarda cifrado
+  (AES-256-GCM con `DATA_ENCRYPTION_KEY`, o con `JWT_ACCESS_SECRET` si no hay) y nunca se devuelve. **Poner
+  `DATA_ENCRYPTION_KEY` antes de conectar el primer número y no cambiarla después** (si cambia, hay que volver a pegar
+  los tokens).
+- **Avisos de Meta**: en la app de Meta, dirección `https://<API>/api/v1/webhooks/whatsapp`, clave de verificación
+  `WHATSAPP_VERIFY_TOKEN` y suscripción a «messages». Cada aviso se valida con la firma `X-Hub-Signature-256` y
+  `WHATSAPP_APP_SECRET` (el secreto de la app de Meta); en producción, sin ese secreto no se acepta ningún aviso. La
+  API arranca con `rawBody: true` para poder comprobar la firma.
+- **Bandeja**: abiertas, mías y cerradas; asignar a alguien; cerrar y reabrir (se reabre sola si el cliente escribe).
+  Cada mensaje nuevo avisa en la campanita (a quien la atiende o a supervisores en adelante, uno por hora por
+  conversación). El cliente queda en el CRM (se busca por los últimos 10 dígitos; si no está y la empresa tiene CRM,
+  se crea con origen WhatsApp). Se ven los estados enviado, entregado y leído.
+- **24 horas**: WhatsApp solo deja mandar texto libre hasta 24 horas después del último mensaje del cliente; después,
+  y para escribirle primero, solo plantillas aprobadas. Las plantillas se crean y aprueban en Meta y un administrador
+  de la empresa las trae con «Traer plantillas de Meta».
+- En desarrollo y pruebas no se habla con Meta (cliente falso); en producción, siempre Meta.
+
 ### Suscripciones (cobro de la plataforma)
 
 - **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir

@@ -594,36 +594,39 @@ model Company {
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  members            CompanyMember[]
-  modules            CompanyModule[]
-  invites            CompanyInvite[]
-  crmContacts        CrmContact[]
-  crmActivities      CrmActivity[]
-  tickets            Ticket[]
-  ticketEvents       TicketEvent[]
-  employeeProfiles   EmployeeProfile[]
-  leaveRequests      LeaveRequest[]
-  announcements      Announcement[]
-  documents          CompanyDocument[]
-  assistantQuestions AssistantQuestion[]
-  aiGenerations      AiGeneration[]
-  calendarEvents     CalendarEvent[]
-  notifications      Notification[]
-  quotes             Quote[]
-  subscription       CompanySubscription?
-  invoices           CompanyInvoice[]
-  surveys            Survey[]
-  courses            Course[]
-  articles           KnowledgeArticle[]
-  inventoryItems     InventoryItem[]
-  companyAssets      CompanyAsset[]
-  store              StoreSettings?
-  storeProducts      StoreProduct[]
-  storeCoupons       StoreCoupon[]
-  storeOrders        StoreOrder[]
-  automations        Automation[]
-  campaigns          Campaign[]
-  site               Site?                @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  members               CompanyMember[]
+  modules               CompanyModule[]
+  invites               CompanyInvite[]
+  crmContacts           CrmContact[]
+  crmActivities         CrmActivity[]
+  tickets               Ticket[]
+  ticketEvents          TicketEvent[]
+  employeeProfiles      EmployeeProfile[]
+  leaveRequests         LeaveRequest[]
+  announcements         Announcement[]
+  documents             CompanyDocument[]
+  assistantQuestions    AssistantQuestion[]
+  aiGenerations         AiGeneration[]
+  calendarEvents        CalendarEvent[]
+  notifications         Notification[]
+  quotes                Quote[]
+  subscription          CompanySubscription?
+  invoices              CompanyInvoice[]
+  surveys               Survey[]
+  courses               Course[]
+  articles              KnowledgeArticle[]
+  inventoryItems        InventoryItem[]
+  companyAssets         CompanyAsset[]
+  store                 StoreSettings?
+  storeProducts         StoreProduct[]
+  storeCoupons          StoreCoupon[]
+  storeOrders           StoreOrder[]
+  automations           Automation[]
+  campaigns             Campaign[]
+  site                  Site?                  @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  whatsappAccount       WhatsappAccount?
+  whatsappConversations WhatsappConversation[]
+  whatsappTemplates     WhatsappTemplate[]
 
   @@map("companies")
 }
@@ -1718,4 +1721,92 @@ model AiGeneration {
 
   @@index([companyId, createdAt], map: "idx_ai_generations_company")
   @@map("ai_generations")
+}
+
+// ───────────────────────── MÓDULO: WHATSAPP EMPRESARIAL ─────────────────────────
+
+// El número de WhatsApp Business (API de Meta) de la empresa. Lo conecta el equipo de 3R.
+model WhatsappAccount {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId     String   @unique @map("company_id") @db.Uuid
+  // Identificador del número en Meta (llega en cada aviso).
+  phoneNumberId String   @unique @map("phone_number_id") @db.VarChar(40)
+  wabaId        String   @map("waba_id") @db.VarChar(40)
+  displayPhone  String   @map("display_phone") @db.VarChar(30)
+  // Token de acceso de Meta, cifrado (AES-256-GCM). Nunca se devuelve.
+  tokenEnc      String   @map("token_enc") @db.Text
+  // active | paused
+  status        String   @default("active") @db.VarChar(10)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("whatsapp_accounts")
+}
+
+model WhatsappConversation {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String    @map("company_id") @db.Uuid
+  // Número del cliente, solo dígitos con indicativo (573001234567).
+  waId             String    @map("wa_id") @db.VarChar(20)
+  name             String    @db.VarChar(150)
+  contactId        String?   @map("contact_id") @db.Uuid
+  lastMessageAt    DateTime  @default(now()) @map("last_message_at") @db.Timestamptz(6)
+  // WhatsApp solo deja escribir texto libre hasta 24 horas después del último mensaje del cliente.
+  lastInboundAt    DateTime? @map("last_inbound_at") @db.Timestamptz(6)
+  unread           Int       @default(0)
+  assignedMemberId String?   @map("assigned_member_id") @db.Uuid
+  // open | closed
+  status           String    @default("open") @db.VarChar(10)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company  Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  messages WhatsappMessage[]
+
+  @@unique([companyId, waId])
+  @@index([companyId, lastMessageAt], map: "idx_whatsapp_conversations_company")
+  @@map("whatsapp_conversations")
+}
+
+model WhatsappMessage {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  // in (del cliente) | out (de la empresa)
+  direction      String   @db.VarChar(3)
+  // Identificador en Meta (para no repetir avisos y actualizar el estado).
+  waMessageId    String?  @unique @map("wa_message_id") @db.VarChar(120)
+  // text | template | image | audio | document | location | other
+  type           String   @db.VarChar(12)
+  body           String   @db.Text
+  // received | sent | delivered | read | failed
+  status         String   @db.VarChar(10)
+  error          String?  @db.VarChar(300)
+  sentById       String?  @map("sent_by_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  conversation WhatsappConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt], map: "idx_whatsapp_messages_conversation")
+  @@map("whatsapp_messages")
+}
+
+// Plantillas aprobadas por Meta (las únicas que se pueden mandar pasadas 24 horas). Se traen de Meta.
+model WhatsappTemplate {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  name      String   @db.VarChar(120)
+  language  String   @db.VarChar(10)
+  category  String   @db.VarChar(20)
+  // APPROVED | PENDING | REJECTED…
+  status    String   @db.VarChar(20)
+  body      String   @db.Text
+  // Cuántos espacios {{1}}, {{2}}… tiene el cuerpo.
+  params    Int      @default(0)
+  syncedAt  DateTime @default(now()) @map("synced_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, name, language])
+  @@map("whatsapp_templates")
 }

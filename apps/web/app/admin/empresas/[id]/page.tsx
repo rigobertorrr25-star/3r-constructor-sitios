@@ -3,14 +3,17 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { adminSetCompanyStatusAction } from '@/app/empresa/actions';
 import { linkCompanySiteAction } from '@/app/empresa/web-actions';
+import { disconnectWhatsappAction } from '@/app/empresa/whatsapp-actions';
+import { WhatsappConnectForm } from '@/components/whatsapp-forms';
 import { markInvoicePaidAction, voidInvoiceAction } from '@/app/admin/billing-actions';
 import { GenerateInvoiceButton, SubscriptionForm } from '@/components/billing-forms';
 import { AdminModulesForm } from '@/components/company-forms';
 import { InvoiceList } from '@/components/invoice-list';
 import { SUBSCRIPTION_LABEL, pesos, type BillingOverview } from '@/lib/billing';
-import { authedApi } from '@/lib/api';
+import { API_URL, authedApi } from '@/lib/api';
 import type { AdminCompany } from '@/lib/companies';
 import type { SiteOptions } from '@/lib/company-web';
+import type { WaAdmin } from '@/lib/whatsapp';
 
 export const metadata: Metadata = { title: 'Empresa — Administración 3R' };
 
@@ -19,10 +22,11 @@ const card = 'rounded-[28px] border border-white/[0.08] bg-card p-6 shadow-[var(
 export default async function AdminCompanyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const [res, billingRes, siteRes] = await Promise.all([
+  const [res, billingRes, siteRes, waRes] = await Promise.all([
     authedApi<AdminCompany>(`/admin/companies/${id}`),
     authedApi<BillingOverview>(`/admin/companies/${id}/billing`),
     authedApi<SiteOptions>(`/admin/companies/${id}/site`),
+    authedApi<WaAdmin>(`/admin/companies/${id}/whatsapp`),
   ]);
   if (!res.ok) notFound();
   const billing = billingRes.data;
@@ -89,6 +93,25 @@ export default async function AdminCompanyPage({ params }: { params: Promise<{ i
             Guardar
           </button>
         </form>
+      </section>
+      <section className={`${card} mt-6`} aria-labelledby="h-wa">
+        <h2 id="h-wa" className="font-display text-[20px] font-semibold text-foreground">
+          WhatsApp de la empresa
+        </h2>
+        <p className="mt-1 mb-4 max-w-[75ch] text-[14px] text-muted-foreground">
+          Con el módulo WhatsApp, los mensajes de este número llegan a la bandeja de la empresa. Los datos salen de Meta (WhatsApp Manager → API). En
+          la app de Meta, la dirección de avisos es <span className="break-all text-foreground">{API_URL.replace(/\/$/, '')}/webhooks/whatsapp</span>{' '}
+          con la clave de verificación que está en Render (WHATSAPP_VERIFY_TOKEN), suscrita a «messages».
+        </p>
+        {waRes.ok ? <WhatsappConnectForm companyId={c.id} data={waRes.data} /> : null}
+        {waRes.ok && waRes.data.account ? (
+          <form action={disconnectWhatsappAction} className="mt-4">
+            <input type="hidden" name="companyId" value={c.id} />
+            <button type="submit" className="text-[13px] text-muted-foreground transition hover:text-[#ffb4b5]">
+              Desconectar el número
+            </button>
+          </form>
+        ) : null}
       </section>
       <section className={`${card} mt-6`} aria-labelledby="h-plan">
         <div className="flex flex-wrap items-start justify-between gap-3">

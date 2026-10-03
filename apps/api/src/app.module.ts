@@ -25,6 +25,7 @@ import { AnalyticsModule } from './analytics/analytics.module.js';
 import { SeoModule } from './seo/seo.module.js';
 import { AutomationsModule } from './automations/automations.module.js';
 import { MarketingModule } from './marketing/marketing.module.js';
+import { WhatsappModule } from './whatsapp/whatsapp.module.js';
 import { AiContentModule } from './ai-content/ai-content.module.js';
 import { AiModule } from './ai/ai.module.js';
 import { AssistantModule } from './assistant/assistant.module.js';
@@ -91,6 +92,7 @@ import { UsersModule } from './users/users.module.js';
     AiModule,
     AssistantModule,
     AiContentModule,
+    WhatsappModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

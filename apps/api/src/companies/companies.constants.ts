@@ -52,7 +52,7 @@ export const MODULES: ModuleInfo[] = [
   { key: 'crm', area: 'clientes', ready: true },
   { key: 'quotes', area: 'clientes', ready: true },
   { key: 'marketing', area: 'clientes', ready: true },
-  { key: 'whatsapp', area: 'clientes', ready: false },
+  { key: 'whatsapp', area: 'clientes', ready: true },
   { key: 'alerts', area: 'automatizacion', ready: true },
   { key: 'automations', area: 'automatizacion', ready: true },
   { key: 'ai_assistant', area: 'ia', ready: true },
