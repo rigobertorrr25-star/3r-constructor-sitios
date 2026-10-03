@@ -464,6 +464,20 @@ ideales 25–65 y 70–160), título principal, fotos sin descripción, botones 
 tiene el inicio. Nota de 0 a 100 (bien = 1, mejorar = ½, arreglar = 0). Cada punto dice dónde se arregla: título y
 descripción en la misma pantalla (con vista previa como en Google), textos y fotos en Página web, el resto lo hace 3R.
 
+### Módulo Automatizaciones (`automations`)
+
+`/empresa/[id]/automatizaciones` (administradores; tablas `automations` y `automation_runs`). "Si pasa X, hacer Y".
+
+- **Disparadores**: pedido en la tienda, mensaje del formulario de la página (si la página está vinculada a la
+  empresa), cotización aceptada o rechazada, ticket creado y producto bajo el mínimo. Pedidos y cotizaciones admiten
+  la condición "solo si el valor es de al menos…".
+- **Acciones** (hasta 5): avisar en la campanita (supervisores, administradores, todos o una persona), mandar un
+  correo (tope de 200 por empresa al día), guardar a la persona en el CRM (si ya existe por correo o celular, le deja
+  una nota) y crear un ticket (con prioridad y responsable). Los textos aceptan `{campos}` del evento.
+- `AutomationsModule` es global: cada módulo llama `automations.emit(companyId, disparador, evento)`. Nunca lanza
+  error hacia quien lo llamó; cada corrida queda en el historial con el resultado de cada acción. Hay recetas para
+  empezar (pedido grande, formulario al CRM, cotización aceptada, reponer inventario).
+
 ### Suscripciones (cobro de la plataforma)
 
 - **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir

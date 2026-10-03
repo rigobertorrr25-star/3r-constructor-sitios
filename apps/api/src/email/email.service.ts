@@ -196,4 +196,10 @@ export class EmailService {
   sendSiteContactAutoReply(to: string, data: { siteName: string; name: string }, replyTo?: string) {
     return this.safeSend(to, templates.siteContactAutoReply(data), replyTo);
   }
+
+  /** Correo de una automatización de una empresa. Devuelve si se pudo mandar. */
+  async sendAutomation(to: string, data: { companyName: string; subject: string; body: string; path?: string | null }) {
+    const url = data.path ? `${this.webOrigin}${data.path}` : null;
+    return this.safeSend(to, templates.automationEmail({ ...data, url }));
+  }
 }

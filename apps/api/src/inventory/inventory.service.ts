@@ -6,6 +6,7 @@ import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { AssetStatusDto, AssignDto, MovementDto, SaveAssetDto, SaveItemDto } from './dto/inventory.dto.js';
 import { INVENTORY_MODULE } from './inventory.constants.js';
+import { AutomationsService } from '../automations/automations.service.js';
 
 type Min = 'employee' | 'supervisor';
 type Dec = { toString(): string } | null;
@@ -61,6 +62,7 @@ export class InventoryService {
     private readonly prisma: PrismaService,
     private readonly companies: CompaniesService,
     private readonly alerts: AlertsService,
+    private readonly automations: AutomationsService,
   ) {}
 
   /** Inventario y activos los maneja supervisor en adelante; cada persona ve los equipos que tiene a cargo. */
@@ -229,6 +231,11 @@ export class InventoryService {
           dedupeKey: `lowstock:${itemId}:${todayBogota()}`,
         },
       );
+      void this.automations.emit(companyId, 'low_stock', {
+        vars: { producto: result.name, cantidad: qtyText(result.after), minimo: qtyText(result.min) },
+        summary: `Queda poco de ${result.name}: ${qtyText(result.after)} (mínimo ${qtyText(result.min)})`,
+        href: `inventario/${itemId}`,
+      });
     }
     return { stock: result.after / 1000, low: result.min != null && result.after < result.min };
   }

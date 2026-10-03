@@ -18,4 +18,5 @@ export const KIND_LABEL: Record<string, string> = {
   inventory: 'Inventario',
   asset: 'Equipo',
   store: 'Tienda',
+  automation: 'Automatización',
 };

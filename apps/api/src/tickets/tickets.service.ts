@@ -7,6 +7,7 @@ import { EmailService } from '../email/email.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { CreateCommentDto, CreateTicketDto, UpdateTicketDto } from './dto/tickets.dto.js';
 import { ACTIVE_STATUSES, PRIORITY_LABEL, STATUS_LABEL, TICKETS_MODULE, TICKET_CATEGORIES } from './tickets.constants.js';
+import { AutomationsService } from '../automations/automations.service.js';
 
 const ticketSelect = {
   id: true,
@@ -45,6 +46,7 @@ export class TicketsService {
     private readonly companies: CompaniesService,
     private readonly email: EmailService,
     private readonly alerts: AlertsService,
+    private readonly automations: AutomationsService,
   ) {}
 
   private async access(userId: string, companyId: string, min: 'employee' | 'admin' = 'employee') {
@@ -149,6 +151,13 @@ export class TicketsService {
         href: `tickets/${created.id}`,
       });
     }
+    const who = await this.prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true, email: true } });
+    const quien = who ? [who.firstName, who.lastName].filter(Boolean).join(' ') || who.email : '';
+    void this.automations.emit(companyId, 'ticket_created', {
+      vars: { numero: created.number, titulo: created.title, prioridad: ({ low: 'baja', medium: 'media', high: 'alta', urgent: 'urgente' } as Record<string, string>)[created.priority] ?? created.priority, quien },
+      summary: `Ticket #${created.number}: ${created.title}`,
+      href: `tickets/${created.id}`,
+    });
     return created;
   }
 

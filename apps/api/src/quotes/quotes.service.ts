@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import type { RespondQuoteDto, SaveQuoteDto } from './dto/quotes.dto.js';
 import { renderQuote } from './quote-pdf.js';
 import { QUOTES_MODULE, QUOTE_STATUSES, STATUS_LABEL, quoteCode } from './quotes.constants.js';
+import { AutomationsService } from '../automations/automations.service.js';
 
 type Member = Awaited<ReturnType<CompaniesService['requireMember']>>;
 
@@ -58,6 +59,7 @@ export class QuotesService {
     private readonly companies: CompaniesService,
     private readonly email: EmailService,
     private readonly alerts: AlertsService,
+    private readonly automations: AutomationsService,
   ) {}
 
   /** Cualquier miembro activo hace cotizaciones (son de ventas); borrar exige administrador. */
@@ -370,6 +372,15 @@ export class QuotesService {
           quoteUrl: this.email.quoteUrl(q.companyId, q.id),
         });
       }
+    }
+    if (status === 'accepted' || status === 'rejected') {
+      void this.automations.emit(q.companyId, status === 'accepted' ? 'quote_accepted' : 'quote_rejected', {
+        vars: { numero: code, cliente: q.clientName, correo: q.clientEmail, celular: q.clientPhone, total: `$${new Intl.NumberFormat('es-CO').format(Number(q.total))}`, titulo: q.title, mensaje: dto.message ?? '' },
+        amountPesos: Number(q.total),
+        summary: `${q.clientName} ${verdict} la cotización ${code} (${q.title})`,
+        href: `cotizaciones/${q.id}`,
+        contact: { name: q.clientName, email: q.clientEmail, phone: q.clientPhone },
+      });
     }
     return { status, label: STATUS_LABEL[status] };
   }

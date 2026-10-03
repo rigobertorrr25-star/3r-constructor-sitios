@@ -9,6 +9,7 @@ import { plusOneYear } from './domain-renewals.service.js';
 import type { ContactFormDto } from './dto/contact-form.dto.js';
 import { renderNotFound, renderPage, renderRobots, renderSitemap } from './render/render.js';
 import { PUBLISH_STORAGE, type PublishStorage } from './storage.js';
+import { AutomationsService } from '../automations/automations.service.js';
 
 // Direcciones que no se pueden dar a un cliente: se confundirían con servicios propios.
 const RESERVED_LABELS = new Set(['www', 'app', 'api', 'admin', 'mail', 'ftp', 'smtp', 'cdn', 'static', 'assets', 'dashboard', 'login', 'blog', 'ayuda', 'soporte', 'support', 'status']);
@@ -43,6 +44,7 @@ export class PublishingService {
     private readonly email: EmailService,
     @Inject(PUBLISH_STORAGE) private readonly storage: PublishStorage,
     config: ConfigService,
+    private readonly automations: AutomationsService,
   ) {
     this.rootHost = (config.get<string>('SITES_ROOT_HOST') ?? 'localhost').toLowerCase();
     this.urlTemplate = config.get<string>('SITES_URL_TEMPLATE') ?? 'http://{label}.localhost:3000';
@@ -368,6 +370,15 @@ export class PublishingService {
     }
     // Aviso automático al visitante: no es una IA respondiendo, solo confirma que el mensaje llegó.
     await this.email.sendSiteContactAutoReply(dto.email, { siteName: domain.site.name, name: dto.name }, to ?? undefined);
+    // Si la página es de una empresa de la plataforma, puede disparar sus automatizaciones.
+    const company = await this.prisma.company.findUnique({ where: { siteId: domain.site.id }, select: { id: true } });
+    if (company) {
+      void this.automations.emit(company.id, 'site_contact', {
+        vars: { cliente: dto.name, correo: dto.email, celular: dto.phone ?? '', mensaje: dto.message },
+        summary: `${dto.name} escribió por la página: «${dto.message.slice(0, 160)}»`,
+        contact: { name: dto.name, email: dto.email, phone: dto.phone },
+      });
+    }
     return { ok: true };
   }
 }

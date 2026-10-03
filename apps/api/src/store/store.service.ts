@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import type { PlaceOrderDto, QuoteCartDto, SaveCouponDto, SaveProductDto, StoreSettingsDto, UpdateOrderDto } from './dto/store.dto.js';
 import { priceLines, totals, type PricedLine, type PricedProduct } from './pricing.js';
 import { SLUG, STORE_MODULE } from './store.constants.js';
+import { AutomationsService } from '../automations/automations.service.js';
 
 type Min = 'employee' | 'supervisor' | 'admin';
 
@@ -84,6 +85,7 @@ export class StoreService {
     private readonly companies: CompaniesService,
     private readonly alerts: AlertsService,
     @Inject(MEDIA_STORAGE) private readonly media: MediaStorage,
+    private readonly automations: AutomationsService,
   ) {}
 
   /** Productos, cupones y pedidos: supervisor en adelante. Los ajustes de la tienda: administradores. */
@@ -553,6 +555,22 @@ export class StoreService {
         href: `tienda/pedidos/${order.id}`,
       },
     );
+    const lines = order.items as StoredLine[];
+    void this.automations.emit(s.companyId, 'store_order', {
+      vars: {
+        numero: order.number,
+        cliente: order.customerName,
+        celular: order.customerPhone,
+        correo: order.customerEmail ?? '',
+        total: money(order.totalCents),
+        entrega: order.delivery === 'delivery' ? `domicilio a ${order.address}` : 'recoge en el local',
+        productos: lines.map((l) => `${l.qty} × ${l.name}${l.variant ? ` (${l.variant})` : ''}`).join(', '),
+      },
+      amountPesos: Number(order.totalCents / 100n),
+      summary: `Pedido #${order.number} de ${order.customerName} por ${money(order.totalCents)}`,
+      href: `tienda/pedidos/${order.id}`,
+      contact: { name: order.customerName, email: order.customerEmail, phone: order.customerPhone },
+    });
     return { ...this.publicOrderShape(order), store: this.publicStore(s) };
   }
 

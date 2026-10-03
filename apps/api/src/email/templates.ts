@@ -351,3 +351,19 @@ export function siteContactAutoReply(data: { siteName: string; name: string }): 
   );
   return { subject: `Ya recibimos tu mensaje — ${sanitizeHeader(data.siteName, 60)}`, html, text };
 }
+
+/** Correo que manda una automatización de una empresa ("si pasa X, avisar por correo"). */
+export function automationEmail(data: { companyName: string; subject: string; body: string; url?: string | null }): RenderedEmail {
+  const paragraphs = data.body
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const { html, text } = layout(
+    `<p style="color:#6b7280;font-size:13px">Aviso automático de <strong>${escapeHtml(data.companyName)}</strong></p>
+     <p style="font-size:18px"><strong>${escapeHtml(data.subject)}</strong></p>
+     ${paragraphs.map((p) => `<p style="white-space:pre-wrap">${escapeHtml(p)}</p>`).join('')}
+     ${data.url ? button(data.url, 'Verlo en 3R') : ''}`,
+    `Aviso automático de ${data.companyName}\n\n${data.subject}\n\n${paragraphs.join('\n\n')}${data.url ? `\n\nVerlo en 3R: ${data.url}` : ''}`,
+  );
+  return { subject: `${sanitizeHeader(data.subject, 110)} — ${sanitizeHeader(data.companyName, 60)}`, html, text };
+}

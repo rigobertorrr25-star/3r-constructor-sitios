@@ -617,6 +617,7 @@ model Company {
   storeProducts    StoreProduct[]
   storeCoupons     StoreCoupon[]
   storeOrders      StoreOrder[]
+  automations      Automation[]
   site             Site?               @relation(fields: [siteId], references: [id], onDelete: SetNull)
 
   @@map("companies")
@@ -1545,4 +1546,50 @@ model PageView {
 
   @@index([siteId, day], map: "idx_page_views_site_day")
   @@map("page_views")
+}
+
+// ───────── Automatizaciones ─────────
+
+// "Si pasa X, hacer Y": un disparador, una condición opcional y una lista de acciones.
+model Automation {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String    @map("company_id") @db.Uuid
+  name           String    @db.VarChar(120)
+  // store_order | site_contact | quote_accepted | quote_rejected | ticket_created | low_stock (ver automations.constants.ts)
+  trigger        String    @db.VarChar(30)
+  // Condición opcional: solo si el valor es al menos esto (pedidos y cotizaciones).
+  minAmountCents BigInt?   @map("min_amount_cents")
+  // [{ type: notify | email | crm_contact | ticket, ... }]
+  actions        Json
+  active         Boolean   @default(true)
+  runCount       Int       @default(0) @map("run_count")
+  lastRunAt      DateTime? @map("last_run_at") @db.Timestamptz(6)
+  createdById    String?   @map("created_by_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  runs    AutomationRun[]
+
+  @@index([companyId, trigger, active], map: "idx_automations_company_trigger")
+  @@map("automations")
+}
+
+model AutomationRun {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  automationId String   @map("automation_id") @db.Uuid
+  companyId    String   @map("company_id") @db.Uuid
+  // ok | error | skipped
+  status       String   @db.VarChar(10)
+  // Qué pasó, en una línea ("Pedido #12 de Ana").
+  summary      String   @db.VarChar(300)
+  // Resultado de cada acción: [{ type, ok, message }]
+  results      Json
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  automation Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  @@index([automationId, createdAt], map: "idx_automation_runs_automation")
+  @@index([companyId, createdAt], map: "idx_automation_runs_company")
+  @@map("automation_runs")
 }
