@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AdminModule } from './admin/admin.module.js';
 import { AuditModule } from './audit/audit.module.js';
 import { AuthModule } from './auth/auth.module.js';
@@ -25,6 +25,7 @@ import { AnalyticsModule } from './analytics/analytics.module.js';
 import { SeoModule } from './seo/seo.module.js';
 import { AutomationsModule } from './automations/automations.module.js';
 import { MarketingModule } from './marketing/marketing.module.js';
+import { VisitorThrottlerGuard } from './common/visitor-throttler.guard.js';
 import { WhatsappModule } from './whatsapp/whatsapp.module.js';
 import { AiContentModule } from './ai-content/ai-content.module.js';
 import { AiModule } from './ai/ai.module.js';
@@ -95,6 +96,6 @@ import { UsersModule } from './users/users.module.js';
     WhatsappModule,
   ],
   controllers: [HealthController],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [{ provide: APP_GUARD, useClass: VisitorThrottlerGuard }],
 })
 export class AppModule {}

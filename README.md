@@ -560,6 +560,11 @@ misma llave que el asistente (`ANTHROPIC_API_KEY`, `AI_MODEL`). No inventa preci
 
 ## Notas técnicas
 
+- **Límites por minuto por visitante**: las acciones públicas (pedidos, encuestas, cotizaciones, inicio de sesión…)
+  llegan a la API desde el servidor de la web. Por eso la web manda la IP real del visitante en `x-3r-client-ip` con
+  `CRON_SECRET` en `x-3r-relay`, y la API (`VisitorThrottlerGuard`) cuenta por esa IP solo si la clave coincide. Sin
+  `CRON_SECRET` igual en Render y en Vercel, todos los visitantes comparten un mismo límite.
+
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.
 - TypeScript **6** (el CLI de Nest aún no funciona con 7).
 - Los estados de las tablas son `VARCHAR` y se validan en código.
