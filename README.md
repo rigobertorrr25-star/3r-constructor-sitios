@@ -279,6 +279,21 @@ alta, urgente) y estado (abierto → asignado → en proceso → resuelto → ce
 - Abrir un comunicado lo marca como leído. Quien publica ve cuántos lo leyeron y quién todavía no.
 - Cifras: sin leer y próximo evento (también en el inicio de la empresa).
 
+### Módulo Documentos (`documents`)
+
+`/empresa/[id]/documentos`: carpeta de la empresa (reglamentos, manuales; para todos o solo RR. HH.) y carpeta de
+cada empleado (contrato, cédula, nómina, incapacidades, hoja de vida). Tabla `company_documents`.
+
+- Los archivos son **privados**: nunca tienen dirección pública. Se suben directo del navegador con un enlace firmado
+  (5 minutos) y se descargan igual, después de que la API revisa permisos (`/empresa/[id]/documentos/descargar/[docId]`
+  pide el enlace y redirige). Subida en dos pasos: `POST …/documents/uploads` y `POST …/documents/:id/confirm`.
+- Con R2 se guardan en `R2_DOCS_BUCKET` (bucket privado, recomendado) o, si no está, en la carpeta `company-docs/` de
+  `R2_BUCKET` con claves aleatorias. El bucket de documentos necesita la misma regla CORS (PUT desde `WEB_ORIGIN`).
+  Sin R2 se guardan en el disco del servidor (solo para desarrollo).
+- Quién ve qué: la carpeta del empleado, él y RR. HH. en adelante sobre alguien de menor rango. El empleado sube a su
+  carpeta y borra solo lo que él subió. Las descargas de documentos de otra persona quedan en la auditoría.
+- PDF, imágenes, Word y Excel; máximo 20 MB. Fecha de vencimiento opcional: RR. HH. ve "Vencen pronto" (30 días).
+
 ## Notas técnicas
 
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.

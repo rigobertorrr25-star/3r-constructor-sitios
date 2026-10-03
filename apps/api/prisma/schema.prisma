@@ -594,6 +594,7 @@ model Company {
   employeeProfiles EmployeeProfile[]
   leaveRequests    LeaveRequest[]
   announcements    Announcement[]
+  documents        CompanyDocument[]
 
   @@map("companies")
 }
@@ -617,6 +618,7 @@ model CompanyMember {
   profile           EmployeeProfile?
   leaveRequests     LeaveRequest[]
   announcementReads AnnouncementRead[]
+  documents         CompanyDocument[]
 
   @@unique([companyId, userId])
   @@index([userId], map: "idx_company_members_user_id")
@@ -862,4 +864,36 @@ model AnnouncementRead {
   @@id([announcementId, memberId])
   @@index([memberId], map: "idx_announcement_reads_member")
   @@map("announcement_reads")
+}
+
+// ───────────────────────── MÓDULO: DOCUMENTOS ─────────────────────────
+
+// Archivo privado de la empresa (políticas, manuales) o de un empleado (contrato, cédula, soportes).
+model CompanyDocument {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String    @map("company_id") @db.Uuid
+  // Null: documento de la empresa. Con valor: documento de ese empleado (se borra si sale de la empresa).
+  memberId     String?   @map("member_id") @db.Uuid
+  // contract | id | certificate | payroll | medical | resume | policy | manual | other (ver documents.constants.ts)
+  category     String    @db.VarChar(20)
+  title        String    @db.VarChar(150)
+  fileName     String    @map("file_name") @db.VarChar(200)
+  contentType  String    @map("content_type") @db.VarChar(100)
+  size         Int       @default(0)
+  // Clave en el almacenamiento privado (nunca pública).
+  storageKey   String    @unique @map("storage_key") @db.VarChar(120)
+  // pending (pedido el enlace, falta subir) | ready
+  status       String    @default("pending") @db.VarChar(10)
+  // De la empresa: all (todo el equipo) | hr (solo RR. HH. en adelante). Del empleado: él y RR. HH.
+  audience     String    @default("all") @db.VarChar(10)
+  // Vencimiento (licencia, contrato, certificado), para avisos.
+  expiresOn    DateTime? @map("expires_on") @db.Date
+  uploadedById String?   @map("uploaded_by_id") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  member  CompanyMember? @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, memberId], map: "idx_company_documents_company_member")
+  @@map("company_documents")
 }

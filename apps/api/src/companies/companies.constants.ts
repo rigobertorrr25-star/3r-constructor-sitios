@@ -41,7 +41,7 @@ export const MODULES: ModuleInfo[] = [
   { key: 'employees', area: 'empresa', ready: true },
   { key: 'requests', area: 'empresa', ready: true },
   { key: 'announcements', area: 'empresa', ready: true },
-  { key: 'documents', area: 'empresa', ready: false },
+  { key: 'documents', area: 'empresa', ready: true },
   { key: 'doc_generator', area: 'empresa', ready: false },
   { key: 'tickets', area: 'empresa', ready: true },
   { key: 'calendar', area: 'empresa', ready: false },
