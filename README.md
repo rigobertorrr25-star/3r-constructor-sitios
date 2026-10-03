@@ -348,6 +348,20 @@ Campanita en el encabezado de la empresa y `/empresa/[id]/alertas` (tabla `notif
 - Con el CRM: se puede hacer desde la ficha del cliente; al enviarla, el cliente pasa a «Cotización»; al aceptarla, a
   «Ganado»; todo queda en su historial. PDF tamaño carta con `pdf-lib`.
 
+### Módulo Encuestas (`surveys`)
+
+`/empresa/[id]/encuestas` (tablas `surveys`, `survey_questions` y `survey_responses`).
+
+- Supervisores en adelante crean encuestas desde cero o con plantilla ("Clima laboral", "Satisfacción de clientes").
+  Preguntas: estrellas (1–5), recomendación (0–10), una opción, varias opciones y respuesta abierta. Con respuestas ya
+  no se edita (para no mezclar resultados). Cierre opcional por fecha.
+- **Para el equipo**: al abrirla, alerta a todos; el tablero muestra "N encuestas por responder". Cada persona responde
+  una vez. Si es **anónima**, solo se guarda un hash para no repetir (`respondentKey`), nunca quién respondió.
+- **Para clientes**: al abrirla se crea un enlace `/encuesta/[token]` (sin cuenta, nombre opcional, límite 20 por
+  minuto) para copiar o mandar por WhatsApp.
+- Resultados (`/encuestas/[id]/resultados`): barras por respuesta, promedio, índice de recomendación (NPS: % que da
+  9–10 menos % que da 0–6), textos y participación del equipo (con quién falta, si no es anónima).
+
 ### Suscripciones (cobro de la plataforma)
 
 - **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir

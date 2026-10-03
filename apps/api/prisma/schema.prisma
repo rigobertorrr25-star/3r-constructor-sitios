@@ -602,6 +602,7 @@ model Company {
   quotes           Quote[]
   subscription     CompanySubscription?
   invoices         CompanyInvoice[]
+  surveys          Survey[]
 
   @@map("companies")
 }
@@ -1092,4 +1093,70 @@ model InvoicePayment {
 
   @@index([invoiceId], map: "idx_invoice_payments_invoice")
   @@map("invoice_payments")
+}
+
+// ───────────────────────── MÓDULO: ENCUESTAS ─────────────────────────
+
+// Encuesta del equipo (clima laboral; puede ser anónima) o para clientes (enlace público).
+model Survey {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String    @map("company_id") @db.Uuid
+  title       String    @db.VarChar(150)
+  description String?   @db.VarChar(2000)
+  // team | public
+  audience    String    @db.VarChar(10)
+  // Del equipo: no se guarda quién respondió.
+  anonymous   Boolean   @default(false)
+  // draft | open | closed
+  status      String    @default("draft") @db.VarChar(10)
+  closesAt    DateTime? @map("closes_at") @db.Timestamptz(6)
+  // Para las de clientes: el enlace /encuesta/[token].
+  publicToken String?   @unique @map("public_token") @db.VarChar(64)
+  createdById String?   @map("created_by_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company   Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  questions SurveyQuestion[]
+  responses SurveyResponse[]
+
+  @@index([companyId, status], map: "idx_surveys_company_status")
+  @@map("surveys")
+}
+
+model SurveyQuestion {
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  surveyId String  @map("survey_id") @db.Uuid
+  position Int
+  // rating (1 a 5) | nps (0 a 10) | choice (una) | multi (varias) | text
+  kind     String  @db.VarChar(10)
+  text     String  @db.VarChar(300)
+  // Opciones de choice/multi.
+  options  Json?
+  required Boolean @default(true)
+
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  @@index([surveyId], map: "idx_survey_questions_survey")
+  @@map("survey_questions")
+}
+
+model SurveyResponse {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  surveyId      String   @map("survey_id") @db.Uuid
+  // Solo si la encuesta del equipo no es anónima.
+  memberId      String?  @map("member_id") @db.Uuid
+  // Del equipo: hash de encuesta + persona, para que nadie responda dos veces (aunque sea anónima).
+  respondentKey String?  @map("respondent_key") @db.VarChar(64)
+  // De clientes: nombre si lo quiso dejar.
+  name          String?  @db.VarChar(150)
+  // { [questionId]: number | string | string[] }
+  answers       Json
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  @@unique([surveyId, respondentKey])
+  @@index([surveyId, createdAt], map: "idx_survey_responses_survey")
+  @@map("survey_responses")
 }

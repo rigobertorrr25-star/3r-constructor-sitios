@@ -11,6 +11,7 @@ import type { DocumentsSummary } from '@/lib/documents';
 import { monthName, todayBogota, type EmployeesSummary } from '@/lib/employees';
 import { formatMoney } from '@/lib/orders';
 import { TYPE_LABEL as LEAVE_LABEL, type RequestsSummary } from '@/lib/requests';
+import type { SurveysSummary } from '@/lib/surveys';
 import type { TicketSummary } from '@/lib/tickets';
 import { loadCompany } from './company';
 
@@ -35,7 +36,7 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
   const c = `/companies/${id}`;
 
   // Cada módulo activo aporta sus cifras y pendientes: el tablero crece con cada módulo.
-  const [crm, tickets, people, requests, news, docs, upcoming] = await Promise.all([
+  const [crm, tickets, people, requests, news, docs, upcoming, surveys] = await Promise.all([
     get<CrmSummary>(enabled('crm'), `${c}/crm/summary`),
     get<TicketSummary>(enabled('tickets'), `${c}/tickets/summary`),
     get<EmployeesSummary>(enabled('employees'), `${c}/employees/summary`),
@@ -43,6 +44,7 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
     get<AnnouncementsSummary>(enabled('announcements'), `${c}/announcements/summary`),
     get<DocumentsSummary>(enabled('documents'), `${c}/documents/summary`),
     get<CalendarItem[]>(enabled('calendar'), `${c}/calendar/upcoming`),
+    get<SurveysSummary>(enabled('surveys'), `${c}/surveys/summary`),
   ]);
 
   const todos: Todo[] = [];
@@ -53,6 +55,11 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
   if (tickets?.urgent) todos.push({ href: `${base}/tickets`, text: `${plural(tickets.urgent, 'ticket urgente', 'tickets urgentes')}`, tone: 'warn' });
   if (tickets && atLeast(role, 'supervisor') && tickets.unassigned)
     todos.push({ href: `${base}/tickets`, text: `${plural(tickets.unassigned, 'ticket', 'tickets')} sin responsable` });
+  if (surveys?.pendingToAnswer)
+    todos.push({
+      href: surveys.pendingToAnswer === 1 ? `${base}/encuestas/${surveys.pending[0].id}` : `${base}/encuestas`,
+      text: `${plural(surveys.pendingToAnswer, 'encuesta', 'encuestas')} por responder`,
+    });
   if (news?.unread) todos.push({ href: `${base}/comunicados`, text: `${plural(news.unread, 'comunicado', 'comunicados')} sin leer` });
   if (docs?.expiring.length)
     todos.push({ href: `${base}/documentos`, text: `${plural(docs.expiring.length, 'documento vence', 'documentos vencen')} pronto`, tone: 'warn' });
