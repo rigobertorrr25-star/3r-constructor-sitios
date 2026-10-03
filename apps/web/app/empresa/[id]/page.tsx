@@ -6,6 +6,7 @@ import type { CrmSummary } from '@/lib/crm';
 import type { TicketSummary } from '@/lib/tickets';
 import { monthName, todayBogota, type EmployeesSummary } from '@/lib/employees';
 import type { RequestsSummary } from '@/lib/requests';
+import type { AnnouncementsSummary } from '@/lib/announcements';
 import { formatMoney } from '@/lib/orders';
 import { AREA_LABEL, MODULE_INFO, MODULE_ROUTE, atLeast, type ModuleArea } from '@/lib/companies';
 import { loadCompany } from './company';
@@ -22,11 +23,12 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
   const canAsk = atLeast(company.me.role, 'admin');
   const enabled = (key: string) => company.modules.some((m) => m.key === key && m.enabled);
   // Cifras de cada módulo activo (el tablero de la empresa crece con cada módulo).
-  const [crm, tickets, people, requests] = await Promise.all([
+  const [crm, tickets, people, requests, news] = await Promise.all([
     enabled('crm') ? authedApi<CrmSummary>(`/companies/${id}/crm/summary`).then((r) => (r.ok ? r.data : null)) : null,
     enabled('tickets') ? authedApi<TicketSummary>(`/companies/${id}/tickets/summary`).then((r) => (r.ok ? r.data : null)) : null,
     enabled('employees') ? authedApi<EmployeesSummary>(`/companies/${id}/employees/summary`).then((r) => (r.ok ? r.data : null)) : null,
     enabled('requests') ? authedApi<RequestsSummary>(`/companies/${id}/requests/summary`).then((r) => (r.ok ? r.data : null)) : null,
+    enabled('announcements') ? authedApi<AnnouncementsSummary>(`/companies/${id}/announcements/summary`).then((r) => (r.ok ? r.data : null)) : null,
   ]);
   const stats: [string, string][] = [
     ['Personas', String(company.memberCount)],
@@ -43,6 +45,7 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
           ['Tickets urgentes', String(tickets.urgent)],
         ] as [string, string][])
       : []),
+    ...(news ? ([['Comunicados sin leer', String(news.unread)]] as [string, string][]) : []),
     ...(people ? ([[`Cumpleaños en ${monthName(todayBogota().month)}`, String(people.birthdaysThisMonth)]] as [string, string][]) : []),
     ...(requests && atLeast(company.me.role, 'supervisor')
       ? ([

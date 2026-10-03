@@ -269,6 +269,16 @@ alta, urgente) y estado (abierto → asignado → en proceso → resuelto → ce
 - Correos: a quienes les toca decidir cada paso (máximo 10) y al empleado cuando se aprueba o se rechaza, con la nota.
 - Cifras: por decidir, mis solicitudes abiertas, mis días de vacaciones aprobados este año y quién no está hoy.
 
+### Módulo Comunicados (`announcements`)
+
+`/empresa/[id]/comunicados`: noticias, avisos y eventos (fecha, hora y lugar) para todo el equipo (tablas
+`announcements` y `announcement_reads`).
+
+- Todos leen; RR. HH. en adelante publica, edita, fija arriba y borra.
+- "Avisar por correo" al publicar le escribe a todo el equipo activo (máximo 300), menos a quien publica.
+- Abrir un comunicado lo marca como leído. Quien publica ve cuántos lo leyeron y quién todavía no.
+- Cifras: sin leer y próximo evento (también en el inicio de la empresa).
+
 ## Notas técnicas
 
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.

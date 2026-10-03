@@ -593,6 +593,7 @@ model Company {
   ticketEvents     TicketEvent[]
   employeeProfiles EmployeeProfile[]
   leaveRequests    LeaveRequest[]
+  announcements    Announcement[]
 
   @@map("companies")
 }
@@ -611,10 +612,11 @@ model CompanyMember {
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  company       Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  profile       EmployeeProfile?
-  leaveRequests LeaveRequest[]
+  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile           EmployeeProfile?
+  leaveRequests     LeaveRequest[]
+  announcementReads AnnouncementRead[]
 
   @@unique([companyId, userId])
   @@index([userId], map: "idx_company_members_user_id")
@@ -821,4 +823,43 @@ model LeaveRequest {
   @@index([companyId, status], map: "idx_leave_requests_company_status")
   @@index([memberId], map: "idx_leave_requests_member")
   @@map("leave_requests")
+}
+
+// ───────────────────────── MÓDULO: COMUNICADOS ─────────────────────────
+
+model Announcement {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId  String    @map("company_id") @db.Uuid
+  // news | notice | event (ver announcements.constants.ts)
+  kind       String    @default("news") @db.VarChar(20)
+  title      String    @db.VarChar(150)
+  body       String    @db.VarChar(10000)
+  // Para eventos: cuándo es.
+  eventAt    DateTime? @map("event_at") @db.Timestamptz(6)
+  eventPlace String?   @map("event_place") @db.VarChar(150)
+  // Fijado arriba de la lista.
+  pinned     Boolean   @default(false)
+  authorId   String?   @map("author_id") @db.Uuid
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  reads   AnnouncementRead[]
+
+  @@index([companyId, createdAt], map: "idx_announcements_company")
+  @@map("announcements")
+}
+
+// Quién leyó cada comunicado (una fila por persona).
+model AnnouncementRead {
+  announcementId String   @map("announcement_id") @db.Uuid
+  memberId       String   @map("member_id") @db.Uuid
+  readAt         DateTime @default(now()) @map("read_at") @db.Timestamptz(6)
+
+  announcement Announcement  @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  member       CompanyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@id([announcementId, memberId])
+  @@index([memberId], map: "idx_announcement_reads_member")
+  @@map("announcement_reads")
 }

@@ -191,6 +191,17 @@ export function leaveRequestDecided(data: { companyName: string; typeLabel: stri
   return { subject: `Tu solicitud de ${sanitizeHeader(data.typeLabel.toLowerCase(), 40)} ${verdict} — ${sanitizeHeader(data.companyName, 60)}`, html, text };
 }
 
+export function companyAnnouncement(data: { companyName: string; kindLabel: string; title: string; excerpt: string; url: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>${escapeHtml(data.kindLabel)} de <strong>${escapeHtml(data.companyName)}</strong>:</p>
+     <p style="font-size:18px"><strong>${escapeHtml(data.title)}</strong></p>
+     <p>${escapeHtml(data.excerpt)}</p>
+     ${button(data.url, 'Leerlo completo')}`,
+    `${data.kindLabel} de ${data.companyName}:\n\n${data.title}\n\n${data.excerpt}\n\nLeerlo completo: ${data.url}`,
+  );
+  return { subject: `${sanitizeHeader(data.title, 100)} — ${sanitizeHeader(data.companyName, 60)}`, html, text };
+}
+
 // ───────── al equipo (administrador) ─────────
 
 export function adminNewSignup(data: { email: string; firstName?: string | null }): RenderedEmail {

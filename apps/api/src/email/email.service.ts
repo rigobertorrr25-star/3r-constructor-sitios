@@ -105,6 +105,14 @@ export class EmailService {
     return this.safeSend(to, templates.leaveRequestDecided(data));
   }
 
+  announcementUrl(companyId: string, announcementId: string) {
+    return `${this.webOrigin}/empresa/${companyId}/comunicados/${announcementId}`;
+  }
+
+  sendCompanyAnnouncement(to: string, data: { companyName: string; kindLabel: string; title: string; excerpt: string; url: string }) {
+    return this.safeSend(to, templates.companyAnnouncement(data));
+  }
+
   // ───────── al equipo ─────────
 
   sendAdminNewSignup(data: { email: string; firstName?: string | null }) {

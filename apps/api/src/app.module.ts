@@ -10,6 +10,7 @@ import { CrmModule } from './crm/crm.module.js';
 import { TicketsModule } from './tickets/tickets.module.js';
 import { EmployeesModule } from './employees/employees.module.js';
 import { RequestsModule } from './requests/requests.module.js';
+import { AnnouncementsModule } from './announcements/announcements.module.js';
 import { EmailModule } from './email/email.module.js';
 import { HealthController } from './health/health.controller.js';
 import { MediaModule } from './media/media.module.js';
@@ -51,6 +52,7 @@ import { UsersModule } from './users/users.module.js';
     TicketsModule,
     EmployeesModule,
     RequestsModule,
+    AnnouncementsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
