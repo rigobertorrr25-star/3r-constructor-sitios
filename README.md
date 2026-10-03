@@ -305,6 +305,17 @@ constancia de vacaciones (de una solicitud aprobada) y carta libre con campos `{
 - Opción de guardar copia en la carpeta del empleado (módulo Documentos). Cada documento generado queda en la
   auditoría (`COMPANY_DOCUMENT_GENERATED`). Una solicitud de certificado trae el botón "Generar el certificado laboral".
 
+### Módulo Calendario (`calendar`)
+
+`/empresa/[id]/calendario`: mes en cuadrícula (computador) y agenda (celular y debajo). Tabla `calendar_events` para
+reuniones, eventos, fechas límite y recordatorios; lo demás sale de los otros módulos activos:
+
+- Vacaciones aprobadas (todo el equipo); permisos e incapacidades solo los propios o de quienes tengo a cargo.
+- Cumpleaños (Portal del empleado; el 29 de febrero sale el 28 en años no bisiestos) y, para RR. HH., fin de contratos.
+- Eventos de Comunicados y, para RR. HH., documentos que vencen.
+- Supervisor en adelante crea eventos para el equipo; cualquiera crea recordatorios personales (solo los ve él).
+  Cambia o borra quien lo creó, o un administrador. `GET …/calendar/upcoming` da los próximos 14 días.
+
 ## Notas técnicas
 
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.

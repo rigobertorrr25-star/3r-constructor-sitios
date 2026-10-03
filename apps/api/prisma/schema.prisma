@@ -595,6 +595,7 @@ model Company {
   leaveRequests    LeaveRequest[]
   announcements    Announcement[]
   documents        CompanyDocument[]
+  calendarEvents   CalendarEvent[]
 
   @@map("companies")
 }
@@ -896,4 +897,30 @@ model CompanyDocument {
 
   @@index([companyId, memberId], map: "idx_company_documents_company_member")
   @@map("company_documents")
+}
+
+// ───────────────────────── MÓDULO: CALENDARIO ─────────────────────────
+
+// Reunión, evento o recordatorio. Los de la empresa (`personal` = false) los ve todo el equipo; un recordatorio
+// personal solo quien lo creó. Vacaciones, cumpleaños y vencimientos no se guardan aquí: salen de sus módulos.
+model CalendarEvent {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String    @map("company_id") @db.Uuid
+  // meeting | event | reminder | deadline
+  kind        String    @default("meeting") @db.VarChar(20)
+  title       String    @db.VarChar(150)
+  description String?   @db.VarChar(2000)
+  location    String?   @db.VarChar(150)
+  startsAt    DateTime  @map("starts_at") @db.Timestamptz(6)
+  endsAt      DateTime? @map("ends_at") @db.Timestamptz(6)
+  allDay      Boolean   @default(false) @map("all_day")
+  personal    Boolean   @default(false)
+  createdById String    @map("created_by_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, startsAt], map: "idx_calendar_events_company_start")
+  @@map("calendar_events")
 }
