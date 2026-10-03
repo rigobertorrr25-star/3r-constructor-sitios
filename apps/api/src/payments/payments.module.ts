@@ -8,6 +8,7 @@ import { WompiConfig } from './wompi.config.js';
   imports: [AuthModule],
   controllers: [OrderPaymentsController, WompiEventsController],
   providers: [PaymentsService, WompiConfig],
-  exports: [WompiConfig],
+  // Suscripciones cobra sus facturas con el mismo Wompi.
+  exports: [WompiConfig, PaymentsService],
 })
 export class PaymentsModule {}

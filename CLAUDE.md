@@ -16,7 +16,9 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   https://claude.ai/artifact/6A1HRPqkdhT4PwXqbvon6Q). Rigoberto programó hasta el 15 oct. Segundo paquete (16 oct –
   15 nov: piezas 8–14 de octubre + 6 nuevas de noviembre + 15 historias con sticker por día) en
   https://claude.ai/artifact/LS8mhicvdzLWUUdHDGAMvp. El post del 14 nov (pago en línea) ya puede salir (Wompi en
-  producción). Siguiente: 16 nov – diciembre. No hay conexión para publicar directo: Rigoberto programa en Meta
+  producción). Tercer paquete (16 nov – 31 dic: 20 publicaciones con 4 reels de asistencia QR, cuenta
+  del cliente y Azul Caribe en 3 pantallas, 17 historias) en https://claude.ai/artifact/Kef33AtRmyGxDg6XH14CUy.
+  Siguiente: enero 2027. No hay conexión para publicar directo: Rigoberto programa en Meta
   Business Suite.
 - Instagram de 3R: https://www.instagram.com/3r.paginas_/ (en el pie de la portada y en los datos para Google).
 - Precios de los paquetes: ya confirmados por Rigoberto en `/admin/paquetes`.
@@ -28,7 +30,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   el pago de prueba en sandbox había funcionado. Datos de transferencia (`PAYMENT_INSTRUCTIONS`) puestos en Vercel.
   Rigoberto dice que también configuró `CRON_SECRET`; no se ha podido comprobar desde la sesión (sin acceso de red a
   3rpaginas.com ni a Render).
-- Pendiente de Rigoberto: revisar que el portafolio en vivo tenga capturas. Siguiente contenido: 16 nov – diciembre para Instagram.
+- Pendiente de Rigoberto: revisar que el portafolio en vivo tenga capturas. Siguiente contenido: enero 2027 para Instagram.
 - Asistencia con QR (28 sep 2026): sistema **aparte** de la tienda en `asistencia/` (ver su README). Rigoberto pidió
   que no aparezca nada en 3rpaginas.com: no enlazarlo desde la tienda ni compartir base, clave o despliegue. Usa el estilo
   3R y el león. Primer negocio: Azul Caribe Lounge (11 empleados; turnos 8am–3pm, 11am–6pm, 2pm–9pm). Publicado en
@@ -44,6 +46,20 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   negocio" con y sin página, por qué dar el paso), luego los paquetes (`components/package-grid.tsx`, el mismo de la
   portada) y "Más servicios" (asistencia QR, asistencia mensual, dominio; botones a WhatsApp). Con pedidos: sus pedidos
   y "Más servicios". Precios de la asistencia QR en `apps/web/lib/services.ts`.
+- **Plataforma empresarial** (3 oct 2026): Rigoberto quiere que 3rpaginas.com sea una plataforma para empresas (web,
+  empleados, clientes, automatización, IA), no solo venta de páginas, y construir los 25 módulos uno por uno. **No mezclar
+  con `asistencia/` ni con otros proyectos salvo que él lo pida.** Hecho: núcleo de empresas, miembros con roles,
+  invitaciones y módulos por empresa (`/empresa`, `/admin/empresas`; ver README, "Plataforma empresarial"). Módulos
+  listos: CRM (`/empresa/[id]/crm`), Tickets (`/empresa/[id]/tickets`) Portal del empleado (`/empresa/[id]/personal`),
+  Permisos y vacaciones (`/empresa/[id]/solicitudes`) Comunicados (`/empresa/[id]/comunicados`) y
+  Documentos (`/empresa/[id]/documentos`, archivos privados; recomendado crear un bucket R2 privado `R2_DOCS_BUCKET`) ,
+  Generador de documentos (`/empresa/[id]/generador`, PDF con `pdf-lib`), Calendario (`/empresa/[id]/calendario`) y
+  Alertas (campanita + resumen diario por correo; usa el cron diario de dominios y `CRON_SECRET`). Cotizaciones (`/empresa/[id]/cotizaciones`; el cliente responde en `/cotizacion/[token]`). Encuestas (`/empresa/[id]/encuestas`, del equipo o de clientes con enlace `/encuesta/[token]`). Capacitaciones (`/empresa/[id]/capacitaciones`, lecciones, evaluación y certificado PDF). Centro de conocimiento (`/empresa/[id]/conocimiento`; ayuda pública para clientes en `/ayuda/[token]`). Inventario y equipos entregados (`/empresa/[id]/inventario`). Tienda online (`/empresa/[id]/tienda`; la tienda pública en `/tienda/[slug]`, pedidos también por WhatsApp; sin pago en línea todavía). Página web (`/empresa/[id]/pagina-web`: la empresa cambia textos, fotos y botones de su página y la publica; el diseño solo lo cambia 3R; 3R la vincula en `/admin/empresas/[id]`). Analítica web (`/empresa/[id]/analitica`: visitas sin cookies; la web firma cada visita con `CRON_SECRET`, así que debe estar igual en Render y en Vercel). SEO (`/empresa/[id]/seo`: nota de 0 a 100, qué arreglar y título y descripción para Google). Automatizaciones (`/empresa/[id]/automatizaciones`: si pasa X —pedido, formulario, cotización, ticket, poco inventario— avisar, mandar correo, guardar en el CRM o crear un ticket). Marketing (`/empresa/[id]/marketing`: campañas de correo por grupos del CRM, solo a quien aceptó; baja en `/baja/[token]`, suscripción pública en `/suscribirse/[token]`; tope 300 al día por empresa). Asistente con IA (`/empresa/[id]/asistente`: responde con artículos y documentos marcados; necesita `ANTHROPIC_API_KEY` en Render: Rigoberto dice que ya la puso (3 oct 2026); no se ha podido comprobar desde la sesión). Textos con IA (`/empresa/[id]/textos`: 3 opciones de publicaciones, descripciones, correos, textos de página, Google y WhatsApp; botón «Escribir con IA» en Marketing y en productos; misma llave). WhatsApp empresarial (`/empresa/[id]/whatsapp`: bandeja con la API de Meta, respuestas en 24 h, plantillas, CRM; 3R conecta el número en `/admin/empresas/[id]`; **faltan `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET` y `DATA_ENCRYPTION_KEY` en Render y la cuenta de Meta de cada negocio**). Los 25 módulos están construidos. Tablero en `/empresa/[id]`.
+  Suscripciones: precios por módulo en `/admin/modulos` (**faltan los precios reales de Rigoberto**), plan y facturas por
+  empresa, pago con Wompi o transferencia en `/empresa/[id]/facturacion`. Orden acordado en PENDIENTES.md: dashboard, CRM, tickets, portal del empleado,
+  permisos y vacaciones, comunicados, documentos, generador de documentos, calendario, alertas, cotizaciones,
+  suscripciones, encuestas, capacitaciones, conocimiento, inventario, tienda, constructor web, analítica, SEO,
+  automatizaciones, marketing, IA (asistente y textos), WhatsApp (API de Meta). Precios por módulo: pendientes de Rigoberto.
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto

@@ -76,6 +76,85 @@ export class EmailService {
     return this.safeSend(to, templates.domainRenewal({ ...data, orderUrl: this.orderUrl(data.orderId) }));
   }
 
+  sendCompanyInvite(to: string, data: { companyName: string; inviterName: string; roleLabel: string; token: string }) {
+    const inviteUrl = `${this.webOrigin}/invitacion?token=${encodeURIComponent(data.token)}`;
+    return this.safeSend(to, templates.companyInvite({ companyName: data.companyName, inviterName: data.inviterName, roleLabel: data.roleLabel, inviteUrl }));
+  }
+
+  ticketUrl(companyId: string, ticketId: string) {
+    return `${this.webOrigin}/empresa/${companyId}/tickets/${ticketId}`;
+  }
+
+  sendTicketAssigned(to: string, data: { companyName: string; number: number; title: string; priorityLabel: string; ticketUrl: string }) {
+    return this.safeSend(to, templates.ticketAssigned(data));
+  }
+
+  sendTicketResolved(to: string, data: { companyName: string; number: number; title: string; ticketUrl: string }) {
+    return this.safeSend(to, templates.ticketResolved(data));
+  }
+
+  requestUrl(companyId: string, requestId: string) {
+    return `${this.webOrigin}/empresa/${companyId}/solicitudes/${requestId}`;
+  }
+
+  sendLeaveRequestPending(to: string, data: { companyName: string; personName: string; typeLabel: string; dates: string; requestUrl: string }) {
+    return this.safeSend(to, templates.leaveRequestPending(data));
+  }
+
+  sendLeaveRequestDecided(to: string, data: { companyName: string; typeLabel: string; approved: boolean; note: string | null; requestUrl: string }) {
+    return this.safeSend(to, templates.leaveRequestDecided(data));
+  }
+
+  announcementUrl(companyId: string, announcementId: string) {
+    return `${this.webOrigin}/empresa/${companyId}/comunicados/${announcementId}`;
+  }
+
+  sendCompanyAnnouncement(to: string, data: { companyName: string; kindLabel: string; title: string; excerpt: string; url: string }) {
+    return this.safeSend(to, templates.companyAnnouncement(data));
+  }
+
+  sendAlertsDigest(
+    to: string,
+    data: { firstName?: string | null; companyName: string; companyId: string; items: { title: string; body?: string | null; href?: string | null }[]; more: number },
+  ) {
+    const companyUrl = `${this.webOrigin}/empresa/${data.companyId}`;
+    return this.safeSend(
+      to,
+      templates.alertsDigest({
+        firstName: data.firstName,
+        companyName: data.companyName,
+        items: data.items.map((i) => ({ title: i.title, body: i.body, url: i.href ? `${companyUrl}/${i.href}` : companyUrl })),
+        more: data.more,
+        alertsUrl: `${companyUrl}/alertas`,
+      }),
+    );
+  }
+
+  publicQuoteUrl(token: string) {
+    return `${this.webOrigin}/cotizacion/${encodeURIComponent(token)}`;
+  }
+
+  quoteUrl(companyId: string, quoteId: string) {
+    return `${this.webOrigin}/empresa/${companyId}/cotizaciones/${quoteId}`;
+  }
+
+  sendQuote(to: string, replyTo: string | undefined, data: { companyName: string; clientName: string; code: string; title: string; total: string; validUntil: string | null; quoteUrl: string; senderName: string }) {
+    return this.safeSend(to, templates.quoteSent(data), replyTo);
+  }
+
+  sendQuoteResponded(to: string, data: { code: string; clientName: string; verdict: string; responseName: string; message: string | null; quoteUrl: string }) {
+    return this.safeSend(to, templates.quoteResponded(data));
+  }
+
+  sendInvoiceIssued(to: string, data: { companyId: string; companyName: string; code: string; period: string; total: string; dueDate: string; items: { name: string; price: string }[] }) {
+    return this.safeSend(to, templates.invoiceIssued({ ...data, billingUrl: `${this.webOrigin}/empresa/${data.companyId}/facturacion` }));
+  }
+
+  sendAdminInvoicePaid(data: { companyId: string; companyName: string; code: string; amount: string; method: string }) {
+    if (!this.adminEmail) return Promise.resolve();
+    return this.safeSend(this.adminEmail, templates.adminInvoicePaid({ ...data, adminUrl: `${this.webOrigin}/admin/empresas/${data.companyId}` }));
+  }
+
   // ───────── al equipo ─────────
 
   sendAdminNewSignup(data: { email: string; firstName?: string | null }) {
@@ -116,5 +195,33 @@ export class EmailService {
   /** Al visitante que escribió: un aviso automático de que su mensaje llegó (no una IA, solo confirmación). */
   sendSiteContactAutoReply(to: string, data: { siteName: string; name: string }, replyTo?: string) {
     return this.safeSend(to, templates.siteContactAutoReply(data), replyTo);
+  }
+
+  /** Correo de una automatización de una empresa. Devuelve si se pudo mandar. */
+  async sendAutomation(to: string, data: { companyName: string; subject: string; body: string; path?: string | null }) {
+    const url = data.path ? `${this.webOrigin}${data.path}` : null;
+    return this.safeSend(to, templates.automationEmail({ ...data, url }));
+  }
+
+  unsubscribeUrl(token: string) {
+    return `${this.webOrigin}/baja/${token}`;
+  }
+
+  /** Correo de campaña. A diferencia de los demás, dice si se pudo mandar (para el informe de la campaña). */
+  async sendMarketing(to: string, data: { companyName: string; subject: string; body: string; token: string; replyTo?: string | null; companyLine?: string | null }) {
+    const unsubscribeUrl = this.unsubscribeUrl(data.token);
+    try {
+      await this.sender.send({
+        to,
+        ...templates.marketingEmail({ companyName: data.companyName, subject: data.subject, body: data.body, unsubscribeUrl, companyLine: data.companyLine }),
+        fromName: data.companyName,
+        replyTo: data.replyTo ?? undefined,
+        headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>` },
+      });
+      return true;
+    } catch (error) {
+      this.logger.error(`No se pudo enviar la campaña a ${to}: ${(error as Error).message}`);
+      return false;
+    }
   }
 }

@@ -9,6 +9,7 @@ import { plusOneYear } from './domain-renewals.service.js';
 import type { ContactFormDto } from './dto/contact-form.dto.js';
 import { renderNotFound, renderPage, renderRobots, renderSitemap } from './render/render.js';
 import { PUBLISH_STORAGE, type PublishStorage } from './storage.js';
+import { AutomationsService } from '../automations/automations.service.js';
 
 // Direcciones que no se pueden dar a un cliente: se confundirían con servicios propios.
 const RESERVED_LABELS = new Set(['www', 'app', 'api', 'admin', 'mail', 'ftp', 'smtp', 'cdn', 'static', 'assets', 'dashboard', 'login', 'blog', 'ayuda', 'soporte', 'support', 'status']);
@@ -22,6 +23,8 @@ export interface PublishedFile {
   status: number;
   contentType: string;
   body: string;
+  /** Solo en las páginas (HTML) servidas: para contar la visita. */
+  page?: { siteId: string; path: string };
 }
 
 interface Manifest {
@@ -41,6 +44,7 @@ export class PublishingService {
     private readonly email: EmailService,
     @Inject(PUBLISH_STORAGE) private readonly storage: PublishStorage,
     config: ConfigService,
+    private readonly automations: AutomationsService,
   ) {
     this.rootHost = (config.get<string>('SITES_ROOT_HOST') ?? 'localhost').toLowerCase();
     this.urlTemplate = config.get<string>('SITES_URL_TEMPLATE') ?? 'http://{label}.localhost:3000';
@@ -140,9 +144,10 @@ export class PublishingService {
 
   // ───────── publicar ─────────
 
-  async publish(userId: string, siteId: string, ip?: string) {
+  /** `ownerCheck: false` solo desde la empresa vinculada (Constructor web), que ya revisó los permisos. */
+  async publish(userId: string, siteId: string, ip?: string, ownerCheck = true) {
     const site = await this.prisma.site.findFirst({
-      where: { id: siteId, userId },
+      where: { id: siteId, ...(ownerCheck ? { userId } : {}) },
       include: { pages: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] }, domains: { where: { type: 'subdomain' } } },
     });
     if (!site) throw new NotFoundException('Sitio no encontrado');
@@ -259,9 +264,9 @@ export class PublishingService {
 
   // ───────── estado ─────────
 
-  async status(userId: string, siteId: string) {
+  async status(userId: string, siteId: string, ownerCheck = true) {
     const site = await this.prisma.site.findFirst({
-      where: { id: siteId, userId },
+      where: { id: siteId, ...(ownerCheck ? { userId } : {}) },
       select: { status: true, domains: { select: { domain: true, type: true, expiresAt: true } }, pages: { select: { updatedAt: true } } },
     });
     if (!site) throw new NotFoundException('Sitio no encontrado');
@@ -324,7 +329,9 @@ export class PublishingService {
     if (!entry) return missing(domain.site.name);
 
     const body = await this.storage.get(dir, entry.file);
-    return body === null ? missing(domain.site.name) : { status: 200, contentType: 'text/html; charset=utf-8', body };
+    return body === null
+      ? missing(domain.site.name)
+      : { status: 200, contentType: 'text/html; charset=utf-8', body, page: { siteId: domain.site.id, path: entry.path } };
   }
 
   // ───────── formulario de contacto ─────────
@@ -363,6 +370,15 @@ export class PublishingService {
     }
     // Aviso automático al visitante: no es una IA respondiendo, solo confirma que el mensaje llegó.
     await this.email.sendSiteContactAutoReply(dto.email, { siteName: domain.site.name, name: dto.name }, to ?? undefined);
+    // Si la página es de una empresa de la plataforma, puede disparar sus automatizaciones.
+    const company = await this.prisma.company.findUnique({ where: { siteId: domain.site.id }, select: { id: true } });
+    if (company) {
+      void this.automations.emit(company.id, 'site_contact', {
+        vars: { cliente: dto.name, correo: dto.email, celular: dto.phone ?? '', mensaje: dto.message },
+        summary: `${dto.name} escribió por la página: «${dto.message.slice(0, 160)}»`,
+        contact: { name: dto.name, email: dto.email, phone: dto.phone },
+      });
+    }
     return { ok: true };
   }
 }

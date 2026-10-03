@@ -200,7 +200,370 @@ Notas de seguridad para producción: el renovador de tokens del proxy comparte u
    cliente pague y se renueve en el registrador, en el pedido se toca **Renovado un año**. Requiere `CRON_SECRET`
    (la misma clave) en Render y en Vercel.
 
+## Plataforma empresarial (módulos por empresa)
+
+3R no solo vende páginas: cada cliente puede crear su **empresa** en `/empresa` y usar la plataforma con su equipo.
+
+- **Empresa** (`companies`): nombre, NIT, ciudad, teléfono, sector. Quien la crea queda como dueño (máximo 5 por persona;
+  necesita el correo confirmado).
+- **Miembros** (`company_members`) con un rol: `owner` (dueño) > `admin` > `hr` (RR. HH.) > `supervisor` > `employee`. Cada
+  rol puede lo del de abajo. Solo admin invita, cambia roles o deshabilita; RR. HH. edita cargo, área y fecha de ingreso;
+  nadie toca al dueño ni a alguien de su mismo rango. Cualquiera se puede salir (menos el dueño).
+- **Invitaciones** (`company_invites`): por correo, con enlace `/invitacion?token=…` que vence en 7 días; solo se acepta con
+  la cuenta de ese mismo correo. El token se guarda como hash.
+- **Módulos** (`company_modules`): el catálogo está en `apps/api/src/companies/companies.constants.ts` (`MODULES`) y sus
+  nombres en `apps/web/lib/companies.ts` (`MODULE_INFO`). El equipo de 3R los activa en `/admin/empresas`. Solo se pueden
+  activar los que tienen `ready: true`.
+- **Para construir un módulo nuevo:** en su servicio, empezar cada acción con
+  `companies.requireMember(userId, companyId, rolMínimo)` y `companies.requireModule(companyId, 'clave')` (importar
+  `CompaniesModule`); al terminarlo, poner `ready: true` en el catálogo.
+- Alguien de afuera recibe 404 (no sabe que la empresa existe). Una empresa suspendida no deja entrar a nadie.
+- En la web, cada módulo listo tiene su ruta en `MODULE_ROUTE` (`apps/web/lib/companies.ts`): aparece como pestaña y
+  como botón «Abrir» en el inicio de la empresa, y suma sus cifras al inicio.
+
+### Tablero de la empresa (`/empresa/[id]`)
+
+Menú lateral agrupado por área (en celular, un menú que se abre) y un inicio que junta lo de cada módulo activo:
+cifras, **Pendientes** (solicitudes por decidir, tickets a mi cargo o sin responsable, comunicados sin leer, documentos
+y contratos por vencer, fichas incompletas), **Próximos días** (calendario), **Hoy no están** y el último comunicado.
+El catálogo de módulos (activar por WhatsApp) solo lo ven los administradores. Un módulo nuevo suma aquí sus cifras.
+
+### Módulo CRM (`crm`)
+
+`/empresa/[id]/crm`: tablero con las 6 etapas (nuevo, contactado, cotización, negociación, ganado, perdido), búsqueda,
+cifras (negocios abiertos, valor en juego, ganado) y ficha de cada cliente con su historial (llamadas, WhatsApp,
+correos, reuniones, notas; los cambios de etapa se anotan solos). Cualquier miembro lo usa; solo un administrador borra
+clientes. El valor se escribe en pesos y se guarda en centavos. Tablas `crm_contacts` y `crm_activities`.
+
+### Módulo Tickets (`tickets`)
+
+`/empresa/[id]/tickets`: solicitudes internas numeradas por empresa (#1, #2…; contador `companies.ticket_seq`), con
+área (soporte técnico, RR. HH., mantenimiento, administración, contabilidad, compras, otro), prioridad (baja, media,
+alta, urgente) y estado (abierto → asignado → en proceso → resuelto → cerrado).
+
+- Cualquier miembro crea tickets. Supervisor en adelante ve y atiende todos (asigna, cambia prioridad y área); los demás
+  ven solo los que pidieron o tienen a su cargo.
+- El responsable lo pasa a «en proceso» o «resuelto». Quien lo pidió lo cierra o lo reabre. Solo un administrador borra.
+- Asignar uno abierto lo pasa a «asignado»; reabrir uno con responsable lo deja «asignado».
+- Correos: al responsable cuando se lo asignan y a quien lo pidió cuando se resuelve (nunca a quien hizo el cambio).
+- Cada comentario y cambio queda en el historial (`ticket_events`). Cifras: pendientes, urgentes, sin responsable,
+  a mi cargo y tiempo promedio para resolver (últimos 30 días).
+
+### Módulo Portal del empleado (`employees`)
+
+`/empresa/[id]/personal`: directorio del equipo, cumpleaños y aniversarios del mes, y la ficha de cada persona
+(`/empresa/[id]/personal/[memberId]`, tabla `employee_profiles`, una fila por miembro; se borra si sale de la empresa).
+
+- Datos personales (documento, celular, nacimiento, dirección, EPS, pensión, contacto de emergencia): los llena el
+  empleado o RR. HH. en adelante sobre alguien de menor rango.
+- Contrato (tipo, fin, salario en pesos, horario, notas de RR. HH.): solo RR. HH. en adelante sobre alguien de menor
+  rango (el dueño también el suyo). El empleado ve su contrato y salario, pero no las notas. Cada cambio de contrato
+  queda en la auditoría (`EMPLOYEE_WORK_UPDATED`, sin el valor).
+- El directorio no muestra datos privados: cumpleaños sin año y el celular solo si la persona lo permite.
+- Cifras: personas y cumpleaños del mes; para RR. HH., fichas incompletas (sin documento o sin contacto de emergencia)
+  y contratos que vencen en 30 días.
+- Cargo, área y fecha de ingreso siguen en `company_members` y se editan en Equipo.
+
+### Módulo Permisos y vacaciones (`requests`)
+
+`/empresa/[id]/solicitudes`: vacaciones, permisos, incapacidades, certificados laborales y otras solicitudes (tabla
+`leave_requests`).
+
+- Flujo: `pending` (espera al supervisor) → `supervisor_ok` (espera a RR. HH.) → `approved`; o `rejected` / `cancelled`.
+- Decide siempre alguien de mayor rango que quien pide: supervisor en adelante el primer paso, RR. HH. en adelante el
+  segundo. Si RR. HH. (o más) decide el primer paso, cierra los dos. Un certificado va directo a RR. HH.
+- Quien pide cancela mientras siga abierta. Los días se cuentan sin domingos (los festivos no se descuentan todavía).
+- Correos: a quienes les toca decidir cada paso (máximo 10) y al empleado cuando se aprueba o se rechaza, con la nota.
+- Cifras: por decidir, mis solicitudes abiertas, mis días de vacaciones aprobados este año y quién no está hoy.
+
+### Módulo Comunicados (`announcements`)
+
+`/empresa/[id]/comunicados`: noticias, avisos y eventos (fecha, hora y lugar) para todo el equipo (tablas
+`announcements` y `announcement_reads`).
+
+- Todos leen; RR. HH. en adelante publica, edita, fija arriba y borra.
+- "Avisar por correo" al publicar le escribe a todo el equipo activo (máximo 300), menos a quien publica.
+- Abrir un comunicado lo marca como leído. Quien publica ve cuántos lo leyeron y quién todavía no.
+- Cifras: sin leer y próximo evento (también en el inicio de la empresa).
+
+### Módulo Documentos (`documents`)
+
+`/empresa/[id]/documentos`: carpeta de la empresa (reglamentos, manuales; para todos o solo RR. HH.) y carpeta de
+cada empleado (contrato, cédula, nómina, incapacidades, hoja de vida). Tabla `company_documents`.
+
+- Los archivos son **privados**: nunca tienen dirección pública. Se suben directo del navegador con un enlace firmado
+  (5 minutos) y se descargan igual, después de que la API revisa permisos (`/empresa/[id]/documentos/descargar/[docId]`
+  pide el enlace y redirige). Subida en dos pasos: `POST …/documents/uploads` y `POST …/documents/:id/confirm`.
+- Con R2 se guardan en `R2_DOCS_BUCKET` (bucket privado, recomendado) o, si no está, en la carpeta `company-docs/` de
+  `R2_BUCKET` con claves aleatorias. El bucket de documentos necesita la misma regla CORS (PUT desde `WEB_ORIGIN`).
+  Sin R2 se guardan en el disco del servidor (solo para desarrollo).
+- Quién ve qué: la carpeta del empleado, él y RR. HH. en adelante sobre alguien de menor rango. El empleado sube a su
+  carpeta y borra solo lo que él subió. Las descargas de documentos de otra persona quedan en la auditoría.
+- PDF, imágenes, Word y Excel; máximo 20 MB. Fecha de vencimiento opcional: RR. HH. ve "Vencen pronto" (30 días).
+
+### Módulo Generador de documentos (`doc_generator`)
+
+`/empresa/[id]/generador` (RR. HH. en adelante): certificado laboral (con salario en letras y números si se quiere),
+constancia de vacaciones (de una solicitud aprobada) y carta libre con campos `{nombre}`, `{documento}`, `{cargo}`,
+`{area}`, `{fecha_ingreso}`, `{salario}`, `{empresa}`, `{nit}`, `{ciudad}`, `{fecha}`.
+
+- PDF tamaño carta hecho en la API con `pdf-lib` (membrete con nombre, NIT, ciudad y teléfono de la empresa, firma).
+- Los datos salen de `company_members`, `employee_profiles` y `companies`; si falta algo, dice qué y dónde llenarlo.
+- Opción de guardar copia en la carpeta del empleado (módulo Documentos). Cada documento generado queda en la
+  auditoría (`COMPANY_DOCUMENT_GENERATED`). Una solicitud de certificado trae el botón "Generar el certificado laboral".
+
+### Módulo Calendario (`calendar`)
+
+`/empresa/[id]/calendario`: mes en cuadrícula (computador) y agenda (celular y debajo). Tabla `calendar_events` para
+reuniones, eventos, fechas límite y recordatorios; lo demás sale de los otros módulos activos:
+
+- Vacaciones aprobadas (todo el equipo); permisos e incapacidades solo los propios o de quienes tengo a cargo.
+- Cumpleaños (Portal del empleado; el 29 de febrero sale el 28 en años no bisiestos) y, para RR. HH., fin de contratos.
+- Eventos de Comunicados y, para RR. HH., documentos que vencen.
+- Supervisor en adelante crea eventos para el equipo; cualquiera crea recordatorios personales (solo los ve él).
+  Cambia o borra quien lo creó, o un administrador. `GET …/calendar/upcoming` da los próximos 14 días.
+
+### Módulo Alertas (`alerts`)
+
+Campanita en el encabezado de la empresa y `/empresa/[id]/alertas` (tabla `notifications`). Solo con el módulo activo.
+
+- Avisos al momento: ticket urgente o de prioridad alta (supervisores), ticket asignado, comentario y ticket resuelto;
+  solicitud por decidir y decisión; comunicado nuevo; documento subido a mi carpeta o generado para mí.
+- Revisión diaria (el mismo cron de Vercel de dominios, `/api/cron/dominios`, llama también a
+  `POST /internal/alerts/run` con `CRON_SECRET`): cumpleaños de hoy, contratos y documentos que vencen en 30, 7 y 0
+  días, solicitudes con más de 2 días sin respuesta y tickets urgentes sin responsable. `dedupe_key` evita repetir.
+- Después, un correo por persona con sus avisos nuevos sin leer de las últimas 24 horas (una sola vez cada aviso).
+- Abrir un aviso lo marca leído y lleva a lo que avisa; "Marcar todo como leído".
+
+### Módulo Cotizaciones (`quotes`)
+
+`/empresa/[id]/cotizaciones` (tablas `quotes` y `quote_items`, numeradas COT-1, COT-2… con `companies.quote_seq`).
+
+- Editor con ítems, descuento, IVA (0, 5 o 19 %) y vigencia; totales en vivo, iguales a los de la API (IVA sobre
+  subtotal − descuento, redondeado al peso). Valores en pesos, guardados como BIGINT.
+- Enviar genera un enlace nuevo (`/cotizacion/[token]`, solo se guarda el hash; el anterior deja de servir) y, si hay
+  correo, se lo manda al cliente con respuesta a quien la envió. También se puede copiar o mandar por WhatsApp.
+- El cliente, sin cuenta, la ve, descarga el PDF y la acepta, la rechaza o pide cambios (con mensaje). Vencida no se
+  acepta. Quien la hizo recibe alerta y correo. Para cambiarla, «Cambiarla» la pasa a borrador.
+- Con el CRM: se puede hacer desde la ficha del cliente; al enviarla, el cliente pasa a «Cotización»; al aceptarla, a
+  «Ganado»; todo queda en su historial. PDF tamaño carta con `pdf-lib`.
+
+### Módulo Encuestas (`surveys`)
+
+`/empresa/[id]/encuestas` (tablas `surveys`, `survey_questions` y `survey_responses`).
+
+- Supervisores en adelante crean encuestas desde cero o con plantilla ("Clima laboral", "Satisfacción de clientes").
+  Preguntas: estrellas (1–5), recomendación (0–10), una opción, varias opciones y respuesta abierta. Con respuestas ya
+  no se edita (para no mezclar resultados). Cierre opcional por fecha.
+- **Para el equipo**: al abrirla, alerta a todos; el tablero muestra "N encuestas por responder". Cada persona responde
+  una vez. Si es **anónima**, solo se guarda un hash para no repetir (`respondentKey`), nunca quién respondió.
+- **Para clientes**: al abrirla se crea un enlace `/encuesta/[token]` (sin cuenta, nombre opcional, límite 20 por
+  minuto) para copiar o mandar por WhatsApp.
+- Resultados (`/encuestas/[id]/resultados`): barras por respuesta, promedio, índice de recomendación (NPS: % que da
+  9–10 menos % que da 0–6), textos y participación del equipo (con quién falta, si no es anónima).
+
+### Módulo Capacitaciones (`training`)
+
+`/empresa/[id]/capacitaciones` (tablas `courses`, `course_lessons`, `course_questions` y `course_progress`).
+
+- RR. HH. en adelante crea cursos (hay plantilla de inducción): lecciones con texto y enlace opcional a un video o
+  material (`https://`), y una evaluación opcional de selección con puntaje para aprobar. Puede marcarlo obligatorio
+  y ponerle fecha límite.
+- Al publicarlo, alerta a todo el equipo. Los obligatorios sin terminar salen en el tablero ("N cursos obligatorios por
+  terminar", en amarillo si se venció la fecha).
+- Cada persona ve las lecciones en orden y las marca como vistas; al terminar todas se abre la evaluación (se califica
+  en la API: las respuestas correctas nunca llegan al navegador; se puede repetir y queda el mejor puntaje). Sin
+  evaluación, el curso termina al ver la última lección. Quien creó el curso recibe aviso.
+- Certificado en PDF horizontal con código (`/capacitaciones/[id]/certificado`). Supervisores en adelante ven el avance
+  de cada persona (`/equipo`) y descargan sus certificados.
+- Al editar, las lecciones que siguen conservan su id, así nadie pierde el avance. Archivado: solo lo ven quienes ya
+  lo terminaron (por su certificado).
+
+### Módulo Centro de conocimiento (`knowledge`)
+
+`/empresa/[id]/conocimiento` (tablas `knowledge_articles` y `knowledge_votes`; `companies.help_token`).
+
+- Supervisores en adelante escriben artículos con formato sencillo («## » subtítulo, «- » lista, línea en blanco entre
+  párrafos), con categoría, fijados arriba y en borrador o publicados. Todo el equipo lee y busca.
+- Buscador sin importar mayúsculas ni tildes: se guarda una copia del texto en minúsculas y sin tildes
+  (`search_text`) al guardar, así funciona igual con cualquier codificación de la base.
+- "¿Te sirvió?": un voto por persona (se puede cambiar); quien escribe ve vistas y votos.
+- **Ayuda para clientes**: los artículos marcados «Clientes» salen en `/ayuda/[token]` (con buscador y temas, sin
+  cuenta). Los administradores crean, copian o apagan el enlace. Los clientes también votan (10 por minuto).
+
+### Módulo Inventario y activos (`inventory`)
+
+`/empresa/[id]/inventario` (tablas `inventory_items`, `inventory_movements`, `company_assets` y `company_asset_events`;
+los nombres `assets` ya eran del constructor de páginas).
+
+- **Productos e insumos** (supervisor en adelante): unidad (kg, litro, unidad…), mínimo, costo y lugar. Entradas,
+  salidas y conteos con historial; la salida no deja el inventario en negativo (se bloquea la fila mientras se
+  registra). Cantidades con hasta 3 decimales, guardadas como `DECIMAL(14,3)` y calculadas en milésimas.
+- Cuando un producto baja del mínimo, alerta a supervisores en adelante (una vez al día por producto) y sale en el
+  tablero. Valor en bodega = existencias × costo.
+- **Equipos entregados**: código único por empresa, serial, valor y fecha de compra. Entregar (alerta a la persona),
+  pasar a otra, devolver, a reparación o de baja, con historial que guarda el nombre de quien lo tuvo. Cada persona
+  ve los equipos a su cargo; `GET …/inventory/members/:id/assets` sirve para el paz y salvo.
+
+### Módulo Tienda online (`store`)
+
+Panel en `/empresa/[id]/tienda` (supervisor en adelante; los ajustes, administradores). Tablas `store_settings`,
+`store_products`, `store_variants`, `store_coupons` y `store_orders`.
+
+- **Ajustes**: dirección pública `/tienda/[slug]` (única), WhatsApp de pedidos, recoger en el local y/o domicilio
+  (valor, gratis desde un monto, zonas), cómo se paga y "Recibiendo pedidos" (apagado: se ve, pero no deja pedir).
+- **Productos**: foto (se sube directo al almacenamiento público con `POST …/store/images/presign`, PNG/JPG/WEBP de
+  hasta 5 MB), precio y precio "antes", categoría, destacados, opciones con su propio precio y existencias opcionales
+  (por producto o por opción). Al editar, las opciones conservan su id.
+- **Cupones**: porcentaje o valor fijo, compra mínima, usos máximos y vencimiento; se pueden pausar.
+- **Pedidos**: el navegador guarda el carrito (`localStorage`), pero la API recalcula todo (`pricing.ts`). Al pedir,
+  en una sola transacción se descuentan existencias (nunca quedan en negativo, ni con dos clientes al tiempo), se usa
+  el cupón y se numera el pedido (#1, #2… sin huecos). Avisa a supervisores en adelante y sale en el tablero.
+  El cliente ve el estado en `/tienda/[slug]/pedido/[token]` y puede mandar el resumen por WhatsApp. Estados: nuevo,
+  confirmado, en preparación, listo (recoge) o en camino (domicilio), entregado; cancelar devuelve existencias y cupón.
+- Sin pago en línea por ahora: el dinero debe llegar a la cuenta de cada negocio, no a la de 3R (se cobra por
+  transferencia, Nequi o efectivo, según "Cómo te pagan").
+
+### Módulo Página web / Constructor web (`web`)
+
+`/empresa/[id]/pagina-web`. La empresa cambia **textos, fotos, botones y la dirección del mapa** de su página de 3R y
+la publica; el diseño (colores, secciones, tamaños) solo lo cambia el equipo de 3R en el editor (decisión de
+Rigoberto, 3 oct 2026).
+
+- El equipo de 3R vincula la página con la empresa en `/admin/empresas/[id]` → "Página web de la empresa"
+  (`companies.site_id`, una página por empresa). Las páginas siguen siendo de la cuenta de 3R que las armó.
+- Ven todos; cambian y publican los administradores de la empresa. Cada guardado es una versión nueva de la página
+  (el equipo de 3R puede volver atrás desde el editor). Si alguien guardó otra versión mientras tanto, avisa (409)
+  en vez de pisarla. Solo se tocan esos campos de nodos existentes; enlaces y fotos pasan por los mismos filtros
+  que usa la publicación.
+- Publicar usa la misma publicación de siempre (`PublishingService.publish` con la revisión de dueño apagada, porque
+  ya la hizo la empresa). Fotos: `POST …/web/images/presign` (PNG/JPG/WEBP) al almacenamiento público.
+
+### Módulo Analítica web (`analytics`)
+
+`/empresa/[id]/analitica` (supervisor en adelante; tabla `page_views`). Usa la página vinculada en el módulo Página web.
+
+- Cada visita a una página publicada se cuenta cuando la API la entrega. La web (`app/s/[label]/…`) le reenvía el
+  navegador, el sitio de origen, la IP, la consulta y el dominio en encabezados `x-3r-*`, **firmados con
+  `CRON_SECRET`** (si la API tiene `CRON_SECRET` y la firma no coincide, no se cuenta: nadie puede inflar visitas
+  llamando a la API directo). Sin cookies y sin guardar la IP: `visitor` es un hash que cambia cada día.
+- No cuentan robots, vistas previas de enlaces (WhatsApp, Facebook…) ni precargas. La navegación dentro de la misma
+  página cuenta como visita pero no como llegada. `?utm_source=` manda sobre el origen (la pantalla da los enlaces
+  para Instagram y WhatsApp).
+- Para que cada visita llegue, las páginas (HTML) ya no se guardan en la caché compartida
+  (`Cache-Control: public, max-age=0, no-cache`); robots.txt y sitemap siguen igual.
+- Informe de 7, 30 o 90 días: personas, visitas, mensajes del formulario, por día, origen, dispositivo, páginas, y
+  pedidos y ventas de la tienda si la empresa la tiene, comparado con el periodo anterior.
+
+### Módulo SEO (`seo`)
+
+`/empresa/[id]/seo` (ven supervisores en adelante; cambian administradores). Revisa la página vinculada sobre su
+contenido guardado, sin salir a internet (`src/seo/seo-audit.ts`): publicada, dominio propio, cómo contactar
+(WhatsApp, teléfono, correo o formulario), dirección o mapa, y por página título y descripción para Google (largos
+ideales 25–65 y 70–160), título principal, fotos sin descripción, botones que no llevan a ningún lado y cuánto texto
+tiene el inicio. Nota de 0 a 100 (bien = 1, mejorar = ½, arreglar = 0). Cada punto dice dónde se arregla: título y
+descripción en la misma pantalla (con vista previa como en Google), textos y fotos en Página web, el resto lo hace 3R.
+
+### Módulo Automatizaciones (`automations`)
+
+`/empresa/[id]/automatizaciones` (administradores; tablas `automations` y `automation_runs`). "Si pasa X, hacer Y".
+
+- **Disparadores**: pedido en la tienda, mensaje del formulario de la página (si la página está vinculada a la
+  empresa), cotización aceptada o rechazada, ticket creado y producto bajo el mínimo. Pedidos y cotizaciones admiten
+  la condición "solo si el valor es de al menos…".
+- **Acciones** (hasta 5): avisar en la campanita (supervisores, administradores, todos o una persona), mandar un
+  correo (tope de 200 por empresa al día), guardar a la persona en el CRM (si ya existe por correo o celular, le deja
+  una nota) y crear un ticket (con prioridad y responsable). Los textos aceptan `{campos}` del evento.
+- `AutomationsModule` es global: cada módulo llama `automations.emit(companyId, disparador, evento)`. Nunca lanza
+  error hacia quien lo llamó; cada corrida queda en el historial con el resultado de cada acción. Hay recetas para
+  empezar (pedido grande, formulario al CRM, cotización aceptada, reponer inventario).
+
+### Módulo Marketing (`marketing`)
+
+`/empresa/[id]/marketing` (tablas `campaigns` y `campaign_recipients`). Correos con promociones a los contactos del CRM.
+
+- **Permiso (Ley 1581)**: solo reciben los contactos con correo que tienen marcado "Aceptó recibir promociones" en el
+  CRM (se guarda la fecha) y no se han dado de baja. Cada correo trae "No quiero recibir más correos" (`/baja/[token]`)
+  y la cabecera `List-Unsubscribe`. Darse de baja quita el permiso a todos los contactos de la empresa con ese correo.
+- **Grupos**: por etapa del CRM, por origen y por etiquetas (`crm_contacts.tags`, en minúscula). La pantalla muestra
+  cuántos recibirían el correo y una vista previa; "Enviarme una prueba" lo manda solo a quien lo prepara.
+- **Envío**: supervisores preparan borradores; solo dueño y administradores envían. Sale de `RESEND_FROM` con el nombre
+  de la empresa como remitente y "responder a" el correo de quien envía. Se manda en segundo plano, uno cada 600 ms
+  (`MARKETING_SEND_DELAY_MS`), con tope de 300 correos por empresa al día; si el servidor se reinicia, sigue con los
+  pendientes. Una campaña enviada no se edita ni se borra (su enlace de baja debe seguir sirviendo).
+- **Enlace para suscribirse** (`/suscribirse/[token]`, lo crea un administrador): el cliente deja nombre y correo y
+  acepta; queda en el CRM con origen "Página web" y el permiso marcado.
+
+### Módulo Asistente con IA (`ai_assistant`)
+
+`/empresa/[id]/asistente` (tablas `document_chunks` y `assistant_questions`). El equipo pregunta y la IA responde
+solo con los artículos publicados del Centro de conocimiento y los documentos de la empresa que un administrador
+marque (PDF o Word; se saca el texto con `unpdf` y `mammoth`). Cada respuesta dice de qué fuente salió.
+
+- **Llave**: `ANTHROPIC_API_KEY` en Render (de console.anthropic.com; se cobra por uso) y, opcional, `AI_MODEL`
+  (por defecto `claude-sonnet-5-5`; `claude-haiku-4-5-20251001` sale más barato). Sin llave en producción la pantalla
+  dice que el asistente no está activado; en desarrollo y pruebas responde un cliente falso que no llama a nadie.
+- **Qué lee**: los documentos «solo RR. HH.» solo se usan cuando pregunta alguien de RR. HH. en adelante; los
+  documentos personales de los empleados, nunca. Antes de llamar a la IA se buscan los pedazos que tienen que ver con
+  la pregunta (máx. ~18.000 letras); si no hay ninguno, responde que no lo encontró sin gastar una llamada.
+- **Topes**: 200 preguntas por empresa y 40 por persona en 24 horas. Los administradores ven lo que no supo
+  responder o no sirvió (sin el nombre de quien preguntó) para escribir lo que falta.
+
+### Módulo Textos con IA (`ai_content`)
+
+`/empresa/[id]/textos` (supervisores en adelante; tabla `ai_generations`). La empresa escoge qué necesita (publicación
+para Instagram o Facebook, descripción de producto, correo de promoción, texto para la página, título y descripción
+para Google, mensaje de WhatsApp), escribe de qué se trata y el tono, y la IA devuelve 3 opciones para copiar. Usa la
+misma llave que el asistente (`ANTHROPIC_API_KEY`, `AI_MODEL`). No inventa precios ni fechas: deja espacios como
+`[precio]`. Topes: 100 por empresa y 30 por persona en 24 horas.
+
+- También hay un botón «Escribir con IA» en el editor de campañas de Marketing (llena asunto y mensaje) y en la
+  descripción de los productos de la tienda, si la empresa tiene el módulo.
+- El diseño de la página sigue siendo de 3R: la IA solo propone textos, que la empresa pega en Página web.
+
+### Módulo WhatsApp empresarial (`whatsapp`)
+
+`/empresa/[id]/whatsapp` (supervisores en adelante; tablas `whatsapp_accounts`, `whatsapp_conversations`,
+`whatsapp_messages` y `whatsapp_templates`). Usa la API oficial de Meta (WhatsApp Cloud API).
+
+- **Conectar** (equipo de 3R, en `/admin/empresas/[id]` → WhatsApp de la empresa): identificador del número, de la
+  cuenta de WhatsApp Business, número visible y token de acceso permanente de Meta. El token se guarda cifrado
+  (AES-256-GCM con `DATA_ENCRYPTION_KEY`, o con `JWT_ACCESS_SECRET` si no hay) y nunca se devuelve. **Poner
+  `DATA_ENCRYPTION_KEY` antes de conectar el primer número y no cambiarla después** (si cambia, hay que volver a pegar
+  los tokens).
+- **Avisos de Meta**: en la app de Meta, dirección `https://<API>/api/v1/webhooks/whatsapp`, clave de verificación
+  `WHATSAPP_VERIFY_TOKEN` y suscripción a «messages». Cada aviso se valida con la firma `X-Hub-Signature-256` y
+  `WHATSAPP_APP_SECRET` (el secreto de la app de Meta); en producción, sin ese secreto no se acepta ningún aviso. La
+  API arranca con `rawBody: true` para poder comprobar la firma.
+- **Bandeja**: abiertas, mías y cerradas; asignar a alguien; cerrar y reabrir (se reabre sola si el cliente escribe).
+  Cada mensaje nuevo avisa en la campanita (a quien la atiende o a supervisores en adelante, uno por hora por
+  conversación). El cliente queda en el CRM (se busca por los últimos 10 dígitos; si no está y la empresa tiene CRM,
+  se crea con origen WhatsApp). Se ven los estados enviado, entregado y leído.
+- **24 horas**: WhatsApp solo deja mandar texto libre hasta 24 horas después del último mensaje del cliente; después,
+  y para escribirle primero, solo plantillas aprobadas. Las plantillas se crean y aprueban en Meta y un administrador
+  de la empresa las trae con «Traer plantillas de Meta».
+- En desarrollo y pruebas no se habla con Meta (cliente falso); en producción, siempre Meta.
+
+### Suscripciones (cobro de la plataforma)
+
+- **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir
+  (no se cobra y la empresa sale con aviso en `/admin`); 0 = incluido gratis.
+- **Plan** de cada empresa (`/admin/empresas/[id]` → Plan y facturación, tabla `company_subscriptions`): estado
+  (en prueba, activa, con pagos atrasados, cancelada), fin de la prueba y día de cobro (1–28). Notas internas.
+- **Facturas** (`company_invoices`, FAC-1, FAC-2…): una por periodo con los módulos activos y sus precios de ese día;
+  vencen a los 10 días. Se generan a mano en `/admin` o solas el día de cobro (cron diario,
+  `POST /internal/billing/run`, el mismo de dominios y alertas). Al dueño y administradores les llega correo y alerta.
+- **Pago**: en `/empresa/[id]/facturacion` (dueño y administradores) con Wompi (tabla `invoice_payments`, referencia
+  `FAC-…`; el aviso de Wompi de siempre las reconoce) o por transferencia (`PAYMENT_INSTRUCTIONS`), que el equipo marca
+  como pagada en `/admin`. Una factura vencida deja la suscripción "con pagos atrasados" (no suspende a nadie: eso lo
+  decide el equipo) y vuelve a "activa" al pagar.
+
 ## Notas técnicas
+
+- **Límites por minuto por visitante**: las acciones públicas (pedidos, encuestas, cotizaciones, inicio de sesión…)
+  llegan a la API desde el servidor de la web. Por eso la web manda la IP real del visitante en `x-3r-client-ip` con
+  `CRON_SECRET` en `x-3r-relay`, y la API (`VisitorThrottlerGuard`) cuenta por esa IP solo si la clave coincide. Sin
+  `CRON_SECRET` igual en Render y en Vercel, todos los visitantes comparten un mismo límite.
 
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.
 - TypeScript **6** (el CLI de Nest aún no funciona con 7).

@@ -1,10 +1,37 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AdminModule } from './admin/admin.module.js';
 import { AuditModule } from './audit/audit.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { CompaniesModule } from './companies/companies.module.js';
+import { CrmModule } from './crm/crm.module.js';
+import { TicketsModule } from './tickets/tickets.module.js';
+import { EmployeesModule } from './employees/employees.module.js';
+import { RequestsModule } from './requests/requests.module.js';
+import { AnnouncementsModule } from './announcements/announcements.module.js';
+import { DocumentsModule } from './documents/documents.module.js';
+import { DocGeneratorModule } from './doc-generator/doc-generator.module.js';
+import { CalendarModule } from './calendar/calendar.module.js';
+import { AlertsModule } from './alerts/alerts.module.js';
+import { QuotesModule } from './quotes/quotes.module.js';
+import { BillingModule } from './billing/billing.module.js';
+import { SurveysModule } from './surveys/surveys.module.js';
+import { InventoryModule } from './inventory/inventory.module.js';
+import { StoreModule } from './store/store.module.js';
+import { CompanyWebModule } from './company-web/company-web.module.js';
+import { AnalyticsModule } from './analytics/analytics.module.js';
+import { SeoModule } from './seo/seo.module.js';
+import { AutomationsModule } from './automations/automations.module.js';
+import { MarketingModule } from './marketing/marketing.module.js';
+import { VisitorThrottlerGuard } from './common/visitor-throttler.guard.js';
+import { WhatsappModule } from './whatsapp/whatsapp.module.js';
+import { AiContentModule } from './ai-content/ai-content.module.js';
+import { AiModule } from './ai/ai.module.js';
+import { AssistantModule } from './assistant/assistant.module.js';
+import { KnowledgeModule } from './knowledge/knowledge.module.js';
+import { TrainingModule } from './training/training.module.js';
 import { EmailModule } from './email/email.module.js';
 import { HealthController } from './health/health.controller.js';
 import { MediaModule } from './media/media.module.js';
@@ -41,8 +68,34 @@ import { UsersModule } from './users/users.module.js';
     PortfolioModule,
     PublishingModule,
     MediaModule,
+    CompaniesModule,
+    CrmModule,
+    TicketsModule,
+    EmployeesModule,
+    RequestsModule,
+    AnnouncementsModule,
+    DocumentsModule,
+    DocGeneratorModule,
+    CalendarModule,
+    AlertsModule,
+    QuotesModule,
+    BillingModule,
+    SurveysModule,
+    TrainingModule,
+    KnowledgeModule,
+    InventoryModule,
+    StoreModule,
+    CompanyWebModule,
+    AnalyticsModule,
+    SeoModule,
+    AutomationsModule,
+    MarketingModule,
+    AiModule,
+    AssistantModule,
+    AiContentModule,
+    WhatsappModule,
   ],
   controllers: [HealthController],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [{ provide: APP_GUARD, useClass: VisitorThrottlerGuard }],
 })
 export class AppModule {}

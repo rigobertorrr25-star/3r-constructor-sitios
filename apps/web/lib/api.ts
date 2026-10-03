@@ -1,5 +1,5 @@
 // Cliente de la API para código que corre en el servidor de Next (nunca en el navegador).
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export const API_URL = process.env.API_URL ?? 'http://localhost:3001/api/v1';
@@ -11,12 +11,32 @@ export type ApiResult<T> = { status: number; ok: boolean; data: T };
 
 type RequestInit = { method?: string; body?: unknown; token?: string };
 
+/**
+ * La IP real del visitante, para que los límites por minuto de la API (pedidos, encuestas, inicio de sesión…) sean por
+ * persona y no por el servidor de la web. Va con CRON_SECRET: la API solo la cree si la clave coincide. Solo en lo que
+ * cambia algo (POST, PUT…), que es lo que tiene límites estrictos.
+ */
+async function visitorHeaders(method: string): Promise<Record<string, string>> {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || method === 'GET') return {};
+  try {
+    const h = await headers();
+    const ip = (h.get('x-forwarded-for') ?? '').split(',')[0].trim() || (h.get('x-real-ip') ?? '');
+    return ip ? { 'x-3r-client-ip': ip, 'x-3r-relay': secret } : {};
+  } catch {
+    // Fuera de una petición (no hay visitante): la API usa la IP de siempre.
+    return {};
+  }
+}
+
 export async function rawApi<T>(path: string, init: RequestInit = {}): Promise<ApiResult<T>> {
+  const method = init.method ?? 'GET';
   const res = await fetch(`${API_URL}${path}`, {
-    method: init.method ?? 'GET',
+    method,
     headers: {
       'content-type': 'application/json',
       ...(init.token ? { authorization: `Bearer ${init.token}` } : {}),
+      ...(await visitorHeaders(method)),
     },
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
     cache: 'no-store',

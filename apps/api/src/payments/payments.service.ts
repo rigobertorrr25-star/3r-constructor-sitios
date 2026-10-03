@@ -137,6 +137,8 @@ export class PaymentsService {
       select: { id: true, orderId: true, amountCents: true, currency: true, status: true },
     });
     if (!payment) {
+      // No es de un pedido: puede ser de una factura de la plataforma empresarial.
+      if (transaction.reference.startsWith('FAC-')) return this.applyInvoiceTransaction(transaction);
       this.logger.warn(`Aviso de Wompi con referencia desconocida: ${transaction.reference}`);
       return null;
     }
@@ -187,6 +189,79 @@ export class PaymentsService {
       }
       const businessName = String((credited.brief as { businessName?: unknown } | null)?.businessName ?? '');
       await this.email.sendAdminNewMessage({ orderId: credited.id, orderCode: code, businessName, body: `Pago en línea aprobado por Wompi: ${amount} (referencia ${transaction.reference}).` });
+    }
+    return status;
+  }
+
+  // ───────── facturas de la plataforma empresarial (mismo Wompi, otra tabla) ─────────
+
+  /** Dirección de pago de Wompi por el total de una factura pendiente. */
+  async createInvoiceCheckout(invoice: { id: string; number: number; total: number; companyId: string }, email: string) {
+    if (!this.wompi.enabled) throw new ServiceUnavailableException('El pago en línea todavía no está disponible');
+    const amount = invoice.total * 100;
+    const reference = `FAC-${invoice.number}-${randomBytes(4).toString('hex')}`;
+    await this.prisma.invoicePayment.create({ data: { invoiceId: invoice.id, reference, amountCents: amount, currency: 'COP' } });
+    const params = new URLSearchParams({
+      'public-key': this.wompi.publicKey,
+      currency: 'COP',
+      'amount-in-cents': String(amount),
+      reference,
+      'signature:integrity': this.integritySignature(reference, amount, 'COP'),
+      'redirect-url': `${this.wompi.webOrigin}/empresa/${invoice.companyId}/facturacion?pago=wompi&factura=${invoice.id}`,
+      'customer-data:email': email,
+    });
+    return { url: `${this.wompi.checkoutUrl}?${params.toString()}`, reference };
+  }
+
+  /** Al volver de Wompi con una factura: consulta la transacción y la aplica. */
+  async confirmInvoice(invoiceId: string, transactionId: string) {
+    if (!/^[A-Za-z0-9-]{1,100}$/.test(transactionId)) throw new BadRequestException('Transacción inválida');
+    let transaction: WompiTransaction;
+    try {
+      const res = await fetch(`${this.wompi.apiUrl}/transactions/${encodeURIComponent(transactionId)}`);
+      if (res.status === 404) throw new NotFoundException('Wompi no encontró esa transacción');
+      if (!res.ok) throw new Error(`Wompi respondió ${res.status}`);
+      transaction = ((await res.json()) as { data: WompiTransaction }).data;
+    } catch (err) {
+      if (err instanceof NotFoundException) throw err;
+      throw new BadGatewayException('No pudimos consultar el pago con Wompi. Si ya pagaste, se verá reflejado en unos minutos.');
+    }
+    const payment = await this.prisma.invoicePayment.findUnique({ where: { reference: transaction.reference }, select: { invoiceId: true } });
+    if (!payment || payment.invoiceId !== invoiceId) throw new NotFoundException('Ese pago no es de esta factura');
+    return { status: await this.applyInvoiceTransaction(transaction) };
+  }
+
+  /** Idempotente, igual que con los pedidos: la factura queda pagada una sola vez y solo si el monto coincide. */
+  async applyInvoiceTransaction(transaction: WompiTransaction): Promise<string | null> {
+    const payment = await this.prisma.invoicePayment.findUnique({
+      where: { reference: transaction.reference },
+      select: { id: true, invoiceId: true, amountCents: true, currency: true, status: true },
+    });
+    if (!payment) {
+      this.logger.warn(`Aviso de Wompi con referencia de factura desconocida: ${transaction.reference}`);
+      return null;
+    }
+    let status = STATUS[transaction.status] ?? 'error';
+    if (status === 'approved' && (transaction.amount_in_cents !== payment.amountCents || transaction.currency !== payment.currency)) {
+      this.logger.error(`Factura ${transaction.reference}: Wompi aprobó ${transaction.amount_in_cents} ${transaction.currency}, se esperaba ${payment.amountCents}`);
+      status = 'error';
+    }
+    if (payment.status === 'approved') return 'approved';
+    const paid = await this.prisma.$transaction(async (tx) => {
+      const changed = await tx.invoicePayment.updateMany({ where: { id: payment.id, status: { not: 'approved' } }, data: { status, providerTransactionId: transaction.id } });
+      if (status !== 'approved' || changed.count === 0) return null;
+      const done = await tx.companyInvoice.updateMany({
+        where: { id: payment.invoiceId, status: 'pending' },
+        data: { status: 'paid', paidAt: new Date(), method: 'wompi', paymentNote: `Wompi ${transaction.id}` },
+      });
+      if (!done.count) return null;
+      const invoice = await tx.companyInvoice.findUniqueOrThrow({ where: { id: payment.invoiceId }, select: { companyId: true, number: true, total: true, company: { select: { name: true } } } });
+      // Si ya no le quedan facturas pendientes vencidas, vuelve a estar al día.
+      await tx.companySubscription.updateMany({ where: { companyId: invoice.companyId, status: 'past_due' }, data: { status: 'active' } });
+      return invoice;
+    });
+    if (paid) {
+      await this.email.sendAdminInvoicePaid({ companyId: paid.companyId, companyName: paid.company.name, code: `FAC-${paid.number}`, amount: cop(paid.total * 100, 'COP'), method: 'Wompi' });
     }
     return status;
   }

@@ -137,6 +137,137 @@ export function domainRenewal(data: {
   return { subject: `Tu dominio ${sanitizeHeader(data.domain, 80)} ${data.expired ? 'venció' : 'vence pronto'} — 3R`, html, text };
 }
 
+export function companyInvite(data: { companyName: string; inviterName: string; roleLabel: string; inviteUrl: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p><strong>${escapeHtml(data.inviterName)}</strong> te invitó a unirte a <strong>${escapeHtml(data.companyName)}</strong> en 3R como ${escapeHtml(data.roleLabel)}.</p>
+     <p>La invitación vence en 7 días. Si no tienes cuenta, la creas con este mismo correo.</p>
+     ${button(data.inviteUrl, 'Aceptar la invitación')}`,
+    `Hola,\n\n${data.inviterName} te invitó a unirte a ${data.companyName} en 3R como ${data.roleLabel}.\nLa invitación vence en 7 días. Si no tienes cuenta, la creas con este mismo correo.\n\nAceptar: ${data.inviteUrl}`,
+  );
+  return { subject: `Te invitaron a ${sanitizeHeader(data.companyName, 80)} — 3R`, html, text };
+}
+
+export function ticketAssigned(data: { companyName: string; number: number; title: string; priorityLabel: string; ticketUrl: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p>En <strong>${escapeHtml(data.companyName)}</strong> te asignaron el ticket <strong>#${data.number}: ${escapeHtml(data.title)}</strong> (prioridad ${escapeHtml(data.priorityLabel)}).</p>
+     ${button(data.ticketUrl, 'Ver el ticket')}`,
+    `Hola,\n\nEn ${data.companyName} te asignaron el ticket #${data.number}: ${data.title} (prioridad ${data.priorityLabel}).\n\nVer el ticket: ${data.ticketUrl}`,
+  );
+  return { subject: `Te asignaron el ticket #${data.number} — ${sanitizeHeader(data.companyName, 80)}`, html, text };
+}
+
+export function ticketResolved(data: { companyName: string; number: number; title: string; ticketUrl: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p>Tu ticket <strong>#${data.number}: ${escapeHtml(data.title)}</strong> en ${escapeHtml(data.companyName)} quedó resuelto.</p>
+     <p>Si todo está bien, ciérralo. Si no, ábrelo de nuevo y cuenta qué falta.</p>
+     ${button(data.ticketUrl, 'Ver el ticket')}`,
+    `Hola,\n\nTu ticket #${data.number}: ${data.title} en ${data.companyName} quedó resuelto.\nSi todo está bien, ciérralo. Si no, ábrelo de nuevo y cuenta qué falta.\n\nVer el ticket: ${data.ticketUrl}`,
+  );
+  return { subject: `Tu ticket #${data.number} quedó resuelto — ${sanitizeHeader(data.companyName, 80)}`, html, text };
+}
+
+export function leaveRequestPending(data: { companyName: string; personName: string; typeLabel: string; dates: string; requestUrl: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p><strong>${escapeHtml(data.personName)}</strong> pidió <strong>${escapeHtml(data.typeLabel.toLowerCase())}</strong> en ${escapeHtml(data.companyName)}${data.dates ? ` (${escapeHtml(data.dates)})` : ''}. Te toca revisarla.</p>
+     ${button(data.requestUrl, 'Revisar la solicitud')}`,
+    `Hola,\n\n${data.personName} pidió ${data.typeLabel.toLowerCase()} en ${data.companyName}${data.dates ? ` (${data.dates})` : ''}. Te toca revisarla.\n\nRevisar: ${data.requestUrl}`,
+  );
+  return { subject: `Solicitud por revisar: ${sanitizeHeader(data.typeLabel, 40)} de ${sanitizeHeader(data.personName, 60)}`, html, text };
+}
+
+export function leaveRequestDecided(data: { companyName: string; typeLabel: string; approved: boolean; note: string | null; requestUrl: string }): RenderedEmail {
+  const verdict = data.approved ? 'quedó aprobada' : 'no fue aprobada';
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p>Tu solicitud de <strong>${escapeHtml(data.typeLabel.toLowerCase())}</strong> en ${escapeHtml(data.companyName)} ${verdict}.</p>
+     ${data.note ? `<p><strong>Nota:</strong> ${escapeHtml(data.note)}</p>` : ''}
+     ${button(data.requestUrl, 'Ver la solicitud')}`,
+    `Hola,\n\nTu solicitud de ${data.typeLabel.toLowerCase()} en ${data.companyName} ${verdict}.${data.note ? `\nNota: ${data.note}` : ''}\n\nVer: ${data.requestUrl}`,
+  );
+  return { subject: `Tu solicitud de ${sanitizeHeader(data.typeLabel.toLowerCase(), 40)} ${verdict} — ${sanitizeHeader(data.companyName, 60)}`, html, text };
+}
+
+export function companyAnnouncement(data: { companyName: string; kindLabel: string; title: string; excerpt: string; url: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>${escapeHtml(data.kindLabel)} de <strong>${escapeHtml(data.companyName)}</strong>:</p>
+     <p style="font-size:18px"><strong>${escapeHtml(data.title)}</strong></p>
+     <p>${escapeHtml(data.excerpt)}</p>
+     ${button(data.url, 'Leerlo completo')}`,
+    `${data.kindLabel} de ${data.companyName}:\n\n${data.title}\n\n${data.excerpt}\n\nLeerlo completo: ${data.url}`,
+  );
+  return { subject: `${sanitizeHeader(data.title, 100)} — ${sanitizeHeader(data.companyName, 60)}`, html, text };
+}
+
+export function alertsDigest(data: {
+  firstName?: string | null;
+  companyName: string;
+  items: { title: string; body?: string | null; url: string }[];
+  more: number;
+  alertsUrl: string;
+}): RenderedEmail {
+  const list = data.items
+    .map((i) => `<li style="margin:0 0 10px"><a href="${escapeHtml(i.url)}"><strong>${escapeHtml(i.title)}</strong></a>${i.body ? `<br>${escapeHtml(i.body)}` : ''}</li>`)
+    .join('');
+  const { html, text } = layout(
+    `<p>Hola${data.firstName ? ` ${escapeHtml(data.firstName)}` : ''},</p>
+     <p>Esto es lo nuevo para ti en <strong>${escapeHtml(data.companyName)}</strong>:</p>
+     <ul style="padding-left:18px">${list}</ul>
+     ${data.more ? `<p>Y ${data.more} más.</p>` : ''}
+     ${button(data.alertsUrl, 'Ver todas mis alertas')}`,
+    `Hola${data.firstName ? ` ${data.firstName}` : ''},\n\nEsto es lo nuevo para ti en ${data.companyName}:\n\n${data.items.map((i) => `- ${i.title}${i.body ? ` (${i.body})` : ''}\n  ${i.url}`).join('\n')}${data.more ? `\n\nY ${data.more} más.` : ''}\n\nVer todas: ${data.alertsUrl}`,
+  );
+  const n = data.items.length + data.more;
+  return { subject: `${n} ${n === 1 ? 'aviso nuevo' : 'avisos nuevos'} en ${sanitizeHeader(data.companyName, 60)} — 3R`, html, text };
+}
+
+export function quoteSent(data: { companyName: string; clientName: string; code: string; title: string; total: string; validUntil: string | null; quoteUrl: string; senderName: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Hola ${escapeHtml(data.clientName)},</p>
+     <p><strong>${escapeHtml(data.companyName)}</strong> te envió la cotización <strong>${escapeHtml(data.code)}: ${escapeHtml(data.title)}</strong> por <strong>${escapeHtml(data.total)}</strong>${data.validUntil ? `, válida hasta el ${escapeHtml(data.validUntil)}` : ''}.</p>
+     <p>En el enlace la ves completa, la descargas en PDF y la aceptas, la rechazas o pides cambios.</p>
+     ${button(data.quoteUrl, 'Ver la cotización')}
+     <p style="color:#6b7280;font-size:13px">Te la envía ${escapeHtml(data.senderName)}. Si respondes este correo, le llega a esa persona.</p>`,
+    `Hola ${data.clientName},\n\n${data.companyName} te envió la cotización ${data.code}: ${data.title} por ${data.total}${data.validUntil ? `, válida hasta el ${data.validUntil}` : ''}.\n\nVerla, descargarla o responder: ${data.quoteUrl}\n\nTe la envía ${data.senderName}.`,
+  );
+  return { subject: `Cotización ${sanitizeHeader(data.code, 20)} de ${sanitizeHeader(data.companyName, 60)}`, html, text };
+}
+
+export function quoteResponded(data: { code: string; clientName: string; verdict: string; responseName: string; message: string | null; quoteUrl: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p><strong>${escapeHtml(data.clientName)}</strong> ${escapeHtml(data.verdict)} la cotización <strong>${escapeHtml(data.code)}</strong> (respondió ${escapeHtml(data.responseName)}).</p>
+     ${data.message ? `<p><strong>Mensaje:</strong> ${escapeHtml(data.message)}</p>` : ''}
+     ${button(data.quoteUrl, 'Ver la cotización')}`,
+    `Hola,\n\n${data.clientName} ${data.verdict} la cotización ${data.code} (respondió ${data.responseName}).${data.message ? `\nMensaje: ${data.message}` : ''}\n\nVer: ${data.quoteUrl}`,
+  );
+  return { subject: `${sanitizeHeader(data.clientName, 60)} ${sanitizeHeader(data.verdict, 30)} la cotización ${sanitizeHeader(data.code, 20)}`, html, text };
+}
+
+export function invoiceIssued(data: { companyName: string; code: string; period: string; total: string; dueDate: string; items: { name: string; price: string }[]; billingUrl: string }): RenderedEmail {
+  const rows = data.items.map((i) => `<li>${escapeHtml(i.name)}: ${escapeHtml(i.price)}</li>`).join('');
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p>Ya está la factura <strong>${escapeHtml(data.code)}</strong> de <strong>${escapeHtml(data.companyName)}</strong> en 3R, por el periodo ${escapeHtml(data.period)}.</p>
+     <ul style="padding-left:18px">${rows}</ul>
+     <p><strong>Total: ${escapeHtml(data.total)}</strong>. Vence el ${escapeHtml(data.dueDate)}.</p>
+     ${button(data.billingUrl, 'Ver y pagar')}`,
+    `Hola,\n\nYa está la factura ${data.code} de ${data.companyName} en 3R, por el periodo ${data.period}.\n${data.items.map((i) => `- ${i.name}: ${i.price}`).join('\n')}\n\nTotal: ${data.total}. Vence el ${data.dueDate}.\n\nVer y pagar: ${data.billingUrl}`,
+  );
+  return { subject: `Factura ${sanitizeHeader(data.code, 20)} de 3R — ${sanitizeHeader(data.companyName, 60)}`, html, text };
+}
+
+export function adminInvoicePaid(data: { companyName: string; code: string; amount: string; method: string; adminUrl: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Pago recibido: factura <strong>${escapeHtml(data.code)}</strong> de <strong>${escapeHtml(data.companyName)}</strong> por ${escapeHtml(data.amount)} (${escapeHtml(data.method)}).</p>${button(data.adminUrl, 'Ver la empresa')}`,
+    `Pago recibido: factura ${data.code} de ${data.companyName} por ${data.amount} (${data.method}).\n${data.adminUrl}`,
+  );
+  return { subject: `Pago de la factura ${sanitizeHeader(data.code, 20)} — ${sanitizeHeader(data.companyName, 60)}`, html, text };
+}
+
 // ───────── al equipo (administrador) ─────────
 
 export function adminNewSignup(data: { email: string; firstName?: string | null }): RenderedEmail {
@@ -219,4 +350,48 @@ export function siteContactAutoReply(data: { siteName: string; name: string }): 
     `${greeting(data.name)}\n\nGracias por escribirle a ${data.siteName}. Ya recibimos tu mensaje y te van a responder pronto.\n\n(Aviso automático — puedes responder directo a este correo.)`,
   );
   return { subject: `Ya recibimos tu mensaje — ${sanitizeHeader(data.siteName, 60)}`, html, text };
+}
+
+/** Correo que manda una automatización de una empresa ("si pasa X, avisar por correo"). */
+export function automationEmail(data: { companyName: string; subject: string; body: string; url?: string | null }): RenderedEmail {
+  const paragraphs = data.body
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const { html, text } = layout(
+    `<p style="color:#6b7280;font-size:13px">Aviso automático de <strong>${escapeHtml(data.companyName)}</strong></p>
+     <p style="font-size:18px"><strong>${escapeHtml(data.subject)}</strong></p>
+     ${paragraphs.map((p) => `<p style="white-space:pre-wrap">${escapeHtml(p)}</p>`).join('')}
+     ${data.url ? button(data.url, 'Verlo en 3R') : ''}`,
+    `Aviso automático de ${data.companyName}\n\n${data.subject}\n\n${paragraphs.join('\n\n')}${data.url ? `\n\nVerlo en 3R: ${data.url}` : ''}`,
+  );
+  return { subject: `${sanitizeHeader(data.subject, 110)} — ${sanitizeHeader(data.companyName, 60)}`, html, text };
+}
+
+/** Campaña de marketing de una empresa a sus clientes (con enlace para darse de baja). */
+export function marketingEmail(data: { companyName: string; subject: string; body: string; unsubscribeUrl: string; companyLine?: string | null }): RenderedEmail {
+  const blocks = data.body
+    .replace(/\r/g, '')
+    .split(/\n\s*\n/)
+    .map((b) => b.trim())
+    .filter(Boolean);
+  const htmlBlocks = blocks
+    .map((b) => {
+      const lines = b.split('\n');
+      if (lines.every((l) => /^[-*•]\s+/.test(l))) return `<ul>${lines.map((l) => `<li>${escapeHtml(l.replace(/^[-*•]\s+/, ''))}</li>`).join('')}</ul>`;
+      if (/^#{1,3}\s+/.test(b)) return `<p style="font-size:17px"><strong>${escapeHtml(b.replace(/^#{1,3}\s+/, ''))}</strong></p>`;
+      return `<p style="white-space:pre-wrap">${escapeHtml(b)}</p>`;
+    })
+    .join('');
+  const footer = `Recibes este correo porque aceptaste recibir novedades de ${data.companyName}.${data.companyLine ? ` ${data.companyLine}.` : ''}`;
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:32px 16px;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#111827;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;border:1px solid #e5e7eb;">
+<tr><td style="padding:28px 32px 0"><span style="font-weight:800;font-size:19px;color:#111827;">${escapeHtml(data.companyName)}</span></td></tr>
+<tr><td style="padding:16px 32px 28px;font-size:15px;line-height:1.6;">${htmlBlocks}</td></tr>
+</table>
+<p style="max-width:560px;margin:16px auto 0;text-align:center;font-size:12px;color:#9ca3af;line-height:1.5">${escapeHtml(footer)}<br><a href="${escapeHtml(data.unsubscribeUrl)}" style="color:#6b7280">No quiero recibir más correos</a></p>
+</body></html>`;
+  const text = `${data.companyName}\n\n${blocks.map((b) => b.replace(/^#{1,3}\s+/, '')).join('\n\n')}\n\n—\n${footer}\nNo quiero recibir más correos: ${data.unsubscribeUrl}`;
+  return { subject: sanitizeHeader(data.subject, 150), html, text };
 }
