@@ -6,6 +6,7 @@ import { AdminModule } from './admin/admin.module.js';
 import { AuditModule } from './audit/audit.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { CompaniesModule } from './companies/companies.module.js';
+import { CrmModule } from './crm/crm.module.js';
 import { EmailModule } from './email/email.module.js';
 import { HealthController } from './health/health.controller.js';
 import { MediaModule } from './media/media.module.js';
@@ -43,6 +44,7 @@ import { UsersModule } from './users/users.module.js';
     PublishingModule,
     MediaModule,
     CompaniesModule,
+    CrmModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

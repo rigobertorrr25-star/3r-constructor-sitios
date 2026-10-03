@@ -49,7 +49,7 @@ export const MODULES: ModuleInfo[] = [
   { key: 'training', area: 'empresa', ready: false },
   { key: 'knowledge', area: 'empresa', ready: false },
   { key: 'inventory', area: 'empresa', ready: false },
-  { key: 'crm', area: 'clientes', ready: false },
+  { key: 'crm', area: 'clientes', ready: true },
   { key: 'quotes', area: 'clientes', ready: false },
   { key: 'marketing', area: 'clientes', ready: false },
   { key: 'whatsapp', area: 'clientes', ready: false },

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { CompanyTabs } from '@/components/company-tabs';
 import { Alert } from '@/components/shop';
-import { ROLE_LABEL, atLeast } from '@/lib/companies';
+import { MODULE_INFO, MODULE_ROUTE, ROLE_LABEL, atLeast } from '@/lib/companies';
 import { loadCompany } from './company';
 
 export default async function CompanyLayout({ children, params }: { children: ReactNode; params: Promise<{ id: string }> }) {
@@ -35,7 +35,13 @@ export default async function CompanyLayout({ children, params }: { children: Re
         </span>
       </div>
       <div className="mt-6">
-        <CompanyTabs companyId={company.id} canEdit={atLeast(company.me.role, 'admin')} />
+        <CompanyTabs
+          companyId={company.id}
+          canEdit={atLeast(company.me.role, 'admin')}
+          modules={company.modules
+            .filter((m) => m.enabled && MODULE_ROUTE[m.key])
+            .map((m) => ({ route: MODULE_ROUTE[m.key], label: MODULE_INFO[m.key]?.name ?? m.key }))}
+        />
       </div>
       <div className="mt-8">{children}</div>
     </>

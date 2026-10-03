@@ -218,6 +218,15 @@ Notas de seguridad para producción: el renovador de tokens del proxy comparte u
   `companies.requireMember(userId, companyId, rolMínimo)` y `companies.requireModule(companyId, 'clave')` (importar
   `CompaniesModule`); al terminarlo, poner `ready: true` en el catálogo.
 - Alguien de afuera recibe 404 (no sabe que la empresa existe). Una empresa suspendida no deja entrar a nadie.
+- En la web, cada módulo listo tiene su ruta en `MODULE_ROUTE` (`apps/web/lib/companies.ts`): aparece como pestaña y
+  como botón «Abrir» en el inicio de la empresa, y suma sus cifras al inicio.
+
+### Módulo CRM (`crm`)
+
+`/empresa/[id]/crm`: tablero con las 6 etapas (nuevo, contactado, cotización, negociación, ganado, perdido), búsqueda,
+cifras (negocios abiertos, valor en juego, ganado) y ficha de cada cliente con su historial (llamadas, WhatsApp,
+correos, reuniones, notas; los cambios de etapa se anotan solos). Cualquier miembro lo usa; solo un administrador borra
+clientes. El valor se escribe en pesos y se guarda en centavos. Tablas `crm_contacts` y `crm_activities`.
 
 ## Notas técnicas
 

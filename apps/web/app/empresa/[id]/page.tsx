@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { whatsappLink } from '@/components/whatsapp-button';
-import { AREA_LABEL, MODULE_INFO, atLeast, type ModuleArea } from '@/lib/companies';
+import { authedApi } from '@/lib/api';
+import type { CrmSummary } from '@/lib/crm';
+import { formatMoney } from '@/lib/orders';
+import { AREA_LABEL, MODULE_INFO, MODULE_ROUTE, atLeast, type ModuleArea } from '@/lib/companies';
 import { loadCompany } from './company';
 
 export const metadata: Metadata = { title: 'Mi empresa — 3R' };
@@ -13,18 +17,29 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
   if (!company) return null;
   const active = company.modules.filter((m) => m.enabled).length;
   const canAsk = atLeast(company.me.role, 'admin');
+  const enabled = (key: string) => company.modules.some((m) => m.key === key && m.enabled);
+  // Cifras de cada módulo activo (el tablero de la empresa crece con cada módulo).
+  const crm = enabled('crm') ? await authedApi<CrmSummary>(`/companies/${id}/crm/summary`).then((r) => (r.ok ? r.data : null)) : null;
+  const stats: [string, string][] = [
+    ['Personas', String(company.memberCount)],
+    ['Módulos activos', String(active)],
+    ...(crm
+      ? ([
+          ['Negocios abiertos', String(crm.openCount)],
+          ['Valor en juego', formatMoney(crm.openValueCents, 'COP')],
+        ] as [string, string][])
+      : []),
+  ];
 
   return (
     <div className="space-y-12">
-      <dl className="grid grid-cols-2 gap-4 sm:max-w-md">
-        <div className="rounded-[24px] border border-white/[0.08] bg-card p-5">
-          <dt className="text-[13px] text-muted-foreground">Personas</dt>
-          <dd className="mt-1 font-display text-[30px] font-bold text-foreground">{company.memberCount}</dd>
-        </div>
-        <div className="rounded-[24px] border border-white/[0.08] bg-card p-5">
-          <dt className="text-[13px] text-muted-foreground">Módulos activos</dt>
-          <dd className="mt-1 font-display text-[30px] font-bold text-foreground">{active}</dd>
-        </div>
+      <dl className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {stats.map(([label, value]) => (
+          <div key={label} className="rounded-[24px] border border-white/[0.08] bg-card p-5">
+            <dt className="text-[13px] text-muted-foreground">{label}</dt>
+            <dd className="mt-1 font-display text-[26px] font-bold tracking-tight text-foreground sm:text-[30px]">{value}</dd>
+          </div>
+        ))}
       </dl>
 
       {AREAS.map((area) => {
@@ -48,6 +63,14 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
                       ) : null}
                     </div>
                     <p className="mt-2 flex-1 text-[14px] leading-snug text-muted-foreground">{info.text}</p>
+                    {m.enabled && MODULE_ROUTE[m.key] ? (
+                      <Link
+                        href={`/empresa/${company.id}/${MODULE_ROUTE[m.key]}`}
+                        className="mt-4 inline-flex w-fit rounded-full bg-primary px-4 py-2 text-[13.5px] font-medium text-primary-foreground transition hover:shadow-[var(--shadow-glow)]"
+                      >
+                        Abrir
+                      </Link>
+                    ) : null}
                     {m.ready && !m.enabled && canAsk ? (
                       <a
                         href={whatsappLink(`Hola, quiero activar el módulo ${info.name} para ${company.name}`)}

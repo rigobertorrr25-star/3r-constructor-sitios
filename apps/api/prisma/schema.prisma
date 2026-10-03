@@ -582,9 +582,11 @@ model Company {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  members CompanyMember[]
-  modules CompanyModule[]
-  invites CompanyInvite[]
+  members       CompanyMember[]
+  modules       CompanyModule[]
+  invites       CompanyInvite[]
+  crmContacts   CrmContact[]
+  crmActivities CrmActivity[]
 
   @@map("companies")
 }
@@ -640,4 +642,53 @@ model CompanyInvite {
 
   @@index([companyId], map: "idx_company_invites_company_id")
   @@map("company_invites")
+}
+
+// ───────────────────────── MÓDULO: CRM ─────────────────────────
+
+model CrmContact {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId     String    @map("company_id") @db.Uuid
+  name          String    @db.VarChar(150)
+  // Empresa o negocio del contacto (si es un cliente empresarial).
+  organization  String?   @db.VarChar(150)
+  email         String?   @db.VarChar(255)
+  phone         String?   @db.VarChar(50)
+  // lead | contacted | quote | negotiation | won | lost (ver crm.constants.ts)
+  stage         String    @default("lead") @db.VarChar(20)
+  // Valor potencial del negocio, en centavos de COP.
+  valueCents    Int?      @map("value_cents")
+  // manual | web | whatsapp | referral | social | other
+  source        String    @default("manual") @db.VarChar(20)
+  notes         String?   @db.VarChar(4000)
+  // Responsable dentro de la empresa (miembro). Si sale de la empresa, queda sin responsable.
+  ownerMemberId String?   @map("owner_member_id") @db.Uuid
+  lastContactAt DateTime? @map("last_contact_at") @db.Timestamptz(6)
+  createdById   String?   @map("created_by_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  activities CrmActivity[]
+
+  @@index([companyId, stage], map: "idx_crm_contacts_company_stage")
+  @@map("crm_contacts")
+}
+
+model CrmActivity {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  contactId String   @map("contact_id") @db.Uuid
+  // Quién la registró (usuario). Null si ya no existe.
+  userId    String?  @map("user_id") @db.Uuid
+  // note | call | email | whatsapp | meeting | stage (cambio de etapa, automático)
+  kind      String   @db.VarChar(20)
+  body      String   @db.VarChar(4000)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contact CrmContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([contactId, createdAt], map: "idx_crm_activities_contact")
+  @@map("crm_activities")
 }
