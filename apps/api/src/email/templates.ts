@@ -224,6 +224,29 @@ export function alertsDigest(data: {
   return { subject: `${n} ${n === 1 ? 'aviso nuevo' : 'avisos nuevos'} en ${sanitizeHeader(data.companyName, 60)} — 3R`, html, text };
 }
 
+export function quoteSent(data: { companyName: string; clientName: string; code: string; title: string; total: string; validUntil: string | null; quoteUrl: string; senderName: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Hola ${escapeHtml(data.clientName)},</p>
+     <p><strong>${escapeHtml(data.companyName)}</strong> te envió la cotización <strong>${escapeHtml(data.code)}: ${escapeHtml(data.title)}</strong> por <strong>${escapeHtml(data.total)}</strong>${data.validUntil ? `, válida hasta el ${escapeHtml(data.validUntil)}` : ''}.</p>
+     <p>En el enlace la ves completa, la descargas en PDF y la aceptas, la rechazas o pides cambios.</p>
+     ${button(data.quoteUrl, 'Ver la cotización')}
+     <p style="color:#6b7280;font-size:13px">Te la envía ${escapeHtml(data.senderName)}. Si respondes este correo, le llega a esa persona.</p>`,
+    `Hola ${data.clientName},\n\n${data.companyName} te envió la cotización ${data.code}: ${data.title} por ${data.total}${data.validUntil ? `, válida hasta el ${data.validUntil}` : ''}.\n\nVerla, descargarla o responder: ${data.quoteUrl}\n\nTe la envía ${data.senderName}.`,
+  );
+  return { subject: `Cotización ${sanitizeHeader(data.code, 20)} de ${sanitizeHeader(data.companyName, 60)}`, html, text };
+}
+
+export function quoteResponded(data: { code: string; clientName: string; verdict: string; responseName: string; message: string | null; quoteUrl: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p><strong>${escapeHtml(data.clientName)}</strong> ${escapeHtml(data.verdict)} la cotización <strong>${escapeHtml(data.code)}</strong> (respondió ${escapeHtml(data.responseName)}).</p>
+     ${data.message ? `<p><strong>Mensaje:</strong> ${escapeHtml(data.message)}</p>` : ''}
+     ${button(data.quoteUrl, 'Ver la cotización')}`,
+    `Hola,\n\n${data.clientName} ${data.verdict} la cotización ${data.code} (respondió ${data.responseName}).${data.message ? `\nMensaje: ${data.message}` : ''}\n\nVer: ${data.quoteUrl}`,
+  );
+  return { subject: `${sanitizeHeader(data.clientName, 60)} ${sanitizeHeader(data.verdict, 30)} la cotización ${sanitizeHeader(data.code, 20)}`, html, text };
+}
+
 // ───────── al equipo (administrador) ─────────
 
 export function adminNewSignup(data: { email: string; firstName?: string | null }): RenderedEmail {

@@ -130,6 +130,22 @@ export class EmailService {
     );
   }
 
+  publicQuoteUrl(token: string) {
+    return `${this.webOrigin}/cotizacion/${encodeURIComponent(token)}`;
+  }
+
+  quoteUrl(companyId: string, quoteId: string) {
+    return `${this.webOrigin}/empresa/${companyId}/cotizaciones/${quoteId}`;
+  }
+
+  sendQuote(to: string, replyTo: string | undefined, data: { companyName: string; clientName: string; code: string; title: string; total: string; validUntil: string | null; quoteUrl: string; senderName: string }) {
+    return this.safeSend(to, templates.quoteSent(data), replyTo);
+  }
+
+  sendQuoteResponded(to: string, data: { code: string; clientName: string; verdict: string; responseName: string; message: string | null; quoteUrl: string }) {
+    return this.safeSend(to, templates.quoteResponded(data));
+  }
+
   // ───────── al equipo ─────────
 
   sendAdminNewSignup(data: { email: string; firstName?: string | null }) {

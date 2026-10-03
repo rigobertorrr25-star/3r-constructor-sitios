@@ -53,6 +53,14 @@ export default async function ContactPage({ params }: { params: Promise<{ id: st
               WhatsApp
             </a>
           ) : null}
+          {company.modules.some((m) => m.key === 'quotes' && m.enabled) ? (
+            <Link
+              href={`/empresa/${id}/cotizaciones/nueva?contacto=${contact.id}`}
+              className="rounded-full bg-primary px-4 py-2 text-[13.5px] font-medium text-primary-foreground transition hover:shadow-[var(--shadow-glow)]"
+            >
+              Nueva cotización
+            </Link>
+          ) : null}
           {contact.email ? (
             <a href={`mailto:${contact.email}`} className="rounded-full border border-white/[0.12] px-4 py-2 text-[13.5px] hover:bg-white/[0.06]">
               Correo

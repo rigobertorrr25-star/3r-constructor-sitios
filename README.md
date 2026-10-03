@@ -335,6 +335,19 @@ Campanita en el encabezado de la empresa y `/empresa/[id]/alertas` (tabla `notif
 - Después, un correo por persona con sus avisos nuevos sin leer de las últimas 24 horas (una sola vez cada aviso).
 - Abrir un aviso lo marca leído y lleva a lo que avisa; "Marcar todo como leído".
 
+### Módulo Cotizaciones (`quotes`)
+
+`/empresa/[id]/cotizaciones` (tablas `quotes` y `quote_items`, numeradas COT-1, COT-2… con `companies.quote_seq`).
+
+- Editor con ítems, descuento, IVA (0, 5 o 19 %) y vigencia; totales en vivo, iguales a los de la API (IVA sobre
+  subtotal − descuento, redondeado al peso). Valores en pesos, guardados como BIGINT.
+- Enviar genera un enlace nuevo (`/cotizacion/[token]`, solo se guarda el hash; el anterior deja de servir) y, si hay
+  correo, se lo manda al cliente con respuesta a quien la envió. También se puede copiar o mandar por WhatsApp.
+- El cliente, sin cuenta, la ve, descarga el PDF y la acepta, la rechaza o pide cambios (con mensaje). Vencida no se
+  acepta. Quien la hizo recibe alerta y correo. Para cambiarla, «Cambiarla» la pasa a borrador.
+- Con el CRM: se puede hacer desde la ficha del cliente; al enviarla, el cliente pasa a «Cotización»; al aceptarla, a
+  «Ganado»; todo queda en su historial. PDF tamaño carta con `pdf-lib`.
+
 ## Notas técnicas
 
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.

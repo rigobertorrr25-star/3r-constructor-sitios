@@ -581,6 +581,8 @@ model Company {
   status    String   @default("active") @db.VarChar(20)
   // Último número de ticket usado (los tickets se numeran por empresa: #1, #2…).
   ticketSeq Int      @default(0) @map("ticket_seq")
+  // Último número de cotización usado (COT-1, COT-2…).
+  quoteSeq  Int      @default(0) @map("quote_seq")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -597,6 +599,7 @@ model Company {
   documents        CompanyDocument[]
   calendarEvents   CalendarEvent[]
   notifications    Notification[]
+  quotes           Quote[]
 
   @@map("companies")
 }
@@ -685,6 +688,7 @@ model CrmContact {
 
   company    Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   activities CrmActivity[]
+  quotes     Quote[]
 
   @@index([companyId, stage], map: "idx_crm_contacts_company_stage")
   @@map("crm_contacts")
@@ -953,4 +957,64 @@ model Notification {
   @@unique([memberId, dedupeKey])
   @@index([memberId, createdAt], map: "idx_notifications_member")
   @@map("notifications")
+}
+
+// ───────────────────────── MÓDULO: COTIZACIONES ─────────────────────────
+
+// Cotización para un cliente. Se manda con un enlace (token) donde el cliente la acepta, la rechaza o pide cambios.
+model Quote {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId       String    @map("company_id") @db.Uuid
+  number          Int
+  // Cliente del CRM (opcional). Si se borra del CRM, la cotización queda con los datos copiados.
+  contactId       String?   @map("contact_id") @db.Uuid
+  clientName      String    @map("client_name") @db.VarChar(150)
+  clientCompany   String?   @map("client_company") @db.VarChar(150)
+  clientEmail     String?   @map("client_email") @db.VarChar(255)
+  clientPhone     String?   @map("client_phone") @db.VarChar(50)
+  title           String    @db.VarChar(150)
+  notes           String?   @db.VarChar(4000)
+  // Valores en pesos (sin centavos).
+  discount        BigInt    @default(0)
+  // Porcentaje de IVA: 0, 5 o 19.
+  taxRate         Int       @default(0) @map("tax_rate")
+  subtotal        BigInt    @default(0)
+  tax             BigInt    @default(0)
+  total           BigInt    @default(0)
+  validUntil      DateTime? @map("valid_until") @db.Date
+  // draft | sent | accepted | rejected | changes_requested
+  status          String    @default("draft") @db.VarChar(20)
+  // Solo el hash del token del enlace público.
+  tokenHash       String?   @unique @map("token_hash") @db.VarChar(64)
+  sentAt          DateTime? @map("sent_at") @db.Timestamptz(6)
+  viewedAt        DateTime? @map("viewed_at") @db.Timestamptz(6)
+  respondedAt     DateTime? @map("responded_at") @db.Timestamptz(6)
+  responseName    String?   @map("response_name") @db.VarChar(150)
+  responseMessage String?   @map("response_message") @db.VarChar(2000)
+  createdById     String?   @map("created_by_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contact CrmContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  items   QuoteItem[]
+
+  @@unique([companyId, number])
+  @@index([companyId, status], map: "idx_quotes_company_status")
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  quoteId     String @map("quote_id") @db.Uuid
+  position    Int
+  description String @db.VarChar(300)
+  quantity    Int
+  // Pesos por unidad.
+  unitPrice   BigInt @map("unit_price")
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId], map: "idx_quote_items_quote")
+  @@map("quote_items")
 }
