@@ -148,6 +148,27 @@ export function companyInvite(data: { companyName: string; inviterName: string; 
   return { subject: `Te invitaron a ${sanitizeHeader(data.companyName, 80)} — 3R`, html, text };
 }
 
+export function ticketAssigned(data: { companyName: string; number: number; title: string; priorityLabel: string; ticketUrl: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p>En <strong>${escapeHtml(data.companyName)}</strong> te asignaron el ticket <strong>#${data.number}: ${escapeHtml(data.title)}</strong> (prioridad ${escapeHtml(data.priorityLabel)}).</p>
+     ${button(data.ticketUrl, 'Ver el ticket')}`,
+    `Hola,\n\nEn ${data.companyName} te asignaron el ticket #${data.number}: ${data.title} (prioridad ${data.priorityLabel}).\n\nVer el ticket: ${data.ticketUrl}`,
+  );
+  return { subject: `Te asignaron el ticket #${data.number} — ${sanitizeHeader(data.companyName, 80)}`, html, text };
+}
+
+export function ticketResolved(data: { companyName: string; number: number; title: string; ticketUrl: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p>Tu ticket <strong>#${data.number}: ${escapeHtml(data.title)}</strong> en ${escapeHtml(data.companyName)} quedó resuelto.</p>
+     <p>Si todo está bien, ciérralo. Si no, ábrelo de nuevo y cuenta qué falta.</p>
+     ${button(data.ticketUrl, 'Ver el ticket')}`,
+    `Hola,\n\nTu ticket #${data.number}: ${data.title} en ${data.companyName} quedó resuelto.\nSi todo está bien, ciérralo. Si no, ábrelo de nuevo y cuenta qué falta.\n\nVer el ticket: ${data.ticketUrl}`,
+  );
+  return { subject: `Tu ticket #${data.number} quedó resuelto — ${sanitizeHeader(data.companyName, 80)}`, html, text };
+}
+
 // ───────── al equipo (administrador) ─────────
 
 export function adminNewSignup(data: { email: string; firstName?: string | null }): RenderedEmail {

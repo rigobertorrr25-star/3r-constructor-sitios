@@ -81,6 +81,18 @@ export class EmailService {
     return this.safeSend(to, templates.companyInvite({ companyName: data.companyName, inviterName: data.inviterName, roleLabel: data.roleLabel, inviteUrl }));
   }
 
+  ticketUrl(companyId: string, ticketId: string) {
+    return `${this.webOrigin}/empresa/${companyId}/tickets/${ticketId}`;
+  }
+
+  sendTicketAssigned(to: string, data: { companyName: string; number: number; title: string; priorityLabel: string; ticketUrl: string }) {
+    return this.safeSend(to, templates.ticketAssigned(data));
+  }
+
+  sendTicketResolved(to: string, data: { companyName: string; number: number; title: string; ticketUrl: string }) {
+    return this.safeSend(to, templates.ticketResolved(data));
+  }
+
   // ───────── al equipo ─────────
 
   sendAdminNewSignup(data: { email: string; firstName?: string | null }) {

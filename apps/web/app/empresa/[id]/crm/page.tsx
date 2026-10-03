@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { moveContactAction } from '@/app/empresa/crm-actions';
 import { NewContactPanel } from '@/components/crm-forms';
-import { whatsappLink } from '@/components/whatsapp-button';
+import { ModuleOff } from '@/components/module-off';
 import { authedApi } from '@/lib/api';
 import type { CompanyMember } from '@/lib/companies';
 import { CRM_STAGES, STAGE_HUE, STAGE_LABEL, type CrmContact, type CrmSummary } from '@/lib/crm';
@@ -20,20 +20,7 @@ export default async function CrmPage({ params, searchParams }: { params: Promis
   const { company } = await loadCompany(id);
   if (!company) return null;
   if (!company.modules.find((m) => m.key === 'crm')?.enabled) {
-    return (
-      <div className="max-w-xl rounded-[28px] border border-white/[0.08] bg-card p-6">
-        <h2 className="font-display text-[20px] font-semibold text-foreground">Tu empresa no tiene activo el CRM</h2>
-        <p className="mt-2 text-[15px] text-muted-foreground">Con el CRM llevas tus clientes, el embudo de ventas y el historial de cada uno.</p>
-        <a
-          href={whatsappLink(`Hola, quiero activar el CRM para ${company.name}`)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-5 inline-flex rounded-full bg-primary px-6 py-3 text-[14.875px] font-medium text-primary-foreground"
-        >
-          Activarlo por WhatsApp
-        </a>
-      </div>
-    );
+    return <ModuleOff companyName={company.name} name="CRM" text="Con el CRM llevas tus clientes, el embudo de ventas y el historial de cada uno." />;
   }
 
   const base = `/companies/${id}/crm`;

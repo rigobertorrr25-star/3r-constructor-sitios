@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { whatsappLink } from '@/components/whatsapp-button';
 import { authedApi } from '@/lib/api';
 import type { CrmSummary } from '@/lib/crm';
+import type { TicketSummary } from '@/lib/tickets';
 import { formatMoney } from '@/lib/orders';
 import { AREA_LABEL, MODULE_INFO, MODULE_ROUTE, atLeast, type ModuleArea } from '@/lib/companies';
 import { loadCompany } from './company';
@@ -19,7 +20,10 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
   const canAsk = atLeast(company.me.role, 'admin');
   const enabled = (key: string) => company.modules.some((m) => m.key === key && m.enabled);
   // Cifras de cada módulo activo (el tablero de la empresa crece con cada módulo).
-  const crm = enabled('crm') ? await authedApi<CrmSummary>(`/companies/${id}/crm/summary`).then((r) => (r.ok ? r.data : null)) : null;
+  const [crm, tickets] = await Promise.all([
+    enabled('crm') ? authedApi<CrmSummary>(`/companies/${id}/crm/summary`).then((r) => (r.ok ? r.data : null)) : null,
+    enabled('tickets') ? authedApi<TicketSummary>(`/companies/${id}/tickets/summary`).then((r) => (r.ok ? r.data : null)) : null,
+  ]);
   const stats: [string, string][] = [
     ['Personas', String(company.memberCount)],
     ['Módulos activos', String(active)],
@@ -27,6 +31,12 @@ export default async function CompanyHome({ params }: { params: Promise<{ id: st
       ? ([
           ['Negocios abiertos', String(crm.openCount)],
           ['Valor en juego', formatMoney(crm.openValueCents, 'COP')],
+        ] as [string, string][])
+      : []),
+    ...(tickets
+      ? ([
+          ['Tickets pendientes', String(tickets.active)],
+          ['Tickets urgentes', String(tickets.urgent)],
         ] as [string, string][])
       : []),
   ];

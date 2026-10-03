@@ -579,6 +579,8 @@ model Company {
   industry  String?  @db.VarChar(60)
   // active | suspended (suspendida: nadie entra, los datos se conservan)
   status    String   @default("active") @db.VarChar(20)
+  // Último número de ticket usado (los tickets se numeran por empresa: #1, #2…).
+  ticketSeq Int      @default(0) @map("ticket_seq")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -587,6 +589,8 @@ model Company {
   invites       CompanyInvite[]
   crmContacts   CrmContact[]
   crmActivities CrmActivity[]
+  tickets       Ticket[]
+  ticketEvents  TicketEvent[]
 
   @@map("companies")
 }
@@ -691,4 +695,54 @@ model CrmActivity {
 
   @@index([contactId, createdAt], map: "idx_crm_activities_contact")
   @@map("crm_activities")
+}
+
+// ───────────────────────── MÓDULO: TICKETS ─────────────────────────
+
+model Ticket {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId         String    @map("company_id") @db.Uuid
+  // Número visible dentro de la empresa (#1, #2…).
+  number            Int
+  title             String    @db.VarChar(150)
+  description       String    @db.VarChar(8000)
+  // support | hr | maintenance | admin | accounting | purchases | other (ver tickets.constants.ts)
+  category          String    @db.VarChar(20)
+  // low | medium | high | urgent
+  priority          String    @default("medium") @db.VarChar(10)
+  // open | assigned | in_progress | resolved | closed
+  status            String    @default("open") @db.VarChar(20)
+  // Quién lo pidió y quién lo atiende (miembros). Si salen de la empresa, quedan en null.
+  requesterMemberId String?   @map("requester_member_id") @db.Uuid
+  assigneeMemberId  String?   @map("assignee_member_id") @db.Uuid
+  resolvedAt        DateTime? @map("resolved_at") @db.Timestamptz(6)
+  closedAt          DateTime? @map("closed_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  events  TicketEvent[]
+
+  @@unique([companyId, number])
+  @@index([companyId, status], map: "idx_tickets_company_status")
+  @@map("tickets")
+}
+
+// Historial del ticket: comentarios y cambios (estado, responsable, prioridad), en orden.
+model TicketEvent {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  ticketId  String   @map("ticket_id") @db.Uuid
+  // Quién lo hizo (usuario). Null si ya no existe.
+  userId    String?  @map("user_id") @db.Uuid
+  // comment | status | assign | priority
+  kind      String   @db.VarChar(20)
+  body      String   @db.VarChar(4000)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  ticket  Ticket  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt], map: "idx_ticket_events_ticket")
+  @@map("ticket_events")
 }

@@ -228,6 +228,20 @@ cifras (negocios abiertos, valor en juego, ganado) y ficha de cada cliente con s
 correos, reuniones, notas; los cambios de etapa se anotan solos). Cualquier miembro lo usa; solo un administrador borra
 clientes. El valor se escribe en pesos y se guarda en centavos. Tablas `crm_contacts` y `crm_activities`.
 
+### Módulo Tickets (`tickets`)
+
+`/empresa/[id]/tickets`: solicitudes internas numeradas por empresa (#1, #2…; contador `companies.ticket_seq`), con
+área (soporte técnico, RR. HH., mantenimiento, administración, contabilidad, compras, otro), prioridad (baja, media,
+alta, urgente) y estado (abierto → asignado → en proceso → resuelto → cerrado).
+
+- Cualquier miembro crea tickets. Supervisor en adelante ve y atiende todos (asigna, cambia prioridad y área); los demás
+  ven solo los que pidieron o tienen a su cargo.
+- El responsable lo pasa a «en proceso» o «resuelto». Quien lo pidió lo cierra o lo reabre. Solo un administrador borra.
+- Asignar uno abierto lo pasa a «asignado»; reabrir uno con responsable lo deja «asignado».
+- Correos: al responsable cuando se lo asignan y a quien lo pidió cuando se resuelve (nunca a quien hizo el cambio).
+- Cada comentario y cambio queda en el historial (`ticket_events`). Cifras: pendientes, urgentes, sin responsable,
+  a mi cargo y tiempo promedio para resolver (últimos 30 días).
+
 ## Notas técnicas
 
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.
