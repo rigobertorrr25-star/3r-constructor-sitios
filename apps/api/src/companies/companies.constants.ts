@@ -34,7 +34,7 @@ export interface ModuleInfo {
  * el área y si ya está construido. Para lanzar un módulo: construirlo y poner `ready: true`.
  */
 export const MODULES: ModuleInfo[] = [
-  { key: 'web', area: 'web', ready: false },
+  { key: 'web', area: 'web', ready: true },
   { key: 'store', area: 'web', ready: true },
   { key: 'analytics', area: 'web', ready: false },
   { key: 'seo', area: 'web', ready: false },

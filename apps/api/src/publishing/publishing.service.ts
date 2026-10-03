@@ -140,9 +140,10 @@ export class PublishingService {
 
   // ───────── publicar ─────────
 
-  async publish(userId: string, siteId: string, ip?: string) {
+  /** `ownerCheck: false` solo desde la empresa vinculada (Constructor web), que ya revisó los permisos. */
+  async publish(userId: string, siteId: string, ip?: string, ownerCheck = true) {
     const site = await this.prisma.site.findFirst({
-      where: { id: siteId, userId },
+      where: { id: siteId, ...(ownerCheck ? { userId } : {}) },
       include: { pages: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] }, domains: { where: { type: 'subdomain' } } },
     });
     if (!site) throw new NotFoundException('Sitio no encontrado');
@@ -259,9 +260,9 @@ export class PublishingService {
 
   // ───────── estado ─────────
 
-  async status(userId: string, siteId: string) {
+  async status(userId: string, siteId: string, ownerCheck = true) {
     const site = await this.prisma.site.findFirst({
-      where: { id: siteId, userId },
+      where: { id: siteId, ...(ownerCheck ? { userId } : {}) },
       select: { status: true, domains: { select: { domain: true, type: true, expiresAt: true } }, pages: { select: { updatedAt: true } } },
     });
     if (!site) throw new NotFoundException('Sitio no encontrado');

@@ -424,6 +424,21 @@ Panel en `/empresa/[id]/tienda` (supervisor en adelante; los ajustes, administra
 - Sin pago en línea por ahora: el dinero debe llegar a la cuenta de cada negocio, no a la de 3R (se cobra por
   transferencia, Nequi o efectivo, según "Cómo te pagan").
 
+### Módulo Página web / Constructor web (`web`)
+
+`/empresa/[id]/pagina-web`. La empresa cambia **textos, fotos, botones y la dirección del mapa** de su página de 3R y
+la publica; el diseño (colores, secciones, tamaños) solo lo cambia el equipo de 3R en el editor (decisión de
+Rigoberto, 3 oct 2026).
+
+- El equipo de 3R vincula la página con la empresa en `/admin/empresas/[id]` → "Página web de la empresa"
+  (`companies.site_id`, una página por empresa). Las páginas siguen siendo de la cuenta de 3R que las armó.
+- Ven todos; cambian y publican los administradores de la empresa. Cada guardado es una versión nueva de la página
+  (el equipo de 3R puede volver atrás desde el editor). Si alguien guardó otra versión mientras tanto, avisa (409)
+  en vez de pisarla. Solo se tocan esos campos de nodos existentes; enlaces y fotos pasan por los mismos filtros
+  que usa la publicación.
+- Publicar usa la misma publicación de siempre (`PublishingService.publish` con la revisión de dueño apagada, porque
+  ya la hizo la empresa). Fotos: `POST …/web/images/presign` (PNG/JPG/WEBP) al almacenamiento público.
+
 ### Suscripciones (cobro de la plataforma)
 
 - **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir

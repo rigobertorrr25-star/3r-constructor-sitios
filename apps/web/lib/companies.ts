@@ -76,7 +76,7 @@ export const assignableBy = (actor: CompanyRole): CompanyRole[] =>
 export const outranks = (actor: CompanyRole, target: CompanyRole) => actor === 'owner' || RANK[actor] > RANK[target];
 
 /** Ruta dentro de /empresa/[id] de cada módulo ya construido. */
-export const MODULE_ROUTE: Record<string, string> = { crm: 'crm', tickets: 'tickets', employees: 'personal', requests: 'solicitudes', announcements: 'comunicados', documents: 'documentos', doc_generator: 'generador', calendar: 'calendario', alerts: 'alertas', quotes: 'cotizaciones', surveys: 'encuestas', training: 'capacitaciones', knowledge: 'conocimiento', inventory: 'inventario', store: 'tienda' };
+export const MODULE_ROUTE: Record<string, string> = { crm: 'crm', tickets: 'tickets', employees: 'personal', requests: 'solicitudes', announcements: 'comunicados', documents: 'documentos', doc_generator: 'generador', calendar: 'calendario', alerts: 'alertas', quotes: 'cotizaciones', surveys: 'encuestas', training: 'capacitaciones', knowledge: 'conocimiento', inventory: 'inventario', store: 'tienda', web: 'pagina-web' };
 
 export const AREA_LABEL: Record<ModuleArea, string> = {
   web: 'Web',
@@ -87,7 +87,7 @@ export const AREA_LABEL: Record<ModuleArea, string> = {
 };
 
 export const MODULE_INFO: Record<string, { name: string; text: string }> = {
-  web: { name: 'Página web', text: 'Edita tu página tú mismo: textos, fotos y secciones, con plantillas por tipo de negocio.' },
+  web: { name: 'Página web', text: 'Cambia tú mismo los textos, las fotos y los botones de tu página, y publícala con un botón.' },
   store: { name: 'Tienda en línea', text: 'Catálogo, carrito, cupones, pagos y envíos. También compra por WhatsApp.' },
   analytics: { name: 'Analítica web', text: 'Cuántas personas visitan tu página, desde dónde y qué miran.' },
   seo: { name: 'SEO', text: 'Revisa qué le falta a tu página para salir mejor en Google.' },

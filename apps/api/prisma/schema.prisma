@@ -101,6 +101,7 @@ model Site {
   tickets          SupportTicket[]
   order            Order?
   formSubmissions  FormSubmission[]
+  company          Company?
 
   @@unique([userId, slug])
   @@index([userId], map: "idx_sites_user_id")
@@ -585,6 +586,8 @@ model Company {
   quoteSeq  Int      @default(0) @map("quote_seq")
   // Enlace público del centro de ayuda (/ayuda/[token]). Vacío = apagado.
   helpToken String?  @unique @map("help_token") @db.VarChar(64)
+  // Página de 3R de la empresa: sus administradores cambian textos y fotos (módulo Constructor web).
+  siteId    String?  @unique @map("site_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -613,6 +616,7 @@ model Company {
   storeProducts    StoreProduct[]
   storeCoupons     StoreCoupon[]
   storeOrders      StoreOrder[]
+  site             Site?               @relation(fields: [siteId], references: [id], onDelete: SetNull)
 
   @@map("companies")
 }
