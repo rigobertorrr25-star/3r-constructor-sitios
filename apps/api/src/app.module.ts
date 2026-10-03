@@ -9,6 +9,7 @@ import { CompaniesModule } from './companies/companies.module.js';
 import { CrmModule } from './crm/crm.module.js';
 import { TicketsModule } from './tickets/tickets.module.js';
 import { EmployeesModule } from './employees/employees.module.js';
+import { RequestsModule } from './requests/requests.module.js';
 import { EmailModule } from './email/email.module.js';
 import { HealthController } from './health/health.controller.js';
 import { MediaModule } from './media/media.module.js';
@@ -49,6 +50,7 @@ import { UsersModule } from './users/users.module.js';
     CrmModule,
     TicketsModule,
     EmployeesModule,
+    RequestsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

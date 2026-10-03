@@ -592,6 +592,7 @@ model Company {
   tickets          Ticket[]
   ticketEvents     TicketEvent[]
   employeeProfiles EmployeeProfile[]
+  leaveRequests    LeaveRequest[]
 
   @@map("companies")
 }
@@ -610,9 +611,10 @@ model CompanyMember {
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  company Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  profile EmployeeProfile?
+  company       Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile       EmployeeProfile?
+  leaveRequests LeaveRequest[]
 
   @@unique([companyId, userId])
   @@index([userId], map: "idx_company_members_user_id")
@@ -785,4 +787,38 @@ model EmployeeProfile {
 
   @@index([companyId], map: "idx_employee_profiles_company")
   @@map("employee_profiles")
+}
+
+// ───────────────────────── MÓDULO: PERMISOS Y VACACIONES ─────────────────────────
+
+// Solicitud de un empleado: vacaciones, permiso, incapacidad, certificado u otra.
+// Flujo: pending (espera al supervisor) → supervisor_ok (espera a RR. HH.) → approved; o rejected / cancelled.
+model LeaveRequest {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String    @map("company_id") @db.Uuid
+  // Quien pide (miembro). Si sale de la empresa, la solicitud se borra con su ficha.
+  memberId       String    @map("member_id") @db.Uuid
+  // vacation | permission | sick_leave | certificate | other (ver requests.constants.ts)
+  type           String    @db.VarChar(20)
+  startDate      DateTime? @map("start_date") @db.Date
+  endDate        DateTime? @map("end_date") @db.Date
+  // Días sin contar domingos, calculados al crear.
+  days           Int       @default(0)
+  reason         String    @db.VarChar(2000)
+  status         String    @default("pending") @db.VarChar(20)
+  supervisorById String?   @map("supervisor_by_id") @db.Uuid
+  supervisorAt   DateTime? @map("supervisor_at") @db.Timestamptz(6)
+  supervisorNote String?   @map("supervisor_note") @db.VarChar(1000)
+  hrById         String?   @map("hr_by_id") @db.Uuid
+  hrAt           DateTime? @map("hr_at") @db.Timestamptz(6)
+  hrNote         String?   @map("hr_note") @db.VarChar(1000)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  member  CompanyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, status], map: "idx_leave_requests_company_status")
+  @@index([memberId], map: "idx_leave_requests_member")
+  @@map("leave_requests")
 }

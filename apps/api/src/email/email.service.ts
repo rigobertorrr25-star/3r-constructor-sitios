@@ -93,6 +93,18 @@ export class EmailService {
     return this.safeSend(to, templates.ticketResolved(data));
   }
 
+  requestUrl(companyId: string, requestId: string) {
+    return `${this.webOrigin}/empresa/${companyId}/solicitudes/${requestId}`;
+  }
+
+  sendLeaveRequestPending(to: string, data: { companyName: string; personName: string; typeLabel: string; dates: string; requestUrl: string }) {
+    return this.safeSend(to, templates.leaveRequestPending(data));
+  }
+
+  sendLeaveRequestDecided(to: string, data: { companyName: string; typeLabel: string; approved: boolean; note: string | null; requestUrl: string }) {
+    return this.safeSend(to, templates.leaveRequestDecided(data));
+  }
+
   // ───────── al equipo ─────────
 
   sendAdminNewSignup(data: { email: string; firstName?: string | null }) {

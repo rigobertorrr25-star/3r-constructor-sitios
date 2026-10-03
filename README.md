@@ -257,6 +257,18 @@ alta, urgente) y estado (abierto → asignado → en proceso → resuelto → ce
   y contratos que vencen en 30 días.
 - Cargo, área y fecha de ingreso siguen en `company_members` y se editan en Equipo.
 
+### Módulo Permisos y vacaciones (`requests`)
+
+`/empresa/[id]/solicitudes`: vacaciones, permisos, incapacidades, certificados laborales y otras solicitudes (tabla
+`leave_requests`).
+
+- Flujo: `pending` (espera al supervisor) → `supervisor_ok` (espera a RR. HH.) → `approved`; o `rejected` / `cancelled`.
+- Decide siempre alguien de mayor rango que quien pide: supervisor en adelante el primer paso, RR. HH. en adelante el
+  segundo. Si RR. HH. (o más) decide el primer paso, cierra los dos. Un certificado va directo a RR. HH.
+- Quien pide cancela mientras siga abierta. Los días se cuentan sin domingos (los festivos no se descuentan todavía).
+- Correos: a quienes les toca decidir cada paso (máximo 10) y al empleado cuando se aprueba o se rechaza, con la nota.
+- Cifras: por decidir, mis solicitudes abiertas, mis días de vacaciones aprobados este año y quién no está hoy.
+
 ## Notas técnicas
 
 - La API es **ESM** (Nest 12): los imports relativos llevan extensión `.js`.

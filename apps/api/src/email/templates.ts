@@ -169,6 +169,28 @@ export function ticketResolved(data: { companyName: string; number: number; titl
   return { subject: `Tu ticket #${data.number} quedó resuelto — ${sanitizeHeader(data.companyName, 80)}`, html, text };
 }
 
+export function leaveRequestPending(data: { companyName: string; personName: string; typeLabel: string; dates: string; requestUrl: string }): RenderedEmail {
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p><strong>${escapeHtml(data.personName)}</strong> pidió <strong>${escapeHtml(data.typeLabel.toLowerCase())}</strong> en ${escapeHtml(data.companyName)}${data.dates ? ` (${escapeHtml(data.dates)})` : ''}. Te toca revisarla.</p>
+     ${button(data.requestUrl, 'Revisar la solicitud')}`,
+    `Hola,\n\n${data.personName} pidió ${data.typeLabel.toLowerCase()} en ${data.companyName}${data.dates ? ` (${data.dates})` : ''}. Te toca revisarla.\n\nRevisar: ${data.requestUrl}`,
+  );
+  return { subject: `Solicitud por revisar: ${sanitizeHeader(data.typeLabel, 40)} de ${sanitizeHeader(data.personName, 60)}`, html, text };
+}
+
+export function leaveRequestDecided(data: { companyName: string; typeLabel: string; approved: boolean; note: string | null; requestUrl: string }): RenderedEmail {
+  const verdict = data.approved ? 'quedó aprobada' : 'no fue aprobada';
+  const { html, text } = layout(
+    `<p>Hola,</p>
+     <p>Tu solicitud de <strong>${escapeHtml(data.typeLabel.toLowerCase())}</strong> en ${escapeHtml(data.companyName)} ${verdict}.</p>
+     ${data.note ? `<p><strong>Nota:</strong> ${escapeHtml(data.note)}</p>` : ''}
+     ${button(data.requestUrl, 'Ver la solicitud')}`,
+    `Hola,\n\nTu solicitud de ${data.typeLabel.toLowerCase()} en ${data.companyName} ${verdict}.${data.note ? `\nNota: ${data.note}` : ''}\n\nVer: ${data.requestUrl}`,
+  );
+  return { subject: `Tu solicitud de ${sanitizeHeader(data.typeLabel.toLowerCase(), 40)} ${verdict} — ${sanitizeHeader(data.companyName, 60)}`, html, text };
+}
+
 // ───────── al equipo (administrador) ─────────
 
 export function adminNewSignup(data: { email: string; firstName?: string | null }): RenderedEmail {
