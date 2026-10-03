@@ -16,6 +16,10 @@ const contactSelect = {
   notes: true,
   ownerMemberId: true,
   lastContactAt: true,
+  marketingOptIn: true,
+  marketingOptInAt: true,
+  unsubscribedAt: true,
+  tags: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -24,6 +28,8 @@ const contactSelect = {
 const clean = (v: string | undefined) => (v === undefined ? undefined : v || null);
 const cents = (pesos: number | null | undefined) => (pesos === undefined ? undefined : pesos === null ? null : BigInt(pesos) * 100n);
 /** El valor se guarda como BIGINT (negocios grandes) y sale como número. */
+/** Etiquetas en minúsculas, sin repetir. */
+const tagsOf = (t: string[] | undefined) => (t === undefined ? undefined : [...new Set(t.map((x) => x.trim().toLowerCase()).filter(Boolean))]);
 const out = <T extends { valueCents: bigint | null }>(c: T) => ({ ...c, valueCents: c.valueCents === null ? null : Number(c.valueCents) });
 
 @Injectable()
@@ -104,6 +110,9 @@ export class CrmService {
         valueCents: cents(dto.value) ?? null,
         notes: clean(dto.notes),
         ownerMemberId: dto.ownerMemberId || null,
+        marketingOptIn: dto.marketingOptIn ?? false,
+        marketingOptInAt: dto.marketingOptIn ? new Date() : null,
+        tags: tagsOf(dto.tags) ?? [],
         createdById: userId,
       },
       select: contactSelect,
@@ -134,7 +143,7 @@ export class CrmService {
 
   async update(userId: string, companyId: string, contactId: string, dto: UpdateContactDto) {
     await this.access(userId, companyId);
-    const current = await this.prisma.crmContact.findFirst({ where: { id: contactId, companyId }, select: { id: true, stage: true } });
+    const current = await this.prisma.crmContact.findFirst({ where: { id: contactId, companyId }, select: { id: true, stage: true, marketingOptIn: true } });
     if (!current) throw new NotFoundException('Cliente no encontrado');
     if (dto.ownerMemberId !== undefined) await this.checkOwner(companyId, dto.ownerMemberId);
 
@@ -152,6 +161,13 @@ export class CrmService {
           valueCents: cents(dto.value),
           notes: clean(dto.notes),
           ownerMemberId: dto.ownerMemberId === undefined ? undefined : dto.ownerMemberId || null,
+          tags: tagsOf(dto.tags),
+          // Marcar que aceptó vuelve a dejarlo suscrito (con la fecha de hoy).
+          ...(dto.marketingOptIn === undefined || dto.marketingOptIn === current.marketingOptIn
+            ? {}
+            : dto.marketingOptIn
+              ? { marketingOptIn: true, marketingOptInAt: new Date(), unsubscribedAt: null }
+              : { marketingOptIn: false }),
         },
         select: contactSelect,
       }),

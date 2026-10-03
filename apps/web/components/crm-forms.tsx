@@ -4,12 +4,13 @@ import { useActionState, useState } from 'react';
 import { addActivityAction, createContactAction, updateContactAction } from '@/app/empresa/crm-actions';
 import { ACTIVITY_LABEL, CRM_STAGES, SOURCE_LABEL, STAGE_LABEL, type CrmContact } from '@/lib/crm';
 import { formKey } from './form-key';
-import { Field, SelectField, TextAreaField } from './field';
+import { CheckField, Field, SelectField, TextAreaField } from './field';
 import { Alert } from './shop';
 import { SubmitButton } from './submit-button';
 
 type MemberOption = { id: string; name: string };
 
+const day = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Bogota' });
 const pesos = (cents: number | null | undefined) => (cents == null ? '' : new Intl.NumberFormat('es-CO').format(Math.round(cents / 100)));
 
 /** Nuevo cliente (sin `contact`) o editar uno. */
@@ -58,6 +59,25 @@ export function ContactForm({ companyId, contact, members }: { companyId: string
         />
       </div>
       <TextAreaField label="Notas" name="notes" rows={3} maxLength={4000} defaultValue={v?.notes ?? contact?.notes ?? ''} />
+      <Field
+        label="Etiquetas (opcional)"
+        name="tags"
+        maxLength={400}
+        defaultValue={v?.tags ?? contact?.tags.join(', ') ?? ''}
+        placeholder="vip, mayorista"
+        hint="Separadas por comas. Sirven para mandar campañas a un grupo."
+      />
+      <input type="hidden" name="marketingField" value="1" />
+      <CheckField
+        name="marketingOptIn"
+        label="Aceptó recibir promociones por correo"
+        defaultChecked={v ? v.marketingOptIn === 'on' : (contact?.marketingOptIn ?? false)}
+        hint={
+          contact?.unsubscribedAt && !contact.marketingOptIn
+            ? `Se dio de baja el ${day.format(new Date(contact.unsubscribedAt))}. Márcalo solo si te volvió a dar permiso.`
+            : 'Márcalo solo si la persona te dio permiso. Sin esto no le llegan las campañas de Marketing.'
+        }
+      />
       {state?.error ? <Alert>{state.error}</Alert> : null}
       {state?.ok ? <Alert tone="ok">Cambios guardados.</Alert> : null}
       <SubmitButton pendingText="Guardando…">{contact ? 'Guardar cambios' : 'Guardar cliente'}</SubmitButton>

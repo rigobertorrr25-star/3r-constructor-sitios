@@ -367,3 +367,31 @@ export function automationEmail(data: { companyName: string; subject: string; bo
   );
   return { subject: `${sanitizeHeader(data.subject, 110)} — ${sanitizeHeader(data.companyName, 60)}`, html, text };
 }
+
+/** Campaña de marketing de una empresa a sus clientes (con enlace para darse de baja). */
+export function marketingEmail(data: { companyName: string; subject: string; body: string; unsubscribeUrl: string; companyLine?: string | null }): RenderedEmail {
+  const blocks = data.body
+    .replace(/\r/g, '')
+    .split(/\n\s*\n/)
+    .map((b) => b.trim())
+    .filter(Boolean);
+  const htmlBlocks = blocks
+    .map((b) => {
+      const lines = b.split('\n');
+      if (lines.every((l) => /^[-*•]\s+/.test(l))) return `<ul>${lines.map((l) => `<li>${escapeHtml(l.replace(/^[-*•]\s+/, ''))}</li>`).join('')}</ul>`;
+      if (/^#{1,3}\s+/.test(b)) return `<p style="font-size:17px"><strong>${escapeHtml(b.replace(/^#{1,3}\s+/, ''))}</strong></p>`;
+      return `<p style="white-space:pre-wrap">${escapeHtml(b)}</p>`;
+    })
+    .join('');
+  const footer = `Recibes este correo porque aceptaste recibir novedades de ${data.companyName}.${data.companyLine ? ` ${data.companyLine}.` : ''}`;
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:32px 16px;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#111827;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;border:1px solid #e5e7eb;">
+<tr><td style="padding:28px 32px 0"><span style="font-weight:800;font-size:19px;color:#111827;">${escapeHtml(data.companyName)}</span></td></tr>
+<tr><td style="padding:16px 32px 28px;font-size:15px;line-height:1.6;">${htmlBlocks}</td></tr>
+</table>
+<p style="max-width:560px;margin:16px auto 0;text-align:center;font-size:12px;color:#9ca3af;line-height:1.5">${escapeHtml(footer)}<br><a href="${escapeHtml(data.unsubscribeUrl)}" style="color:#6b7280">No quiero recibir más correos</a></p>
+</body></html>`;
+  const text = `${data.companyName}\n\n${blocks.map((b) => b.replace(/^#{1,3}\s+/, '')).join('\n\n')}\n\n—\n${footer}\nNo quiero recibir más correos: ${data.unsubscribeUrl}`;
+  return { subject: sanitizeHeader(data.subject, 150), html, text };
+}

@@ -24,6 +24,7 @@ import { CompanyWebModule } from './company-web/company-web.module.js';
 import { AnalyticsModule } from './analytics/analytics.module.js';
 import { SeoModule } from './seo/seo.module.js';
 import { AutomationsModule } from './automations/automations.module.js';
+import { MarketingModule } from './marketing/marketing.module.js';
 import { KnowledgeModule } from './knowledge/knowledge.module.js';
 import { TrainingModule } from './training/training.module.js';
 import { EmailModule } from './email/email.module.js';
@@ -83,6 +84,7 @@ import { UsersModule } from './users/users.module.js';
     AnalyticsModule,
     SeoModule,
     AutomationsModule,
+    MarketingModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

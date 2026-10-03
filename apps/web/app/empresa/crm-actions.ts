@@ -25,6 +25,16 @@ const contactBody = (formData: FormData) => ({
   value: parsePesos(text(formData, 'value')),
   notes: text(formData, 'notes'),
   ownerMemberId: text(formData, 'ownerMemberId') || null,
+  ...(formData.has('marketingField')
+    ? {
+        marketingOptIn: formData.get('marketingOptIn') === 'on',
+        tags: text(formData, 'tags')
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+          .slice(0, 20),
+      }
+    : {}),
 });
 
 export async function createContactAction(_prev: CompanyFormState, formData: FormData): Promise<CompanyFormState> {

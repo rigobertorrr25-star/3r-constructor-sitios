@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsEmail, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength, ValidateIf } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsEmail, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength, ValidateIf } from 'class-validator';
 import { CRM_ACTIVITY_KINDS, CRM_SOURCES, CRM_STAGES } from '../crm.constants.js';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
@@ -15,6 +15,9 @@ export class CreateContactDto {
   @IsOptional() @Type(() => Number) @IsInt({ message: 'El valor va en pesos, sin decimales' }) @Min(0) @Max(100_000_000_000) value?: number;
   @IsOptional() @Transform(trim) @IsString() @MaxLength(4000) notes?: string;
   @IsOptional() @ValidateIf((_, v) => v !== null && v !== '') @IsUUID() ownerMemberId?: string | null;
+  /** Aceptó recibir promociones (Ley 1581). */
+  @IsOptional() @IsBoolean() marketingOptIn?: boolean;
+  @IsOptional() @IsArray() @ArrayMaxSize(20) @IsString({ each: true }) @MaxLength(30, { each: true, message: 'Cada etiqueta puede tener hasta 30 letras' }) tags?: string[];
 }
 
 export class UpdateContactDto {
@@ -27,6 +30,9 @@ export class UpdateContactDto {
   @IsOptional() @ValidateIf((_, v) => v !== null) @Type(() => Number) @IsInt({ message: 'El valor va en pesos, sin decimales' }) @Min(0) @Max(100_000_000_000) value?: number | null;
   @IsOptional() @Transform(trim) @IsString() @MaxLength(4000) notes?: string;
   @IsOptional() @ValidateIf((_, v) => v !== null && v !== '') @IsUUID() ownerMemberId?: string | null;
+  /** Aceptó recibir promociones (Ley 1581). */
+  @IsOptional() @IsBoolean() marketingOptIn?: boolean;
+  @IsOptional() @IsArray() @ArrayMaxSize(20) @IsString({ each: true }) @MaxLength(30, { each: true, message: 'Cada etiqueta puede tener hasta 30 letras' }) tags?: string[];
 }
 
 export class CreateActivityDto {

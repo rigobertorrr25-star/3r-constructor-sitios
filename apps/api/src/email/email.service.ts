@@ -202,4 +202,26 @@ export class EmailService {
     const url = data.path ? `${this.webOrigin}${data.path}` : null;
     return this.safeSend(to, templates.automationEmail({ ...data, url }));
   }
+
+  unsubscribeUrl(token: string) {
+    return `${this.webOrigin}/baja/${token}`;
+  }
+
+  /** Correo de campaña. A diferencia de los demás, dice si se pudo mandar (para el informe de la campaña). */
+  async sendMarketing(to: string, data: { companyName: string; subject: string; body: string; token: string; replyTo?: string | null; companyLine?: string | null }) {
+    const unsubscribeUrl = this.unsubscribeUrl(data.token);
+    try {
+      await this.sender.send({
+        to,
+        ...templates.marketingEmail({ companyName: data.companyName, subject: data.subject, body: data.body, unsubscribeUrl, companyLine: data.companyLine }),
+        fromName: data.companyName,
+        replyTo: data.replyTo ?? undefined,
+        headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>` },
+      });
+      return true;
+    } catch (error) {
+      this.logger.error(`No se pudo enviar la campaña a ${to}: ${(error as Error).message}`);
+      return false;
+    }
+  }
 }

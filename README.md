@@ -478,6 +478,22 @@ descripción en la misma pantalla (con vista previa como en Google), textos y fo
   error hacia quien lo llamó; cada corrida queda en el historial con el resultado de cada acción. Hay recetas para
   empezar (pedido grande, formulario al CRM, cotización aceptada, reponer inventario).
 
+### Módulo Marketing (`marketing`)
+
+`/empresa/[id]/marketing` (tablas `campaigns` y `campaign_recipients`). Correos con promociones a los contactos del CRM.
+
+- **Permiso (Ley 1581)**: solo reciben los contactos con correo que tienen marcado "Aceptó recibir promociones" en el
+  CRM (se guarda la fecha) y no se han dado de baja. Cada correo trae "No quiero recibir más correos" (`/baja/[token]`)
+  y la cabecera `List-Unsubscribe`. Darse de baja quita el permiso a todos los contactos de la empresa con ese correo.
+- **Grupos**: por etapa del CRM, por origen y por etiquetas (`crm_contacts.tags`, en minúscula). La pantalla muestra
+  cuántos recibirían el correo y una vista previa; "Enviarme una prueba" lo manda solo a quien lo prepara.
+- **Envío**: supervisores preparan borradores; solo dueño y administradores envían. Sale de `RESEND_FROM` con el nombre
+  de la empresa como remitente y "responder a" el correo de quien envía. Se manda en segundo plano, uno cada 600 ms
+  (`MARKETING_SEND_DELAY_MS`), con tope de 300 correos por empresa al día; si el servidor se reinicia, sigue con los
+  pendientes. Una campaña enviada no se edita ni se borra (su enlace de baja debe seguir sirviendo).
+- **Enlace para suscribirse** (`/suscribirse/[token]`, lo crea un administrador): el cliente deja nombre y correo y
+  acepta; queda en el CRM con origen "Página web" y el permiso marcado.
+
 ### Suscripciones (cobro de la plataforma)
 
 - **Precios** (`/admin/modulos`, tabla `module_prices`): precio mensual en pesos de cada módulo. Vacío = por definir

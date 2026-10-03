@@ -44,6 +44,10 @@ export type CrmContact = {
   source: string;
   notes: string | null;
   ownerMemberId: string | null;
+  marketingOptIn: boolean;
+  marketingOptInAt: string | null;
+  unsubscribedAt: string | null;
+  tags: string[];
   lastContactAt: string | null;
   createdAt: string;
   updatedAt: string;
