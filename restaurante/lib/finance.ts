@@ -1,5 +1,6 @@
 // Módulo 07: gastos y estado de resultados (lo que entró, lo que costó y lo que quedó).
 // Las fechas son días del negocio (hora de Colombia por defecto), no del servidor.
+import { formatCop } from './format';
 import { query, transaction } from './db';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 
@@ -16,7 +17,7 @@ export const EXPENSE_LABEL: Record<ExpenseCategory, string> = {
   other: 'Otros',
 };
 
-const money = (n: number) => `$${Math.round(n).toLocaleString('es-CO')}`;
+const money = (n: number) => formatCop(n);
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 function requireText(value: string, label: string, min: number, max: number) {

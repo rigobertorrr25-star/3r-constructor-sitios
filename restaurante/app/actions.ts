@@ -16,6 +16,7 @@ import {
 } from '@/lib/auth';
 import { homeOf } from '@/lib/permissions';
 import { moveTicket } from '@/lib/kds';
+import { getBrief } from '@/lib/brief';
 import { createReservation, requestReservation, seatReservation, updatePublicSettings, updateReservation } from '@/lib/reservations';
 import { addExpense, voidExpense } from '@/lib/finance';
 import { registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
@@ -605,4 +606,17 @@ export async function requestReservationAction(_prev: FormState, formData: FormD
   } catch (error) {
     return fail(messageOf(error), formData);
   }
+}
+
+// ───────── resumen con IA ─────────
+
+/** Vuelve a escribir el resumen del día (por ejemplo, al cerrar la noche con todas las ventas). */
+export async function refreshBriefAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  if (!allow(`brief:${staff.businessId}`, 10, 60 * 60_000)) return { error: 'Ya se reescribió varias veces en la última hora. Intenta más tarde.' };
+  return run(
+    formData,
+    () => getBrief(staff, { day: text(formData, 'day'), locationId: optionalId(formData, 'scope'), timeZone: staff.timezone, refresh: true }),
+    ['/app/tablero'],
+  );
 }

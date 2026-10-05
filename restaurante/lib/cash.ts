@@ -1,5 +1,6 @@
 // Módulo 04: caja y pagos. Turnos de caja, cobro en partes y con varios medios, propina, descuentos y cierre de caja.
 // Nada se borra: un pago equivocado se reversa con motivo, un descuento se anula, una salida de plata se registra.
+import { formatCop } from './format';
 import { pooled, query, transaction, type Db } from './db';
 import { can } from './permissions';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
@@ -8,7 +9,7 @@ export const METHODS = ['cash', 'card', 'transfer'] as const;
 export type Method = (typeof METHODS)[number];
 export const METHOD_LABEL: Record<Method, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia' };
 
-const money = (n: number) => `$${Math.round(n).toLocaleString('es-CO')}`;
+const money = (n: number) => formatCop(n);
 
 function requireAmount(value: number, label: string, { allowZero = false } = {}) {
   if (!Number.isInteger(value) || value < (allowZero ? 0 : 1) || value > 1_000_000_000) throw new AppError('INVALID', `${label}: escribe un valor en pesos.`);

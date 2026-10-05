@@ -96,3 +96,28 @@ describe('módulo 08: tablero del dueño', { skip: url ? false : 'sin TEST_DATAB
     assert.deepEqual(d.lowStock.map((l) => l.name), ['Whisky']);
   });
 });
+
+describe('módulo 12: resumen del día', { skip: url ? false : 'sin TEST_DATABASE_URL' }, () => {
+  it('sin llave de IA arma el resumen con plantilla y lo guarda', async () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    process.env.DATABASE_URL = url;
+    const store = await import('../lib/store');
+    const brief = await import('../lib/brief');
+    const fin = await import('../lib/finance');
+    const db = await import('../lib/db');
+    const stamp = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
+    const a = await store.createBusiness({ name: `Prueba ${stamp} Resumen`, locationName: 'Centro', ownerName: 'Dueña', ownerPin: '2580' });
+    const r = await store.loginStaff({ slug: a.slug, code: '0001', pin: '2580' });
+    if (r.kind !== 'ok') throw new Error('sin sesión');
+    const owner = (await store.getStaffSession(r.staffId, r.locationId, r.epoch))!;
+    const day = fin.todayIn('America/Bogota');
+    const first = await brief.getBrief(owner, { day, locationId: null, timeZone: 'America/Bogota' });
+    assert.equal(first.source, 'plantilla');
+    assert.equal(first.cached, false);
+    assert.match(first.text, /todavía no hay ventas/);
+    const again = await brief.getBrief(owner, { day, locationId: null, timeZone: 'America/Bogota' });
+    assert.equal(again.cached, true);
+    await store.purgeBusiness(a.businessId);
+    await db.closePool();
+  });
+});

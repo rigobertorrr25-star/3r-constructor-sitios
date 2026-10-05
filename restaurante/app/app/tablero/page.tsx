@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
+import { BriefCard, BriefSkeleton } from '@/components/brief-card';
 import { requireStaff } from '@/lib/auth';
 import { getDashboard, isValidScope, type Level } from '@/lib/dashboard';
 import { todayIn } from '@/lib/finance';
@@ -58,6 +60,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             ))
           : null}
       </div>
+
+      {range.from === range.to ? (
+        <Suspense fallback={<BriefSkeleton />}>
+          <BriefCard staff={staff} day={range.from} scope={sede} />
+        </Suspense>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Ventas" value={formatCop(st.sales)} hint={`${st.tables} mesas cobradas · ticket ${formatCop(st.averageTicket)}`} accent="#5ee0a0" />
@@ -170,7 +178,7 @@ function Kpi({ label, value, hint, accent }: { label: string; value: string; hin
   return (
     <div className="rounded-[22px] border border-white/[0.08] bg-card p-4" style={{ boxShadow: `inset 3px 0 0 ${accent}` }}>
       <p className="text-[13px] text-muted-foreground">{label}</p>
-      <p className="mt-1 font-display text-[23px] font-bold">{value}</p>
+      <p className="mt-1 whitespace-nowrap font-display text-[19px] font-bold sm:text-[23px]">{value}</p>
       {hint ? <p className="mt-0.5 text-[12.5px] text-muted-foreground">{hint}</p> : null}
     </div>
   );

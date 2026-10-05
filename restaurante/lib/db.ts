@@ -357,6 +357,21 @@ CREATE TABLE IF NOT EXISTS reservations (
 );
 CREATE INDEX IF NOT EXISTS idx_reservations_location_start ON reservations (location_id, starts_at);
 
+-- ───────── módulo 12: resumen diario con IA ─────────
+
+-- Un resumen por negocio, alcance (sede o todas) y día. Se guarda para no pedirlo a la IA cada vez que se abre.
+CREATE TABLE IF NOT EXISTS daily_briefs (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  scope       VARCHAR(40) NOT NULL,
+  day         DATE NOT NULL,
+  text        TEXT NOT NULL,
+  source      VARCHAR(40) NOT NULL,
+  created_by  UUID REFERENCES staff(id),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (business_id, scope, day)
+);
+
 -- Rastro de todo lo importante: quién hizo qué, cuándo y por qué.
 CREATE TABLE IF NOT EXISTS audit_events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -4,7 +4,7 @@ import { query } from './db';
 import { getStatement, type Statement } from './finance';
 import { lowStock } from './inventory';
 import { requirePermission, isUuid, type Actor } from './store';
-import { LONG_TABLE_MINUTES } from './format';
+import { LONG_TABLE_MINUTES, formatCop } from './format';
 
 export type Level = 'ok' | 'watch' | 'alert';
 
@@ -30,7 +30,7 @@ export type Dashboard = {
   score: number;
 };
 
-const money = (n: number) => `$${Math.round(n).toLocaleString('es-CO')}`;
+const money = (n: number) => formatCop(n);
 
 /** Nivel según dos umbrales (desde cuánto mirar y desde cuánto alarmarse). */
 export const levelOf = (value: number, watch: number, alert: number): Level => (value >= alert ? 'alert' : value >= watch ? 'watch' : 'ok');

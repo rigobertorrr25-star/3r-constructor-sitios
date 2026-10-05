@@ -1,6 +1,7 @@
 // Módulos 05 y 06: inventario por sede, recetas y control de botellas.
 // La existencia de cada insumo es la suma de sus movimientos (compras, ventas, mermas, conteos). Nada se borra:
 // un error se corrige con otro movimiento. Cada venta descuenta sola lo de la receta.
+import { formatCop } from './format';
 import { query, transaction, type Db } from './db';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 
@@ -17,7 +18,7 @@ export const MOVEMENT_LABEL: Record<string, string> = {
   adjust: 'Ajuste',
 };
 
-const money = (n: number) => `$${Math.round(n).toLocaleString('es-CO')}`;
+const money = (n: number) => formatCop(n);
 const qty = (n: number, unit: string) => `${Number(n.toFixed(3)).toLocaleString('es-CO')} ${unit}`;
 
 function requireText(value: string, label: string, min: number, max: number) {

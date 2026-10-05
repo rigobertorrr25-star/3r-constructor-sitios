@@ -22,7 +22,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 | 09 | Sin internet: pedidos y cobros quedan en el aparato y se reintentan solos, sin duplicarse | Listo |
 | 10 | Facturación electrónica DIAN | Pendiente (falta elegir proveedor) |
 | 11 | Reservas (del equipo y en línea), mesas reservadas en el plano, carta pública y QR | Listo |
-| 12 | Resumen diario con IA | Pendiente |
+| 12 | Resumen del día con IA (Claude) en el tablero, con plantilla si no hay llave | Listo (falta la llave) |
 | 13 | Servicios y citas (barberías) | Pendiente |
 
 ## Cómo funciona (módulo 01)
@@ -181,6 +181,20 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   público y el interruptor de reservas en línea.
 - Los clientes quedan guardados por teléfono (se usarán también para las facturas).
 
+## Cómo funciona (módulo 12: resumen del día con IA)
+
+- Arriba del tablero, **"¿Qué pasó?"**: un párrafo para el dueño con lo que pasó en el día y, como máximo, tres cosas
+  para revisar empezando por la señal más grave del radar. Lo escribe Claude (modelo `claude-opus-5-5`, esfuerzo bajo)
+  con los **números reales** del tablero; se le pide no inventar cifras ni causas.
+- A la IA solo se le mandan **cifras agregadas** del negocio (ventas, costos, señales del radar, lo más vendido): nada de
+  nombres de clientes ni de empleados.
+- Se guarda uno por día y sede; el de hoy se rehace solo si tiene más de una hora, o con "Escribir de nuevo" (máximo 10
+  veces por hora). Mientras se escribe, el resto del tablero ya se ve.
+- **Sin la variable `ANTHROPIC_API_KEY`** (o si la IA no responde) se arma el mismo resumen con una plantilla, y la
+  tarjeta dice "Resumen automático". Para activarla: poner `ANTHROPIC_API_KEY` en las variables de Vercel del proyecto
+  `restaurante` (puede ser la misma llave que ya está en Render para la plataforma de 3R).
+- Si el modelo declinara la solicitud por sus políticas, la API reintenta sola con otro modelo (respaldo automático).
+
 ## Publicarla (una sola vez)
 
 1. **Base de datos (Neon):** crea una base nueva, aparte de la tienda y de la asistencia (por ejemplo un proyecto o base
@@ -189,6 +203,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
    - `DATABASE_URL`: la cadena del paso 1.
    - `ADMIN_PASSWORD`: la clave de 3R para `/admin`. Cambiarla cierra las sesiones de 3R.
    - `SESSION_SECRET`: texto largo al azar (40 letras y números). Cambiarlo cierra todas las sesiones.
+   - `ANTHROPIC_API_KEY` (opcional): para el resumen del día escrito con IA. Sin ella se usa una plantilla.
 3. Despliega. Entra a `https://<dirección>/admin`, crea el negocio y pásale al dueño su enlace `/n/...`, su código `0001` y su PIN.
 
 Las tablas se crean solas la primera vez que la app usa la base.
