@@ -1,0 +1,287 @@
+'use server';
+
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
+import {
+  ADMIN_COOKIE,
+  STAFF_COOKIE,
+  adminSessionValue,
+  authConfigured,
+  checkAdminPassword,
+  cookieOptions,
+  requireAdmin,
+  requireStaff,
+  staffSessionValue,
+} from '@/lib/auth';
+import { homeOf } from '@/lib/permissions';
+import { allow, clientIp } from '@/lib/rate-limit';
+import {
+  AppError,
+  closeTable,
+  createBusiness,
+  createLocation,
+  createStaff,
+  createTable,
+  getBusinessBySlug,
+  loginStaff,
+  logStaffLogout,
+  moveSession,
+  openTable,
+  removeTable,
+  resetPin,
+  saveLayout,
+  setBill,
+  setBusinessActive,
+  slugify,
+  updateLocation,
+  updateSession,
+  updateStaff,
+  updateTable,
+} from '@/lib/store';
+
+/**
+ * `ok` cambia con cada envío exitoso (para cerrar formularios o mostrar "Listo"). `values` devuelve lo escrito
+ * cuando hay un error: React vacía el formulario después de cada acción, y así no se pierde.
+ */
+export type FormState =
+  | { error?: string; ok?: number; message?: string; values?: Record<string, string>; locations?: { id: string; name: string }[] }
+  | undefined;
+
+/** Cookie (legible) con el último negocio usado en este aparato: la portada lleva directo a su ingreso. */
+const LAST_BUSINESS_COOKIE = 'rc_negocio';
+
+const text = (formData: FormData, name: string) => String(formData.get(name) ?? '').trim();
+const int = (formData: FormData, name: string) => {
+  const value = text(formData, name);
+  return /^-?\d+$/.test(value) ? Number(value) : NaN;
+};
+const optionalId = (formData: FormData, name: string) => text(formData, name) || null;
+
+function fail(error: string, formData?: FormData): FormState {
+  const values: Record<string, string> = {};
+  for (const [key, value] of formData?.entries() ?? []) {
+    if (typeof value === 'string' && !['password', 'pin', 'pin2', 'ownerPin'].includes(key) && !key.startsWith('$ACTION')) values[key] = value;
+  }
+  return { error, values };
+}
+
+function messageOf(error: unknown) {
+  if (error instanceof AppError) return error.message;
+  console.error(error);
+  return 'Algo salió mal. Intenta otra vez.';
+}
+
+/** Corre una acción del equipo y devuelve el error en el formulario en vez de romper la página. */
+async function run(formData: FormData, work: () => Promise<unknown>, paths: string[], message?: string): Promise<FormState> {
+  try {
+    await work();
+  } catch (error) {
+    return fail(messageOf(error), formData);
+  }
+  for (const path of paths) revalidatePath(path);
+  return { ok: Date.now(), message };
+}
+
+// ───────── 3R ─────────
+
+export async function adminLoginAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  if (!allow(`admin:${await clientIp()}`, 8, 60_000)) return { error: 'Demasiados intentos. Espera un minuto.' };
+  if (!authConfigured()) return { error: 'Falta configurar ADMIN_PASSWORD y SESSION_SECRET en el servidor.' };
+  if (!checkAdminPassword(String(formData.get('password') ?? ''))) return { error: 'Clave incorrecta.' };
+  const session = adminSessionValue();
+  (await cookies()).set(ADMIN_COOKIE, session.value, cookieOptions(session.maxAge));
+  redirect('/admin');
+}
+
+export async function adminLogoutAction() {
+  (await cookies()).delete(ADMIN_COOKIE);
+  redirect('/admin/entrar');
+}
+
+export async function createBusinessAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  if (text(formData, 'ownerPin') !== text(formData, 'pin2')) return fail('Los dos PIN no coinciden.', formData);
+  try {
+    const created = await createBusiness({
+      name: text(formData, 'name'),
+      locationName: text(formData, 'locationName'),
+      ownerName: text(formData, 'ownerName'),
+      ownerPin: text(formData, 'ownerPin'),
+    });
+    revalidatePath('/admin');
+    return { ok: Date.now(), message: `Listo. El equipo entra en /n/${created.slug}. El dueño usa el código ${created.ownerCode} y el PIN que pusiste.` };
+  } catch (error) {
+    return fail(messageOf(error), formData);
+  }
+}
+
+export async function setBusinessActiveAction(businessId: string, active: boolean) {
+  await requireAdmin();
+  await setBusinessActive(businessId, active);
+  revalidatePath('/admin');
+}
+
+// ───────── ingreso del equipo ─────────
+
+/** Desde la portada: el código del negocio lleva a su pantalla de ingreso. */
+export async function goToBusinessAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const slug = slugify(text(formData, 'slug'));
+  if (!allow(`find:${await clientIp()}`, 30, 60_000)) return { error: 'Demasiados intentos. Espera un minuto.' };
+  const business = await getBusinessBySlug(slug).catch(() => null);
+  if (!business) return fail('No encontramos ese negocio. Revisa el enlace que te dio tu administrador.', formData);
+  redirect(`/n/${business.slug}`);
+}
+
+export async function staffLoginAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const ip = await clientIp();
+  if (!allow(`pin:${ip}`, 20, 60_000)) return { error: 'Demasiados intentos desde este aparato. Espera un minuto.' };
+  if (!authConfigured()) return { error: 'La app no está configurada todavía (faltan claves en el servidor).' };
+  const slug = text(formData, 'slug');
+  let result: Awaited<ReturnType<typeof loginStaff>>;
+  try {
+    result = await loginStaff({ slug, code: text(formData, 'code'), pin: text(formData, 'pin'), locationId: optionalId(formData, 'locationId'), ip });
+  } catch (error) {
+    return fail(messageOf(error), formData);
+  }
+  if (result.kind === 'choose-location') return { locations: result.locations, values: { code: text(formData, 'code') } };
+  const jar = await cookies();
+  const session = staffSessionValue(result.staffId, result.locationId, result.epoch);
+  jar.set(STAFF_COOKIE, session.value, cookieOptions(session.maxAge));
+  jar.set(LAST_BUSINESS_COOKIE, slug, { ...cookieOptions(365 * 86_400), httpOnly: false });
+  redirect(homeOf(result.role));
+}
+
+export async function staffLogoutAction() {
+  const staff = await requireStaff().catch(() => null);
+  if (staff) await logStaffLogout(staff).catch(() => undefined);
+  const jar = await cookies();
+  jar.delete(STAFF_COOKIE);
+  redirect(staff ? `/n/${staff.businessSlug}` : '/');
+}
+
+// ───────── mesas ─────────
+
+export async function openTableAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => openTable(staff, text(formData, 'tableId'), { guests: int(formData, 'guests'), notes: text(formData, 'notes') }), ['/app']);
+}
+
+export async function updateSessionAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => updateSession(staff, text(formData, 'sessionId'), { guests: int(formData, 'guests'), notes: text(formData, 'notes') }), ['/app'], 'Guardado.');
+}
+
+export async function setBillAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => setBill(staff, text(formData, 'sessionId'), text(formData, 'bill') === '1'), ['/app']);
+}
+
+export async function moveSessionAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => moveSession(staff, text(formData, 'sessionId'), text(formData, 'toTableId')), ['/app']);
+}
+
+export async function closeTableAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => closeTable(staff, text(formData, 'sessionId'), text(formData, 'reason')), ['/app']);
+}
+
+// ───────── plano ─────────
+
+export async function createTableAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () => createTable(staff, { zone: text(formData, 'zone'), number: text(formData, 'number'), capacity: int(formData, 'capacity'), shape: text(formData, 'shape') }),
+    ['/app', '/app/plano'],
+  );
+}
+
+export async function updateTableAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () =>
+      updateTable(staff, text(formData, 'tableId'), {
+        zone: text(formData, 'zone'),
+        number: text(formData, 'number'),
+        capacity: int(formData, 'capacity'),
+        shape: text(formData, 'shape'),
+        isBlocked: formData.get('isBlocked') === 'on',
+      }),
+    ['/app', '/app/plano'],
+    'Mesa guardada.',
+  );
+}
+
+export async function removeTableAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => removeTable(staff, text(formData, 'tableId')), ['/app', '/app/plano']);
+}
+
+/** Lo llama el editor del plano (no es un formulario): devuelve el error o nada. */
+export async function saveLayoutAction(positions: { id: string; x: number; y: number; w: number; h: number }[]): Promise<string | null> {
+  const staff = await requireStaff();
+  try {
+    await saveLayout(staff, positions);
+  } catch (error) {
+    return messageOf(error);
+  }
+  revalidatePath('/app');
+  revalidatePath('/app/plano');
+  return null;
+}
+
+// ───────── equipo y sedes ─────────
+
+export async function createStaffAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  if (text(formData, 'pin') !== text(formData, 'pin2')) return fail('Los dos PIN no coinciden.', formData);
+  let code = '';
+  const state = await run(
+    formData,
+    async () => {
+      code = (await createStaff(staff, { name: text(formData, 'name'), role: text(formData, 'role'), locationId: optionalId(formData, 'locationId'), pin: text(formData, 'pin') })).code;
+    },
+    ['/app/equipo'],
+  );
+  return state?.error ? state : { ...state, message: `Listo. Su código para entrar es ${code}.` };
+}
+
+export async function updateStaffAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () =>
+      updateStaff(staff, text(formData, 'staffId'), {
+        name: text(formData, 'name'),
+        role: text(formData, 'role'),
+        locationId: optionalId(formData, 'locationId'),
+        isActive: formData.get('isActive') === 'on',
+      }),
+    ['/app/equipo'],
+    'Guardado.',
+  );
+}
+
+export async function resetPinAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  if (text(formData, 'pin') !== text(formData, 'pin2')) return fail('Los dos PIN no coinciden.', formData);
+  return run(formData, () => resetPin(staff, text(formData, 'staffId'), text(formData, 'pin')), ['/app/equipo'], 'PIN cambiado. Ya puede entrar con el nuevo.');
+}
+
+export async function createLocationAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => createLocation(staff, { name: text(formData, 'name'), address: text(formData, 'address') }), ['/app/sedes'], 'Sede creada.');
+}
+
+export async function updateLocationAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () => updateLocation(staff, text(formData, 'locationId'), { name: text(formData, 'name'), address: text(formData, 'address'), isActive: formData.get('isActive') === 'on' }),
+    ['/app/sedes'],
+    'Guardado.',
+  );
+}

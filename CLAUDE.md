@@ -60,11 +60,21 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   permisos y vacaciones, comunicados, documentos, generador de documentos, calendario, alertas, cotizaciones,
   suscripciones, encuestas, capacitaciones, conocimiento, inventario, tienda, constructor web, analítica, SEO,
   automatizaciones, marketing, IA (asistente y textos), WhatsApp (API de Meta). Precios por módulo: pendientes de Rigoberto.
+- Página de venta del software para empresas en `/software` (5 oct 2026), enlazada desde el menú y una sección de la portada.
+  Sin precios hasta que Rigoberto los defina; los botones van a WhatsApp.
+- **Restaurant Control** (5 oct 2026): sistema **aparte** en `restaurante/` (como `asistencia/`: su propia base, clave y
+  despliegue; no enlazar desde 3rpaginas.com ni compartir base). Producto general para cualquier restaurante o bar (no
+  solo Azul Caribe). Nace de los bocetos de 13 módulos de Rigoberto (ZIP): se tomaron las reglas y se reescribió con la
+  tecnología de la asistencia, varios negocios desde el día uno, plata en pesos enteros, nada se borra. Avance y orden de
+  módulos en `restaurante/README.md`. **Aún no está publicado**: falta que Rigoberto cree la base en Neon y el proyecto en
+  Vercel (Root Directory `restaurante`). Facturación DIAN: falta elegir proveedor (Alegra, Siigo…).
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto
 
 - `asistencia/`: app independiente (control de asistencia con QR), con su propio `package.json`; no es workspace.
+- `restaurante/`: app independiente (Restaurant Control), con su propio `package.json`; no es workspace.
+  Pruebas: `npm test` dentro de `restaurante/` con `TEST_DATABASE_URL`.
 - Monorepo: `apps/web` (Next.js 16 + Tailwind 4) y `apps/api` (NestJS 12 + Prisma 7 + PostgreSQL).
   Detalles, variables y despliegue en `README.md`.
 - Diseño: sigue `design/REFERENCIA-LOVABLE.md` (modo oscuro, Sora + Manrope, tokens de color). Aquí los botones
