@@ -15,6 +15,7 @@ import {
   staffSessionValue,
 } from '@/lib/auth';
 import { homeOf } from '@/lib/permissions';
+import { moveTicket } from '@/lib/kds';
 import { saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import {
@@ -363,4 +364,20 @@ export async function sendOrderAction(sessionId: string, lines: CartLine[], clie
 export async function voidItemAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   return run(formData, () => voidItem(staff, text(formData, 'itemId'), text(formData, 'reason')), ['/app', `/app/mesa/${text(formData, 'sessionId')}`], 'Anulado.');
+}
+
+// ───────── cocina y barra ─────────
+
+/** Avanza (o devuelve un paso) una comanda. Devuelve el error o nada. */
+export async function moveTicketAction(ticketId: string, to: string): Promise<string | null> {
+  const staff = await requireStaff();
+  try {
+    await moveTicket(staff, ticketId, to);
+  } catch (error) {
+    return messageOf(error);
+  }
+  revalidatePath('/app');
+  revalidatePath('/app/cocina');
+  revalidatePath('/app/barra');
+  return null;
 }

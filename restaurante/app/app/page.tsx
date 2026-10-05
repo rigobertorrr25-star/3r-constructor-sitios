@@ -2,6 +2,7 @@ import { requireStaff } from '@/lib/auth';
 import { can } from '@/lib/permissions';
 import { listTables } from '@/lib/store';
 import { sessionTotals } from '@/lib/orders';
+import { readyToServe } from '@/lib/kds';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { TableBoard, type BoardTable } from '@/components/table-board';
 import { Empty, PageTitle } from '@/components/ui';
@@ -12,7 +13,10 @@ export const dynamic = 'force-dynamic';
 export default async function TablesPage() {
   const staff = await requireStaff('tables.view');
   const tables = await listTables(staff);
-  const totals = await sessionTotals(staff.businessId, tables.flatMap((t) => (t.session ? [t.session.id] : [])));
+  const [totals, ready] = await Promise.all([
+    sessionTotals(staff.businessId, tables.flatMap((t) => (t.session ? [t.session.id] : []))),
+    can(staff.role, 'tickets.deliver') ? readyToServe(staff) : Promise.resolve([]),
+  ]);
   const board: BoardTable[] = tables.map((t) => ({
     ...t,
     session: t.session
@@ -36,7 +40,13 @@ export default async function TablesPage() {
           )}
         </Empty>
       ) : (
-        <TableBoard tables={board} canOpen={can(staff.role, 'tables.open')} canClose={can(staff.role, 'tables.close')} timeZone={staff.timezone} />
+        <TableBoard
+          tables={board}
+          ready={ready.map((r) => ({ ...r, readyAt: r.readyAt.toISOString() }))}
+          canOpen={can(staff.role, 'tables.open')}
+          canClose={can(staff.role, 'tables.close')}
+          timeZone={staff.timezone}
+        />
       )}
     </div>
   );

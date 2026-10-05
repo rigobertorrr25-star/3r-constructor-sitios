@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { closeTableAction, moveSessionAction, openTableAction, setBillAction, updateSessionAction } from '@/app/actions';
+import { useEffect, useMemo, useState, useTransition } from 'react';
+import { closeTableAction, moveSessionAction, moveTicketAction, openTableAction, setBillAction, updateSessionAction } from '@/app/actions';
 import Link from 'next/link';
 import { LONG_TABLE_MINUTES, elapsedMinutes, formatCop, formatElapsed, formatTime } from '@/lib/format';
 import type { FloorTable } from '@/lib/store';
+import type { ReadyTicket } from '@/lib/kds';
+import { STATION_LABEL } from '@/lib/stations';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Field, Select, TextArea, primaryButton, quietButton } from './ui';
@@ -32,7 +34,7 @@ const STATUS_STYLE: Record<BoardTable['status'], string> = {
   blocked: 'border-white/10 bg-white/[0.03] text-muted-foreground [background-image:repeating-linear-gradient(135deg,transparent_0_8px,#ffffff08_8px_16px)]',
 };
 
-export function TableShape({ table, now, onClick, selected }: { table: BoardTable; now: number; onClick?: () => void; selected?: boolean }) {
+export function TableShape({ table, now, onClick, selected, hasReady }: { table: BoardTable; now: number; onClick?: () => void; selected?: boolean; hasReady?: boolean }) {
   const minutes = table.session ? elapsedMinutes(table.session.openedAt, now) : 0;
   const late = table.session && minutes >= LONG_TABLE_MINUTES;
   return (
@@ -45,6 +47,7 @@ export function TableShape({ table, now, onClick, selected }: { table: BoardTabl
       } ${selected ? 'ring-2 ring-foreground ring-offset-2 ring-offset-background' : ''}`}
       style={{ left: `${(table.x / 1000) * 100}%`, top: `${(table.y / 640) * 100}%`, width: `${(table.w / 1000) * 100}%`, height: `${(table.h / 640) * 100}%` }}
     >
+      {hasReady ? <span className="absolute -right-1.5 -top-1.5 size-3.5 animate-pulse rounded-full border-2 border-background bg-success" aria-label="Hay algo listo para llevar" /> : null}
       <span className="font-display text-[clamp(13px,2.2vw,22px)] font-bold leading-none">{table.number}</span>
       {table.session ? (
         <span className={`mt-1 text-[clamp(10px,1.2vw,13px)] font-medium leading-none ${late ? 'text-[#ffb4b5]' : 'text-foreground/80'}`}>{formatElapsed(minutes)}</span>
@@ -90,7 +93,21 @@ export function ZoneTabs({ zones, zone, onChange }: { zones: string[]; zone: str
   );
 }
 
-export function TableBoard({ tables, canOpen, canClose, timeZone }: { tables: BoardTable[]; canOpen: boolean; canClose: boolean; timeZone: string }) {
+type Ready = Omit<ReadyTicket, 'readyAt'> & { readyAt: string };
+
+export function TableBoard({
+  tables,
+  ready = [],
+  canOpen,
+  canClose,
+  timeZone,
+}: {
+  tables: BoardTable[];
+  ready?: Ready[];
+  canOpen: boolean;
+  canClose: boolean;
+  timeZone: string;
+}) {
   const now = useNow();
   const zones = useMemo(() => [...new Set(tables.map((t) => t.zone))], [tables]);
   const [zone, setZone] = useState(zones[0]);
@@ -98,6 +115,7 @@ export function TableBoard({ tables, canOpen, canClose, timeZone }: { tables: Bo
   const currentZone = zones.includes(zone) ? zone : zones[0];
   const selected = tables.find((t) => t.id === selectedId) ?? null;
   const openTables = tables.filter((t) => t.session).sort((a, b) => a.session!.openedAt.localeCompare(b.session!.openedAt));
+  const readySessions = new Set(ready.map((r) => r.sessionId));
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
@@ -111,7 +129,14 @@ export function TableBoard({ tables, canOpen, canClose, timeZone }: { tables: Bo
           {tables
             .filter((t) => t.zone === currentZone)
             .map((t) => (
-              <TableShape key={t.id} table={t} now={now} selected={t.id === selectedId} onClick={() => setSelectedId(t.id)} />
+              <TableShape
+                key={t.id}
+                table={t}
+                now={now}
+                selected={t.id === selectedId}
+                hasReady={readySessions.has(t.session?.id ?? '')}
+                onClick={() => setSelectedId(t.id)}
+              />
             ))}
         </div>
         {/* En el celular el plano queda pequeño para el dedo: las mismas mesas en botones grandes. */}
@@ -136,6 +161,7 @@ export function TableBoard({ tables, canOpen, canClose, timeZone }: { tables: Bo
       </div>
 
       <aside className="space-y-3">
+        {ready.length > 0 ? <ReadyList ready={ready} now={now} /> : null}
         <h2 className="font-display text-[17px] font-bold">Mesas abiertas</h2>
         {openTables.length === 0 ? (
           <p className="text-[14px] text-muted-foreground">Ninguna por ahora.</p>
@@ -380,5 +406,44 @@ function GuestStepper({ defaultValue }: { defaultValue: number }) {
         </button>
       </div>
     </div>
+  );
+}
+
+/** Lo que cocina o barra ya dejó listo: el mesero lo lleva y toca "Entregado". */
+function ReadyList({ ready, now }: { ready: Ready[]; now: number }) {
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <section className="rounded-[22px] border-2 border-success/40 bg-success/[0.06] p-4">
+      <h2 className="font-display text-[17px] font-bold">Listo para llevar</h2>
+      <ul className="mt-3 space-y-2.5">
+        {ready.map((r) => (
+          <li key={r.id} className="flex items-start justify-between gap-3">
+            <span className="text-[14px]">
+              <span className="font-semibold">
+                Mesa {r.tableNumber} · {STATION_LABEL[r.station]}
+              </span>
+              <span className="block text-muted-foreground">{r.items.join(', ')}</span>
+              <span className="block text-[12.5px] text-muted-foreground">hace {formatElapsed(elapsedMinutes(r.readyAt, now))}</span>
+            </span>
+            <button
+              type="button"
+              disabled={pending}
+              className={quietButton}
+              onClick={() =>
+                start(async () => {
+                  setError(null);
+                  const result = await moveTicketAction(r.id, 'delivered');
+                  if (result) setError(result);
+                })
+              }
+            >
+              Entregado
+            </button>
+          </li>
+        ))}
+      </ul>
+      {error ? <p className="mt-2 text-[13px] text-[#ffb4b5]">{error}</p> : null}
+    </section>
   );
 }

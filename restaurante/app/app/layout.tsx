@@ -1,11 +1,15 @@
 import { staffLogoutAction } from '@/app/actions';
 import { requireStaff } from '@/lib/auth';
-import { ROLE_LABEL, can, type Permission } from '@/lib/permissions';
+import { pendingCounts } from '@/lib/kds';
+import { ROLE_LABEL, can, ownStation, type Permission } from '@/lib/permissions';
+import type { Station } from '@/lib/stations';
 import { AppNav } from '@/components/app-nav';
 import { Lion, quietButton } from '@/components/ui';
 
-const LINKS: { href: string; label: string; permission: Permission }[] = [
+const LINKS: { href: string; label: string; permission: Permission; station?: Station }[] = [
   { href: '/app', label: 'Mesas', permission: 'tables.view' },
+  { href: '/app/cocina', label: 'Cocina', permission: 'kds.view', station: 'kitchen' },
+  { href: '/app/barra', label: 'Barra', permission: 'kds.view', station: 'bar' },
   { href: '/app/carta', label: 'Carta', permission: 'orders.take' },
   { href: '/app/plano', label: 'Plano', permission: 'floor.edit' },
   { href: '/app/equipo', label: 'Equipo', permission: 'staff.manage' },
@@ -15,7 +19,10 @@ const LINKS: { href: string; label: string; permission: Permission }[] = [
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const staff = await requireStaff();
-  const links = LINKS.filter((l) => can(staff.role, l.permission)).map(({ href, label }) => ({ href, label }));
+  const own = ownStation(staff.role);
+  const visible = LINKS.filter((l) => can(staff.role, l.permission) && (!own || !l.station || l.station === own));
+  const counts = visible.some((l) => l.station) ? await pendingCounts(staff) : {};
+  const links = visible.map(({ href, label, station }) => ({ href, label, badge: station ? (counts[station] ?? 0) : 0 }));
   return (
     <div className="min-h-screen" style={{ backgroundImage: 'var(--gradient-hero)' }}>
       <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-background/80 backdrop-blur-md">
@@ -34,7 +41,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <button className={quietButton}>Salir</button>
           </form>
         </div>
-        {links.length > 1 ? <AppNav links={links} /> : null}
+        <AppNav links={links} />
       </header>
       <main className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6">{children}</main>
     </div>

@@ -32,7 +32,9 @@ export type Permission =
   | 'audit.view'
   | 'orders.take'
   | 'orders.void'
-  | 'menu.edit';
+  | 'menu.edit'
+  | 'kds.view'
+  | 'tickets.deliver';
 
 const GRANTS: Record<Permission, Role[]> = {
   'tables.view': ['owner', 'manager', 'cashier', 'waiter'],
@@ -46,6 +48,10 @@ const GRANTS: Record<Permission, Role[]> = {
   'orders.take': ['owner', 'manager', 'cashier', 'waiter'],
   'orders.void': ['owner', 'manager'],
   'menu.edit': ['owner', 'manager'],
+  // Pantallas de cocina y barra: cada estación ve la suya; dueño y administrador, las dos.
+  'kds.view': ['owner', 'manager', 'kitchen', 'bar'],
+  // Marcar "entregado a la mesa": quien lleva los platos.
+  'tickets.deliver': ['owner', 'manager', 'cashier', 'waiter', 'kitchen', 'bar'],
 };
 
 export const can = (role: Role, permission: Permission) => GRANTS[permission].includes(role);
@@ -56,4 +62,7 @@ export const isRole = (value: string): value is Role => (ROLES as readonly strin
 export const assignableRoles = (actor: Role): Role[] => (actor === 'owner' ? [...ROLES] : ROLES.filter((r) => r !== 'owner' && r !== 'manager'));
 
 /** Pantalla inicial de cada rol al entrar. */
-export const homeOf = (role: Role) => (role === 'kitchen' || role === 'bar' ? '/app/espera' : '/app');
+export const homeOf = (role: Role) => (role === 'kitchen' ? '/app/cocina' : role === 'bar' ? '/app/barra' : '/app');
+
+/** Estación que le toca a un rol de producción (null = puede ver cualquiera). */
+export const ownStation = (role: Role) => (role === 'kitchen' ? 'kitchen' : role === 'bar' ? 'bar' : null);

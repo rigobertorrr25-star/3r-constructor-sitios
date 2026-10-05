@@ -14,7 +14,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 |---|--------|--------|
 | 01 | Núcleo: negocios, sedes, equipo con código + PIN, roles, auditoría, plano de mesas, abrir/mover/cerrar mesas | Listo |
 | 02 | Carta y pedidos (POS): rondas partidas en cocina y barra, notas, agotados, anulaciones con motivo | Listo |
-| 03 | Pantallas de cocina y barra | Pendiente |
+| 03 | Pantallas de cocina y barra (nueva → preparando → lista → entregada), aviso de listo para llevar | Listo |
 | 04 | Caja y pagos | Pendiente |
 | 05–06 | Inventario, recetas y control de botellas | Pendiente |
 | 07 | Gastos y finanzas | Pendiente |
@@ -38,7 +38,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   - Administrador: plano, equipo (menos dueños y administradores) y auditoría de su sede.
   - Cajero: mesas y cierre de mesas.
   - Mesero: abre mesas, cambia personas o nota, pide la cuenta y pasa la cuenta a otra mesa. No cierra mesas.
-  - Cocina y Barra: su pantalla (llega con el módulo 03).
+  - Cocina y Barra: solo su pantalla (`/app/cocina` o `/app/barra`); al entrar llegan directo ahí.
 - **Sedes:** cada una con su plano. Quien tiene sede fija entra siempre a la suya; quien trabaja en "todas" elige al entrar.
 - **Plano** (`/app/plano`): mesas cuadradas, redondas o largas por zonas (Salón, Terraza…). Se arrastran y se cambian de
   tamaño; "Guardar plano". Una mesa se puede bloquear o quitar del plano (no se borra: su historial queda; si se crea otra
@@ -69,6 +69,21 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   en la auditoría (con aviso si ya estaba en preparación).
 - Una mesa **con consumo no se puede cerrar** sin cobrar (eso lo hace la caja, módulo 04). Pedir más con la cuenta pedida
   vuelve a dejar la mesa abierta.
+
+## Cómo funciona (módulo 03: cocina y barra)
+
+- `/app/cocina` y `/app/barra`, pensadas para una tablet en la pared: columnas **Nuevas**, **Preparando** y **Listas para
+  llevar**, con letra grande, la nota de cada plato resaltada y el tiempo desde que llegó (amarillo a los 15 min, rojo a
+  los 25). Se actualizan solas cada 5 segundos. Botón "Activar sonido": pita cuando llega una comanda nueva.
+- Cada comanda avanza de a un paso (Empezar → Lista → Entregada). "↶" la devuelve un paso si fue un toque equivocado
+  (queda en la auditoría). Las entregadas de la última hora se pueden recuperar ("No se entregó").
+- Si anulan algo después de enviado, la comanda lo muestra tachado y con "Anulado"; si se anuló todo, "Entendido" la descarta.
+- El menú muestra cuántas comandas nuevas tiene cada estación. El cocinero solo ve cocina; el de barra, solo barra; dueño y
+  administrador, las dos.
+- En **Mesas**, el mesero ve "Listo para llevar" (mesa, estación y qué es) y la mesa tiene un punto verde; al llevarlo toca
+  "Entregado". En la pantalla del pedido, cada producto muestra si está enviado, preparando, listo o entregado.
+- Se guardan las horas reales de inicio y de "lista" de cada comanda: el tablero del dueño (módulo 08) las usará para
+  medir tiempos de preparación.
 
 ## Publicarla (una sola vez)
 
