@@ -33,6 +33,7 @@ import {
   createStaff,
   createTable,
   getBusinessBySlug,
+  listLoginPeople,
   loginStaff,
   logStaffLogout,
   moveSession,
@@ -119,7 +120,7 @@ export async function createBusinessAction(_prev: FormState, formData: FormData)
       ownerPin: text(formData, 'ownerPin'),
     });
     revalidatePath('/admin');
-    return { ok: Date.now(), message: `Listo. El equipo entra en /n/${created.slug}. El dueño usa el código ${created.ownerCode} y el PIN que pusiste.` };
+    return { ok: Date.now(), message: `Listo. El equipo entra en la página de inicio escogiendo «${text(formData, 'name')}» (o directo en /n/${created.slug}). El dueño usa el código ${created.ownerCode} y el PIN que pusiste.` };
   } catch (error) {
     return fail(messageOf(error), formData);
   }
@@ -140,6 +141,12 @@ export async function goToBusinessAction(_prev: FormState, formData: FormData): 
   const business = await getBusinessBySlug(slug).catch(() => null);
   if (!business) return fail('No encontramos ese negocio. Revisa el enlace que te dio tu administrador.', formData);
   redirect(`/n/${business.slug}`);
+}
+
+/** Lista de nombres del restaurante escogido en la portada. */
+export async function loginPeopleAction(slug: string) {
+  if (!allow(`people:${await clientIp()}`, 60, 60_000)) return null;
+  return listLoginPeople(String(slug).slice(0, 80)).catch(() => null);
 }
 
 export async function staffLoginAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -166,7 +173,7 @@ export async function staffLogoutAction() {
   if (staff) await logStaffLogout(staff).catch(() => undefined);
   const jar = await cookies();
   jar.delete(STAFF_COOKIE);
-  redirect(staff ? `/n/${staff.businessSlug}` : '/');
+  redirect('/');
 }
 
 // ───────── mesas ─────────

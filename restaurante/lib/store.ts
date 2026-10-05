@@ -166,6 +166,22 @@ export async function listBusinesses(): Promise<BusinessSummary[]> {
   );
 }
 
+/** Restaurantes activos para la lista de la pantalla de ingreso (solo nombre y enlace). */
+export async function listActiveBusinesses(): Promise<{ name: string; slug: string }[]> {
+  return query<{ name: string; slug: string }>(`SELECT name, slug FROM businesses WHERE is_active ORDER BY lower(name), slug`);
+}
+
+export type LoginPerson = { code: string; name: string; role: Role };
+
+/** Personas activas de un restaurante activo, para tocar su nombre en la pantalla de ingreso (luego piden su PIN). */
+export async function listLoginPeople(slug: string): Promise<LoginPerson[]> {
+  return query<LoginPerson>(
+    `SELECT s.code, s.name, s.role FROM staff s JOIN businesses b ON b.id = s.business_id
+      WHERE b.slug = $1 AND b.is_active AND s.is_active ORDER BY lower(s.name), s.code`,
+    [slug],
+  );
+}
+
 export async function getBusinessBySlug(slug: string): Promise<BusinessRow | null> {
   const rows = await query<BusinessRow>(
     `SELECT id, name, slug, timezone, is_active AS "isActive", created_at AS "createdAt" FROM businesses WHERE slug = $1`,
@@ -299,6 +315,15 @@ function checkAssignable(actor: Actor, role: string): Role {
   return role;
 }
 
+/** En la pantalla de ingreso cada persona toca su nombre: dos personas activas no pueden llamarse igual. */
+async function ensureUniqueName(db: Db, businessId: string, name: string, exceptId: string | null) {
+  const res = await db.query(
+    `SELECT 1 FROM staff WHERE business_id = $1 AND is_active AND lower(name) = lower($2) AND ($3::uuid IS NULL OR id <> $3::uuid) LIMIT 1`,
+    [businessId, name, exceptId],
+  );
+  if (res.rowCount) throw new AppError('CONFLICT', `Ya hay alguien activo llamado ${name}. Agrega el apellido o una inicial para diferenciarlos.`);
+}
+
 export async function createStaff(actor: Actor, input: { name: string; role: string; locationId: string | null; pin: string }) {
   requirePermission(actor, 'staff.manage');
   const name = requireText(input.name, 'Nombre', 2, 120);
@@ -309,6 +334,7 @@ export async function createStaff(actor: Actor, input: { name: string; role: str
     await checkLocation(db, actor.businessId, input.locationId);
     // Candado por negocio: dos altas al mismo tiempo no se llevan el mismo código.
     await db.query(`SELECT 1 FROM businesses WHERE id = $1 FOR UPDATE`, [actor.businessId]);
+    await ensureUniqueName(db, actor.businessId, name, null);
     const max = (
       await db.query<{ max: number | null }>(`SELECT max(code::int) AS max FROM staff WHERE business_id = $1 AND code ~ '^[0-9]+$'`, [actor.businessId])
     ).rows[0].max;
@@ -355,6 +381,10 @@ export async function updateStaff(actor: Actor, staffId: string, input: { name: 
   await transaction(async (db) => {
     const target = await lockTarget(db, actor, staffId);
     await checkLocation(db, actor.businessId, input.locationId);
+    if (input.isActive) {
+      await db.query(`SELECT 1 FROM businesses WHERE id = $1 FOR UPDATE`, [actor.businessId]);
+      await ensureUniqueName(db, actor.businessId, name, staffId);
+    }
     if (target.role === 'owner' && target.isActive && (role !== 'owner' || !input.isActive)) await ensureAnotherOwner(db, actor.businessId, staffId);
     // Cambiar rol, sede o desactivar cierra sus sesiones abiertas (session_epoch).
     const sensitive = role !== target.role || input.locationId !== target.locationId || input.isActive !== target.isActive;
@@ -405,7 +435,7 @@ export type LoginResult =
 
 /** Revisa código + PIN. Con 5 PIN equivocados seguidos, la persona queda bloqueada 15 minutos. */
 export async function loginStaff(input: { slug: string; code: string; pin: string; locationId?: string | null; ip?: string }): Promise<LoginResult> {
-  const wrong = new AppError('INVALID', 'Código o PIN incorrectos.');
+  const wrong = new AppError('INVALID', 'PIN incorrecto.');
   const business = await getBusinessBySlug(input.slug);
   if (!business) throw new AppError('NOT_FOUND', 'No encontramos ese negocio.');
   if (!business.isActive) throw new AppError('FORBIDDEN', 'Este negocio está suspendido. Escríbele a 3R.');

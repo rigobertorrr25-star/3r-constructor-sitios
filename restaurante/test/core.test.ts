@@ -91,6 +91,20 @@ describe('módulo 01: núcleo y mesas', { skip: url ? false : 'sin TEST_DATABASE
     assert.equal(waiter.role, 'waiter');
   });
 
+  it('la pantalla de ingreso lista los nombres activos y no deja dos iguales', async () => {
+    await assert.rejects(store.createStaff(owner, { name: 'beto mesero', role: 'waiter', locationId: null, pin: '1357' }), { code: 'CONFLICT' });
+    const tmp = await store.createStaff(owner, { name: 'Eva Temporal', role: 'waiter', locationId: null, pin: '1357' });
+    await assert.rejects(store.updateStaff(owner, tmp.id, { name: 'Caro Caja', role: 'waiter', locationId: null, isActive: true }), { code: 'CONFLICT' });
+    await store.updateStaff(owner, tmp.id, { name: 'Eva Temporal', role: 'waiter', locationId: null, isActive: false });
+    const people = await store.listLoginPeople(slug);
+    assert.ok(people.some((p) => p.name === 'Beto Mesero' && p.code === '0002' && p.role === 'waiter'));
+    assert.ok(!people.some((p) => p.name === 'Eva Temporal'), 'quien está desactivado no sale');
+    assert.deepEqual(Object.keys(people[0]).sort(), ['code', 'name', 'role'], 'nada del PIN ni otros datos');
+    // Con otra persona desactivada con el mismo nombre, sí se puede crear.
+    const eva = await store.createStaff(owner, { name: 'Eva Temporal', role: 'waiter', locationId: null, pin: '2468' });
+    await store.updateStaff(owner, eva.id, { name: 'Eva Temporal', role: 'waiter', locationId: null, isActive: false });
+  });
+
   it('bloquea tras 5 PIN equivocados', async () => {
     const extra = await store.createStaff(owner, { name: 'Dani Barra', role: 'bar', locationId: mainId, pin: '7531' });
     for (let i = 0; i < 5; i++) await assert.rejects(store.loginStaff({ slug, code: extra.code, pin: '0101' }), { code: 'INVALID' });

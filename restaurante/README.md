@@ -29,10 +29,14 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 
 - **3R** entra a `/admin` con `ADMIN_PASSWORD` y crea cada negocio con su primera sede y su dueño (código `0001` y el PIN
   que se le ponga). Puede suspender un negocio: nadie de su equipo entra hasta reactivarlo.
-- **El equipo** entra en `/n/{negocio}` (por ejemplo `/n/bar-la-ola`) con su **código de empleado** y su **PIN** (4 a 6
-  números; no se aceptan PIN obvios como 1111 o 1234). Teclado grande para tablet y celular; también sirve el teclado del
+- **El equipo** entra en la portada (`/`): escoge su restaurante en la lista (solo salen los activos), **toca su
+  nombre** (salen las personas activas, con su rol) y pone su **PIN**. También sirve el enlace directo `/n/{negocio}`
+  (por ejemplo `/n/bar-la-ola`). Dos personas activas del mismo negocio no pueden llamarse igual. Cada persona tiene además
+  un **código de empleado** interno (0001, 0002…) que se ve en Equipo y en la auditoría. El **PIN** es de 4 a 6
+  números (no se aceptan PIN obvios como 1111 o 1234). Teclado grande para tablet y celular; también sirve el teclado del
   computador. 5 PIN equivocados seguidos bloquean a esa persona 15 minutos (o hasta que le cambien el PIN). La sesión dura
-  14 horas. La portada recuerda el último negocio usado en ese aparato.
+  14 horas. La portada deja escogido el último restaurante usado en ese aparato; si alguien tiene la sesión abierta, sale
+  el aviso «Sesión abierta · Seguir» y otra persona puede entrar sin que la anterior salga. «Salir» vuelve a la portada.
 - **Roles** (fijos, revisados siempre en el servidor):
   - Dueño: todo, incluidas las sedes. Ve la auditoría de todas las sedes.
   - Administrador: plano, equipo (menos dueños y administradores) y auditoría de su sede.
@@ -234,7 +238,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
    - `ADMIN_PASSWORD`: la clave de 3R para `/admin`. Cambiarla cierra las sesiones de 3R.
    - `SESSION_SECRET`: texto largo al azar (40 letras y números). Cambiarlo cierra todas las sesiones.
    - `ANTHROPIC_API_KEY` (opcional): para el resumen del día escrito con IA. Sin ella se usa una plantilla.
-3. Despliega. Entra a `https://<dirección>/admin`, crea el negocio y pásale al dueño su enlace `/n/...`, su código `0001` y su PIN.
+3. Despliega. Entra a `https://<dirección>/admin`, crea el negocio y pásale al dueño la dirección (escoge su restaurante en la lista), su código `0001` y su PIN.
 
 Las tablas se crean solas la primera vez que la app usa la base.
 
