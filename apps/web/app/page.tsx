@@ -157,9 +157,12 @@ export default async function HomePage() {
             <a href="#paquetes" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground md:block">
               Paquetes
             </a>
-            <a href="#preguntas" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground md:block">
+            <a href="#preguntas" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground lg:block">
               Preguntas
             </a>
+            <Link href="/software" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground md:block">
+              Para empresas
+            </Link>
             {user ? (
               <Link
                 href={isStaff ? '/admin' : '/dashboard'}
@@ -461,6 +464,29 @@ export default async function HomePage() {
                 <p className="mt-3 text-[13px] text-muted-foreground">Te escribimos por WhatsApp y lo dejamos funcionando.</p>
               </div>
             </div>
+          </Reveal>
+        </section>
+
+        <section aria-labelledby="h-software" className="mx-auto max-w-[1224px] px-4 pb-24 sm:px-[34px]">
+          <Reveal>
+            <Link
+              href="/software"
+              className={`${card} group flex flex-col gap-6 p-[26px] transition duration-300 hover:border-white/[0.18] sm:p-10 lg:flex-row lg:items-center lg:justify-between`}
+            >
+              <div>
+                <span className="rounded-full bg-secondary/15 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.2em] text-secondary">Para empresas</span>
+                <h2 id="h-software" className="mt-5 font-display text-[28px] font-bold leading-[1.15] tracking-tight text-foreground sm:text-[34px]">
+                  ¿Tu empresa ya creció? Todo en un solo lugar
+                </h2>
+                <p className="mt-3 max-w-2xl text-[16px] text-muted-foreground">
+                  Clientes, empleados, documentos, cotizaciones, tienda en línea, WhatsApp e inteligencia artificial. Activas solo los módulos que usas.
+                </p>
+              </div>
+              <span className={`${pill} shrink-0 border border-white/[0.08] bg-white/[0.014] group-hover:bg-white/[0.06]`}>
+                Conocer el software
+                <ArrowRightIcon />
+              </span>
+            </Link>
           </Reveal>
         </section>
 
