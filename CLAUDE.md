@@ -67,9 +67,11 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   solo Azul Caribe), y también barberías/peluquerías (módulo 13). Nace de los bocetos de 13 módulos de Rigoberto (ZIP): se
   tomaron las reglas y se reescribió con la tecnología de la asistencia, varios negocios desde el día uno, plata en pesos
   enteros, nada se borra (auditoría y movimientos de inventario protegidos en la base). **Los 13 módulos están
-  construidos** (detalle en `restaurante/README.md`); 46 pruebas contra PostgreSQL real. **Aún no está publicado**: falta
-  que Rigoberto cree la base en Neon y el proyecto en Vercel (Root Directory `restaurante`, variables `DATABASE_URL`,
-  `ADMIN_PASSWORD`, `SESSION_SECRET` y opcional `ANTHROPIC_API_KEY`). Pendiente de él: elegir proveedor de factura
+  construidos** (detalle en `restaurante/README.md`); 46 pruebas contra PostgreSQL real. **Publicado (5 oct 2026)** en
+  https://3r-constructor-sitios-git1.vercel.app (proyecto propio de Vercel, Root Directory `restaurante`; base en el proyecto
+  `restaurante` de Neon, id `misty-haze-65464257`). Variables en Vercel: `DATABASE_URL`, `ADMIN_PASSWORD`,
+  `SESSION_SECRET` y opcional `ANTHROPIC_API_KEY` (no se ha podido comprobar si la puso). Usar siempre la dirección fija,
+  no la de cada publicación. Pendiente de él: elegir proveedor de factura
   electrónica (Alegra, Siigo…) para el envío a la DIAN (módulo 10: todo lo demás listo) y probar el resumen con IA con la
   llave real. El esquema de la base se aplica solo cuando cambia (tabla `schema_meta`).
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.

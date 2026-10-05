@@ -53,6 +53,17 @@ html {
   color-scheme: dark;
 }
 
+/* Listas desplegables: el menú de opciones lo pinta el navegador y salía transparente o blanco.
+   Fondo sólido del mismo color de la página. */
+select {
+  background-color: var(--surface-2);
+}
+select option,
+select optgroup {
+  background-color: var(--surface-2);
+  color: var(--foreground);
+}
+
 /* Calendario de los campos de fecha en oscuro, como el resto. */
 input[type='date'] {
   color-scheme: dark;
