@@ -16,6 +16,7 @@ import {
 } from '@/lib/auth';
 import { homeOf } from '@/lib/permissions';
 import { moveTicket } from '@/lib/kds';
+import { createAppointment, payAppointment, saveService, setAppointmentStatus } from '@/lib/appointments';
 import { getBrief } from '@/lib/brief';
 import { createReservation, requestReservation, seatReservation, updatePublicSettings, updateReservation } from '@/lib/reservations';
 import { addExpense, voidExpense } from '@/lib/finance';
@@ -619,4 +620,64 @@ export async function refreshBriefAction(_prev: FormState, formData: FormData): 
     () => getBrief(staff, { day: text(formData, 'day'), locationId: optionalId(formData, 'scope'), timeZone: staff.timezone, refresh: true }),
     ['/app/tablero'],
   );
+}
+
+// ───────── servicios y citas ─────────
+
+export async function saveServiceAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () =>
+      saveService(staff, {
+        id: optionalId(formData, 'id'),
+        name: text(formData, 'name'),
+        price: pesos(formData, 'price'),
+        duration: int(formData, 'duration'),
+        commission: int(formData, 'commission') || 0,
+        isActive: formData.has('id') ? formData.get('isActive') === 'on' : true,
+      }),
+    ['/app/agenda'],
+    'Servicio guardado.',
+  );
+}
+
+export async function createAppointmentAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () =>
+      createAppointment(staff, {
+        name: text(formData, 'name'),
+        phone: text(formData, 'phone'),
+        serviceId: text(formData, 'serviceId'),
+        staffId: text(formData, 'staffId'),
+        date: text(formData, 'date'),
+        time: text(formData, 'time'),
+        notes: text(formData, 'notes'),
+      }),
+    ['/app/agenda'],
+    'Cita agendada.',
+  );
+}
+
+export async function appointmentStatusAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => setAppointmentStatus(staff, text(formData, 'appointmentId'), text(formData, 'status')), ['/app/agenda']);
+}
+
+/** Cobra una cita (con su identificador para no cobrar dos veces si se repite). */
+export async function payAppointmentAction(
+  id: string,
+  input: { method: string; tip: number; received: number | null; reference: string; clientKey: string },
+): Promise<{ error?: string; change?: number | null }> {
+  const staff = await requireStaff();
+  try {
+    const r = await payAppointment(staff, id, input);
+    revalidatePath('/app/agenda');
+    revalidatePath('/app/caja');
+    return { change: r.change };
+  } catch (error) {
+    return { error: messageOf(error) };
+  }
 }

@@ -372,6 +372,47 @@ CREATE TABLE IF NOT EXISTS daily_briefs (
   UNIQUE (business_id, scope, day)
 );
 
+-- ───────── módulo 13: servicios y citas (barberías, peluquerías, spas) ─────────
+
+-- Servicios con precio, duración y comisión del profesional (en %).
+CREATE TABLE IF NOT EXISTS services (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  name        VARCHAR(80) NOT NULL,
+  price       BIGINT NOT NULL CHECK (price >= 0),
+  duration    INT NOT NULL CHECK (duration BETWEEN 5 AND 600),
+  commission  INT NOT NULL DEFAULT 0 CHECK (commission BETWEEN 0 AND 100),
+  is_active   BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (business_id, name)
+);
+
+-- Citas. Precio y comisión se copian del servicio al agendar. status: scheduled, done, paid, no_show, cancelled.
+CREATE TABLE IF NOT EXISTS appointments (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  service_id  UUID NOT NULL REFERENCES services(id),
+  staff_id    UUID NOT NULL REFERENCES staff(id),
+  starts_at   TIMESTAMPTZ NOT NULL,
+  ends_at     TIMESTAMPTZ NOT NULL,
+  price       BIGINT NOT NULL,
+  commission  INT NOT NULL,
+  status      VARCHAR(10) NOT NULL DEFAULT 'scheduled',
+  notes       VARCHAR(300),
+  created_by  UUID REFERENCES staff(id),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_appointments_staff_start ON appointments (staff_id, starts_at);
+CREATE INDEX IF NOT EXISTS idx_appointments_location_start ON appointments (location_id, starts_at);
+
+-- Un pago es de una cuenta de mesa o de una cita (no de las dos).
+ALTER TABLE payments ALTER COLUMN session_id DROP NOT NULL;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS appointment_id UUID REFERENCES appointments(id) ON DELETE CASCADE;
+ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_one_target;
+ALTER TABLE payments ADD CONSTRAINT payments_one_target CHECK ((session_id IS NULL) <> (appointment_id IS NULL));
+
 -- Rastro de todo lo importante: quién hizo qué, cuándo y por qué.
 CREATE TABLE IF NOT EXISTS audit_events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -1,6 +1,6 @@
 // Roles fijos y lo que puede hacer cada uno. Se revisa siempre en el servidor, no solo escondiendo botones.
 
-export const ROLES = ['owner', 'manager', 'cashier', 'waiter', 'kitchen', 'bar'] as const;
+export const ROLES = ['owner', 'manager', 'cashier', 'waiter', 'kitchen', 'bar', 'pro'] as const;
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_LABEL: Record<Role, string> = {
@@ -10,6 +10,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   waiter: 'Mesero',
   kitchen: 'Cocina',
   bar: 'Barra',
+  pro: 'Profesional',
 };
 
 export const ROLE_HINT: Record<Role, string> = {
@@ -19,6 +20,7 @@ export const ROLE_HINT: Record<Role, string> = {
   waiter: 'Abre mesas, toma pedidos y pide la cuenta.',
   kitchen: 'Pantalla de cocina.',
   bar: 'Pantalla de barra.',
+  pro: 'Barbero, estilista, terapeuta…: ve su agenda y sus comisiones.',
 };
 
 export type Permission =
@@ -42,7 +44,9 @@ export type Permission =
   | 'inventory.manage'
   | 'inventory.waste'
   | 'finance.view'
-  | 'reservations.manage';
+  | 'reservations.manage'
+  | 'agenda.view'
+  | 'agenda.manage';
 
 const GRANTS: Record<Permission, Role[]> = {
   'tables.view': ['owner', 'manager', 'cashier', 'waiter'],
@@ -72,6 +76,9 @@ const GRANTS: Record<Permission, Role[]> = {
   // Gastos y estado de resultados. El dueño ve todas las sedes; el administrador, la suya.
   'finance.view': ['owner', 'manager'],
   'reservations.manage': ['owner', 'manager', 'cashier', 'waiter'],
+  // Citas: el profesional ve la suya; dueño, administrador y cajero agendan, mueven y cobran.
+  'agenda.view': ['owner', 'manager', 'cashier', 'pro'],
+  'agenda.manage': ['owner', 'manager', 'cashier'],
 };
 
 export const can = (role: Role, permission: Permission) => GRANTS[permission].includes(role);
@@ -82,7 +89,8 @@ export const isRole = (value: string): value is Role => (ROLES as readonly strin
 export const assignableRoles = (actor: Role): Role[] => (actor === 'owner' ? [...ROLES] : ROLES.filter((r) => r !== 'owner' && r !== 'manager'));
 
 /** Pantalla inicial de cada rol al entrar. */
-export const homeOf = (role: Role) => (role === 'owner' ? '/app/tablero' : role === 'kitchen' ? '/app/cocina' : role === 'bar' ? '/app/barra' : '/app');
+export const homeOf = (role: Role) =>
+  role === 'owner' ? '/app/tablero' : role === 'kitchen' ? '/app/cocina' : role === 'bar' ? '/app/barra' : role === 'pro' ? '/app/agenda' : '/app';
 
 /** Estación que le toca a un rol de producción (null = puede ver cualquiera). */
 export const ownStation = (role: Role) => (role === 'kitchen' ? 'kitchen' : role === 'bar' ? 'bar' : null);

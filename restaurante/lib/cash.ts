@@ -6,6 +6,7 @@ import { can } from './permissions';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 
 export const METHODS = ['cash', 'card', 'transfer'] as const;
+export const isMethod = (v: string): v is Method => (METHODS as readonly string[]).includes(v);
 export type Method = (typeof METHODS)[number];
 export const METHOD_LABEL: Record<Method, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia' };
 
@@ -74,7 +75,7 @@ export async function openShift(actor: Actor, openingAmount: number) {
   }
 }
 
-async function lockOpenShift(db: Db, actor: Actor) {
+export async function lockOpenShift(db: Db, actor: Actor) {
   const shift = (
     await db.query<{ id: string; openingAmount: string }>(
       `SELECT id, opening_amount AS "openingAmount" FROM cash_shifts WHERE location_id = $1 AND business_id = $2 AND closed_at IS NULL FOR UPDATE`,
@@ -427,8 +428,8 @@ export async function reversePayment(actor: Actor, paymentId: string, reason: st
   if (!isUuid(paymentId)) throw new AppError('NOT_FOUND', 'No encontramos ese pago.');
   await transaction(async (db) => {
     const p = (
-      await db.query<{ id: string; sessionId: string; amount: string; method: Method; reversed: boolean; shiftClosed: boolean }>(
-        `SELECT p.id, p.session_id AS "sessionId", p.amount, p.method, (p.reversed_at IS NOT NULL) AS reversed, (c.closed_at IS NOT NULL) AS "shiftClosed"
+      await db.query<{ id: string; sessionId: string | null; appointmentId: string | null; amount: string; method: Method; reversed: boolean; shiftClosed: boolean }>(
+        `SELECT p.id, p.session_id AS "sessionId", p.appointment_id AS "appointmentId", p.amount, p.method, (p.reversed_at IS NOT NULL) AS reversed, (c.closed_at IS NOT NULL) AS "shiftClosed"
            FROM payments p JOIN cash_shifts c ON c.id = p.shift_id
           WHERE p.id = $1 AND p.business_id = $2 AND p.location_id = $3 FOR UPDATE OF p`,
         [paymentId, actor.businessId, actor.locationId],
@@ -437,7 +438,14 @@ export async function reversePayment(actor: Actor, paymentId: string, reason: st
     if (!p) throw new AppError('NOT_FOUND', 'No encontramos ese pago.');
     if (p.reversed) throw new AppError('CONFLICT', 'Ese pago ya estaba reversado.');
     if (p.shiftClosed) throw new AppError('CONFLICT', 'La caja de ese pago ya se cerró. Registra la devolución como una salida de caja.');
-    const session = await lockSessionForCash(db, actor, p.sessionId);
+    if (p.appointmentId) {
+      // Pago de una cita: la cita vuelve a quedar "atendida, por cobrar".
+      await db.query(`UPDATE appointments SET status = 'done' WHERE id = $1`, [p.appointmentId]);
+      await db.query(`UPDATE payments SET reversed_at = now(), reversed_by = $2, reverse_reason = $3 WHERE id = $1`, [paymentId, actor.id, why]);
+      await audit(db, actor, { action: 'payment.reverse', entity: 'payment', entityId: paymentId, summary: `Reversó el pago de una cita (${money(Number(p.amount))})`, reason: why });
+      return;
+    }
+    const session = await lockSessionForCash(db, actor, p.sessionId!);
     if (session.status === 'closed') {
       const busy = await db.query(`SELECT 1 FROM table_sessions WHERE table_id = $1 AND status <> 'closed'`, [session.tableId]);
       if (busy.rowCount) throw new AppError('CONFLICT', `La mesa ${session.number} ya tiene otra cuenta abierta. Registra la devolución como una salida de caja.`);

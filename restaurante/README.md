@@ -23,7 +23,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 | 10 | Facturación electrónica DIAN | Pendiente (falta elegir proveedor) |
 | 11 | Reservas (del equipo y en línea), mesas reservadas en el plano, carta pública y QR | Listo |
 | 12 | Resumen del día con IA (Claude) en el tablero, con plantilla si no hay llave | Listo (falta la llave) |
-| 13 | Servicios y citas (barberías) | Pendiente |
+| 13 | Servicios y citas (barberías, peluquerías, spas) con cobro en la caja y comisiones | Listo |
 
 ## Cómo funciona (módulo 01)
 
@@ -39,6 +39,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   - Cajero: mesas, pedidos, caja y cobro; descuentos hasta el límite del negocio (10 % por defecto).
   - Mesero: abre mesas, cambia personas o nota, pide la cuenta y pasa la cuenta a otra mesa. No cierra mesas.
   - Cocina y Barra: solo su pantalla (`/app/cocina` o `/app/barra`); al entrar llegan directo ahí.
+  - Profesional (barbero, estilista…): su agenda y sus comisiones (`/app/agenda`).
 - **Sedes:** cada una con su plano. Quien tiene sede fija entra siempre a la suya; quien trabaja en "todas" elige al entrar.
 - **Plano** (`/app/plano`): mesas cuadradas, redondas o largas por zonas (Salón, Terraza…). Se arrastran y se cambian de
   tamaño; "Guardar plano". Una mesa se puede bloquear o quitar del plano (no se borra: su historial queda; si se crea otra
@@ -194,6 +195,19 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   tarjeta dice "Resumen automático". Para activarla: poner `ANTHROPIC_API_KEY` en las variables de Vercel del proyecto
   `restaurante` (puede ser la misma llave que ya está en Render para la plataforma de 3R).
 - Si el modelo declinara la solicitud por sus políticas, la API reintenta sola con otro modelo (respaldo automático).
+
+## Cómo funciona (módulo 13: servicios y citas)
+
+- La misma app sirve para **barberías, peluquerías y spas**: en Equipo se agregan personas con el rol **Profesional**.
+- **Servicios** (al final de `/app/agenda`, dueño y administrador): nombre, precio, duración y **comisión** del
+  profesional en %. Precio y comisión se copian a la cita al agendar (si cambian después, la cita no cambia).
+- **Agenda** (`/app/agenda`): un día, una columna por profesional. Dueño, administrador y cajero agendan (cliente y
+  teléfono, servicio, profesional, fecha y hora); **no se cruzan** dos citas del mismo profesional, ni aunque se agenden
+  al mismo tiempo. El profesional ve solo su columna y puede marcar su cita como atendida.
+- **Cobrar** la cita en la misma caja (efectivo con vueltas, tarjeta o transferencia, propina opcional): entra a las
+  ventas del turno, a Finanzas y al Tablero. Un doble toque no cobra dos veces. Reversar el pago (dueño o administrador,
+  con motivo) deja la cita otra vez por cobrar.
+- **Comisiones del mes:** por profesional, servicios, ventas, comisión y propinas. Cada profesional ve la suya.
 
 ## Publicarla (una sola vez)
 
