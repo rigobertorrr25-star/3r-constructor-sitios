@@ -14,9 +14,9 @@ export const ROLE_LABEL: Record<Role, string> = {
 
 export const ROLE_HINT: Record<Role, string> = {
   owner: 'Todo, incluidas las sedes y el equipo.',
-  manager: 'Opera la sede: plano, equipo y auditoría.',
-  cashier: 'Mesas y cierre de cuentas.',
-  waiter: 'Abre mesas y pide la cuenta.',
+  manager: 'Opera la sede: carta, plano, equipo, anulaciones y auditoría.',
+  cashier: 'Mesas, pedidos y cierre de cuentas.',
+  waiter: 'Abre mesas, toma pedidos y pide la cuenta.',
   kitchen: 'Pantalla de cocina.',
   bar: 'Pantalla de barra.',
 };
@@ -29,7 +29,10 @@ export type Permission =
   | 'floor.edit'
   | 'staff.manage'
   | 'locations.manage'
-  | 'audit.view';
+  | 'audit.view'
+  | 'orders.take'
+  | 'orders.void'
+  | 'menu.edit';
 
 const GRANTS: Record<Permission, Role[]> = {
   'tables.view': ['owner', 'manager', 'cashier', 'waiter'],
@@ -40,6 +43,9 @@ const GRANTS: Record<Permission, Role[]> = {
   'staff.manage': ['owner', 'manager'],
   'locations.manage': ['owner'],
   'audit.view': ['owner', 'manager'],
+  'orders.take': ['owner', 'manager', 'cashier', 'waiter'],
+  'orders.void': ['owner', 'manager'],
+  'menu.edit': ['owner', 'manager'],
 };
 
 export const can = (role: Role, permission: Permission) => GRANTS[permission].includes(role);

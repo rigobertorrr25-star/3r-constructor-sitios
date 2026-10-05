@@ -1,6 +1,7 @@
 import { requireStaff } from '@/lib/auth';
 import { can } from '@/lib/permissions';
 import { listTables } from '@/lib/store';
+import { sessionTotals } from '@/lib/orders';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { TableBoard, type BoardTable } from '@/components/table-board';
 import { Empty, PageTitle } from '@/components/ui';
@@ -11,9 +12,12 @@ export const dynamic = 'force-dynamic';
 export default async function TablesPage() {
   const staff = await requireStaff('tables.view');
   const tables = await listTables(staff);
+  const totals = await sessionTotals(staff.businessId, tables.flatMap((t) => (t.session ? [t.session.id] : [])));
   const board: BoardTable[] = tables.map((t) => ({
     ...t,
-    session: t.session ? { ...t.session, openedAt: t.session.openedAt.toISOString(), billAt: t.session.billAt?.toISOString() ?? null } : null,
+    session: t.session
+      ? { ...t.session, openedAt: t.session.openedAt.toISOString(), billAt: t.session.billAt?.toISOString() ?? null, total: totals.get(t.session.id) ?? 0 }
+      : null,
   }));
   const open = tables.filter((t) => t.session).length;
   return (

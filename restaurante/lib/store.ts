@@ -801,6 +801,8 @@ export async function closeTable(actor: Actor, sessionId: string, reason?: strin
   const why = reason?.trim() ? requireText(reason, 'Motivo', 3, 300) : null;
   await transaction(async (db) => {
     const session = await lockSession(db, actor, sessionId);
+    const consumed = await db.query(`SELECT 1 FROM order_items WHERE session_id = $1 AND voided_at IS NULL LIMIT 1`, [sessionId]);
+    if (consumed.rowCount) throw new AppError('CONFLICT', `La mesa ${session.number} tiene consumo: se cierra cobrando en Caja.`);
     if (session.status !== 'bill' && !why) throw new AppError('INVALID', 'La mesa no ha pedido la cuenta: escribe el motivo para cerrarla.');
     await db.query(`UPDATE table_sessions SET status = 'closed', closed_at = now(), closed_by = $2 WHERE id = $1`, [sessionId, actor.id]);
     const minutes = Math.round((Date.now() - new Date(session.openedAt).getTime()) / 60_000);

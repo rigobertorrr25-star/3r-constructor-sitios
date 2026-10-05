@@ -20,7 +20,7 @@ describe('módulo 01: núcleo y mesas', { skip: url ? false : 'sin TEST_DATABASE
   });
 
   after(async () => {
-    const rows = await db.query<{ id: string }>("SELECT id FROM businesses WHERE name LIKE 'Prueba %'");
+    const rows = await db.query<{ id: string }>('SELECT id FROM businesses WHERE name LIKE $1', [`Prueba ${stamp} %`]);
     for (const row of rows) await store.purgeBusiness(row.id);
     await db.closePool();
   });

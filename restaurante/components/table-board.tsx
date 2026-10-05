@@ -2,14 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { closeTableAction, moveSessionAction, openTableAction, setBillAction, updateSessionAction } from '@/app/actions';
-import { LONG_TABLE_MINUTES, elapsedMinutes, formatElapsed, formatTime } from '@/lib/format';
+import Link from 'next/link';
+import { LONG_TABLE_MINUTES, elapsedMinutes, formatCop, formatElapsed, formatTime } from '@/lib/format';
 import type { FloorTable } from '@/lib/store';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
-import { Field, Select, TextArea, quietButton } from './ui';
+import { Field, Select, TextArea, primaryButton, quietButton } from './ui';
 
 export type BoardTable = Omit<FloorTable, 'session'> & {
-  session: (Omit<NonNullable<FloorTable['session']>, 'openedAt' | 'billAt'> & { openedAt: string; billAt: string | null }) | null;
+  session: (Omit<NonNullable<FloorTable['session']>, 'openedAt' | 'billAt'> & { openedAt: string; billAt: string | null; total?: number }) | null;
 };
 
 /** La hora actual, que avanza sola (los cronómetros salen de la hora de apertura guardada, no de un contador). */
@@ -152,7 +153,7 @@ export function TableBoard({ tables, canOpen, canClose, timeZone }: { tables: Bo
                     <span>
                       <span className="font-display text-[16px] font-semibold">Mesa {t.number}</span>
                       <span className="block text-[13px] text-muted-foreground">
-                        {t.session!.guests} p. · {t.session!.openedBy}
+                        {t.session!.guests} p. · {formatCop(t.session!.total ?? 0)}
                         {t.status === 'bill' ? ' · pidió la cuenta' : ''}
                       </span>
                     </span>
@@ -256,6 +257,9 @@ function TableSheet({
 
         {session ? (
           <div className="mt-5 space-y-5">
+            <Link href={`/app/mesa/${session.id}`} className={`${primaryButton} w-full py-3 text-[15.5px]`}>
+              Pedido · {formatCop(session.total ?? 0)}
+            </Link>
             <div className="grid grid-cols-2 gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-[14px]">
               <p>
                 <span className="block text-muted-foreground">Tiempo</span>
@@ -292,7 +296,7 @@ function TableSheet({
                   <>
                     <input type="hidden" name="sessionId" value={session.id} />
                     <input type="hidden" name="bill" value={table.status === 'bill' ? '0' : '1'} />
-                    <SubmitButton tone={table.status === 'bill' ? 'quiet' : 'primary'}>{table.status === 'bill' ? 'Volver a abrir' : 'Pedir la cuenta'}</SubmitButton>
+                    <SubmitButton tone="quiet">{table.status === 'bill' ? 'Volver a abrir' : 'Pedir la cuenta'}</SubmitButton>
                   </>
                 )}
               </ActionForm>
@@ -309,7 +313,7 @@ function TableSheet({
                   <>
                     <input type="hidden" name="sessionId" value={session.id} />
                     {table.status === 'bill' ? (
-                      <p className="text-[14px] text-muted-foreground">La mesa queda libre y su tiempo queda guardado.</p>
+                      <p className="text-[14px] text-muted-foreground">La mesa queda libre y su tiempo queda guardado. Si tiene consumo, se cierra cobrando en Caja.</p>
                     ) : (
                       <TextArea label="¿Por qué se cierra sin pedir la cuenta?" name="reason" required minLength={3} maxLength={300} defaultValue={state?.values?.reason} />
                     )}

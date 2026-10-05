@@ -15,6 +15,7 @@ import {
   staffSessionValue,
 } from '@/lib/auth';
 import { homeOf } from '@/lib/permissions';
+import { saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import {
   AppError,
@@ -162,9 +163,19 @@ export async function staffLogoutAction() {
 
 // ───────── mesas ─────────
 
+/** Abre la mesa y lleva directo a tomar el pedido. */
 export async function openTableAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
-  return run(formData, () => openTable(staff, text(formData, 'tableId'), { guests: int(formData, 'guests'), notes: text(formData, 'notes') }), ['/app']);
+  let sessionId = '';
+  const state = await run(
+    formData,
+    async () => {
+      sessionId = await openTable(staff, text(formData, 'tableId'), { guests: int(formData, 'guests'), notes: text(formData, 'notes') });
+    },
+    ['/app'],
+  );
+  if (state?.error) return state;
+  redirect(`/app/mesa/${sessionId}`);
 }
 
 export async function updateSessionAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -284,4 +295,72 @@ export async function updateLocationAction(_prev: FormState, formData: FormData)
     ['/app/sedes'],
     'Guardado.',
   );
+}
+
+// ───────── carta y pedidos ─────────
+
+export async function saveCategoryAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () =>
+      saveCategory(staff, {
+        id: optionalId(formData, 'id'),
+        name: text(formData, 'name'),
+        station: text(formData, 'station'),
+        sort: int(formData, 'sort') || 0,
+        isActive: formData.has('id') ? formData.get('isActive') === 'on' : true,
+      }),
+    ['/app/carta'],
+    'Categoría guardada.',
+  );
+}
+
+export async function saveProductAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () =>
+      saveProduct(staff, {
+        id: optionalId(formData, 'id'),
+        categoryId: text(formData, 'categoryId'),
+        name: text(formData, 'name'),
+        description: text(formData, 'description'),
+        price: text(formData, 'price'),
+        station: text(formData, 'station'),
+        isActive: formData.has('id') ? formData.get('isActive') === 'on' : true,
+      }),
+    ['/app/carta'],
+    'Producto guardado.',
+  );
+}
+
+/** Agotado / disponible (botón, no formulario). */
+export async function setAvailableAction(productId: string, available: boolean): Promise<string | null> {
+  const staff = await requireStaff();
+  try {
+    await setProductAvailable(staff, productId, available);
+  } catch (error) {
+    return messageOf(error);
+  }
+  revalidatePath('/app/carta');
+  return null;
+}
+
+/** Envía el carrito de una mesa. `clientKey` lo genera el aparato: si se repite, no se duplica el pedido. */
+export async function sendOrderAction(sessionId: string, lines: CartLine[], clientKey: string): Promise<{ error?: string; number?: number }> {
+  const staff = await requireStaff();
+  try {
+    const result = await sendOrder(staff, sessionId, lines, clientKey);
+    revalidatePath('/app');
+    revalidatePath(`/app/mesa/${sessionId}`);
+    return { number: result.number };
+  } catch (error) {
+    return { error: messageOf(error) };
+  }
+}
+
+export async function voidItemAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => voidItem(staff, text(formData, 'itemId'), text(formData, 'reason')), ['/app', `/app/mesa/${text(formData, 'sessionId')}`], 'Anulado.');
 }

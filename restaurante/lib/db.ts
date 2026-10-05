@@ -81,6 +81,87 @@ CREATE TABLE IF NOT EXISTS table_sessions (
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_open_session_per_table ON table_sessions (table_id) WHERE status <> 'closed';
 CREATE INDEX IF NOT EXISTS idx_sessions_location_opened ON table_sessions (location_id, opened_at);
 
+-- ───────── módulo 02: carta y pedidos ─────────
+
+-- Carta del negocio (la misma en todas sus sedes). station: a qué pantalla va (kitchen = cocina, bar = barra).
+CREATE TABLE IF NOT EXISTS menu_categories (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  name        VARCHAR(60) NOT NULL,
+  station     VARCHAR(10) NOT NULL DEFAULT 'kitchen',
+  sort        INT NOT NULL DEFAULT 0,
+  is_active   BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (business_id, name)
+);
+
+-- Precio en pesos enteros. No se borran: se desactivan (los pedidos viejos los nombran).
+CREATE TABLE IF NOT EXISTS menu_products (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id  UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  category_id  UUID NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
+  name         VARCHAR(80) NOT NULL,
+  description  VARCHAR(200),
+  price        BIGINT NOT NULL CHECK (price >= 0),
+  station      VARCHAR(10) NOT NULL DEFAULT 'kitchen',
+  -- Agotado por hoy: sigue en la carta pero no se puede pedir.
+  is_available BOOLEAN NOT NULL DEFAULT TRUE,
+  is_active    BOOLEAN NOT NULL DEFAULT TRUE,
+  sort         INT NOT NULL DEFAULT 0,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_products_business ON menu_products (business_id, category_id);
+
+-- Cada "Enviar" del mesero: una ronda de la cuenta de una mesa. client_key evita que un doble toque
+-- (o un reintento sin internet) mande el mismo pedido dos veces.
+CREATE TABLE IF NOT EXISTS order_rounds (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  session_id  UUID NOT NULL REFERENCES table_sessions(id) ON DELETE CASCADE,
+  number      INT NOT NULL,
+  client_key  UUID NOT NULL,
+  sent_by     UUID NOT NULL REFERENCES staff(id),
+  sent_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (session_id, number),
+  UNIQUE (business_id, client_key)
+);
+
+-- Comanda de una ronda para una estación (cocina o barra). La pantalla de cada estación la avanza:
+-- sent (enviada) → preparing → ready → delivered.
+CREATE TABLE IF NOT EXISTS station_tickets (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id  UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id  UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  round_id     UUID NOT NULL REFERENCES order_rounds(id) ON DELETE CASCADE,
+  station      VARCHAR(10) NOT NULL,
+  status       VARCHAR(12) NOT NULL DEFAULT 'sent',
+  started_at   TIMESTAMPTZ,
+  ready_at     TIMESTAMPTZ,
+  delivered_at TIMESTAMPTZ,
+  UNIQUE (round_id, station)
+);
+CREATE INDEX IF NOT EXISTS idx_tickets_location_status ON station_tickets (location_id, station, status);
+
+-- Lo pedido. Nombre y precio se copian del producto al pedir: si la carta cambia, la cuenta no.
+-- Anular no borra: marca voided_at con quién y por qué.
+CREATE TABLE IF NOT EXISTS order_items (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  session_id  UUID NOT NULL REFERENCES table_sessions(id) ON DELETE CASCADE,
+  round_id    UUID NOT NULL REFERENCES order_rounds(id) ON DELETE CASCADE,
+  ticket_id   UUID NOT NULL REFERENCES station_tickets(id) ON DELETE CASCADE,
+  product_id  UUID NOT NULL REFERENCES menu_products(id),
+  name        VARCHAR(80) NOT NULL,
+  unit_price  BIGINT NOT NULL,
+  quantity    INT NOT NULL CHECK (quantity > 0),
+  notes       VARCHAR(140),
+  voided_at   TIMESTAMPTZ,
+  voided_by   UUID REFERENCES staff(id),
+  void_reason VARCHAR(300)
+);
+CREATE INDEX IF NOT EXISTS idx_items_session ON order_items (session_id);
+
 -- Rastro de todo lo importante: quién hizo qué, cuándo y por qué.
 CREATE TABLE IF NOT EXISTS audit_events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

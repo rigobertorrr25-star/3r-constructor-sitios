@@ -13,7 +13,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 | # | Módulo | Estado |
 |---|--------|--------|
 | 01 | Núcleo: negocios, sedes, equipo con código + PIN, roles, auditoría, plano de mesas, abrir/mover/cerrar mesas | Listo |
-| 02 | Pedidos (POS) | Pendiente |
+| 02 | Carta y pedidos (POS): rondas partidas en cocina y barra, notas, agotados, anulaciones con motivo | Listo |
 | 03 | Pantallas de cocina y barra | Pendiente |
 | 04 | Caja y pagos | Pendiente |
 | 05–06 | Inventario, recetas y control de botellas | Pendiente |
@@ -51,6 +51,24 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   PIN, el rol o la sede, o desactivar a alguien, cierra su sesión abierta de inmediato.
 - **Auditoría** (`/app/auditoria`): entradas, PIN equivocados y bloqueos, mesas abiertas, movidas y cerradas (con motivo),
   cambios del plano, del equipo y de las sedes. La base de datos **no deja cambiar ni borrar** estos registros.
+
+## Cómo funciona (módulo 02: carta y pedidos)
+
+- **Carta** (`/app/carta`): categorías (cada una va a cocina o a barra) y productos con precio en pesos enteros. Un
+  producto puede ir a otra estación que su categoría (por ejemplo, el agua en la categoría Platos pero a barra). La carta
+  es la misma en todas las sedes. Nada se borra: se saca de la carta. Los cambios de precio quedan en la auditoría.
+- **Agotado:** meseros y cajeros también pueden marcar "Se acabó" (son los primeros en saberlo); ya no se puede pedir hasta
+  "Volvió a haber".
+- **Tomar pedido** (`/app/mesa/{cuenta}`): al abrir una mesa se llega aquí. Se tocan productos (con buscador y categorías),
+  se ajustan cantidades y notas ("sin cebolla") y "Enviar a cocina y barra". Cada envío es una **ronda**; cada ronda se
+  parte sola en una comanda para cocina y otra para barra. El carrito queda guardado en el aparato si se cambia de pantalla.
+- **No hay pedidos dobles:** cada carrito lleva un identificador; si el mismo envío llega dos veces (doble toque, internet
+  que se cae y reintenta), se guarda una sola vez.
+- **El precio se congela** al pedir: si después cambia la carta, la cuenta no cambia.
+- **Anular** algo ya enviado: solo dueño o administrador, siempre con motivo. No se borra: queda tachado, con el motivo, y
+  en la auditoría (con aviso si ya estaba en preparación).
+- Una mesa **con consumo no se puede cerrar** sin cobrar (eso lo hace la caja, módulo 04). Pedir más con la cuenta pedida
+  vuelve a dejar la mesa abierta.
 
 ## Publicarla (una sola vez)
 

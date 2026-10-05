@@ -6,6 +6,7 @@ import { Lion, quietButton } from '@/components/ui';
 
 const LINKS: { href: string; label: string; permission: Permission }[] = [
   { href: '/app', label: 'Mesas', permission: 'tables.view' },
+  { href: '/app/carta', label: 'Carta', permission: 'orders.take' },
   { href: '/app/plano', label: 'Plano', permission: 'floor.edit' },
   { href: '/app/equipo', label: 'Equipo', permission: 'staff.manage' },
   { href: '/app/sedes', label: 'Sedes', permission: 'locations.manage' },
