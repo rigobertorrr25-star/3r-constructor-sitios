@@ -5,6 +5,9 @@ import { ROLE_LABEL, homeOf } from '@/lib/permissions';
 import { getBusinessBySlug, listLoginPeople } from '@/lib/store';
 import { StaffLoginForm } from '@/components/login-forms';
 import { Lion, card } from '@/components/ui';
+import { BackgroundLayer } from '@/components/background-forms';
+import { backgroundUrl } from '@/lib/background-url';
+import { backgroundVersion } from '@/lib/backgrounds';
 
 export default async function StaffLogin({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -15,9 +18,11 @@ export default async function StaffLogin({ params }: { params: Promise<{ slug: s
   const staff = await getStaff();
   const current = staff?.businessSlug === slug ? staff : null;
   const people = business.isActive ? await listLoginPeople(business.slug) : [];
+  const background = business.isActive ? backgroundUrl(business.slug, await backgroundVersion(business.id)) : null;
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-10" style={{ backgroundImage: 'var(--gradient-hero)' }}>
+    <main className="relative isolate flex min-h-screen items-center justify-center px-4 py-10" style={{ backgroundImage: 'var(--gradient-hero)' }}>
+      <BackgroundLayer url={background} />
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-3">
           <Lion size={44} />

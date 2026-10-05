@@ -37,6 +37,10 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   computador. 5 PIN equivocados seguidos bloquean a esa persona 15 minutos (o hasta que le cambien el PIN). La sesión dura
   14 horas. La portada deja escogido el último restaurante usado en ese aparato; si alguien tiene la sesión abierta, sale
   el aviso «Sesión abierta · Seguir» y otra persona puede entrar sin que la anterior salga. «Salir» vuelve a la portada.
+- **Fondo propio:** el dueño sube una foto en **Sedes → Fondo del restaurante** (se achica en el teléfono a 1920 px en
+  JPG; el servidor solo acepta JPG, PNG o WebP de verdad y hasta 1,5 MB). Se ve en el ingreso al escoger ese restaurante
+  y, más oscura, detrás de la app. Se guarda en la base (`business_backgrounds`) y se sirve en `/fondo/{negocio}?v=…`
+  (la versión cambia al subir otra, así el navegador la guarda en caché sin mostrar la vieja). Sin foto, el fondo de 3R.
 - **Roles** (fijos, revisados siempre en el servidor):
   - Dueño: todo, incluidas las sedes. Ve la auditoría de todas las sedes.
   - Administrador: plano, equipo (menos dueños y administradores) y auditoría de su sede.

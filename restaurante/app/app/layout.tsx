@@ -6,6 +6,8 @@ import type { Station } from '@/lib/stations';
 import { AppNav } from '@/components/app-nav';
 import { ConnectionBanner } from '@/components/connection-banner';
 import { Lion, quietButton } from '@/components/ui';
+import { BackgroundLayer } from '@/components/background-forms';
+import { backgroundUrl } from '@/lib/background-url';
 
 const LINKS: { href: string; label: string; permission: Permission; station?: Station }[] = [
   { href: '/app/tablero', label: 'Tablero', permission: 'finance.view' },
@@ -33,7 +35,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const counts = visible.some((l) => l.station) ? await pendingCounts(staff) : {};
   const links = visible.map(({ href, label, station }) => ({ href, label, badge: station ? (counts[station] ?? 0) : 0 }));
   return (
-    <div className="min-h-screen" style={{ backgroundImage: 'var(--gradient-hero)' }}>
+    <div className="relative isolate min-h-screen" style={{ backgroundImage: 'var(--gradient-hero)' }}>
+      <BackgroundLayer url={backgroundUrl(staff.businessSlug, staff.background)} strength="strong" />
       <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1280px] items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">

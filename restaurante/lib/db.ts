@@ -487,6 +487,14 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS audit_events_no_change ON audit_events;
 CREATE TRIGGER audit_events_no_change BEFORE UPDATE OR DELETE ON audit_events
   FOR EACH ROW EXECUTE FUNCTION audit_events_append_only();
+
+-- Fondo propio de cada restaurante: foto que sube el dueño; se ve en el ingreso y detrás de la app.
+CREATE TABLE IF NOT EXISTS business_backgrounds (
+  business_id UUID PRIMARY KEY REFERENCES businesses(id) ON DELETE CASCADE,
+  mime VARCHAR(20) NOT NULL,
+  image BYTEA NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 // En desarrollo, Next recarga los módulos: el pool se guarda en globalThis para no abrir conexiones de más.

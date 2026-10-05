@@ -3,6 +3,8 @@
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { adminLoginAction, goToBusinessAction, loginPeopleAction, staffLoginAction } from '@/app/actions';
 import { ROLE_LABEL, type Role } from '@/lib/permissions';
+import { backgroundUrl } from '@/lib/background-url';
+import { BackgroundLayer } from './background-forms';
 import { SubmitButton } from './submit-button';
 import { Alert, Field, inputClass } from './ui';
 
@@ -20,7 +22,7 @@ export function FindBusinessForm() {
 type Person = { code: string; name: string; role: Role };
 
 /** Portada: se escoge el restaurante, luego la persona toca su nombre y pone su PIN. */
-export function RestaurantLogin({ businesses, initialSlug, initialPeople }: { businesses: { name: string; slug: string }[]; initialSlug: string; initialPeople: Person[] | null }) {
+export function RestaurantLogin({ businesses, initialSlug, initialPeople }: { businesses: { name: string; slug: string; background: number | null }[]; initialSlug: string; initialPeople: Person[] | null }) {
   const [slug, setSlug] = useState(initialSlug);
   const [people, setPeople] = useState<Person[] | null>(initialPeople);
   const [loading, setLoading] = useState(false);
@@ -42,8 +44,11 @@ export function RestaurantLogin({ businesses, initialSlug, initialPeople }: { bu
     setFailed(list === null);
   };
 
+  const chosen = businesses.find((b) => b.slug === slug);
+
   return (
     <div className="space-y-5">
+      <BackgroundLayer url={chosen ? backgroundUrl(chosen.slug, chosen.background) : null} />
       <div>
         <label htmlFor="restaurante" className="text-sm font-medium text-foreground">
           Restaurante

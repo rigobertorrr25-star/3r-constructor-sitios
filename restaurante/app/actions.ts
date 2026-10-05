@@ -25,6 +25,7 @@ import { registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } 
 import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
+import { removeBackground, saveBackground } from '@/lib/backgrounds';
 import {
   AppError,
   closeTable,
@@ -710,4 +711,19 @@ export async function invoiceCustomerAction(_prev: FormState, formData: FormData
     ['/app/facturas', `/app/caja/mesa/${text(formData, 'sessionId')}`],
     'Factura a nombre del cliente.',
   );
+}
+
+// ───────── fondo del restaurante ─────────
+
+export async function saveBackgroundAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('locations.manage');
+  const file = formData.get('foto');
+  if (!(file instanceof File) || !file.size) return { error: 'Escoge una foto.' };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  return run(formData, () => saveBackground(staff, bytes), ['/', '/app', '/app/sedes'], 'Listo. Ya se ve el fondo nuevo.');
+}
+
+export async function removeBackgroundAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('locations.manage');
+  return run(formData, () => removeBackground(staff), ['/', '/app', '/app/sedes'], 'Listo. Se quitó el fondo.');
 }
