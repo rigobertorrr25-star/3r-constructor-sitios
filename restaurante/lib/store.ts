@@ -166,6 +166,11 @@ export async function listBusinesses(): Promise<BusinessSummary[]> {
   );
 }
 
+/** Restaurantes activos para la lista de la pantalla de ingreso (solo nombre y enlace). */
+export async function listActiveBusinesses(): Promise<{ name: string; slug: string }[]> {
+  return query<{ name: string; slug: string }>(`SELECT name, slug FROM businesses WHERE is_active ORDER BY lower(name), slug`);
+}
+
 export async function getBusinessBySlug(slug: string): Promise<BusinessRow | null> {
   const rows = await query<BusinessRow>(
     `SELECT id, name, slug, timezone, is_active AS "isActive", created_at AS "createdAt" FROM businesses WHERE slug = $1`,

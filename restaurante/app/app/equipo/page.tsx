@@ -13,7 +13,7 @@ export default async function StaffPage() {
   const sedes = locations.map(({ id, name }) => ({ id, name }));
   return (
     <div className="space-y-6">
-      <PageTitle title="Equipo" text={`Cada persona entra en /n/${staff.businessSlug} con su código y su PIN. Nadie se borra: se desactiva y su historial queda.`} />
+      <PageTitle title="Equipo" text={`Cada persona entra en la página de inicio: escoge el restaurante y pone su código y su PIN (o directo en /n/${staff.businessSlug}). Nadie se borra: se desactiva y su historial queda.`} />
       <section className={card}>
         <h2 className="font-display text-[18px] font-bold">Agregar a alguien</h2>
         <div className="mt-4">

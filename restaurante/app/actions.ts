@@ -119,7 +119,7 @@ export async function createBusinessAction(_prev: FormState, formData: FormData)
       ownerPin: text(formData, 'ownerPin'),
     });
     revalidatePath('/admin');
-    return { ok: Date.now(), message: `Listo. El equipo entra en /n/${created.slug}. El dueño usa el código ${created.ownerCode} y el PIN que pusiste.` };
+    return { ok: Date.now(), message: `Listo. El equipo entra en la página de inicio escogiendo «${text(formData, 'name')}» (o directo en /n/${created.slug}). El dueño usa el código ${created.ownerCode} y el PIN que pusiste.` };
   } catch (error) {
     return fail(messageOf(error), formData);
   }
@@ -166,7 +166,7 @@ export async function staffLogoutAction() {
   if (staff) await logStaffLogout(staff).catch(() => undefined);
   const jar = await cookies();
   jar.delete(STAFF_COOKIE);
-  redirect(staff ? `/n/${staff.businessSlug}` : '/');
+  redirect('/');
 }
 
 // ───────── mesas ─────────

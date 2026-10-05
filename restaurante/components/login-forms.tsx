@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { adminLoginAction, goToBusinessAction, staffLoginAction } from '@/app/actions';
 import { SubmitButton } from './submit-button';
-import { Alert, Field } from './ui';
+import { Alert, Field, inputClass } from './ui';
 
 export function FindBusinessForm() {
   const [state, action] = useActionState(goToBusinessAction, undefined);
@@ -13,6 +13,31 @@ export function FindBusinessForm() {
       {state?.error ? <Alert>{state.error}</Alert> : null}
       <SubmitButton className="w-full">Continuar</SubmitButton>
     </form>
+  );
+}
+
+/** Portada: se escoge el restaurante y debajo aparece el teclado del código y el PIN. */
+export function RestaurantLogin({ businesses, initialSlug }: { businesses: { name: string; slug: string }[]; initialSlug: string }) {
+  const [slug, setSlug] = useState(initialSlug);
+  return (
+    <div className="space-y-5">
+      <div>
+        <label htmlFor="restaurante" className="text-sm font-medium text-foreground">
+          Restaurante
+        </label>
+        <select id="restaurante" value={slug} onChange={(e) => setSlug(e.target.value)} className={`${inputClass} mt-1.5 text-[16px]`}>
+          <option value="" disabled>
+            Escoge tu restaurante
+          </option>
+          {businesses.map((b) => (
+            <option key={b.slug} value={b.slug}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      {slug ? <StaffLoginForm key={slug} slug={slug} /> : null}
+    </div>
   );
 }
 
@@ -59,7 +84,7 @@ export function StaffLoginForm({ slug }: { slug: string }) {
   pressRef.current = press;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.metaKey || e.ctrlKey || e.altKey) return;
       if (/^\d$/.test(e.key)) pressRef.current(e.key);
       else if (e.key === 'Backspace') pressRef.current('⌫');
       else if (e.key === 'Enter') formRef.current?.requestSubmit();

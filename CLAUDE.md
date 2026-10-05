@@ -73,7 +73,8 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   `SESSION_SECRET` y opcional `ANTHROPIC_API_KEY` (no se ha podido comprobar si la puso). Usar siempre la dirección fija,
   no la de cada publicación. Pendiente de él: elegir proveedor de factura
   electrónica (Alegra, Siigo…) para el envío a la DIAN (módulo 10: todo lo demás listo) y probar el resumen con IA con la
-  llave real. El esquema de la base se aplica solo cuando cambia (tabla `schema_meta`).
+  llave real. El esquema de la base se aplica solo cuando cambia (tabla `schema_meta`). Ingreso (5 oct 2026): en la portada se
+  escoge el restaurante de una lista (los activos) y se entra con código y PIN; `/n/{negocio}` sigue sirviendo.
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto
