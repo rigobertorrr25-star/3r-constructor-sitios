@@ -18,7 +18,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 | 04 | Caja: turnos, cobro en partes y con varios medios, propina, descuentos, precuenta, cuadre | Listo |
 | 05–06 | Inventario por sede, recetas que descuentan solas, compras, mermas, conteos y control de botellas | Listo |
 | 07 | Gastos y estado de resultados (ventas, costo, mermas, faltantes, gastos y utilidad) | Listo |
-| 08 | Tablero del dueño y radar de fugas | Pendiente |
+| 08 | Tablero del dueño ("Control total") y radar de fugas con datos reales | Listo |
 | 09 | Sin internet (reintentos sin cobros dobles) | Pendiente |
 | 10 | Facturación electrónica DIAN | Pendiente (falta elegir proveedor) |
 | 11 | Reservas y menú QR | Pendiente |
@@ -137,6 +137,18 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   proveedor. "Lo pagué con la plata de la caja" lo saca de la caja abierta (y revisa que alcance). Anular un gasto exige
   motivo; si había salido de la caja y esa caja sigue abierta, la plata vuelve a la caja.
 - Las fechas son días del negocio en su zona horaria (Colombia), no del servidor.
+
+## Cómo funciona (módulo 08: tablero del dueño y radar de fugas)
+
+- **Control total** (`/app/tablero`, dueño y administrador; el dueño llega directo aquí al entrar): ventas, costo de
+  productos, utilidad operativa y caja esperada, con mesas abiertas y lo que tienen por cobrar. Periodo: hoy, ayer, 7 días
+  o el mes; el dueño elige sede o todas. Se actualiza cada minuto.
+- **Radar de fugas:** un índice que empieza en 100 y baja con cada señal (cada una con su estado Normal / Revisar /
+  Alerta, con ícono y palabra, y un enlace a la auditoría o a la pantalla donde se revisa):
+  anulaciones (y cuántas ya se estaban preparando), descuentos sobre el límite del cajero, diferencias de inventario en los
+  conteos (por ejemplo "Whisky: −270 ml"), mesas abiertas hace más de 90 minutos, pagos reversados, mesas cerradas sin
+  cobrar, cajas con faltante, comandas de más de 25 minutos y bloqueos por PIN equivocado.
+- También: lo más vendido de cocina y de barra, tiempo promedio de preparación por estación e insumos por comprar.
 
 ## Publicarla (una sola vez)
 

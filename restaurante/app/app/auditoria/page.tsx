@@ -9,6 +9,12 @@ export const dynamic = 'force-dynamic';
 const FILTERS: { action: string; label: string }[] = [
   { action: '', label: 'Todo' },
   { action: 'table.close', label: 'Cierres de mesa' },
+  { action: 'order.void', label: 'Anulaciones' },
+  { action: 'discount.apply', label: 'Descuentos' },
+  { action: 'payment.reverse', label: 'Pagos reversados' },
+  { action: 'cash.close', label: 'Cierres de caja' },
+  { action: 'inventory.count', label: 'Conteos' },
+  { action: 'menu.price', label: 'Cambios de precio' },
   { action: 'table.move', label: 'Cambios de mesa' },
   { action: 'auth.failed', label: 'PIN equivocados' },
   { action: 'auth.locked', label: 'Bloqueos' },

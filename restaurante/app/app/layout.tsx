@@ -7,6 +7,7 @@ import { AppNav } from '@/components/app-nav';
 import { Lion, quietButton } from '@/components/ui';
 
 const LINKS: { href: string; label: string; permission: Permission; station?: Station }[] = [
+  { href: '/app/tablero', label: 'Tablero', permission: 'finance.view' },
   { href: '/app', label: 'Mesas', permission: 'tables.view' },
   { href: '/app/cocina', label: 'Cocina', permission: 'kds.view', station: 'kitchen' },
   { href: '/app/barra', label: 'Barra', permission: 'kds.view', station: 'bar' },

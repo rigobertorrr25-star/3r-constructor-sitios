@@ -80,7 +80,7 @@ export const isRole = (value: string): value is Role => (ROLES as readonly strin
 export const assignableRoles = (actor: Role): Role[] => (actor === 'owner' ? [...ROLES] : ROLES.filter((r) => r !== 'owner' && r !== 'manager'));
 
 /** Pantalla inicial de cada rol al entrar. */
-export const homeOf = (role: Role) => (role === 'kitchen' ? '/app/cocina' : role === 'bar' ? '/app/barra' : '/app');
+export const homeOf = (role: Role) => (role === 'owner' ? '/app/tablero' : role === 'kitchen' ? '/app/cocina' : role === 'bar' ? '/app/barra' : '/app');
 
 /** Estación que le toca a un rol de producción (null = puede ver cualquiera). */
 export const ownStation = (role: Role) => (role === 'kitchen' ? 'kitchen' : role === 'bar' ? 'bar' : null);
