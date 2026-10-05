@@ -12,6 +12,7 @@ const LINKS: { href: string; label: string; permission: Permission; station?: St
   { href: '/app/barra', label: 'Barra', permission: 'kds.view', station: 'bar' },
   { href: '/app/caja', label: 'Caja', permission: 'cash.operate' },
   { href: '/app/carta', label: 'Carta', permission: 'orders.take' },
+  { href: '/app/inventario', label: 'Inventario', permission: 'inventory.view' },
   { href: '/app/plano', label: 'Plano', permission: 'floor.edit' },
   { href: '/app/equipo', label: 'Equipo', permission: 'staff.manage' },
   { href: '/app/sedes', label: 'Sedes', permission: 'locations.manage' },

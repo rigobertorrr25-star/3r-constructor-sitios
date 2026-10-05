@@ -16,6 +16,7 @@ import {
 } from '@/lib/auth';
 import { homeOf } from '@/lib/permissions';
 import { moveTicket } from '@/lib/kds';
+import { registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
 import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
@@ -453,4 +454,58 @@ export async function payAction(
 export async function reversePaymentAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   return run(formData, () => reversePayment(staff, text(formData, 'paymentId'), text(formData, 'reason')), ['/app', '/app/caja', `/app/caja/mesa/${text(formData, 'sessionId')}`], 'Pago reversado.');
+}
+
+// ───────── inventario ─────────
+
+export async function saveItemAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () =>
+      saveItem(staff, {
+        id: optionalId(formData, 'id'),
+        name: text(formData, 'name'),
+        unit: text(formData, 'unit'),
+        minStock: text(formData, 'minStock') || 0,
+        bottleSize: text(formData, 'bottleSize') || null,
+        unitCost: text(formData, 'unitCost') || null,
+        isActive: formData.has('id') ? formData.get('isActive') === 'on' : true,
+      }),
+    ['/app/inventario'],
+    'Insumo guardado.',
+  );
+}
+
+export async function inventoryMoveAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const kind = text(formData, 'kind');
+  const itemId = text(formData, 'itemId');
+  let message = 'Registrado.';
+  const state = await run(
+    formData,
+    async () => {
+      if (kind === 'purchase') await registerPurchase(staff, { itemId, quantity: text(formData, 'quantity'), total: text(formData, 'total').replace(/[.$\s]/g, ''), reason: text(formData, 'reason') });
+      else if (kind === 'waste') await registerWaste(staff, { itemId, quantity: text(formData, 'quantity'), reason: text(formData, 'reason') });
+      else if (kind === 'count') {
+        const r = await registerCount(staff, { itemId, counted: text(formData, 'counted'), inBottles: formData.get('inBottles') === 'on', reason: text(formData, 'reason') });
+        const n = (v: number) => `${Number(v.toFixed(3)).toLocaleString('es-CO')} ${r.unit}`;
+        message = r.difference === 0 ? 'Cuadra con lo que había en el sistema.' : `Debía haber ${n(r.expected)} y hay ${n(r.counted)}: ${r.difference > 0 ? 'sobran' : 'faltan'} ${n(Math.abs(r.difference))}.`;
+      } else throw new Error('tipo de movimiento');
+    },
+    ['/app/inventario', `/app/inventario/${itemId}`],
+  );
+  return state?.error ? state : { ...state, message };
+}
+
+export async function saveRecipeAction(productId: string, lines: { itemId: string; quantity: string }[]): Promise<string | null> {
+  const staff = await requireStaff();
+  try {
+    await saveRecipe(staff, productId, lines);
+  } catch (error) {
+    return messageOf(error);
+  }
+  revalidatePath('/app/carta');
+  revalidatePath(`/app/carta/receta/${productId}`);
+  return null;
 }

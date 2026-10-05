@@ -16,7 +16,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 | 02 | Carta y pedidos (POS): rondas partidas en cocina y barra, notas, agotados, anulaciones con motivo | Listo |
 | 03 | Pantallas de cocina y barra (nueva → preparando → lista → entregada), aviso de listo para llevar | Listo |
 | 04 | Caja: turnos, cobro en partes y con varios medios, propina, descuentos, precuenta, cuadre | Listo |
-| 05–06 | Inventario, recetas y control de botellas | Pendiente |
+| 05–06 | Inventario por sede, recetas que descuentan solas, compras, mermas, conteos y control de botellas | Listo |
 | 07 | Gastos y finanzas | Pendiente |
 | 08 | Tablero del dueño y radar de fugas | Pendiente |
 | 09 | Sin internet (reintentos sin cobros dobles) | Pendiente |
@@ -107,6 +107,23 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 - **Precuenta** (`/cuenta/{cuenta}`) para imprimir en impresora de tirilla o carta: consumo, descuentos, propina sugerida y
   total. Dice que la propina es voluntaria y que no es una factura (la factura electrónica llega con el módulo 10).
 - Una mesa con saldo por pagar no se cierra a mano; con cortesía total (saldo cero) sí.
+
+## Cómo funciona (módulos 05 y 06: inventario, recetas y botellas)
+
+- **Insumos** (`/app/inventario`): se miden en gramos, mililitros o unidades. Un licor puede declararse **botella** (por
+  ejemplo 750 ml) y entonces se cuenta en botellas. Cada insumo tiene un **mínimo**: por debajo aparece la alerta.
+- La **existencia** de cada sede es la suma de sus movimientos: compras, ventas, devoluciones por anulación, mermas y
+  conteos. **Ningún movimiento se puede cambiar ni borrar** (lo impide la base de datos); un error se corrige con un conteo.
+- **Compra:** cantidad y valor pagado; el costo del insumo pasa a ser el promedio ponderado.
+- **Receta** (desde la Carta, botón "Receta"): lo que gasta una unidad vendida (60 ml de ron + 8 g de hierbabuena). Muestra
+  el costo de insumos y el **margen** del producto; la carta también muestra costo y margen de cada producto.
+- **Cada venta descuenta sola** la receta al enviarse a cocina o barra. Si se anula antes de que la cocina lo empiece, los
+  insumos vuelven; si ya se estaba preparando, se quedan gastados (es merma real).
+- **Merma** (se cayó, se dañó, se venció), siempre con motivo: la pueden registrar también cocina y barra.
+- **Conteo físico / control de botellas:** se escribe lo que hay de verdad (en botellas: 2,36 = dos llenas y 36 % de otra)
+  y queda la diferencia contra lo que el sistema esperaba: lo que falta es la **fuga** (por ejemplo, "faltan 270 ml de
+  whisky"), con su valor en pesos, en el historial del insumo y en la auditoría.
+- Cocina y barra ven las existencias y registran mermas; dueño y administrador manejan todo y ven costos y valor del inventario.
 
 ## Publicarla (una sola vez)
 

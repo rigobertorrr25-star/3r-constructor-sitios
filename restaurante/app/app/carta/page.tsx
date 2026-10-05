@@ -1,5 +1,6 @@
 import { requireStaff } from '@/lib/auth';
 import { getMenu } from '@/lib/orders';
+import { productCosts } from '@/lib/inventory';
 import { can } from '@/lib/permissions';
 import { MenuEditor } from '@/components/menu-editor';
 import { PageTitle } from '@/components/ui';
@@ -10,6 +11,8 @@ export default async function MenuPage() {
   const staff = await requireStaff('orders.take');
   const menu = await getMenu(staff.businessId);
   const canEdit = can(staff.role, 'menu.edit');
+  const canRecipe = can(staff.role, 'inventory.manage');
+  const costs = canRecipe ? Object.fromEntries(await productCosts(staff.businessId)) : {};
   return (
     <div className="space-y-6">
       <PageTitle
@@ -20,7 +23,7 @@ export default async function MenuPage() {
             : 'Marca aquí lo que se acabó: los meseros ya no lo podrán pedir hasta que vuelva a haber.'
         }
       />
-      <MenuEditor categories={menu.categories} products={menu.products} canEdit={canEdit} />
+      <MenuEditor categories={menu.categories} products={menu.products} canEdit={canEdit} canRecipe={canRecipe} costs={costs} />
     </div>
   );
 }

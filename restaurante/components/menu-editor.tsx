@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { saveCategoryAction, saveProductAction, setAvailableAction } from '@/app/actions';
 import { formatCop } from '@/lib/format';
@@ -9,7 +10,19 @@ import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Alert, CheckField, Empty, Field, Select, card, quietButton } from './ui';
 
-export function MenuEditor({ categories, products, canEdit }: { categories: MenuCategory[]; products: MenuProduct[]; canEdit: boolean }) {
+export function MenuEditor({
+  categories,
+  products,
+  canEdit,
+  canRecipe = false,
+  costs = {},
+}: {
+  categories: MenuCategory[];
+  products: MenuProduct[];
+  canEdit: boolean;
+  canRecipe?: boolean;
+  costs?: Record<string, number>;
+}) {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
   const visible = canEdit ? categories : categories.filter((c) => c.isActive);
@@ -44,7 +57,7 @@ export function MenuEditor({ categories, products, canEdit }: { categories: Menu
             {adding === category.id ? <ProductForm categories={categories} categoryId={category.id} onDone={() => setAdding(null)} /> : null}
             <ul className="mt-4 divide-y divide-white/[0.06]">
               {list.map((p) => (
-                <ProductRow key={p.id} product={p} categories={categories} canEdit={canEdit} />
+                <ProductRow key={p.id} product={p} categories={categories} canEdit={canEdit} canRecipe={canRecipe} cost={costs[p.id]} />
               ))}
             </ul>
           </section>
@@ -117,7 +130,19 @@ function ProductForm({ categories, categoryId, product, onDone }: { categories: 
   );
 }
 
-function ProductRow({ product, categories, canEdit }: { product: MenuProduct; categories: MenuCategory[]; canEdit: boolean }) {
+function ProductRow({
+  product,
+  categories,
+  canEdit,
+  canRecipe,
+  cost,
+}: {
+  product: MenuProduct;
+  categories: MenuCategory[];
+  canEdit: boolean;
+  canRecipe: boolean;
+  cost?: number;
+}) {
   const [editing, setEditing] = useState(false);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -138,6 +163,7 @@ function ProductRow({ product, categories, canEdit }: { product: MenuProduct; ca
           </p>
           <p className="text-[13.5px] text-muted-foreground">
             {formatCop(product.price)} · {STATION_LABEL[product.station]}
+            {canRecipe ? (cost !== undefined ? ` · costo ${formatCop(cost)} (margen ${product.price ? Math.round(((product.price - cost) / product.price) * 100) : 0} %)` : ' · sin receta') : ''}
             {product.description ? ` · ${product.description}` : ''}
           </p>
         </div>
@@ -146,6 +172,11 @@ function ProductRow({ product, categories, canEdit }: { product: MenuProduct; ca
             <button type="button" className={quietButton} disabled={pending} onClick={toggle}>
               {product.isAvailable ? 'Se acabó' : 'Volvió a haber'}
             </button>
+          ) : null}
+          {canRecipe ? (
+            <Link href={`/app/carta/receta/${product.id}`} className={quietButton}>
+              Receta
+            </Link>
           ) : null}
           {canEdit ? (
             <button type="button" className={quietButton} onClick={() => setEditing(!editing)}>

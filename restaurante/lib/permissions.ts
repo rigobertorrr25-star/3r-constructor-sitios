@@ -37,7 +37,10 @@ export type Permission =
   | 'tickets.deliver'
   | 'cash.operate'
   | 'payments.reverse'
-  | 'discounts.unlimited';
+  | 'discounts.unlimited'
+  | 'inventory.view'
+  | 'inventory.manage'
+  | 'inventory.waste';
 
 const GRANTS: Record<Permission, Role[]> = {
   'tables.view': ['owner', 'manager', 'cashier', 'waiter'],
@@ -59,6 +62,11 @@ const GRANTS: Record<Permission, Role[]> = {
   'cash.operate': ['owner', 'manager', 'cashier'],
   'payments.reverse': ['owner', 'manager'],
   'discounts.unlimited': ['owner', 'manager'],
+  'inventory.view': ['owner', 'manager', 'kitchen', 'bar'],
+  // Insumos, recetas, compras y conteos.
+  'inventory.manage': ['owner', 'manager'],
+  // Mermas (se cayó, se dañó): las registra quien las ve.
+  'inventory.waste': ['owner', 'manager', 'kitchen', 'bar'],
 };
 
 export const can = (role: Role, permission: Permission) => GRANTS[permission].includes(role);

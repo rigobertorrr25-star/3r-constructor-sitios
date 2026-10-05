@@ -237,6 +237,64 @@ CREATE TABLE IF NOT EXISTS payments (
 CREATE INDEX IF NOT EXISTS idx_payments_session ON payments (session_id);
 CREATE INDEX IF NOT EXISTS idx_payments_shift ON payments (shift_id);
 
+-- ───────── módulos 05 y 06: inventario, recetas y botellas ─────────
+
+-- Insumos del negocio. unit: g, ml o und. unit_cost: pesos por unidad (promedio ponderado de las compras).
+-- bottle_size: si es una botella (licor), cuántos ml trae; el conteo se hace en botellas.
+CREATE TABLE IF NOT EXISTS inventory_items (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  name        VARCHAR(80) NOT NULL,
+  unit        VARCHAR(4) NOT NULL,
+  unit_cost   NUMERIC(14, 4) NOT NULL DEFAULT 0,
+  min_stock   NUMERIC(14, 3) NOT NULL DEFAULT 0,
+  bottle_size NUMERIC(10, 2),
+  is_active   BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (business_id, name)
+);
+
+-- Receta de un producto de la carta: cuánto de cada insumo gasta una unidad vendida.
+CREATE TABLE IF NOT EXISTS recipe_lines (
+  product_id UUID NOT NULL REFERENCES menu_products(id) ON DELETE CASCADE,
+  item_id    UUID NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
+  quantity   NUMERIC(14, 3) NOT NULL CHECK (quantity > 0),
+  PRIMARY KEY (product_id, item_id)
+);
+
+-- Libro de movimientos por sede (la existencia es la suma). kind: purchase, sale, void (devuelto por anulación),
+-- waste (merma), count (ajuste por conteo físico), adjust. quantity con signo. No se cambia ni se borra.
+CREATE TABLE IF NOT EXISTS inventory_movements (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  item_id     UUID NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
+  kind        VARCHAR(10) NOT NULL,
+  quantity    NUMERIC(14, 3) NOT NULL,
+  unit_cost   NUMERIC(14, 4) NOT NULL DEFAULT 0,
+  reason      VARCHAR(200),
+  order_item_id UUID,
+  -- En un conteo: lo que debía haber y lo que se contó.
+  expected    NUMERIC(14, 3),
+  counted     NUMERIC(14, 3),
+  created_by  UUID REFERENCES staff(id),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_inv_moves_stock ON inventory_movements (location_id, item_id);
+CREATE INDEX IF NOT EXISTS idx_inv_moves_created ON inventory_movements (location_id, created_at DESC);
+
+CREATE OR REPLACE FUNCTION inventory_movements_append_only() RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'DELETE' AND current_setting('app.purge', true) = 'on' THEN
+    RETURN OLD;
+  END IF;
+  RAISE EXCEPTION 'inventory_movements no se puede cambiar ni borrar';
+END;
+$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS inventory_movements_no_change ON inventory_movements;
+CREATE TRIGGER inventory_movements_no_change BEFORE UPDATE OR DELETE ON inventory_movements
+  FOR EACH ROW EXECUTE FUNCTION inventory_movements_append_only();
+
 -- Rastro de todo lo importante: quién hizo qué, cuándo y por qué.
 CREATE TABLE IF NOT EXISTS audit_events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

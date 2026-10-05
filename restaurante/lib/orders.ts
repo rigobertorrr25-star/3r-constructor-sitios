@@ -1,6 +1,7 @@
 // Módulo 02: la carta (categorías y productos) y los pedidos de cada mesa.
 // Un "Enviar" crea una ronda y la parte en una comanda por estación (cocina y barra) para no mezclar la operación.
 import { query, transaction, type Db } from './db';
+import { consumeForRound, returnForVoid } from './inventory';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 
 import { STATIONS, isStation, type Station } from './stations';
@@ -259,6 +260,8 @@ export async function sendOrder(actor: Actor, sessionId: string, lines: CartLine
           [actor.businessId, sessionId, round.id, tickets.get(product.station), product.id, product.name, price, line.quantity, line.notes],
         );
       }
+      // Cada venta descuenta del inventario lo que diga la receta de cada producto.
+      await consumeForRound(db, actor, round.id);
       // Pedir más con la cuenta pedida la vuelve a dejar abierta.
       if (session.status === 'bill') await db.query(`UPDATE table_sessions SET status = 'open', bill_at = NULL WHERE id = $1`, [sessionId]);
       const count = clean.reduce((n, l) => n + l.quantity, 0);
@@ -302,6 +305,8 @@ export async function voidItem(actor: Actor, itemId: string, reason: string) {
     if (item.voidedAt) throw new AppError('CONFLICT', 'Ese producto ya estaba anulado.');
     const session = await lockOpenSession(db, actor, item.sessionId);
     await db.query(`UPDATE order_items SET voided_at = now(), voided_by = $2, void_reason = $3 WHERE id = $1`, [itemId, actor.id, why]);
+    // Si la cocina no lo había empezado, los insumos vuelven al inventario; si ya lo preparó, se quedan gastados.
+    if (item.ticketStatus === 'sent') await returnForVoid(db, actor, itemId);
     const amount = Number(item.unitPrice) * item.quantity;
     await audit(db, actor, {
       action: 'order.void',
