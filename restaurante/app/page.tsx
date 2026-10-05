@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getStaff } from '@/lib/auth';
 import { ROLE_LABEL, homeOf } from '@/lib/permissions';
-import { listActiveBusinesses } from '@/lib/store';
+import { listActiveBusinesses, listLoginPeople } from '@/lib/store';
 import { FindBusinessForm, RestaurantLogin } from '@/components/login-forms';
 import { Lion, card } from '@/components/ui';
 
@@ -15,6 +15,7 @@ export default async function Home() {
   const last = jar.get('rc_negocio')?.value;
   const known = (slug?: string) => (slug && businesses?.some((b) => b.slug === slug) ? slug : '');
   const initialSlug = known(staff?.businessSlug) || known(last) || (businesses?.length === 1 ? businesses[0].slug : '');
+  const initialPeople = initialSlug ? await listLoginPeople(initialSlug).catch(() => null) : null;
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10" style={{ backgroundImage: 'var(--gradient-hero)' }}>
@@ -39,13 +40,13 @@ export default async function Home() {
         ) : null}
         <div className={`${card} mt-6`}>
           <h1 className="font-display text-[22px] font-bold text-foreground">Entra a tu restaurante</h1>
-          <p className="mb-5 mt-1 text-[14.5px] text-muted-foreground">Escoge tu restaurante y escribe tu código y tu PIN.</p>
+          <p className="mb-5 mt-1 text-[14.5px] text-muted-foreground">Escoge tu restaurante, toca tu nombre y escribe tu PIN.</p>
           {businesses === null ? (
             <FindBusinessForm />
           ) : businesses.length === 0 ? (
             <p className="text-[15px] text-muted-foreground">Todavía no hay restaurantes activos.</p>
           ) : (
-            <RestaurantLogin businesses={businesses} initialSlug={initialSlug} />
+            <RestaurantLogin businesses={businesses} initialSlug={initialSlug} initialPeople={initialPeople} />
           )}
         </div>
         <p className="mt-6 text-center text-[13px] text-muted-foreground">

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getStaff } from '@/lib/auth';
 import { ROLE_LABEL, homeOf } from '@/lib/permissions';
-import { getBusinessBySlug } from '@/lib/store';
+import { getBusinessBySlug, listLoginPeople } from '@/lib/store';
 import { StaffLoginForm } from '@/components/login-forms';
 import { Lion, card } from '@/components/ui';
 
@@ -14,6 +14,7 @@ export default async function StaffLogin({ params }: { params: Promise<{ slug: s
   // Quien ya tiene la sesión abierta sigue con un toque.
   const staff = await getStaff();
   const current = staff?.businessSlug === slug ? staff : null;
+  const people = business.isActive ? await listLoginPeople(business.slug) : [];
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10" style={{ backgroundImage: 'var(--gradient-hero)' }}>
@@ -37,9 +38,9 @@ export default async function StaffLogin({ params }: { params: Promise<{ slug: s
           </Link>
         ) : null}
         <div className={`${card} mt-6`}>
-          {current && business.isActive ? <p className="mb-4 text-[14px] text-muted-foreground">¿Es otra persona? Que entre con su código y su PIN.</p> : null}
+          {current && business.isActive ? <p className="mb-4 text-[14px] text-muted-foreground">¿Es otra persona? Que toque su nombre y ponga su PIN.</p> : null}
           {business.isActive ? (
-            <StaffLoginForm slug={business.slug} />
+            <StaffLoginForm slug={business.slug} people={people} />
           ) : (
             <p className="text-[15px] text-muted-foreground">Este negocio está suspendido. Escríbele a 3R para reactivarlo.</p>
           )}

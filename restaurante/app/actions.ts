@@ -33,6 +33,7 @@ import {
   createStaff,
   createTable,
   getBusinessBySlug,
+  listLoginPeople,
   loginStaff,
   logStaffLogout,
   moveSession,
@@ -140,6 +141,12 @@ export async function goToBusinessAction(_prev: FormState, formData: FormData): 
   const business = await getBusinessBySlug(slug).catch(() => null);
   if (!business) return fail('No encontramos ese negocio. Revisa el enlace que te dio tu administrador.', formData);
   redirect(`/n/${business.slug}`);
+}
+
+/** Lista de nombres del restaurante escogido en la portada. */
+export async function loginPeopleAction(slug: string) {
+  if (!allow(`people:${await clientIp()}`, 60, 60_000)) return null;
+  return listLoginPeople(String(slug).slice(0, 80)).catch(() => null);
 }
 
 export async function staffLoginAction(_prev: FormState, formData: FormData): Promise<FormState> {

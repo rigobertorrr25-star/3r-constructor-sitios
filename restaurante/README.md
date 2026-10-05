@@ -29,9 +29,11 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 
 - **3R** entra a `/admin` con `ADMIN_PASSWORD` y crea cada negocio con su primera sede y su dueño (código `0001` y el PIN
   que se le ponga). Puede suspender un negocio: nadie de su equipo entra hasta reactivarlo.
-- **El equipo** entra en la portada (`/`): escoge su restaurante en la lista (solo salen los activos) y pone su
-  código y su PIN. También sirve el enlace directo `/n/{negocio}` (por ejemplo `/n/bar-la-ola`). Siempre con su **código de empleado** y su **PIN** (4 a 6
-  números; no se aceptan PIN obvios como 1111 o 1234). Teclado grande para tablet y celular; también sirve el teclado del
+- **El equipo** entra en la portada (`/`): escoge su restaurante en la lista (solo salen los activos), **toca su
+  nombre** (salen las personas activas, con su rol) y pone su **PIN**. También sirve el enlace directo `/n/{negocio}`
+  (por ejemplo `/n/bar-la-ola`). Dos personas activas del mismo negocio no pueden llamarse igual. Cada persona tiene además
+  un **código de empleado** interno (0001, 0002…) que se ve en Equipo y en la auditoría. El **PIN** es de 4 a 6
+  números (no se aceptan PIN obvios como 1111 o 1234). Teclado grande para tablet y celular; también sirve el teclado del
   computador. 5 PIN equivocados seguidos bloquean a esa persona 15 minutos (o hasta que le cambien el PIN). La sesión dura
   14 horas. La portada deja escogido el último restaurante usado en ese aparato; si alguien tiene la sesión abierta, sale
   el aviso «Sesión abierta · Seguir» y otra persona puede entrar sin que la anterior salga. «Salir» vuelve a la portada.
