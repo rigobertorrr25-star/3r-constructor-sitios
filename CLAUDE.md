@@ -64,10 +64,14 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   Sin precios hasta que Rigoberto los defina; los botones van a WhatsApp.
 - **Restaurant Control** (5 oct 2026): sistema **aparte** en `restaurante/` (como `asistencia/`: su propia base, clave y
   despliegue; no enlazar desde 3rpaginas.com ni compartir base). Producto general para cualquier restaurante o bar (no
-  solo Azul Caribe). Nace de los bocetos de 13 módulos de Rigoberto (ZIP): se tomaron las reglas y se reescribió con la
-  tecnología de la asistencia, varios negocios desde el día uno, plata en pesos enteros, nada se borra. Avance y orden de
-  módulos en `restaurante/README.md`. **Aún no está publicado**: falta que Rigoberto cree la base en Neon y el proyecto en
-  Vercel (Root Directory `restaurante`). Facturación DIAN: falta elegir proveedor (Alegra, Siigo…).
+  solo Azul Caribe), y también barberías/peluquerías (módulo 13). Nace de los bocetos de 13 módulos de Rigoberto (ZIP): se
+  tomaron las reglas y se reescribió con la tecnología de la asistencia, varios negocios desde el día uno, plata en pesos
+  enteros, nada se borra (auditoría y movimientos de inventario protegidos en la base). **Los 13 módulos están
+  construidos** (detalle en `restaurante/README.md`); 46 pruebas contra PostgreSQL real. **Aún no está publicado**: falta
+  que Rigoberto cree la base en Neon y el proyecto en Vercel (Root Directory `restaurante`, variables `DATABASE_URL`,
+  `ADMIN_PASSWORD`, `SESSION_SECRET` y opcional `ANTHROPIC_API_KEY`). Pendiente de él: elegir proveedor de factura
+  electrónica (Alegra, Siigo…) para el envío a la DIAN (módulo 10: todo lo demás listo) y probar el resumen con IA con la
+  llave real. El esquema de la base se aplica solo cuando cambia (tabla `schema_meta`).
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto
