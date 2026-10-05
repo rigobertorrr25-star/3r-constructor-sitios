@@ -167,8 +167,12 @@ export async function listBusinesses(): Promise<BusinessSummary[]> {
 }
 
 /** Restaurantes activos para la lista de la pantalla de ingreso (solo nombre y enlace). */
-export async function listActiveBusinesses(): Promise<{ name: string; slug: string }[]> {
-  return query<{ name: string; slug: string }>(`SELECT name, slug FROM businesses WHERE is_active ORDER BY lower(name), slug`);
+export async function listActiveBusinesses(): Promise<{ name: string; slug: string; background: number | null }[]> {
+  return query<{ name: string; slug: string; background: number | null }>(
+    `SELECT b.name, b.slug, (extract(epoch FROM g.updated_at) * 1000)::bigint::float8 AS background
+       FROM businesses b LEFT JOIN business_backgrounds g ON g.business_id = b.id
+      WHERE b.is_active ORDER BY lower(b.name), b.slug`,
+  );
 }
 
 export type LoginPerson = { code: string; name: string; role: Role };
@@ -510,6 +514,8 @@ export type StaffSession = Actor & {
   businessSlug: string;
   timezone: string;
   locationName: string;
+  /** Versión del fondo propio del restaurante (null = sin fondo). */
+  background: number | null;
   locationCount: number;
 };
 
@@ -520,7 +526,8 @@ export async function getStaffSession(staffId: string, locationId: string, epoch
     await query<StaffSession & { epoch: number; homeLocation: string | null }>(
       `SELECT s.id, s.name, s.code, s.role, s.business_id AS "businessId", l.id AS "locationId", s.session_epoch AS epoch,
               s.location_id AS "homeLocation", b.name AS "businessName", b.slug AS "businessSlug", b.timezone, l.name AS "locationName",
-              (SELECT count(*)::int FROM locations x WHERE x.business_id = b.id AND x.is_active) AS "locationCount"
+              (SELECT count(*)::int FROM locations x WHERE x.business_id = b.id AND x.is_active) AS "locationCount",
+              (SELECT (extract(epoch FROM g.updated_at) * 1000)::bigint::float8 FROM business_backgrounds g WHERE g.business_id = b.id) AS background
          FROM staff s
          JOIN businesses b ON b.id = s.business_id AND b.is_active
          JOIN locations l ON l.id = $2 AND l.business_id = s.business_id AND l.is_active
