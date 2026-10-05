@@ -514,7 +514,7 @@ export const CANVAS = { width: 1000, height: 640 } as const;
 export const SHAPES = ['square', 'round', 'long'] as const;
 export type Shape = (typeof SHAPES)[number];
 
-export type TableStatus = 'free' | 'open' | 'bill' | 'blocked';
+export type TableStatus = 'free' | 'open' | 'bill' | 'blocked' | 'reserved';
 
 export type FloorTable = {
   id: string;

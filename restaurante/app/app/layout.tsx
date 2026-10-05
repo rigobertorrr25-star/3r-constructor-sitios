@@ -12,6 +12,7 @@ const LINKS: { href: string; label: string; permission: Permission; station?: St
   { href: '/app', label: 'Mesas', permission: 'tables.view' },
   { href: '/app/cocina', label: 'Cocina', permission: 'kds.view', station: 'kitchen' },
   { href: '/app/barra', label: 'Barra', permission: 'kds.view', station: 'bar' },
+  { href: '/app/reservas', label: 'Reservas', permission: 'reservations.manage' },
   { href: '/app/caja', label: 'Caja', permission: 'cash.operate' },
   { href: '/app/finanzas', label: 'Finanzas', permission: 'finance.view' },
   { href: '/app/carta', label: 'Carta', permission: 'orders.take' },
@@ -19,6 +20,7 @@ const LINKS: { href: string; label: string; permission: Permission; station?: St
   { href: '/app/plano', label: 'Plano', permission: 'floor.edit' },
   { href: '/app/equipo', label: 'Equipo', permission: 'staff.manage' },
   { href: '/app/sedes', label: 'Sedes', permission: 'locations.manage' },
+  { href: '/app/qr', label: 'QR y enlaces', permission: 'locations.manage' },
   { href: '/app/auditoria', label: 'Auditoría', permission: 'audit.view' },
 ];
 

@@ -16,6 +16,7 @@ import {
 } from '@/lib/auth';
 import { homeOf } from '@/lib/permissions';
 import { moveTicket } from '@/lib/kds';
+import { createReservation, requestReservation, seatReservation, updatePublicSettings, updateReservation } from '@/lib/reservations';
 import { addExpense, voidExpense } from '@/lib/finance';
 import { registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
 import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
@@ -534,4 +535,74 @@ export async function addExpenseAction(_prev: FormState, formData: FormData): Pr
 export async function voidExpenseAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   return run(formData, () => voidExpense(staff, text(formData, 'expenseId'), text(formData, 'reason')), ['/app/finanzas', '/app/caja'], 'Gasto anulado.');
+}
+
+// ───────── reservas ─────────
+
+export async function createReservationAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () =>
+      createReservation(staff, {
+        name: text(formData, 'name'),
+        phone: text(formData, 'phone'),
+        date: text(formData, 'date'),
+        time: text(formData, 'time'),
+        guests: int(formData, 'guests'),
+        tableId: optionalId(formData, 'tableId'),
+        notes: text(formData, 'notes'),
+        deposit: pesos(formData, 'deposit') || 0,
+      }),
+    ['/app/reservas', '/app'],
+    'Reserva guardada.',
+  );
+}
+
+export async function updateReservationAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const input: { status?: string; tableId?: string | null } = {};
+  if (formData.has('status')) input.status = text(formData, 'status');
+  if (formData.has('tableId')) input.tableId = optionalId(formData, 'tableId');
+  return run(formData, () => updateReservation(staff, text(formData, 'reservationId'), input), ['/app/reservas', '/app']);
+}
+
+/** Llegó el cliente: abre su mesa y lleva al pedido. */
+export async function seatReservationAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  let sessionId = '';
+  const state = await run(
+    formData,
+    async () => {
+      sessionId = await seatReservation(staff, text(formData, 'reservationId'), optionalId(formData, 'tableId'));
+    },
+    ['/app/reservas', '/app'],
+  );
+  if (state?.error) return state;
+  redirect(`/app/mesa/${sessionId}`);
+}
+
+export async function publicSettingsAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => updatePublicSettings(staff, { phone: text(formData, 'phone'), reservationsEnabled: formData.get('reservationsEnabled') === 'on' }), ['/app/qr'], 'Guardado.');
+}
+
+/** Reserva pedida por el cliente desde el enlace público (sin cuenta). */
+export async function requestReservationAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  if (!allow(`reserva:${await clientIp()}`, 5, 10 * 60_000)) return { error: 'Demasiadas solicitudes desde este aparato. Intenta más tarde.' };
+  try {
+    const r = await requestReservation(text(formData, 'slug'), {
+      name: text(formData, 'name'),
+      phone: text(formData, 'phone'),
+      email: text(formData, 'email'),
+      date: text(formData, 'date'),
+      time: text(formData, 'time'),
+      guests: int(formData, 'guests'),
+      notes: text(formData, 'notes'),
+      locationId: optionalId(formData, 'locationId'),
+    });
+    return { ok: Date.now(), message: `¡Listo! ${r.businessName} recibió tu solicitud para ${text(formData, 'date')} a las ${text(formData, 'time')}. Te confirman por teléfono o WhatsApp.` };
+  } catch (error) {
+    return fail(messageOf(error), formData);
+  }
 }

@@ -14,6 +14,7 @@ import { Field, Select, TextArea, primaryButton, quietButton } from './ui';
 
 export type BoardTable = Omit<FloorTable, 'session'> & {
   session: (Omit<NonNullable<FloorTable['session']>, 'openedAt' | 'billAt'> & { openedAt: string; billAt: string | null; total?: number }) | null;
+  reservedFor?: { customerName: string; startsAt: string; guests: number } | null;
 };
 
 /** La hora actual, que avanza sola (los cronómetros salen de la hora de apertura guardada, no de un contador). */
@@ -26,13 +27,14 @@ export function useNow(everyMs = 15_000) {
   return now;
 }
 
-const STATUS_LABEL: Record<BoardTable['status'], string> = { free: 'Libre', open: 'Ocupada', bill: 'Pidió la cuenta', blocked: 'Bloqueada' };
+const STATUS_LABEL: Record<BoardTable['status'], string> = { free: 'Libre', open: 'Ocupada', bill: 'Pidió la cuenta', blocked: 'Bloqueada', reserved: 'Reservada' };
 
 const STATUS_STYLE: Record<BoardTable['status'], string> = {
   free: 'border-success/40 bg-success/[0.07] text-foreground hover:bg-success/[0.14]',
   open: 'border-primary/60 bg-primary/[0.16] text-foreground hover:bg-primary/[0.24]',
   bill: 'border-warning/70 bg-warning/[0.16] text-foreground hover:bg-warning/[0.24]',
   blocked: 'border-white/10 bg-white/[0.03] text-muted-foreground [background-image:repeating-linear-gradient(135deg,transparent_0_8px,#ffffff08_8px_16px)]',
+  reserved: 'border-accent/70 border-dashed bg-accent/[0.1] text-foreground hover:bg-accent/[0.18]',
 };
 
 export function TableShape({ table, now, onClick, selected, hasReady }: { table: BoardTable; now: number; onClick?: () => void; selected?: boolean; hasReady?: boolean }) {
@@ -62,7 +64,7 @@ export function TableShape({ table, now, onClick, selected, hasReady }: { table:
 export function Legend() {
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-muted-foreground">
-      {(['free', 'open', 'bill', 'blocked'] as const).map((s) => (
+      {(['free', 'open', 'bill', 'reserved', 'blocked'] as const).map((s) => (
         <li key={s} className="flex items-center gap-1.5">
           <span className={`size-3 rounded-[4px] border-2 ${STATUS_STYLE[s]}`} aria-hidden="true" />
           {STATUS_LABEL[s]}
@@ -263,11 +265,22 @@ function TableSheet({
           </button>
         </div>
 
+        {table.reservedFor && !session ? (
+          <p className="mt-5 rounded-2xl border border-accent/40 bg-accent/10 px-4 py-3 text-[14.5px]">
+            Reservada para <strong>{table.reservedFor.customerName}</strong> ({table.reservedFor.guests} p.) a las {formatTime(table.reservedFor.startsAt, timeZone)}. Si llegó, ábrela
+            desde{' '}
+            <Link href="/app/reservas" className="text-primary underline">
+              Reservas
+            </Link>
+            .
+          </p>
+        ) : null}
+
         {table.status === 'blocked' ? (
           <p className="mt-6 text-[15px] text-muted-foreground">Esta mesa está bloqueada. El administrador la desbloquea en Plano.</p>
         ) : null}
 
-        {table.status === 'free' && canOpen ? (
+        {(table.status === 'free' || table.status === 'reserved') && canOpen ? (
           <ActionForm action={openTableAction} onOk={onClose} className="mt-6 space-y-4">
             {(state) => (
               <>

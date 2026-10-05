@@ -3,6 +3,7 @@ import { can } from '@/lib/permissions';
 import { listTables } from '@/lib/store';
 import { sessionTotals } from '@/lib/orders';
 import { readyToServe } from '@/lib/kds';
+import { heldTables } from '@/lib/reservations';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { TableBoard, type BoardTable } from '@/components/table-board';
 import { Empty, PageTitle } from '@/components/ui';
@@ -13,12 +14,16 @@ export const dynamic = 'force-dynamic';
 export default async function TablesPage() {
   const staff = await requireStaff('tables.view');
   const tables = await listTables(staff);
-  const [totals, ready] = await Promise.all([
+  const [totals, ready, held] = await Promise.all([
     sessionTotals(staff.businessId, tables.flatMap((t) => (t.session ? [t.session.id] : []))),
     can(staff.role, 'tickets.deliver') ? readyToServe(staff) : Promise.resolve([]),
+    heldTables(staff),
   ]);
   const board: BoardTable[] = tables.map((t) => ({
     ...t,
+    // Libre pero apartada por una reserva confirmada que está por llegar.
+    status: t.status === 'free' && held.has(t.id) ? 'reserved' : t.status,
+    reservedFor: held.has(t.id) ? { ...held.get(t.id)!, startsAt: held.get(t.id)!.startsAt.toISOString() } : null,
     session: t.session
       ? { ...t.session, openedAt: t.session.openedAt.toISOString(), billAt: t.session.billAt?.toISOString() ?? null, total: totals.get(t.session.id) ?? 0 }
       : null,

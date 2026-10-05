@@ -21,7 +21,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 | 08 | Tablero del dueño ("Control total") y radar de fugas con datos reales | Listo |
 | 09 | Sin internet: pedidos y cobros quedan en el aparato y se reintentan solos, sin duplicarse | Listo |
 | 10 | Facturación electrónica DIAN | Pendiente (falta elegir proveedor) |
-| 11 | Reservas y menú QR | Pendiente |
+| 11 | Reservas (del equipo y en línea), mesas reservadas en el plano, carta pública y QR | Listo |
 | 12 | Resumen diario con IA | Pendiente |
 | 13 | Servicios y citas (barberías) | Pendiente |
 
@@ -164,6 +164,22 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   en vez de romper la pantalla, y si algo falla aparece "Reintentar".
 - Lo que no hace (todavía): abrir pantallas nuevas sin internet. La tablet necesita conexión para ver el plano y la carta
   actualizados; lo que ya está en pantalla sigue funcionando.
+
+## Cómo funciona (módulo 11: reservas y menú QR)
+
+- **Reservas** (`/app/reservas`, todo el equipo de sala): por día, con nombre, teléfono (enlace a WhatsApp), personas,
+  mesa opcional, nota y abono. Una misma mesa no acepta dos reservas a menos de 2 horas. "Llegó: abrir mesa" abre la mesa
+  (la asignada o la que se elija) con las personas y la nota de la reserva, y lleva al pedido. También: no llegó, cancelar.
+- **Reservas en línea** (`/r/{negocio}`): el cliente elige sede, fecha, hora y personas (hasta 20) y deja nombre y
+  teléfono. Llegan como "por confirmar" arriba de la pantalla de Reservas. Freno: 5 solicitudes cada 10 minutos por
+  aparato y máximo 3 pendientes por teléfono.
+- En el **plano**, una mesa con reserva confirmada aparece "Reservada" (borde morado punteado) desde 30 minutos antes hasta
+  90 minutos después de la hora, con el nombre del cliente.
+- **Carta pública** (`/m/{negocio}`): lo que está en la carta con precios y agotados al momento, botón para reservar y
+  WhatsApp del restaurante. Con `?mesa=5` muestra el número de la mesa.
+- **QR y enlaces** (`/app/qr`, dueño): QR de la carta, de las reservas y uno por mesa, listos para imprimir; WhatsApp
+  público y el interruptor de reservas en línea.
+- Los clientes quedan guardados por teléfono (se usarán también para las facturas).
 
 ## Publicarla (una sola vez)
 
