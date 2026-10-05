@@ -14,7 +14,8 @@ describe('módulos 05 y 06: inventario y recetas', { skip: url ? false : 'sin TE
   type Actor = import('../lib/store').Actor;
   let owner: Actor, waiter: Actor, bartender: Actor;
   let whisky: string, lime: string, drink: string, table: string;
-  const stamp = Date.now();
+  // Marca única por archivo (corren en paralelo): Date.now() solo puede repetirse entre dos archivos.
+  const stamp = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
 
   const login = async (slug: string, code: string, pin: string) => {
     const r = await store.loginStaff({ slug, code, pin });

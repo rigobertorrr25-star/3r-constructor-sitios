@@ -7,7 +7,8 @@ const url = process.env.TEST_DATABASE_URL;
 describe('módulo 01: núcleo y mesas', { skip: url ? false : 'sin TEST_DATABASE_URL' }, () => {
   let store: typeof import('../lib/store');
   let db: typeof import('../lib/db');
-  const stamp = Date.now();
+  // Marca única por archivo (corren en paralelo): Date.now() solo puede repetirse entre dos archivos.
+  const stamp = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
   let businessId: string, slug: string, mainId: string, ownerId: string;
   let owner: import('../lib/store').Actor;
   let waiter: import('../lib/store').Actor;

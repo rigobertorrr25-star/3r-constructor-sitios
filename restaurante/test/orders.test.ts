@@ -12,7 +12,8 @@ describe('módulo 02: carta y pedidos', { skip: url ? false : 'sin TEST_DATABASE
   let owner: import('../lib/store').Actor;
   let waiter: import('../lib/store').Actor;
   let other: import('../lib/store').Actor;
-  const stamp = Date.now();
+  // Marca única por archivo (corren en paralelo): Date.now() solo puede repetirse entre dos archivos.
+  const stamp = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
   let burger: string, mojito: string, water: string, sessionId: string, tableId: string;
 
   const login = async (slug: string, code: string, pin: string) => {

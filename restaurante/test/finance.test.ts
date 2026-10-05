@@ -14,7 +14,8 @@ describe('módulo 07: gastos y finanzas', { skip: url ? false : 'sin TEST_DATABA
   let db: typeof import('../lib/db');
   type Actor = import('../lib/store').Actor;
   let owner: Actor, waiter: Actor, manager: Actor;
-  const stamp = Date.now();
+  // Marca única por archivo (corren en paralelo): Date.now() solo puede repetirse entre dos archivos.
+  const stamp = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
   const tz = 'America/Bogota';
   let today: string;
 

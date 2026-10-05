@@ -13,7 +13,8 @@ describe('módulo 04: caja y pagos', { skip: url ? false : 'sin TEST_DATABASE_UR
   type Actor = import('../lib/store').Actor;
   let owner: Actor, waiter: Actor, cashier: Actor;
   let burger: string, beer: string, t1: string, t2: string, t3: string;
-  const stamp = Date.now();
+  // Marca única por archivo (corren en paralelo): Date.now() solo puede repetirse entre dos archivos.
+  const stamp = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
 
   const login = async (slug: string, code: string, pin: string) => {
     const r = await store.loginStaff({ slug, code, pin });
