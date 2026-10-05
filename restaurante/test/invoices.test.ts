@@ -84,7 +84,7 @@ describe('módulo 10: facturas', { skip: url ? false : 'sin TEST_DATABASE_URL' }
     const list = await inv.listInvoices(owner, { from: today, to: today }, tz);
     assert.equal(list[0].customerName, 'Empresa Cliente SAS');
     const csv = inv.invoicesCsv(list, tz);
-    assert.match(csv, /Empresa Cliente SAS;facturas@cliente\.co;100000;8;8000;108000;10800;Pendiente);
+    assert.match(csv, /Empresa Cliente SAS;facturas@cliente\.co;100000;8;8000;108000;10800;Pendiente/);
   });
 
   it('reversar el pago que cerró la venta anula la factura y al volver a cobrar sale otra', async () => {
