@@ -17,7 +17,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 | 03 | Pantallas de cocina y barra (nueva → preparando → lista → entregada), aviso de listo para llevar | Listo |
 | 04 | Caja: turnos, cobro en partes y con varios medios, propina, descuentos, precuenta, cuadre | Listo |
 | 05–06 | Inventario por sede, recetas que descuentan solas, compras, mermas, conteos y control de botellas | Listo |
-| 07 | Gastos y finanzas | Pendiente |
+| 07 | Gastos y estado de resultados (ventas, costo, mermas, faltantes, gastos y utilidad) | Listo |
 | 08 | Tablero del dueño y radar de fugas | Pendiente |
 | 09 | Sin internet (reintentos sin cobros dobles) | Pendiente |
 | 10 | Facturación electrónica DIAN | Pendiente (falta elegir proveedor) |
@@ -124,6 +124,19 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   y queda la diferencia contra lo que el sistema esperaba: lo que falta es la **fuga** (por ejemplo, "faltan 270 ml de
   whisky"), con su valor en pesos, en el historial del insumo y en la auditoría.
 - Cocina y barra ven las existencias y registran mermas; dueño y administrador manejan todo y ven costos y valor del inventario.
+
+## Cómo funciona (módulo 07: gastos y finanzas)
+
+- **Finanzas** (`/app/finanzas`, dueño y administrador): periodo rápido (hoy, ayer, 7 días, este mes, mes pasado) o fechas
+  a mano. El dueño elige una sede o todas; el administrador ve la suya.
+- **Estado de resultados:** ventas cobradas (sin propinas: son del equipo) − costo de lo vendido (lo que descontaron las
+  recetas) = utilidad bruta; − mermas − faltantes de los conteos + sobrantes − gastos = **utilidad operativa**. También:
+  ticket promedio por mesa y por persona, cómo pagaron, lo más vendido, ventas por día (gráfica con vista de tabla) y, para
+  informar, descuentos dados y lo anulado.
+- **Gastos:** tipo (proveedores, nómina, arriendo, servicios, mantenimiento, publicidad, impuestos, otros), valor, fecha,
+  proveedor. "Lo pagué con la plata de la caja" lo saca de la caja abierta (y revisa que alcance). Anular un gasto exige
+  motivo; si había salido de la caja y esa caja sigue abierta, la plata vuelve a la caja.
+- Las fechas son días del negocio en su zona horaria (Colombia), no del servidor.
 
 ## Publicarla (una sola vez)
 

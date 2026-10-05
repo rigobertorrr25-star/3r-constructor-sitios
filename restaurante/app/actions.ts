@@ -16,6 +16,7 @@ import {
 } from '@/lib/auth';
 import { homeOf } from '@/lib/permissions';
 import { moveTicket } from '@/lib/kds';
+import { addExpense, voidExpense } from '@/lib/finance';
 import { registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
 import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
@@ -508,4 +509,29 @@ export async function saveRecipeAction(productId: string, lines: { itemId: strin
   revalidatePath('/app/carta');
   revalidatePath(`/app/carta/receta/${productId}`);
   return null;
+}
+
+// ───────── gastos ─────────
+
+export async function addExpenseAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () =>
+      addExpense(staff, {
+        category: text(formData, 'category'),
+        description: text(formData, 'description'),
+        supplier: text(formData, 'supplier'),
+        amount: pesos(formData, 'amount'),
+        spentOn: text(formData, 'spentOn'),
+        paidFromCash: formData.get('paidFromCash') === 'on',
+      }),
+    ['/app/finanzas', '/app/caja'],
+    'Gasto registrado.',
+  );
+}
+
+export async function voidExpenseAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => voidExpense(staff, text(formData, 'expenseId'), text(formData, 'reason')), ['/app/finanzas', '/app/caja'], 'Gasto anulado.');
 }

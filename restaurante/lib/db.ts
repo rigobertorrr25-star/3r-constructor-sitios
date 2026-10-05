@@ -295,6 +295,29 @@ DROP TRIGGER IF EXISTS inventory_movements_no_change ON inventory_movements;
 CREATE TRIGGER inventory_movements_no_change BEFORE UPDATE OR DELETE ON inventory_movements
   FOR EACH ROW EXECUTE FUNCTION inventory_movements_append_only();
 
+-- ───────── módulo 07: gastos y finanzas ─────────
+
+-- Gastos del negocio por sede (arriendo, nómina, servicios, proveedores…). Si se pagó con la plata de la caja,
+-- cash_movement_id apunta a la salida de caja que se creó junto. Se anulan con motivo, no se borran.
+CREATE TABLE IF NOT EXISTS expenses (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id      UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id      UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  category         VARCHAR(20) NOT NULL,
+  description      VARCHAR(200) NOT NULL,
+  supplier         VARCHAR(120),
+  amount           BIGINT NOT NULL CHECK (amount > 0),
+  spent_on         DATE NOT NULL,
+  paid_from_cash   BOOLEAN NOT NULL DEFAULT FALSE,
+  cash_movement_id UUID REFERENCES cash_movements(id),
+  created_by       UUID NOT NULL REFERENCES staff(id),
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  voided_at        TIMESTAMPTZ,
+  voided_by        UUID REFERENCES staff(id),
+  void_reason      VARCHAR(200)
+);
+CREATE INDEX IF NOT EXISTS idx_expenses_location_date ON expenses (location_id, spent_on);
+
 -- Rastro de todo lo importante: quién hizo qué, cuándo y por qué.
 CREATE TABLE IF NOT EXISTS audit_events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

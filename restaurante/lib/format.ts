@@ -20,7 +20,8 @@ export function formatDateTime(date: string | Date, timeZone = 'America/Bogota')
 
 /** Pesos enteros: 12500 → "$12.500". */
 export function formatCop(pesos: number) {
-  return `$${Math.round(pesos).toLocaleString('es-CO')}`;
+  const n = Math.round(pesos);
+  return n < 0 ? `−$${(-n).toLocaleString('es-CO')}` : `$${n.toLocaleString('es-CO')}`;
 }
 
 /** Una mesa lleva demasiado tiempo (lo mismo que mira el radar de fugas). */
