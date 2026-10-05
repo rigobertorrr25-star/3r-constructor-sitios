@@ -3,6 +3,7 @@
 import { query, transaction, type Db } from './db';
 import { METHOD_LABEL, isMethod, lockOpenShift } from './cash';
 import { formatCop } from './format';
+import { createInvoice } from './invoices';
 import { can } from './permissions';
 import { normalizePhone } from './reservations';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
@@ -227,6 +228,7 @@ export async function payAppointment(actor: Actor, id: string, input: { method: 
       [actor.businessId, actor.locationId, id, shift.id, input.method, amount, tip, received, change, input.reference?.trim() || null, input.clientKey, actor.id],
     );
     await db.query(`UPDATE appointments SET status = 'paid' WHERE id = $1`, [id]);
+    await createInvoice(db, actor, { appointmentId: id, total: a.price, tip });
     await audit(db, actor, {
       action: 'payment.create',
       entity: 'payment',

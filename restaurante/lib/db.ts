@@ -413,6 +413,49 @@ ALTER TABLE payments ADD COLUMN IF NOT EXISTS appointment_id UUID REFERENCES app
 ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_one_target;
 ALTER TABLE payments ADD CONSTRAINT payments_one_target CHECK ((session_id IS NULL) <> (appointment_id IS NULL));
 
+-- ───────── módulo 10: factura electrónica (lista para conectar un proveedor) ─────────
+
+-- Datos fiscales del negocio. tax_kind: inc (impuesto al consumo 8 %, restaurantes y bares), iva (19 %) o none.
+-- Los precios de la carta incluyen el impuesto.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS legal_name VARCHAR(160);
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS tax_id VARCHAR(20);
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS tax_kind VARCHAR(4) NOT NULL DEFAULT 'inc';
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS invoice_resolution VARCHAR(200);
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS invoice_provider VARCHAR(20) NOT NULL DEFAULT 'none';
+
+-- Una factura por venta cobrada (cuenta de mesa o cita). Mientras no haya proveedor conectado queda "pendiente" y se
+-- exporta para el contador. Los valores no se cambian después de creada; los datos del cliente sí, mientras esté pendiente.
+CREATE TABLE IF NOT EXISTS invoices (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id    UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id    UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  sequence       INT NOT NULL,
+  session_id     UUID REFERENCES table_sessions(id) ON DELETE CASCADE,
+  appointment_id UUID REFERENCES appointments(id) ON DELETE CASCADE,
+  doc_type       VARCHAR(10) NOT NULL DEFAULT 'CC',
+  doc_number     VARCHAR(20) NOT NULL DEFAULT '222222222222',
+  customer_name  VARCHAR(160) NOT NULL DEFAULT 'Consumidor final',
+  customer_email VARCHAR(160),
+  total          BIGINT NOT NULL,
+  tax_kind       VARCHAR(4) NOT NULL,
+  tax_rate       INT NOT NULL,
+  base           BIGINT NOT NULL,
+  tax            BIGINT NOT NULL,
+  tip            BIGINT NOT NULL DEFAULT 0,
+  status         VARCHAR(10) NOT NULL DEFAULT 'pending',
+  provider       VARCHAR(20),
+  number         VARCHAR(40),
+  cufe           VARCHAR(120),
+  error          VARCHAR(300),
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  sent_at        TIMESTAMPTZ,
+  UNIQUE (business_id, sequence),
+  CHECK ((session_id IS NULL) <> (appointment_id IS NULL))
+);
+-- Una factura vigente por venta (las anuladas por un reverso quedan de rastro).
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_invoice_session ON invoices (session_id) WHERE session_id IS NOT NULL AND status <> 'void';
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_invoice_appointment ON invoices (appointment_id) WHERE appointment_id IS NOT NULL AND status <> 'void';
+
 -- Rastro de todo lo importante: quién hizo qué, cuándo y por qué.
 CREATE TABLE IF NOT EXISTS audit_events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

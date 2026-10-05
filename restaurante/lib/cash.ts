@@ -2,6 +2,7 @@
 // Nada se borra: un pago equivocado se reversa con motivo, un descuento se anula, una salida de plata se registra.
 import { formatCop } from './format';
 import { pooled, query, transaction, type Db } from './db';
+import { createInvoice, voidInvoiceFor } from './invoices';
 import { can } from './permissions';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 
@@ -400,6 +401,9 @@ export async function pay(actor: Actor, sessionId: string, input: PaymentInput) 
       const closed = input.amount === checkout.balance;
       if (closed) {
         await db.query(`UPDATE table_sessions SET status = 'closed', closed_at = now(), closed_by = $2 WHERE id = $1`, [sessionId, actor.id]);
+        // Una factura por la venta completa (sin propinas, que no son ingreso del negocio).
+        const tips = checkout.tips + tip;
+        await createInvoice(db, actor, { sessionId, total: checkout.total, tip: tips });
         await audit(db, actor, {
           action: 'table.close',
           entity: 'table_session',
@@ -442,7 +446,14 @@ export async function reversePayment(actor: Actor, paymentId: string, reason: st
       // Pago de una cita: la cita vuelve a quedar "atendida, por cobrar".
       await db.query(`UPDATE appointments SET status = 'done' WHERE id = $1`, [p.appointmentId]);
       await db.query(`UPDATE payments SET reversed_at = now(), reversed_by = $2, reverse_reason = $3 WHERE id = $1`, [paymentId, actor.id, why]);
-      await audit(db, actor, { action: 'payment.reverse', entity: 'payment', entityId: paymentId, summary: `Reversó el pago de una cita (${money(Number(p.amount))})`, reason: why });
+      const sent = await voidInvoiceFor(db, { appointmentId: p.appointmentId });
+      await audit(db, actor, {
+        action: 'payment.reverse',
+        entity: 'payment',
+        entityId: paymentId,
+        summary: `Reversó el pago de una cita (${money(Number(p.amount))})${sent ? '. Su factura ya estaba en la DIAN: hace falta nota crédito' : ''}`,
+        reason: why,
+      });
       return;
     }
     const session = await lockSessionForCash(db, actor, p.sessionId!);
@@ -450,6 +461,9 @@ export async function reversePayment(actor: Actor, paymentId: string, reason: st
       const busy = await db.query(`SELECT 1 FROM table_sessions WHERE table_id = $1 AND status <> 'closed'`, [session.tableId]);
       if (busy.rowCount) throw new AppError('CONFLICT', `La mesa ${session.number} ya tiene otra cuenta abierta. Registra la devolución como una salida de caja.`);
       await db.query(`UPDATE table_sessions SET status = 'bill', closed_at = NULL, closed_by = NULL, bill_at = now() WHERE id = $1`, [session.id]);
+      if (await voidInvoiceFor(db, { sessionId: session.id })) {
+        await audit(db, actor, { action: 'invoice.credit_note', entity: 'table_session', entityId: session.id, summary: `La factura de la mesa ${session.number} ya estaba en la DIAN: hace falta nota crédito` });
+      }
     }
     await db.query(`UPDATE payments SET reversed_at = now(), reversed_by = $2, reverse_reason = $3 WHERE id = $1`, [paymentId, actor.id, why]);
     await audit(db, actor, {

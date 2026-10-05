@@ -46,7 +46,8 @@ export type Permission =
   | 'finance.view'
   | 'reservations.manage'
   | 'agenda.view'
-  | 'agenda.manage';
+  | 'agenda.manage'
+  | 'invoices.manage';
 
 const GRANTS: Record<Permission, Role[]> = {
   'tables.view': ['owner', 'manager', 'cashier', 'waiter'],
@@ -79,6 +80,7 @@ const GRANTS: Record<Permission, Role[]> = {
   // Citas: el profesional ve la suya; dueño, administrador y cajero agendan, mueven y cobran.
   'agenda.view': ['owner', 'manager', 'cashier', 'pro'],
   'agenda.manage': ['owner', 'manager', 'cashier'],
+  'invoices.manage': ['owner', 'manager', 'cashier'],
 };
 
 export const can = (role: Role, permission: Permission) => GRANTS[permission].includes(role);

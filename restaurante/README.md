@@ -20,7 +20,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 | 07 | Gastos y estado de resultados (ventas, costo, mermas, faltantes, gastos y utilidad) | Listo |
 | 08 | Tablero del dueño ("Control total") y radar de fugas con datos reales | Listo |
 | 09 | Sin internet: pedidos y cobros quedan en el aparato y se reintentan solos, sin duplicarse | Listo |
-| 10 | Facturación electrónica DIAN | Pendiente (falta elegir proveedor) |
+| 10 | Factura electrónica: datos fiscales, impuesto, una factura por venta, exportación | Listo sin envío a la DIAN (falta elegir proveedor) |
 | 11 | Reservas (del equipo y en línea), mesas reservadas en el plano, carta pública y QR | Listo |
 | 12 | Resumen del día con IA (Claude) en el tablero, con plantilla si no hay llave | Listo (falta la llave) |
 | 13 | Servicios y citas (barberías, peluquerías, spas) con cobro en la caja y comisiones | Listo |
@@ -208,6 +208,22 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   ventas del turno, a Finanzas y al Tablero. Un doble toque no cobra dos veces. Reversar el pago (dueño o administrador,
   con motivo) deja la cita otra vez por cobrar.
 - **Comisiones del mes:** por profesional, servicios, ventas, comisión y propinas. Cada profesional ve la suya.
+
+## Cómo funciona (módulo 10: factura electrónica)
+
+- **Datos de facturación** (`/app/facturas`, el dueño): razón social, NIT, impuesto (impuesto al consumo 8 % para
+  restaurantes y bares, IVA 19 % o no responsable) y resolución. Los precios de la carta se toman **con el impuesto
+  incluido**: $108.000 con impoconsumo = base $100.000 + $8.000.
+- **Cada venta cobrada** (la cuenta de una mesa al quedar en cero, o una cita) crea su factura con número interno de venta,
+  a nombre de **consumidor final** (CC 222222222222). La propina va aparte: no es ingreso del negocio y no lleva impuesto.
+- **"Poner a nombre del cliente"** (en la pantalla de cobro o en Facturas): tipo y número de documento, nombre o razón
+  social y correo, mientras no se haya enviado.
+- Si se **reversa** el pago que cerró la venta, su factura se anula (queda de rastro) y al cobrar de nuevo sale otra. Si ya
+  se había enviado a la DIAN, la auditoría avisa que hace falta una nota crédito.
+- **Descargar para Excel:** las facturas del periodo con base, impuesto, total, propina, cliente y estado, para el
+  contador o para subirlas al proveedor.
+- **Lo que falta:** el envío a la DIAN. Se hace por un proveedor tecnológico (Alegra, Siigo u otro) con sus llaves; hay que
+  elegirlo y conectar su API. Mientras tanto las facturas quedan "pendientes".
 
 ## Publicarla (una sola vez)
 

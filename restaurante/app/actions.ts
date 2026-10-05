@@ -16,6 +16,7 @@ import {
 } from '@/lib/auth';
 import { homeOf } from '@/lib/permissions';
 import { moveTicket } from '@/lib/kds';
+import { saveFiscal, setInvoiceCustomer } from '@/lib/invoices';
 import { createAppointment, payAppointment, saveService, setAppointmentStatus } from '@/lib/appointments';
 import { getBrief } from '@/lib/brief';
 import { createReservation, requestReservation, seatReservation, updatePublicSettings, updateReservation } from '@/lib/reservations';
@@ -680,4 +681,26 @@ export async function payAppointmentAction(
   } catch (error) {
     return { error: messageOf(error) };
   }
+}
+
+// ───────── facturas ─────────
+
+export async function saveFiscalAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () => saveFiscal(staff, { legalName: text(formData, 'legalName'), taxId: text(formData, 'taxId'), taxKind: text(formData, 'taxKind'), resolution: text(formData, 'resolution') }),
+    ['/app/facturas'],
+    'Datos de facturación guardados.',
+  );
+}
+
+export async function invoiceCustomerAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () => setInvoiceCustomer(staff, text(formData, 'invoiceId'), { docType: text(formData, 'docType'), docNumber: text(formData, 'docNumber'), name: text(formData, 'name'), email: text(formData, 'email') }),
+    ['/app/facturas', `/app/caja/mesa/${text(formData, 'sessionId')}`],
+    'Factura a nombre del cliente.',
+  );
 }
