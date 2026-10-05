@@ -1,4 +1,5 @@
 // Conexión a la base propia de Restaurant Control (no es la de la tienda 3R ni la de la asistencia).
+import { createHash } from 'node:crypto';
 import { Pool, type PoolClient } from 'pg';
 
 const SCHEMA = `
@@ -318,6 +319,44 @@ CREATE TABLE IF NOT EXISTS expenses (
 );
 CREATE INDEX IF NOT EXISTS idx_expenses_location_date ON expenses (location_id, spent_on);
 
+-- ───────── módulo 11: clientes, reservas y menú QR ─────────
+
+-- Datos públicos del negocio para su carta y sus reservas en línea.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS public_phone VARCHAR(30);
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS reservations_enabled BOOLEAN NOT NULL DEFAULT TRUE;
+
+-- Clientes del negocio (se reconocen por teléfono). Los usan las reservas y, más adelante, las facturas.
+CREATE TABLE IF NOT EXISTS customers (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  name        VARCHAR(120) NOT NULL,
+  phone       VARCHAR(20) NOT NULL,
+  email       VARCHAR(160),
+  document    VARCHAR(20),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (business_id, phone)
+);
+
+-- Reservas. status: requested (pedida por el cliente en línea, falta confirmar), confirmed, arrived, no_show, cancelled.
+CREATE TABLE IF NOT EXISTS reservations (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  table_id    UUID REFERENCES dining_tables(id) ON DELETE SET NULL,
+  starts_at   TIMESTAMPTZ NOT NULL,
+  guests      INT NOT NULL CHECK (guests > 0),
+  notes       VARCHAR(300),
+  deposit     BIGINT NOT NULL DEFAULT 0,
+  status      VARCHAR(10) NOT NULL DEFAULT 'confirmed',
+  source      VARCHAR(10) NOT NULL DEFAULT 'staff',
+  session_id  UUID REFERENCES table_sessions(id) ON DELETE SET NULL,
+  created_by  UUID REFERENCES staff(id),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_reservations_location_start ON reservations (location_id, starts_at);
+
 -- Rastro de todo lo importante: quién hizo qué, cuándo y por qué.
 CREATE TABLE IF NOT EXISTS audit_events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -362,15 +401,35 @@ function pool(): Pool {
   return store.restaurantePool;
 }
 
-/** Crea las tablas si no existen. Corre una vez por proceso (con un candado, por si arrancan dos a la vez). */
+// Huella del esquema: si no cambió, no se vuelve a correr (cambiar tablas bloquea a quien las está usando, y en
+// Vercel arrancan servidores nuevos a cada rato).
+const SCHEMA_VERSION = createHash('sha256').update(SCHEMA).digest('hex').slice(0, 16);
+
+/** Crea o actualiza las tablas solo si el esquema cambió desde la última vez. Una vez por proceso, con candado. */
 function ensureSchema(): Promise<void> {
   store.restauranteSchema ??= (async () => {
     const client = await pool().connect();
     try {
+      const current = async () =>
+        (
+          await client.query<{ version: string }>(
+            `SELECT version FROM schema_meta WHERE id = 1 AND to_regclass('schema_meta') IS NOT NULL`,
+          ).catch(() => ({ rows: [] as { version: string }[] }))
+        ).rows[0]?.version;
+      if ((await current()) === SCHEMA_VERSION) return;
       await client.query('SELECT pg_advisory_lock(727001)');
-      await client.query(SCHEMA);
+      try {
+        if ((await current()) === SCHEMA_VERSION) return;
+        await client.query(SCHEMA);
+        await client.query(`CREATE TABLE IF NOT EXISTS schema_meta (id INT PRIMARY KEY, version VARCHAR(32) NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
+        await client.query(
+          `INSERT INTO schema_meta (id, version) VALUES (1, $1) ON CONFLICT (id) DO UPDATE SET version = EXCLUDED.version, updated_at = now()`,
+          [SCHEMA_VERSION],
+        );
+      } finally {
+        await client.query('SELECT pg_advisory_unlock(727001)').catch(() => undefined);
+      }
     } finally {
-      await client.query('SELECT pg_advisory_unlock(727001)').catch(() => undefined);
       client.release();
     }
   })().catch((error) => {
