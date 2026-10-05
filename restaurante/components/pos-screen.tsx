@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { sendOrderAction, setBillAction, voidItemAction } from '@/app/actions';
 import { elapsedMinutes, formatCop, formatElapsed, formatTime } from '@/lib/format';
+import { isNetworkError, retryDelay } from '@/lib/offline';
 import type { MenuCategory, MenuProduct, OrderItemView } from '@/lib/orders';
 import { STATION_LABEL } from '@/lib/stations';
 import { ActionForm } from './form-state';
@@ -26,18 +27,23 @@ const TICKET_STYLE: Record<string, string> = {
 
 const newKey = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
 
-/** El carrito queda guardado en el aparato: si el mesero cambia de pantalla, no lo pierde. */
+/**
+ * El carrito queda guardado en el aparato: si el mesero cambia de pantalla, no lo pierde. Si se envió sin conexión,
+ * queda marcado como pendiente con su identificador, y se reintenta con el mismo (el servidor no lo duplica).
+ */
 function useCart(sessionId: string) {
   const storageKey = `rc-carrito-${sessionId}`;
   const [lines, setLines] = useState<Line[]>([]);
   const [clientKey, setClientKey] = useState('');
+  const [pending, setPending] = useState(false);
   const loaded = useRef(false);
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(storageKey) ?? 'null') as { lines: Line[]; clientKey: string } | null;
+      const saved = JSON.parse(localStorage.getItem(storageKey) ?? 'null') as { lines: Line[]; clientKey: string; pending?: boolean } | null;
       if (saved?.lines?.length) {
         setLines(saved.lines);
         setClientKey(saved.clientKey);
+        setPending(Boolean(saved.pending));
       } else setClientKey(newKey());
     } catch {
       setClientKey(newKey());
@@ -47,13 +53,13 @@ function useCart(sessionId: string) {
   useEffect(() => {
     if (!loaded.current) return;
     try {
-      if (lines.length) localStorage.setItem(storageKey, JSON.stringify({ lines, clientKey }));
+      if (lines.length) localStorage.setItem(storageKey, JSON.stringify({ lines, clientKey, pending }));
       else localStorage.removeItem(storageKey);
     } catch {
       // Sin almacenamiento (modo privado): el carrito vive solo en esta pantalla.
     }
-  }, [lines, clientKey, storageKey]);
-  return { lines, setLines, clientKey, reset: () => (setLines([]), setClientKey(newKey())) };
+  }, [lines, clientKey, pending, storageKey]);
+  return { lines, setLines, clientKey, pending, setPending, reset: () => (setLines([]), setClientKey(newKey()), setPending(false)) };
 }
 
 export function PosScreen({
@@ -76,7 +82,8 @@ export function PosScreen({
   timeZone: string;
 }) {
   const now = useNow();
-  const { lines, setLines, clientKey, reset } = useCart(session.id);
+  const { lines, setLines, clientKey, pending: queued, setPending: setQueued, reset } = useCart(session.id);
+  const attempt = useRef(0);
   const [category, setCategory] = useState<string>('');
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -92,6 +99,8 @@ export function PosScreen({
   }, [products, categories, category, search]);
 
   const add = (p: MenuProduct) => {
+    // Con un pedido pendiente de enviar, el carrito no cambia (se reintenta tal cual, sin duplicar).
+    if (queued) return;
     setSent(null);
     setLines((prev) => {
       const plain = prev.find((l) => l.productId === p.id && !l.notes);
@@ -99,23 +108,48 @@ export function PosScreen({
       return [...prev, { key: newKey(), productId: p.id, name: p.name, price: p.price, quantity: 1, notes: '' }];
     });
   };
-  const change = (key: string, patch: Partial<Line>) => setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)).filter((l) => l.quantity > 0));
+  const change = (key: string, patch: Partial<Line>) => !queued && setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)).filter((l) => l.quantity > 0));
   const cartTotal = lines.reduce((sum, l) => sum + l.price * l.quantity, 0);
 
-  const send = () =>
-    start(async () => {
-      setError(null);
+  const submit = async () => {
+    setError(null);
+    try {
       const result = await sendOrderAction(
         session.id,
         lines.map((l) => ({ productId: l.productId, quantity: l.quantity, notes: l.notes })),
         clientKey,
       );
-      if (result.error) setError(result.error);
-      else {
+      if (result.error) {
+        setQueued(false);
+        setError(result.error);
+      } else {
+        attempt.current = 0;
         reset();
         setSent(result.number ?? null);
       }
-    });
+    } catch (e) {
+      // Sin conexión: queda pendiente en el aparato y se reintenta solo con el mismo identificador.
+      if (isNetworkError(e)) setQueued(true);
+      else setError('Algo salió mal. Intenta otra vez.');
+    }
+  };
+  const send = () => start(submit);
+
+  // Reintento automático del pedido pendiente (y en cuanto vuelve la conexión).
+  useEffect(() => {
+    if (!queued || lines.length === 0 || !clientKey) return;
+    const timer = setTimeout(() => {
+      attempt.current += 1;
+      start(submit);
+    }, retryDelay(attempt.current));
+    const onOnline = () => start(submit);
+    window.addEventListener('online', onOnline);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('online', onOnline);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queued, lines, clientKey, pending]);
 
   return (
     <div className="space-y-5">
@@ -210,6 +244,11 @@ export function PosScreen({
                 ))}
               </ul>
             )}
+            {queued ? (
+              <p role="status" className="mt-3 rounded-2xl border border-warning/40 bg-warning/10 px-4 py-3 text-[14px] text-warning">
+                Sin conexión: este pedido quedó guardado en el aparato y se enviará solo cuando vuelva el internet. No lo vuelvas a pedir.
+              </p>
+            ) : null}
             {error ? (
               <div className="mt-3">
                 <Alert>{error}</Alert>
@@ -219,8 +258,8 @@ export function PosScreen({
               <span className="text-[14px] text-muted-foreground">Total del pedido</span>
               <span className="font-display text-[20px] font-bold">{formatCop(cartTotal)}</span>
             </div>
-            <button type="button" className={`${primaryButton} mt-4 w-full py-3 text-[15.5px]`} disabled={lines.length === 0 || pending || closed || !clientKey} onClick={send}>
-              {pending ? 'Enviando…' : 'Enviar a cocina y barra'}
+            <button type="button" className={`${primaryButton} mt-4 w-full py-3 text-[15.5px]`} disabled={lines.length === 0 || pending || queued || closed || !clientKey} onClick={send}>
+              {queued ? 'Esperando conexión…' : pending ? 'Enviando…' : 'Enviar a cocina y barra'}
             </button>
           </div>
 

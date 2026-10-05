@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { closeTableAction, moveSessionAction, moveTicketAction, openTableAction, setBillAction, updateSessionAction } from '@/app/actions';
+import { orOffline } from '@/lib/offline';
 import Link from 'next/link';
 import { LONG_TABLE_MINUTES, elapsedMinutes, formatCop, formatElapsed, formatTime } from '@/lib/format';
 import type { FloorTable } from '@/lib/store';
@@ -440,7 +441,7 @@ function ReadyList({ ready, now }: { ready: Ready[]; now: number }) {
               onClick={() =>
                 start(async () => {
                   setError(null);
-                  const result = await moveTicketAction(r.id, 'delivered');
+                  const result = await orOffline(moveTicketAction(r.id, 'delivered'));
                   if (result) setError(result);
                 })
               }

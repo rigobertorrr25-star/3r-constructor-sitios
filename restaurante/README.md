@@ -19,7 +19,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 | 05–06 | Inventario por sede, recetas que descuentan solas, compras, mermas, conteos y control de botellas | Listo |
 | 07 | Gastos y estado de resultados (ventas, costo, mermas, faltantes, gastos y utilidad) | Listo |
 | 08 | Tablero del dueño ("Control total") y radar de fugas con datos reales | Listo |
-| 09 | Sin internet (reintentos sin cobros dobles) | Pendiente |
+| 09 | Sin internet: pedidos y cobros quedan en el aparato y se reintentan solos, sin duplicarse | Listo |
 | 10 | Facturación electrónica DIAN | Pendiente (falta elegir proveedor) |
 | 11 | Reservas y menú QR | Pendiente |
 | 12 | Resumen diario con IA | Pendiente |
@@ -149,6 +149,21 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   conteos (por ejemplo "Whisky: −270 ml"), mesas abiertas hace más de 90 minutos, pagos reversados, mesas cerradas sin
   cobrar, cajas con faltante, comandas de más de 25 minutos y bloqueos por PIN equivocado.
 - También: lo más vendido de cocina y de barra, tiempo promedio de preparación por estación e insumos por comprar.
+
+## Cómo funciona (módulo 09: cuando se cae el internet)
+
+- Cada pedido y cada cobro lleva un **identificador único** que crea el aparato. El servidor lo guarda: si el mismo envío
+  llega dos veces (doble toque, o la respuesta se perdió y el aparato reintenta), se registra **una sola vez**. Así no hay
+  pedidos dobles en cocina ni cobros dobles.
+- **Pedido sin conexión:** queda guardado en la tablet como "pendiente", con aviso ("No lo vuelvas a pedir"), el carrito
+  se bloquea y se reintenta solo (cada vez más espaciado y en cuanto vuelve la conexión) con el mismo identificador.
+- **Cobro sin conexión:** igual; el aviso dice que todavía no quedó registrado y se reintenta solo. "Cancelar reintento"
+  pide revisar la lista de pagos antes de cobrar otra vez.
+- Aviso fijo abajo de la pantalla mientras no hay conexión. La actualización automática de las pantallas no intenta
+  recargar sin conexión (antes podía dejar la página en blanco). Los demás botones muestran "Sin conexión: no se guardó"
+  en vez de romper la pantalla, y si algo falla aparece "Reintentar".
+- Lo que no hace (todavía): abrir pantallas nuevas sin internet. La tablet necesita conexión para ver el plano y la carta
+  actualizados; lo que ya está en pantalla sigue funcionando.
 
 ## Publicarla (una sola vez)
 

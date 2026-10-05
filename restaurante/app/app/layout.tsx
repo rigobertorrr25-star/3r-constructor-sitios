@@ -4,6 +4,7 @@ import { pendingCounts } from '@/lib/kds';
 import { ROLE_LABEL, can, ownStation, type Permission } from '@/lib/permissions';
 import type { Station } from '@/lib/stations';
 import { AppNav } from '@/components/app-nav';
+import { ConnectionBanner } from '@/components/connection-banner';
 import { Lion, quietButton } from '@/components/ui';
 
 const LINKS: { href: string; label: string; permission: Permission; station?: Station }[] = [
@@ -47,7 +48,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
         <AppNav links={links} />
       </header>
-      <main className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6">{children}</main>
+      <main className="mx-auto max-w-[1280px] px-4 py-6 pb-16 sm:px-6">{children}</main>
+      <ConnectionBanner />
     </div>
   );
 }

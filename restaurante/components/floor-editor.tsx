@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { createTableAction, removeTableAction, saveLayoutAction, updateTableAction } from '@/app/actions';
+import { orOffline } from '@/lib/offline';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { TableShape, ZoneTabs, type BoardTable } from './table-board';
@@ -86,7 +87,7 @@ export function FloorEditor({ tables }: { tables: BoardTable[] }) {
         })
         .map((t) => ({ id: t.id, ...boxes[t.id] }));
       if (changed.length === 0) return setDirty(false);
-      const result = await saveLayoutAction(changed);
+      const result = await orOffline(saveLayoutAction(changed));
       if (result) setError(result);
       else {
         setDirty(false);

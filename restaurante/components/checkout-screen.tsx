@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { discountAction, payAction, reversePaymentAction, voidDiscountAction } from '@/app/actions';
 import type { Checkout, Method } from '@/lib/cash';
 import { formatCop, formatTime } from '@/lib/format';
+import { isNetworkError, retryDelay } from '@/lib/offline';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Alert, Field, card, inputClass, primaryButton, quietButton } from './ui';
@@ -50,18 +51,18 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
   const receivedValue = toInt(received);
   const change = method === 'cash' && receivedValue ? receivedValue - value - tipValue : null;
 
-  const submit = () =>
-    start(async () => {
-      setError(null);
-      setDone(null);
-      const result = await payAction(c.session.id, {
-        method,
-        amount: value,
-        tip: tipValue,
-        received: method === 'cash' && receivedValue ? receivedValue : null,
-        reference,
-        clientKey,
-      });
+  // Pago que no alcanzó a llegar por falta de conexión: se reintenta tal cual (mismo identificador = sin cobro doble).
+  type Payload = Parameters<typeof payAction>[1];
+  const [queued, setQueued] = useState<Payload | null>(null);
+  const attempt = useRef(0);
+
+  const execute = async (payload: Payload) => {
+    setError(null);
+    setDone(null);
+    try {
+      const result = await payAction(c.session.id, payload);
+      setQueued(null);
+      attempt.current = 0;
       if (result.error) return setError(result.error);
       setClientKey(newKey());
       // Pagó una de las partes: quedan las demás.
@@ -69,10 +70,39 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
       setReceived('');
       setReference('');
       setTip('');
-      setDone(
-        `${result.closed ? 'Cuenta pagada y mesa cerrada.' : 'Pago registrado.'}${result.change ? ` Vueltas: ${formatCop(result.change)}.` : ''}`,
-      );
-    });
+      setDone(`${result.closed ? 'Cuenta pagada y mesa cerrada.' : 'Pago registrado.'}${result.change ? ` Vueltas: ${formatCop(result.change)}.` : ''}`);
+    } catch (e) {
+      if (isNetworkError(e)) setQueued(payload);
+      else setError('Algo salió mal. Revisa la lista de pagos antes de volver a cobrar.');
+    }
+  };
+
+  const submit = () =>
+    start(() =>
+      execute({
+        method,
+        amount: value,
+        tip: tipValue,
+        received: method === 'cash' && receivedValue ? receivedValue : null,
+        reference,
+        clientKey,
+      }),
+    );
+
+  useEffect(() => {
+    if (!queued) return;
+    const retry = () => start(() => execute(queued));
+    const timer = setTimeout(() => {
+      attempt.current += 1;
+      retry();
+    }, retryDelay(attempt.current));
+    window.addEventListener('online', retry);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('online', retry);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queued, pending]);
 
   return (
     <div className="space-y-5">
@@ -248,9 +278,24 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
               <Row label="Propina" value={formatCop(tipValue)} />
               <Row label="Total a cobrar" value={formatCop(value + tipValue)} strong />
             </div>
+            {queued ? (
+              <div role="status" className="space-y-2 rounded-2xl border border-warning/40 bg-warning/10 px-4 py-3 text-[14px] text-warning">
+                <p>Sin conexión: el pago de {formatCop(queued.amount)} todavía no quedó registrado. Se reintenta solo, sin cobrar dos veces.</p>
+                <button
+                  type="button"
+                  className="text-[13px] underline"
+                  onClick={() => {
+                    setQueued(null);
+                    setError('Reintento cancelado. Antes de volver a cobrar, recarga y revisa la lista de pagos: puede que sí haya llegado.');
+                  }}
+                >
+                  Cancelar reintento
+                </button>
+              </div>
+            ) : null}
             {error ? <Alert>{error}</Alert> : null}
-            <button type="button" className={`${primaryButton} w-full py-3 text-[16px]`} disabled={pending || !clientKey || value <= 0} onClick={submit}>
-              {pending ? 'Cobrando…' : value >= c.balance ? 'Cobrar y cerrar mesa' : 'Registrar pago'}
+            <button type="button" className={`${primaryButton} w-full py-3 text-[16px]`} disabled={pending || Boolean(queued) || !clientKey || value <= 0} onClick={submit}>
+              {queued ? 'Esperando conexión…' : pending ? 'Cobrando…' : value >= c.balance ? 'Cobrar y cerrar mesa' : 'Registrar pago'}
             </button>
           </aside>
         ) : null}

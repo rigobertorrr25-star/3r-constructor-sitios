@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { saveRecipeAction } from '@/app/actions';
+import { orOffline } from '@/lib/offline';
 import { formatCop } from '@/lib/format';
 import type { Unit } from '@/lib/units';
 import { Alert, card, inputClass, primaryButton, quietButton } from './ui';
@@ -91,7 +92,7 @@ export function RecipeEditor({ productId, price, initial, items }: { productId: 
           onClick={() =>
             start(async () => {
               setError(null);
-              const result = await saveRecipeAction(productId, lines.filter((l) => l.itemId));
+              const result = await orOffline(saveRecipeAction(productId, lines.filter((l) => l.itemId)));
               if (result) setError(result);
               else setSaved(true);
             })

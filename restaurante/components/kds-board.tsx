@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { moveTicketAction } from '@/app/actions';
+import { orOffline } from '@/lib/offline';
 import { elapsedMinutes, formatElapsed, formatTime } from '@/lib/format';
 import type { KdsTicket, TicketStatus } from '@/lib/kds';
 import { useNow } from './table-board';
@@ -56,7 +57,7 @@ export function KdsBoard({ title, tickets, timeZone }: { title: string; tickets:
   const move = (id: string, to: TicketStatus) =>
     start(async () => {
       setError(null);
-      const result = await moveTicketAction(id, to);
+      const result = await orOffline(moveTicketAction(id, to));
       if (result) setError(result);
     });
 

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { saveCategoryAction, saveProductAction, setAvailableAction } from '@/app/actions';
+import { orOffline } from '@/lib/offline';
 import { formatCop } from '@/lib/format';
 import type { MenuCategory, MenuProduct } from '@/lib/orders';
 import { STATION_LABEL } from '@/lib/stations';
@@ -149,7 +150,7 @@ function ProductRow({
   const toggle = () =>
     start(async () => {
       setError(null);
-      const result = await setAvailableAction(product.id, !product.isAvailable);
+      const result = await orOffline(setAvailableAction(product.id, !product.isAvailable));
       if (result) setError(result);
     });
   return (
