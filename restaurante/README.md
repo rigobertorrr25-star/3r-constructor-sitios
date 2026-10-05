@@ -15,7 +15,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 | 01 | Núcleo: negocios, sedes, equipo con código + PIN, roles, auditoría, plano de mesas, abrir/mover/cerrar mesas | Listo |
 | 02 | Carta y pedidos (POS): rondas partidas en cocina y barra, notas, agotados, anulaciones con motivo | Listo |
 | 03 | Pantallas de cocina y barra (nueva → preparando → lista → entregada), aviso de listo para llevar | Listo |
-| 04 | Caja y pagos | Pendiente |
+| 04 | Caja: turnos, cobro en partes y con varios medios, propina, descuentos, precuenta, cuadre | Listo |
 | 05–06 | Inventario, recetas y control de botellas | Pendiente |
 | 07 | Gastos y finanzas | Pendiente |
 | 08 | Tablero del dueño y radar de fugas | Pendiente |
@@ -36,7 +36,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 - **Roles** (fijos, revisados siempre en el servidor):
   - Dueño: todo, incluidas las sedes. Ve la auditoría de todas las sedes.
   - Administrador: plano, equipo (menos dueños y administradores) y auditoría de su sede.
-  - Cajero: mesas y cierre de mesas.
+  - Cajero: mesas, pedidos, caja y cobro; descuentos hasta el límite del negocio (10 % por defecto).
   - Mesero: abre mesas, cambia personas o nota, pide la cuenta y pasa la cuenta a otra mesa. No cierra mesas.
   - Cocina y Barra: solo su pantalla (`/app/cocina` o `/app/barra`); al entrar llegan directo ahí.
 - **Sedes:** cada una con su plano. Quien tiene sede fija entra siempre a la suya; quien trabaja en "todas" elige al entrar.
@@ -84,6 +84,29 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   "Entregado". En la pantalla del pedido, cada producto muestra si está enviado, preparando, listo o entregado.
 - Se guardan las horas reales de inicio y de "lista" de cada comanda: el tablero del dueño (módulo 08) las usará para
   medir tiempos de preparación.
+
+## Cómo funciona (módulo 04: caja y pagos)
+
+- **Caja** (`/app/caja`, dueño, administrador y cajero): se abre con la **base** en efectivo; sin caja abierta no se
+  cobra. Una sola caja abierta por sede. Muestra ventas del turno por medio de pago, propinas, descuentos, el **efectivo
+  que debería haber** y las cuentas por cobrar (primero las que pidieron la cuenta).
+- **Cobrar una mesa** (`/app/caja/mesa/{cuenta}`, también con "Cobrar" desde el plano o el pedido): consumo, descuentos,
+  pagos y lo que falta. Medios: efectivo (calcula las vueltas), tarjeta (número de voucher) y transferencia (referencia).
+  **Propina voluntaria** con el % sugerido del negocio (10 % por defecto), que se puede cambiar o quitar.
+  **Dividir la cuenta** en 2 a 6 partes: cada pago es una parte y la última paga lo que falte. Cuando la cuenta queda en
+  cero, la mesa se cierra sola. Un doble toque no cobra dos veces.
+- **Descuentos** en % o en pesos, siempre con motivo: el cajero llega hasta el límite del negocio (sumando todos los
+  descuentos de la cuenta); más, el dueño o el administrador. Se pueden quitar mientras la mesa esté abierta. Todo queda en
+  la auditoría.
+- **Reversar un pago** (dueño o administrador, con motivo, mientras su caja siga abierta): si ese pago había cerrado la
+  mesa, la mesa vuelve a quedar abierta con la cuenta pedida. Con la caja ya cerrada, la devolución se registra como salida.
+- **Entradas y salidas de efectivo** que no son ventas (cambio, pago del hielo, retiro del dueño), con motivo. No deja
+  sacar más de lo que debería haber.
+- **Cerrar caja:** se cuenta el efectivo y queda la diferencia (cuadra, sobra o falta) en el **cuadre del turno**
+  (`/app/caja/turno/{id}`) y en la auditoría.
+- **Precuenta** (`/cuenta/{cuenta}`) para imprimir en impresora de tirilla o carta: consumo, descuentos, propina sugerida y
+  total. Dice que la propina es voluntaria y que no es una factura (la factura electrónica llega con el módulo 10).
+- Una mesa con saldo por pagar no se cierra a mano; con cortesía total (saldo cero) sí.
 
 ## Publicarla (una sola vez)
 

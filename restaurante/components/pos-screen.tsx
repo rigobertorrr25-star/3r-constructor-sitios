@@ -63,6 +63,7 @@ export function PosScreen({
   categories,
   products,
   canVoid,
+  canCharge,
   timeZone,
 }: {
   session: Session;
@@ -71,6 +72,7 @@ export function PosScreen({
   categories: MenuCategory[];
   products: MenuProduct[];
   canVoid: boolean;
+  canCharge: boolean;
   timeZone: string;
 }) {
   const now = useNow();
@@ -222,6 +224,16 @@ export function PosScreen({
             </button>
           </div>
 
+          <div className="flex gap-2">
+            <Link href={`/cuenta/${session.id}`} target="_blank" className={`${quietButton} flex-1`}>
+              Precuenta
+            </Link>
+            {canCharge && !closed ? (
+              <Link href={`/app/caja/mesa/${session.id}`} className={`${quietButton} flex-1`}>
+                Cobrar
+              </Link>
+            ) : null}
+          </div>
           {!closed ? (
             <ActionForm action={setBillAction} showOk={false} className="flex">
               {() => (

@@ -16,6 +16,7 @@ import {
 } from '@/lib/auth';
 import { homeOf } from '@/lib/permissions';
 import { moveTicket } from '@/lib/kds';
+import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import {
@@ -380,4 +381,76 @@ export async function moveTicketAction(ticketId: string, to: string): Promise<st
   revalidatePath('/app/cocina');
   revalidatePath('/app/barra');
   return null;
+}
+
+// ───────── caja ─────────
+
+const pesos = (formData: FormData, name: string) => {
+  const value = text(formData, name).replace(/[.\s$]/g, '');
+  return value === '' ? NaN : /^\d+$/.test(value) ? Number(value) : NaN;
+};
+
+export async function openShiftAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => openShift(staff, pesos(formData, 'openingAmount') || 0), ['/app/caja']);
+}
+
+/** Cierra la caja y lleva al cuadre de ese turno (esperado, contado y diferencia). */
+export async function closeShiftAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  let shiftId = '';
+  const state = await run(
+    formData,
+    async () => {
+      shiftId = (await closeShift(staff, pesos(formData, 'countedCash'), text(formData, 'notes'))).shiftId;
+    },
+    ['/app/caja'],
+  );
+  if (state?.error) return state;
+  redirect(`/app/caja/turno/${shiftId}`);
+}
+
+export async function movementAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => addMovement(staff, { kind: text(formData, 'kind'), amount: pesos(formData, 'amount'), reason: text(formData, 'reason') }), ['/app/caja'], 'Registrado.');
+}
+
+export async function discountAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const sessionId = text(formData, 'sessionId');
+  const kind = text(formData, 'kind');
+  const value = pesos(formData, 'value');
+  return run(
+    formData,
+    () => applyDiscount(staff, sessionId, { percent: kind === 'percent' ? value : null, amount: kind === 'amount' ? value : null, reason: text(formData, 'reason') }),
+    [`/app/caja/mesa/${sessionId}`, '/app/caja'],
+    'Descuento aplicado.',
+  );
+}
+
+export async function voidDiscountAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => voidDiscount(staff, text(formData, 'discountId')), [`/app/caja/mesa/${text(formData, 'sessionId')}`]);
+}
+
+/** Cobro (no es un formulario simple: lleva su identificador para no cobrar dos veces). */
+export async function payAction(
+  sessionId: string,
+  input: { method: string; amount: number; tip: number; received: number | null; reference: string; clientKey: string },
+): Promise<{ error?: string; change?: number | null; closed?: boolean }> {
+  const staff = await requireStaff();
+  try {
+    const result = await pay(staff, sessionId, input);
+    revalidatePath('/app');
+    revalidatePath('/app/caja');
+    revalidatePath(`/app/caja/mesa/${sessionId}`);
+    return { change: result.change, closed: result.closed };
+  } catch (error) {
+    return { error: messageOf(error) };
+  }
+}
+
+export async function reversePaymentAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => reversePayment(staff, text(formData, 'paymentId'), text(formData, 'reason')), ['/app', '/app/caja', `/app/caja/mesa/${text(formData, 'sessionId')}`], 'Pago reversado.');
 }

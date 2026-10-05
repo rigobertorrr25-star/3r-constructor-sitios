@@ -10,6 +10,7 @@ const LINKS: { href: string; label: string; permission: Permission; station?: St
   { href: '/app', label: 'Mesas', permission: 'tables.view' },
   { href: '/app/cocina', label: 'Cocina', permission: 'kds.view', station: 'kitchen' },
   { href: '/app/barra', label: 'Barra', permission: 'kds.view', station: 'bar' },
+  { href: '/app/caja', label: 'Caja', permission: 'cash.operate' },
   { href: '/app/carta', label: 'Carta', permission: 'orders.take' },
   { href: '/app/plano', label: 'Plano', permission: 'floor.edit' },
   { href: '/app/equipo', label: 'Equipo', permission: 'staff.manage' },

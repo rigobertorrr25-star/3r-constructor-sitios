@@ -26,6 +26,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         categories={menu.categories}
         products={menu.products}
         canVoid={can(staff.role, 'orders.void')}
+        canCharge={can(staff.role, 'cash.operate')}
         timeZone={staff.timezone}
       />
     </>

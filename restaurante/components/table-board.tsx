@@ -283,9 +283,16 @@ function TableSheet({
 
         {session ? (
           <div className="mt-5 space-y-5">
-            <Link href={`/app/mesa/${session.id}`} className={`${primaryButton} w-full py-3 text-[15.5px]`}>
-              Pedido · {formatCop(session.total ?? 0)}
-            </Link>
+            <div className="flex gap-2">
+              <Link href={`/app/mesa/${session.id}`} className={`${primaryButton} flex-1 py-3 text-[15.5px]`}>
+                Pedido · {formatCop(session.total ?? 0)}
+              </Link>
+              {canClose ? (
+                <Link href={`/app/caja/mesa/${session.id}`} className={`${quietButton} py-3`}>
+                  Cobrar
+                </Link>
+              ) : null}
+            </div>
             <div className="grid grid-cols-2 gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-[14px]">
               <p>
                 <span className="block text-muted-foreground">Tiempo</span>

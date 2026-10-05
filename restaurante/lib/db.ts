@@ -162,6 +162,81 @@ CREATE TABLE IF NOT EXISTS order_items (
 );
 CREATE INDEX IF NOT EXISTS idx_items_session ON order_items (session_id);
 
+-- ───────── módulo 04: caja y pagos ─────────
+
+-- Descuento máximo (en %) que un cajero puede dar sin el administrador.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS cashier_discount_limit INT NOT NULL DEFAULT 10;
+-- Propina sugerida (en %). En Colombia es voluntaria: el cliente decide.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS suggested_tip INT NOT NULL DEFAULT 10;
+
+-- Turno de caja de una sede: se abre con una base en efectivo y se cierra contando la plata.
+CREATE TABLE IF NOT EXISTS cash_shifts (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id    UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id    UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  opened_by      UUID NOT NULL REFERENCES staff(id),
+  opened_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  opening_amount BIGINT NOT NULL CHECK (opening_amount >= 0),
+  closed_by      UUID REFERENCES staff(id),
+  closed_at      TIMESTAMPTZ,
+  expected_cash  BIGINT,
+  counted_cash   BIGINT,
+  notes          VARCHAR(300)
+);
+-- Una sola caja abierta por sede.
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_open_shift_per_location ON cash_shifts (location_id) WHERE closed_at IS NULL;
+
+-- Entradas y salidas de efectivo que no son ventas (cambio que trae el dueño, pago a un proveedor…). No se borran.
+CREATE TABLE IF NOT EXISTS cash_movements (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  shift_id    UUID NOT NULL REFERENCES cash_shifts(id) ON DELETE CASCADE,
+  kind        VARCHAR(4) NOT NULL,
+  amount      BIGINT NOT NULL CHECK (amount > 0),
+  reason      VARCHAR(200) NOT NULL,
+  created_by  UUID NOT NULL REFERENCES staff(id),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Descuentos de una cuenta. Se anulan, no se borran.
+CREATE TABLE IF NOT EXISTS session_discounts (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  session_id  UUID NOT NULL REFERENCES table_sessions(id) ON DELETE CASCADE,
+  amount      BIGINT NOT NULL CHECK (amount > 0),
+  percent     INT,
+  reason      VARCHAR(200) NOT NULL,
+  applied_by  UUID NOT NULL REFERENCES staff(id),
+  applied_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  voided_at   TIMESTAMPTZ,
+  voided_by   UUID REFERENCES staff(id)
+);
+
+-- Pagos (una cuenta se puede pagar en varias partes y con varios medios). amount es lo que abona a la cuenta;
+-- tip la propina; received y change solo en efectivo. Reversar no borra: marca reversed_at con motivo.
+CREATE TABLE IF NOT EXISTS payments (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id   UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id   UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  session_id    UUID NOT NULL REFERENCES table_sessions(id) ON DELETE CASCADE,
+  shift_id      UUID NOT NULL REFERENCES cash_shifts(id) ON DELETE CASCADE,
+  method        VARCHAR(10) NOT NULL,
+  amount        BIGINT NOT NULL CHECK (amount > 0),
+  tip           BIGINT NOT NULL DEFAULT 0 CHECK (tip >= 0),
+  received      BIGINT,
+  change_given  BIGINT,
+  reference     VARCHAR(60),
+  client_key    UUID NOT NULL,
+  created_by    UUID NOT NULL REFERENCES staff(id),
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reversed_at   TIMESTAMPTZ,
+  reversed_by   UUID REFERENCES staff(id),
+  reverse_reason VARCHAR(300),
+  UNIQUE (business_id, client_key)
+);
+CREATE INDEX IF NOT EXISTS idx_payments_session ON payments (session_id);
+CREATE INDEX IF NOT EXISTS idx_payments_shift ON payments (shift_id);
+
 -- Rastro de todo lo importante: quién hizo qué, cuándo y por qué.
 CREATE TABLE IF NOT EXISTS audit_events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -230,6 +305,16 @@ export type Db = Pick<PoolClient, 'query'>;
 export async function query<T>(sql: string, params: unknown[] = []): Promise<T[]> {
   await ensureSchema();
   return (await pool().query(sql, params)).rows as T[];
+}
+
+/** El pool como `Db`, para funciones que sirven igual dentro o fuera de una transacción. */
+export function pooled(): Db {
+  return {
+    query: (async (sql: string, params?: unknown[]) => {
+      await ensureSchema();
+      return pool().query(sql, params);
+    }) as Db['query'],
+  };
 }
 
 /** Varias consultas que se aplican todas o ninguna. */

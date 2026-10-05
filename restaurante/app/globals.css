@@ -81,3 +81,12 @@ body {
     animation: none;
   }
 }
+
+/* La precuenta se imprime en blanco y negro, sin el fondo oscuro de la app. */
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+}
