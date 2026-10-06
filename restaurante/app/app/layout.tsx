@@ -10,6 +10,8 @@ import { Lion, quietButton } from '@/components/ui';
 import { hasPrinter, stuckJobs } from '@/lib/printing';
 import { BackgroundLayer } from '@/components/background-forms';
 import { backgroundUrl } from '@/lib/background-url';
+import { LangSwitch } from '@/components/i18n';
+import { getT } from '@/lib/i18n/server';
 
 const LINKS: { href: string; label: string; permission: Permission; station?: Station }[] = [
   { href: '/app/tablero', label: 'Tablero', permission: 'finance.view' },
@@ -33,12 +35,13 @@ const LINKS: { href: string; label: string; permission: Permission; station?: St
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const staff = await requireStaff();
+  const t = await getT();
   const own = ownStation(staff.role);
   const visible = LINKS.filter((l) => can(staff.role, l.permission) && (!own || !l.station || l.station === own));
   const counts = visible.some((l) => l.station) ? await pendingCounts(staff) : {};
   // Si la estación imprime sus comandas, nadie las marca en pantalla: el contador no diría nada útil.
   const printed = { kitchen: await hasPrinter(staff, 'kitchen'), bar: await hasPrinter(staff, 'bar') };
-  const links = visible.map(({ href, label, station }) => ({ href, label, badge: station && !printed[station] ? (counts[station] ?? 0) : 0 }));
+  const links = visible.map(({ href, label, station }) => ({ href, label: t(label), badge: station && !printed[station] ? (counts[station] ?? 0) : 0 }));
   // Comandas que no han salido en la impresora: casi siempre es el computador de impresión apagado.
   const stuck = await stuckJobs(staff);
   return (
@@ -47,29 +50,34 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1280px] items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <Lion size={34} />
+            <Lion size={34} alt={t('León de 3R')} />
             <div className="min-w-0">
               <p className="truncate font-display text-[15.5px] font-bold text-foreground">{staff.businessName}</p>
               <p className="truncate text-[12.5px] text-muted-foreground">
                 {staff.locationCount > 1 ? `${staff.locationName} · ` : ''}
-                {staff.name} · {ROLE_LABEL[staff.role]}
+                {staff.name} · {t(ROLE_LABEL[staff.role])}
               </p>
             </div>
           </div>
-          <form action={staffLogoutAction}>
-            <button className={quietButton}>Salir</button>
-          </form>
+          <div className="flex shrink-0 items-center gap-2">
+            <LangSwitch />
+            <form action={staffLogoutAction}>
+              <button className={quietButton}>{t('Salir')}</button>
+            </form>
+          </div>
         </div>
         <AppNav links={links} />
       </header>
       {stuck ? (
         <div role="alert" className="border-b border-destructive/30 bg-destructive/15 px-4 py-2.5 text-center text-[14px] text-[#ffd0d0]">
-          {stuck === 1 ? 'Hay 1 papel' : `Hay ${stuck} papeles`} sin imprimir: revisa que el computador de impresión esté prendido y las impresoras con papel.
+          {stuck === 1
+            ? t('Hay 1 papel sin imprimir: revisa que el computador de impresión esté prendido y las impresoras con papel.')
+            : t('Hay {n} papeles sin imprimir: revisa que el computador de impresión esté prendido y las impresoras con papel.', { n: stuck })}
           {can(staff.role, 'printers.manage') ? (
             <>
               {' '}
               <Link href="/app/impresoras" className="underline">
-                Ver impresoras
+                {t('Ver impresoras')}
               </Link>
             </>
           ) : null}

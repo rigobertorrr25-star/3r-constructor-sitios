@@ -15,9 +15,9 @@ export const dangerButton =
 export const inputClass =
   'w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground/70 transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
 
-/** El león de 3R, en círculo. */
-export function Lion({ size = 44, className = '' }: { size?: number; className?: string }) {
-  return <Image src="/avatar-lion.jpg" alt="León de 3R" width={size} height={size} className={`rounded-full ring-1 ring-white/10 ${className}`} priority />;
+/** El león de 3R, en círculo. Quien lo usa le pasa `alt` ya traducido: t('León de 3R'). */
+export function Lion({ size = 44, className = '', alt = 'León de 3R' }: { size?: number; className?: string; alt?: string }) {
+  return <Image src="/avatar-lion.jpg" alt={alt} width={size} height={size} className={`rounded-full ring-1 ring-white/10 ${className}`} priority />;
 }
 
 type FieldProps = InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string };

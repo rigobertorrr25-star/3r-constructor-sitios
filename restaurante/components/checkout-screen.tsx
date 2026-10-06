@@ -10,6 +10,7 @@ import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Alert, Field, card, inputClass, primaryButton, quietButton } from './ui';
 import { PrintBillButton } from './printer-forms';
+import { useLang, useT, useTr } from './i18n';
 
 type View = Omit<Checkout, 'session' | 'payments'> & {
   session: Omit<Checkout['session'], 'openedAt' | 'closedAt'> & { openedAt: string; closedAt: string | null };
@@ -26,6 +27,9 @@ const tipFor = (amount: number, percent: number) => Math.round((amount * percent
 
 export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, timeZone, printBill = false }: { checkout: View; shiftOpen: boolean; canReverse: boolean; canUnlimited: boolean; timeZone: string; printBill?: boolean }) {
   const c = checkout;
+  const t = useT();
+  const lang = useLang();
+  const trx = useTr();
   const closed = c.session.status === 'closed';
   const [parts, setParts] = useState(1);
   const [method, setMethod] = useState<Method>('cash');
@@ -71,10 +75,11 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
       setReceived('');
       setReference('');
       setTip('');
-      setDone(`${result.closed ? 'Cuenta pagada y mesa cerrada.' : 'Pago registrado.'}${result.change ? ` Vueltas: ${formatCop(result.change)}.` : ''}`);
+      const paid = result.closed ? t('Cuenta pagada y mesa cerrada.') : t('Pago registrado.');
+      setDone(result.change ? `${paid} ${t('Vueltas: {amount}.', { amount: formatCop(result.change) })}` : paid);
     } catch (e) {
       if (isNetworkError(e)) setQueued(payload);
-      else setError('Algo salió mal. Revisa la lista de pagos antes de volver a cobrar.');
+      else setError(t('Algo salió mal. Revisa la lista de pagos antes de volver a cobrar.'));
     }
   };
 
@@ -110,36 +115,43 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link href="/app/caja" className="text-[14px] text-muted-foreground hover:text-foreground">
-            ← Caja
+            ← {t('Caja')}
           </Link>
-          <h1 className="mt-1 font-display text-[26px] font-bold">Cobrar mesa {c.session.tableNumber}</h1>
+          <h1 className="mt-1 font-display text-[26px] font-bold">{t('Cobrar mesa {n}', { n: c.session.tableNumber })}</h1>
           <p className="text-[14px] text-muted-foreground">
-            {c.session.guests} personas · abrió {c.session.openedBy} a las {formatTime(c.session.openedAt, timeZone)}
-            {closed ? ' · cerrada' : ''}
+            {c.session.guests === 1 ? t('1 persona') : t('{n} personas', { n: c.session.guests })} ·{' '}
+            {t('abrió {name} a las {time}', { name: c.session.openedBy, time: formatTime(c.session.openedAt, timeZone, lang) })}
+            {closed ? ` · ${t('cerrada')}` : ''}
           </p>
         </div>
         {printBill ? (
           <PrintBillButton sessionId={c.session.id} className="flex" />
         ) : (
           <Link href={`/cuenta/${c.session.id}`} target="_blank" className={quietButton}>
-            Imprimir precuenta
+            {t('Imprimir precuenta')}
           </Link>
         )}
       </div>
       {done ? <Alert tone="ok">{done}</Alert> : null}
       {!shiftOpen && !closed ? (
         <Alert>
-          La caja está cerrada.{' '}
-          <Link href="/app/caja" className="underline">
-            Ábrela
-          </Link>{' '}
-          para cobrar.
+          {t('La caja está cerrada. {link} para cobrar.')
+            .split(/(\{link\})/)
+            .map((part, i) =>
+              part === '{link}' ? (
+                <Link key={i} href="/app/caja" className="underline">
+                  {t('Ábrela')}
+                </Link>
+              ) : (
+                part
+              ),
+            )}
         </Alert>
       ) : null}
 
       <div className="grid gap-5 lg:grid-cols-[1fr_400px]">
         <section className={card}>
-          <h2 className="font-display text-[18px] font-bold">Consumo</h2>
+          <h2 className="font-display text-[18px] font-bold">{t('Consumo')}</h2>
           <ul className="mt-3 divide-y divide-white/[0.06] text-[14.5px]">
             {c.lines.map((l) => (
               <li key={`${l.name}-${l.unitPrice}`} className="flex justify-between gap-3 py-2">
@@ -151,11 +163,11 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
             ))}
           </ul>
           <dl className="mt-4 space-y-1.5 border-t border-white/[0.06] pt-4 text-[15px]">
-            <Row label="Subtotal" value={formatCop(c.subtotal)} />
+            <Row label={t('Subtotal')} value={formatCop(c.subtotal)} />
             {c.discounts.map((d) => (
               <div key={d.id} className={`flex items-center justify-between gap-3 ${d.voided ? 'line-through opacity-50' : ''}`}>
                 <dt className="text-muted-foreground">
-                  Descuento{d.percent ? ` ${d.percent} %` : ''}: {d.reason} <span className="text-[12.5px]">({d.appliedBy})</span>
+                  {d.percent ? t('Descuento {percent} %: {reason}', { percent: d.percent, reason: d.reason }) : t('Descuento: {reason}', { reason: d.reason })} <span className="text-[12.5px]">({d.appliedBy})</span>
                 </dt>
                 <dd className="flex items-center gap-2">
                   −{formatCop(d.amount)}
@@ -165,7 +177,7 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
                         <>
                           <input type="hidden" name="discountId" value={d.id} />
                           <input type="hidden" name="sessionId" value={c.session.id} />
-                          <button className="text-[12.5px] text-muted-foreground hover:text-[#ffb4b5]">Quitar</button>
+                          <button className="text-[12.5px] text-muted-foreground hover:text-[#ffb4b5]">{t('Quitar')}</button>
                         </>
                       )}
                     </ActionForm>
@@ -173,15 +185,15 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
                 </dd>
               </div>
             ))}
-            <Row label="Total" value={formatCop(c.total)} strong />
-            <Row label="Pagado" value={formatCop(c.paid)} />
-            {c.tips ? <Row label="Propinas recibidas" value={formatCop(c.tips)} /> : null}
-            <Row label="Falta por pagar" value={formatCop(c.balance)} strong />
+            <Row label={t('Total')} value={formatCop(c.total)} strong />
+            <Row label={t('Pagado')} value={formatCop(c.paid)} />
+            {c.tips ? <Row label={t('Propinas recibidas')} value={formatCop(c.tips)} /> : null}
+            <Row label={t('Falta por pagar')} value={formatCop(c.balance)} strong />
           </dl>
 
           {c.payments.length ? (
             <>
-              <h3 className="mt-6 font-display text-[16px] font-bold">Pagos</h3>
+              <h3 className="mt-6 font-display text-[16px] font-bold">{t('Pagos')}</h3>
               <ul className="mt-2 divide-y divide-white/[0.06] text-[14px]">
                 {c.payments.map((p) => (
                   <PaymentRow key={p.id} payment={p} sessionId={c.session.id} canReverse={canReverse} timeZone={timeZone} />
@@ -192,30 +204,30 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
 
           {!closed && c.balance > 0 ? (
             <details className="mt-6 rounded-2xl border border-white/[0.08] px-4 py-3">
-              <summary className="cursor-pointer text-[14.5px] font-medium">Aplicar descuento</summary>
+              <summary className="cursor-pointer text-[14.5px] font-medium">{t('Aplicar descuento')}</summary>
               <ActionForm action={discountAction} resetOnOk className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr]">
                 {(state) => (
                   <>
                     <input type="hidden" name="sessionId" value={c.session.id} />
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium" htmlFor="kind">
-                        En
+                        {t('En')}
                       </label>
                       <select id="kind" name="kind" className={inputClass} defaultValue={state?.values?.kind ?? 'percent'}>
-                        <option value="percent">Porcentaje (%)</option>
-                        <option value="amount">Pesos ($)</option>
+                        <option value="percent">{t('Porcentaje (%)')}</option>
+                        <option value="amount">{t('Pesos ($)')}</option>
                       </select>
                     </div>
-                    <Field label="Valor" name="value" inputMode="numeric" required defaultValue={state?.values?.value} />
+                    <Field label={t('Valor')} name="value" inputMode="numeric" required defaultValue={state?.values?.value} />
                     <div className="sm:col-span-2">
-                      <Field label="Motivo" name="reason" required minLength={3} maxLength={200} placeholder="Cliente frecuente, demora, cortesía…" defaultValue={state?.values?.reason} />
+                      <Field label={t('Motivo')} name="reason" required minLength={3} maxLength={200} placeholder={t('Cliente frecuente, demora, cortesía…')} defaultValue={state?.values?.reason} />
                     </div>
                     <p className="text-[12.5px] text-muted-foreground sm:col-span-2">
-                      {canUnlimited ? 'Sin límite para tu rol.' : `Hasta ${c.discountLimit} % de la cuenta. Para más, el administrador.`} Queda en la auditoría.
+                      {canUnlimited ? t('Sin límite para tu rol.') : t('Hasta {n} % de la cuenta. Para más, el administrador.', { n: c.discountLimit })} {t('Queda en la auditoría.')}
                     </p>
                     <div className="sm:col-span-2">
-                      <SubmitButton tone="quiet" pendingText="Aplicando…">
-                        Aplicar
+                      <SubmitButton tone="quiet" pendingText={t('Aplicando…')}>
+                        {t('Aplicar')}
                       </SubmitButton>
                     </div>
                   </>
@@ -227,9 +239,9 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
 
         {!closed && c.balance > 0 && shiftOpen ? (
           <aside className={`${card} space-y-4 lg:sticky lg:top-[132px] lg:self-start`}>
-            <h2 className="font-display text-[18px] font-bold">Cobrar</h2>
+            <h2 className="font-display text-[18px] font-bold">{t('Cobrar')}</h2>
             <div className="space-y-1.5">
-              <p className="text-sm font-medium">Dividir la cuenta</p>
+              <p className="text-sm font-medium">{t('Dividir la cuenta')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {[1, 2, 3, 4, 5, 6].map((n) => (
                   <button
@@ -238,13 +250,13 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
                     onClick={() => setParts(n)}
                     className={`rounded-full px-3.5 py-1.5 text-[14px] ${parts === n ? 'bg-primary text-primary-foreground' : 'border border-white/[0.1] text-muted-foreground'}`}
                   >
-                    {n === 1 ? 'Todo' : `${n} partes`}
+                    {n === 1 ? t('Todo') : t('{n} partes', { n })}
                   </button>
                 ))}
               </div>
-              {parts > 1 ? <p className="text-[12.5px] text-muted-foreground">Cada persona paga su parte; la última paga lo que falte.</p> : null}
+              {parts > 1 ? <p className="text-[12.5px] text-muted-foreground">{t('Cada persona paga su parte; la última paga lo que falte.')}</p> : null}
             </div>
-            <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Medio de pago">
+            <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label={t('Medio de pago')}>
               {(Object.keys(METHOD_LABEL) as Method[]).map((m) => (
                 <button
                   key={m}
@@ -254,53 +266,53 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
                   onClick={() => setMethod(m)}
                   className={`rounded-2xl px-2 py-3 text-[14px] font-medium ${method === m ? 'bg-primary text-primary-foreground' : 'border border-white/[0.1] text-muted-foreground'}`}
                 >
-                  {METHOD_LABEL[m]}
+                  {t(METHOD_LABEL[m])}
                 </button>
               ))}
             </div>
-            <Field label="Valor a pagar" name="amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <Field label={t('Valor a pagar')} name="amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
             <div className="space-y-1.5">
               <label className="flex items-center gap-2 text-sm font-medium">
                 <input type="checkbox" className="size-4 accent-[#8a9bff]" checked={tipOn} onChange={(e) => setTipOn(e.target.checked)} />
-                Propina voluntaria ({c.suggestedTipPercent} % sugerido: {formatCop(suggestedTip)})
+                {t('Propina voluntaria ({percent} % sugerido: {amount})', { percent: c.suggestedTipPercent, amount: formatCop(suggestedTip) })}
               </label>
               {tipOn ? (
-                <input className={inputClass} inputMode="numeric" placeholder={String(suggestedTip)} value={tip} onChange={(e) => setTip(e.target.value)} aria-label="Valor de la propina" />
+                <input className={inputClass} inputMode="numeric" placeholder={String(suggestedTip)} value={tip} onChange={(e) => setTip(e.target.value)} aria-label={t('Valor de la propina')} />
               ) : null}
             </div>
             {method === 'cash' ? (
               <div className="space-y-1.5">
-                <Field label="Recibido en efectivo" name="received" inputMode="numeric" placeholder={String(value + tipValue)} value={received} onChange={(e) => setReceived(e.target.value)} />
+                <Field label={t('Recibido en efectivo')} name="received" inputMode="numeric" placeholder={String(value + tipValue)} value={received} onChange={(e) => setReceived(e.target.value)} />
                 {change !== null ? (
-                  <p className={`text-[15px] font-semibold ${change < 0 ? 'text-[#ffb4b5]' : 'text-success'}`}>{change < 0 ? `Faltan ${formatCop(-change)}` : `Vueltas: ${formatCop(change)}`}</p>
+                  <p className={`text-[15px] font-semibold ${change < 0 ? 'text-[#ffb4b5]' : 'text-success'}`}>{change < 0 ? t('Faltan {amount}', { amount: formatCop(-change) }) : t('Vueltas: {amount}', { amount: formatCop(change) })}</p>
                 ) : null}
               </div>
             ) : (
-              <Field label={method === 'card' ? 'Número del voucher (opcional)' : 'Referencia (opcional)'} name="reference" value={reference} onChange={(e) => setReference(e.target.value)} maxLength={60} />
+              <Field label={method === 'card' ? t('Número del voucher (opcional)') : t('Referencia (opcional)')} name="reference" value={reference} onChange={(e) => setReference(e.target.value)} maxLength={60} />
             )}
             <div className="rounded-2xl bg-white/[0.04] p-3 text-[14.5px]">
-              <Row label="Abona a la cuenta" value={formatCop(value)} />
-              <Row label="Propina" value={formatCop(tipValue)} />
-              <Row label="Total a cobrar" value={formatCop(value + tipValue)} strong />
+              <Row label={t('Abona a la cuenta')} value={formatCop(value)} />
+              <Row label={t('Propina')} value={formatCop(tipValue)} />
+              <Row label={t('Total a cobrar')} value={formatCop(value + tipValue)} strong />
             </div>
             {queued ? (
               <div role="status" className="space-y-2 rounded-2xl border border-warning/40 bg-warning/10 px-4 py-3 text-[14px] text-warning">
-                <p>Sin conexión: el pago de {formatCop(queued.amount)} todavía no quedó registrado. Se reintenta solo, sin cobrar dos veces.</p>
+                <p>{t('Sin conexión: el pago de {amount} todavía no quedó registrado. Se reintenta solo, sin cobrar dos veces.', { amount: formatCop(queued.amount) })}</p>
                 <button
                   type="button"
                   className="text-[13px] underline"
                   onClick={() => {
                     setQueued(null);
-                    setError('Reintento cancelado. Antes de volver a cobrar, recarga y revisa la lista de pagos: puede que sí haya llegado.');
+                    setError(t('Reintento cancelado. Antes de volver a cobrar, recarga y revisa la lista de pagos: puede que sí haya llegado.'));
                   }}
                 >
-                  Cancelar reintento
+                  {t('Cancelar reintento')}
                 </button>
               </div>
             ) : null}
-            {error ? <Alert>{error}</Alert> : null}
+            {error ? <Alert>{trx(error)}</Alert> : null}
             <button type="button" className={`${primaryButton} w-full py-3 text-[16px]`} disabled={pending || Boolean(queued) || !clientKey || value <= 0} onClick={submit}>
-              {queued ? 'Esperando conexión…' : pending ? 'Cobrando…' : value >= c.balance ? 'Cobrar y cerrar mesa' : 'Registrar pago'}
+              {queued ? t('Esperando conexión…') : pending ? t('Cobrando…') : value >= c.balance ? t('Cobrar y cerrar mesa') : t('Registrar pago')}
             </button>
           </aside>
         ) : null}
@@ -320,27 +332,29 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
 
 function PaymentRow({ payment: p, sessionId, canReverse, timeZone }: { payment: View['payments'][number]; sessionId: string; canReverse: boolean; timeZone: string }) {
   const [reversing, setReversing] = useState(false);
+  const t = useT();
+  const lang = useLang();
   return (
     <li className="py-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className={p.reversed ? 'line-through opacity-50' : ''}>
-          {METHOD_LABEL[p.method]} · {formatCop(p.amount)}
-          {p.tip ? ` + propina ${formatCop(p.tip)}` : ''}
-          {p.change ? ` · vueltas ${formatCop(p.change)}` : ''}
+          {t(METHOD_LABEL[p.method])} · {formatCop(p.amount)}
+          {p.tip ? ` + ${t('propina {amount}', { amount: formatCop(p.tip) })}` : ''}
+          {p.change ? ` · ${t('vueltas {amount}', { amount: formatCop(p.change) })}` : ''}
           {p.reference ? ` · ${p.reference}` : ''}
           <span className="block text-[12.5px] text-muted-foreground no-underline">
-            {p.createdBy} · {formatTime(p.createdAt, timeZone)}
+            {p.createdBy} · {formatTime(p.createdAt, timeZone, lang)}
           </span>
         </span>
         {p.reversed ? (
-          <span className="rounded-full bg-destructive/15 px-2.5 py-0.5 text-[12px] text-[#ffb4b5]">Reversado</span>
+          <span className="rounded-full bg-destructive/15 px-2.5 py-0.5 text-[12px] text-[#ffb4b5]">{t('Reversado')}</span>
         ) : canReverse ? (
           <button type="button" className="text-[13px] text-muted-foreground hover:text-[#ffb4b5]" onClick={() => setReversing(!reversing)}>
-            Reversar
+            {t('Reversar')}
           </button>
         ) : null}
       </div>
-      {p.reverseReason ? <p className="text-[12.5px] text-muted-foreground">Motivo: {p.reverseReason}</p> : null}
+      {p.reverseReason ? <p className="text-[12.5px] text-muted-foreground">{t('Motivo: {reason}', { reason: p.reverseReason })}</p> : null}
       {reversing ? (
         <ActionForm action={reversePaymentAction} onOk={() => setReversing(false)} className="mt-2 flex flex-wrap items-end gap-2">
           {() => (
@@ -348,10 +362,10 @@ function PaymentRow({ payment: p, sessionId, canReverse, timeZone }: { payment: 
               <input type="hidden" name="paymentId" value={p.id} />
               <input type="hidden" name="sessionId" value={sessionId} />
               <div className="min-w-[200px] flex-1">
-                <Field label="Motivo" name="reason" required minLength={3} maxLength={300} placeholder="La transferencia no llegó…" />
+                <Field label={t('Motivo')} name="reason" required minLength={3} maxLength={300} placeholder={t('La transferencia no llegó…')} />
               </div>
-              <SubmitButton tone="danger" pendingText="Reversando…">
-                Reversar pago
+              <SubmitButton tone="danger" pendingText={t('Reversando…')}>
+                {t('Reversar pago')}
               </SubmitButton>
             </>
           )}

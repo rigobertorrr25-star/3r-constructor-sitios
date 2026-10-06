@@ -5,6 +5,8 @@ import { createAgentCodeAction, printBillAction, printTestAction, removePrinterA
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Alert, CheckField, Field, Select, card, quietButton } from './ui';
+import { useT } from './i18n';
+import type { T } from '@/lib/i18n';
 
 export type PrinterView = {
   id: string;
@@ -26,22 +28,23 @@ const PAPER = [
 ];
 
 function PrinterFields({ p, values }: { p?: PrinterView; values?: Record<string, string> }) {
+  const t = useT();
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Nombre" name="name" required maxLength={60} placeholder="Cocina" defaultValue={values?.name ?? p?.name} />
+        <Field label={t('Nombre')} name="name" required maxLength={60} placeholder={t('Cocina')} defaultValue={values?.name ?? p?.name} />
         <div className="grid grid-cols-[1fr_110px] gap-3">
-          <Field label="Dirección IP" name="host" required placeholder="192.168.1.50" defaultValue={values?.host ?? p?.host} autoCapitalize="none" />
-          <Field label="Puerto" name="port" inputMode="numeric" required defaultValue={values?.port ?? String(p?.port ?? 9100)} />
+          <Field label={t('Dirección IP')} name="host" required placeholder="192.168.1.50" defaultValue={values?.host ?? p?.host} autoCapitalize="none" />
+          <Field label={t('Puerto')} name="port" inputMode="numeric" required defaultValue={values?.port ?? String(p?.port ?? 9100)} />
         </div>
-        <Select label="Papel" name="width" defaultValue={values?.width ?? String(p?.width ?? 48)}>
+        <Select label={t('Papel')} name="width" defaultValue={values?.width ?? String(p?.width ?? 48)}>
           {PAPER.map((o) => (
             <option key={o.width} value={o.width}>
-              {o.label}
+              {t(o.label)}
             </option>
           ))}
         </Select>
-        <Select label="Copias de cada papel" name="copies" defaultValue={values?.copies ?? String(p?.copies ?? 1)}>
+        <Select label={t('Copias de cada papel')} name="copies" defaultValue={values?.copies ?? String(p?.copies ?? 1)}>
           {[1, 2, 3].map((n) => (
             <option key={n} value={n}>
               {n}
@@ -49,43 +52,46 @@ function PrinterFields({ p, values }: { p?: PrinterView; values?: Record<string,
           ))}
         </Select>
       </div>
-      <p className="mt-5 text-sm font-medium text-foreground">¿Qué imprime?</p>
+      <p className="mt-5 text-sm font-medium text-foreground">{t('¿Qué imprime?')}</p>
       <div className="mt-2 grid gap-3 md:grid-cols-3">
-        <CheckField name="kitchen" label="Comandas de cocina" hint="Los platos de las categorías de cocina." defaultChecked={p?.printsKitchen} />
-        <CheckField name="bar" label="Comandas de barra" hint="Los tragos de las categorías de barra." defaultChecked={p?.printsBar} />
-        <CheckField name="cashier" label="Caja" hint="Precuentas y cierre de caja." defaultChecked={p?.printsCashier} />
+        <CheckField name="kitchen" label={t('Comandas de cocina')} hint={t('Los platos de las categorías de cocina.')} defaultChecked={p?.printsKitchen} />
+        <CheckField name="bar" label={t('Comandas de barra')} hint={t('Los tragos de las categorías de barra.')} defaultChecked={p?.printsBar} />
+        <CheckField name="cashier" label={t('Caja')} hint={t('Precuentas y cierre de caja.')} defaultChecked={p?.printsCashier} />
       </div>
     </>
   );
 }
 
 export function NewPrinterForm() {
+  const t = useT();
   return (
     <ActionForm action={savePrinterAction} resetOnOk>
       {(state) => (
         <>
           <PrinterFields values={state?.values} />
-          <SubmitButton pendingText="Agregando…">Agregar impresora</SubmitButton>
+          <SubmitButton pendingText={t('Agregando…')}>{t('Agregar impresora')}</SubmitButton>
         </>
       )}
     </ActionForm>
   );
 }
 
-const targets = (p: PrinterView) =>
-  [p.printsKitchen ? 'Cocina' : null, p.printsBar ? 'Barra' : null, p.printsCashier ? 'Caja' : null].filter(Boolean).join(' · ') || 'No imprime nada todavía';
+const targets = (p: PrinterView, t: T) =>
+  [p.printsKitchen ? t('Cocina') : null, p.printsBar ? t('Barra') : null, p.printsCashier ? t('Caja') : null].filter(Boolean).join(' · ') || t('No imprime nada todavía');
 
 export function PrinterRow({ printer }: { printer: PrinterView }) {
   const [mode, setMode] = useState<'view' | 'edit' | 'remove'>('view');
+  const t = useT();
+  const paper = PAPER.find((o) => o.width === printer.width)?.label;
   return (
     <li className={`${card} ${printer.isActive ? '' : 'opacity-60'}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-display text-[17px] font-semibold">{printer.name}</p>
           <p className="text-[14px] text-muted-foreground">
-            {targets(printer)} · {printer.host}:{printer.port} · {PAPER.find((o) => o.width === printer.width)?.label}
-            {printer.copies > 1 ? ` · ${printer.copies} copias` : ''}
-            {printer.isActive ? '' : ' · Apagada'}
+            {targets(printer, t)} · {printer.host}:{printer.port} · {paper ? t(paper) : ''}
+            {printer.copies > 1 ? ` · ${t('{n} copias', { n: printer.copies })}` : ''}
+            {printer.isActive ? '' : ` · ${t('Apagada')}`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -93,14 +99,14 @@ export function PrinterRow({ printer }: { printer: PrinterView }) {
             {() => (
               <>
                 <input type="hidden" name="printerId" value={printer.id} />
-                <SubmitButton tone="quiet" pendingText="Enviando…">
-                  Imprimir prueba
+                <SubmitButton tone="quiet" pendingText={t('Enviando…')}>
+                  {t('Imprimir prueba')}
                 </SubmitButton>
               </>
             )}
           </ActionForm>
           <button type="button" className={quietButton} onClick={() => setMode(mode === 'edit' ? 'view' : 'edit')}>
-            {mode === 'edit' ? 'Cerrar' : 'Editar'}
+            {mode === 'edit' ? t('Cerrar') : t('Editar')}
           </button>
         </div>
       </div>
@@ -111,11 +117,11 @@ export function PrinterRow({ printer }: { printer: PrinterView }) {
               <>
                 <input type="hidden" name="printerId" value={printer.id} />
                 <PrinterFields p={printer} values={state?.values} />
-                <CheckField name="isActive" label="Prendida" hint="Apagada no recibe nada (por ejemplo, si está dañada)." defaultChecked={printer.isActive} />
+                <CheckField name="isActive" label={t('Prendida')} hint={t('Apagada no recibe nada (por ejemplo, si está dañada).')} defaultChecked={printer.isActive} />
                 <div className="flex flex-wrap gap-2">
-                  <SubmitButton pendingText="Guardando…">Guardar</SubmitButton>
+                  <SubmitButton pendingText={t('Guardando…')}>{t('Guardar')}</SubmitButton>
                   <button type="button" className={quietButton} onClick={() => setMode('remove')}>
-                    Quitar impresora
+                    {t('Quitar impresora')}
                   </button>
                 </div>
               </>
@@ -129,13 +135,13 @@ export function PrinterRow({ printer }: { printer: PrinterView }) {
             {() => (
               <>
                 <input type="hidden" name="printerId" value={printer.id} />
-                <p className="text-[14.5px]">¿Quitar «{printer.name}»? Se borra también su lista de impresiones.</p>
+                <p className="text-[14.5px]">{t('¿Quitar «{name}»? Se borra también su lista de impresiones.', { name: printer.name })}</p>
                 <div className="flex gap-2">
-                  <SubmitButton tone="danger" pendingText="Quitando…">
-                    Sí, quitar
+                  <SubmitButton tone="danger" pendingText={t('Quitando…')}>
+                    {t('Sí, quitar')}
                   </SubmitButton>
                   <button type="button" className={quietButton} onClick={() => setMode('view')}>
-                    No
+                    {t('No')}
                   </button>
                 </div>
               </>
@@ -149,12 +155,13 @@ export function PrinterRow({ printer }: { printer: PrinterView }) {
 
 export function AgentCodeForm({ hasCode }: { hasCode: boolean }) {
   const [copied, setCopied] = useState(false);
+  const t = useT();
   return (
     <ActionForm action={createAgentCodeAction} showOk={false}>
       {(state) =>
         state?.ok && state.message ? (
           <div className="space-y-3">
-            <Alert tone="ok">Código nuevo. Cópialo ahora: por seguridad no se vuelve a mostrar.</Alert>
+            <Alert tone="ok">{t('Código nuevo. Cópialo ahora: por seguridad no se vuelve a mostrar.')}</Alert>
             <div className="flex flex-wrap items-center gap-2">
               <code className="break-all rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[14px]">{state.message}</code>
               <button
@@ -164,7 +171,7 @@ export function AgentCodeForm({ hasCode }: { hasCode: boolean }) {
                   void navigator.clipboard?.writeText(state.message!).then(() => setCopied(true));
                 }}
               >
-                {copied ? 'Copiado' : 'Copiar'}
+                {copied ? t('Copiado') : t('Copiar')}
               </button>
             </div>
           </div>
@@ -172,11 +179,11 @@ export function AgentCodeForm({ hasCode }: { hasCode: boolean }) {
           <div className="space-y-2">
             {hasCode ? (
               <p className="text-[14px] text-muted-foreground">
-                Ya hay un código. Si haces uno nuevo, el programa del computador deja de funcionar hasta que le pongas el nuevo.
+                {t('Ya hay un código. Si haces uno nuevo, el programa del computador deja de funcionar hasta que le pongas el nuevo.')}
               </p>
             ) : null}
-            <SubmitButton tone={hasCode ? 'quiet' : 'primary'} pendingText="Creando…">
-              {hasCode ? 'Cambiar el código' : 'Crear el código'}
+            <SubmitButton tone={hasCode ? 'quiet' : 'primary'} pendingText={t('Creando…')}>
+              {hasCode ? t('Cambiar el código') : t('Crear el código')}
             </SubmitButton>
           </div>
         )
@@ -186,13 +193,14 @@ export function AgentCodeForm({ hasCode }: { hasCode: boolean }) {
 }
 
 export function ReprintButton({ jobId }: { jobId: string }) {
+  const t = useT();
   return (
     <ActionForm action={reprintAction} className="flex items-center gap-2">
       {() => (
         <>
           <input type="hidden" name="jobId" value={jobId} />
-          <SubmitButton tone="quiet" pendingText="Enviando…" className="py-1.5 text-[13px]">
-            Reimprimir
+          <SubmitButton tone="quiet" pendingText={t('Enviando…')} className="py-1.5 text-[13px]">
+            {t('Reimprimir')}
           </SubmitButton>
         </>
       )}
@@ -202,13 +210,14 @@ export function ReprintButton({ jobId }: { jobId: string }) {
 
 /** «Imprimir precuenta» en la impresora de caja (cuando la sede tiene una). */
 export function PrintBillButton({ sessionId, className }: { sessionId: string; className?: string }) {
+  const t = useT();
   return (
     <ActionForm action={printBillAction} className={className ?? 'flex flex-col gap-2'}>
       {() => (
         <>
           <input type="hidden" name="sessionId" value={sessionId} />
-          <SubmitButton tone="quiet" pendingText="Enviando…" className="w-full">
-            Imprimir precuenta
+          <SubmitButton tone="quiet" pendingText={t('Enviando…')} className="w-full">
+            {t('Imprimir precuenta')}
           </SubmitButton>
         </>
       )}

@@ -11,6 +11,7 @@ import { STATION_LABEL } from '@/lib/stations';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Field, Select, TextArea, primaryButton, quietButton } from './ui';
+import { useLang, useT, useTr } from './i18n';
 
 export type BoardTable = Omit<FloorTable, 'session'> & {
   session: (Omit<NonNullable<FloorTable['session']>, 'openedAt' | 'billAt'> & { openedAt: string; billAt: string | null; total?: number }) | null;
@@ -40,47 +41,51 @@ const STATUS_STYLE: Record<BoardTable['status'], string> = {
 export function TableShape({ table, now, onClick, selected, hasReady }: { table: BoardTable; now: number; onClick?: () => void; selected?: boolean; hasReady?: boolean }) {
   const minutes = table.session ? elapsedMinutes(table.session.openedAt, now) : 0;
   const late = table.session && minutes >= LONG_TABLE_MINUTES;
+  const t = useT();
+  const status = t(STATUS_LABEL[table.status]);
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={`Mesa ${table.number}, ${STATUS_LABEL[table.status]}${table.session ? `, ${formatElapsed(minutes)}` : ''}`}
+      aria-label={table.session ? t('Mesa {n}, {status}, {time}', { n: table.number, status, time: formatElapsed(minutes) }) : t('Mesa {n}, {status}', { n: table.number, status })}
       className={`absolute flex flex-col items-center justify-center border-2 text-center transition ${STATUS_STYLE[table.status]} ${
         table.shape === 'round' ? 'rounded-full' : 'rounded-[14px]'
       } ${selected ? 'ring-2 ring-foreground ring-offset-2 ring-offset-background' : ''}`}
       style={{ left: `${(table.x / 1000) * 100}%`, top: `${(table.y / 640) * 100}%`, width: `${(table.w / 1000) * 100}%`, height: `${(table.h / 640) * 100}%` }}
     >
-      {hasReady ? <span className="absolute -right-1.5 -top-1.5 size-3.5 animate-pulse rounded-full border-2 border-background bg-success" aria-label="Hay algo listo para llevar" /> : null}
+      {hasReady ? <span className="absolute -right-1.5 -top-1.5 size-3.5 animate-pulse rounded-full border-2 border-background bg-success" aria-label={t('Hay algo listo para llevar')} /> : null}
       <span className="font-display text-[clamp(13px,2.2vw,22px)] font-bold leading-none">{table.number}</span>
       {table.session ? (
         <span className={`mt-1 text-[clamp(10px,1.2vw,13px)] font-medium leading-none ${late ? 'text-[#ffb4b5]' : 'text-foreground/80'}`}>{formatElapsed(minutes)}</span>
       ) : (
-        <span className="mt-1 text-[clamp(10px,1.1vw,12px)] leading-none text-muted-foreground">{table.capacity} p.</span>
+        <span className="mt-1 text-[clamp(10px,1.1vw,12px)] leading-none text-muted-foreground">{t('{n} p.', { n: table.capacity })}</span>
       )}
     </button>
   );
 }
 
 export function Legend() {
+  const t = useT();
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-muted-foreground">
       {(['free', 'open', 'bill', 'reserved', 'blocked'] as const).map((s) => (
         <li key={s} className="flex items-center gap-1.5">
           <span className={`size-3 rounded-[4px] border-2 ${STATUS_STYLE[s]}`} aria-hidden="true" />
-          {STATUS_LABEL[s]}
+          {t(STATUS_LABEL[s])}
         </li>
       ))}
       <li className="flex items-center gap-1.5">
-        <span className="text-[#ffb4b5]">●</span> Más de {LONG_TABLE_MINUTES} min
+        <span className="text-[#ffb4b5]">●</span> {t('Más de {n} min', { n: LONG_TABLE_MINUTES })}
       </li>
     </ul>
   );
 }
 
 export function ZoneTabs({ zones, zone, onChange }: { zones: string[]; zone: string; onChange: (zone: string) => void }) {
+  const t = useT();
   if (zones.length < 2) return null;
   return (
-    <div role="tablist" aria-label="Zonas" className="flex flex-wrap gap-1.5">
+    <div role="tablist" aria-label={t('Zonas')} className="flex flex-wrap gap-1.5">
       {zones.map((z) => (
         <button
           key={z}
@@ -112,6 +117,7 @@ export function TableBoard({
   timeZone: string;
 }) {
   const now = useNow();
+  const t = useT();
   const zones = useMemo(() => [...new Set(tables.map((t) => t.zone))], [tables]);
   const [zone, setZone] = useState(zones[0]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -143,19 +149,19 @@ export function TableBoard({
             ))}
         </div>
         {/* En el celular el plano queda pequeño para el dedo: las mismas mesas en botones grandes. */}
-        <ul className="grid grid-cols-4 gap-2 sm:hidden" aria-label="Mesas de la zona">
+        <ul className="grid grid-cols-4 gap-2 sm:hidden" aria-label={t('Mesas de la zona')}>
           {tables
             .filter((t) => t.zone === currentZone)
-            .map((t) => (
-              <li key={t.id}>
+            .map((tb) => (
+              <li key={tb.id}>
                 <button
                   type="button"
-                  onClick={() => setSelectedId(t.id)}
-                  className={`flex h-16 w-full flex-col items-center justify-center rounded-2xl border-2 ${STATUS_STYLE[t.status]}`}
+                  onClick={() => setSelectedId(tb.id)}
+                  className={`flex h-16 w-full flex-col items-center justify-center rounded-2xl border-2 ${STATUS_STYLE[tb.status]}`}
                 >
-                  <span className="font-display text-[18px] font-bold leading-none">{t.number}</span>
+                  <span className="font-display text-[18px] font-bold leading-none">{tb.number}</span>
                   <span className="mt-1 text-[11.5px] leading-none text-muted-foreground">
-                    {t.session ? formatElapsed(elapsedMinutes(t.session.openedAt, now)) : `${t.capacity} p.`}
+                    {tb.session ? formatElapsed(elapsedMinutes(tb.session.openedAt, now)) : t('{n} p.', { n: tb.capacity })}
                   </span>
                 </button>
               </li>
@@ -165,25 +171,25 @@ export function TableBoard({
 
       <aside className="space-y-3">
         {ready.length > 0 ? <ReadyList ready={ready} now={now} /> : null}
-        <h2 className="font-display text-[17px] font-bold">Mesas abiertas</h2>
+        <h2 className="font-display text-[17px] font-bold">{t('Mesas abiertas')}</h2>
         {openTables.length === 0 ? (
-          <p className="text-[14px] text-muted-foreground">Ninguna por ahora.</p>
+          <p className="text-[14px] text-muted-foreground">{t('Ninguna por ahora.')}</p>
         ) : (
           <ul className="space-y-2">
-            {openTables.map((t) => {
-              const minutes = elapsedMinutes(t.session!.openedAt, now);
+            {openTables.map((ot) => {
+              const minutes = elapsedMinutes(ot.session!.openedAt, now);
               return (
-                <li key={t.id}>
+                <li key={ot.id}>
                   <button
                     type="button"
-                    onClick={() => (setZone(t.zone), setSelectedId(t.id))}
+                    onClick={() => (setZone(ot.zone), setSelectedId(ot.id))}
                     className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-card px-4 py-3 text-left transition hover:border-white/[0.18]"
                   >
                     <span>
-                      <span className="font-display text-[16px] font-semibold">Mesa {t.number}</span>
+                      <span className="font-display text-[16px] font-semibold">{t('Mesa {n}', { n: ot.number })}</span>
                       <span className="block text-[13px] text-muted-foreground">
-                        {t.session!.guests} p. · {formatCop(t.session!.total ?? 0)}
-                        {t.status === 'bill' ? ' · pidió la cuenta' : ''}
+                        {t('{n} p.', { n: ot.session!.guests })} · {formatCop(ot.session!.total ?? 0)}
+                        {ot.status === 'bill' ? ` · ${t('pidió la cuenta')}` : ''}
                       </span>
                     </span>
                     <span className={`text-[14px] font-medium ${minutes >= LONG_TABLE_MINUTES ? 'text-[#ffb4b5]' : 'text-foreground'}`}>{formatElapsed(minutes)}</span>
@@ -199,7 +205,7 @@ export function TableBoard({
         <TableSheet
           key={selected.id}
           table={selected}
-          freeTables={tables.filter((t) => t.status === 'free')}
+          freeTables={tables.filter((ft) => ft.status === 'free')}
           canOpen={canOpen}
           canClose={canClose}
           now={now}
@@ -229,6 +235,8 @@ function TableSheet({
   timeZone: string;
   onClose: () => void;
 }) {
+  const t = useT();
+  const lang = useLang();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -254,30 +262,40 @@ function TableSheet({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id="sheet-title" className="font-display text-[24px] font-bold">
-              Mesa {table.number}
+              {t('Mesa {n}', { n: table.number })}
             </h2>
             <p className="text-[14px] text-muted-foreground">
-              {table.zone} · {table.capacity} puestos · {STATUS_LABEL[table.status]}
+              {table.zone} · {t('{n} puestos', { n: table.capacity })} · {t(STATUS_LABEL[table.status])}
             </p>
           </div>
-          <button type="button" onClick={onClose} className={quietButton} aria-label="Cerrar">
+          <button type="button" onClick={onClose} className={quietButton} aria-label={t('Cerrar')}>
             ✕
           </button>
         </div>
 
         {table.reservedFor && !session ? (
           <p className="mt-5 rounded-2xl border border-accent/40 bg-accent/10 px-4 py-3 text-[14.5px]">
-            Reservada para <strong>{table.reservedFor.customerName}</strong> ({table.reservedFor.guests} p.) a las {formatTime(table.reservedFor.startsAt, timeZone)}. Si llegó, ábrela
-            desde{' '}
-            <Link href="/app/reservas" className="text-primary underline">
-              Reservas
-            </Link>
-            .
+            {t('Reservada para {name} ({guests} p.) a las {time}. Si llegó, ábrela desde {link}.', {
+              guests: table.reservedFor.guests,
+              time: formatTime(table.reservedFor.startsAt, timeZone, lang),
+            })
+              .split(/(\{name\}|\{link\})/)
+              .map((part, i) =>
+                part === '{name}' ? (
+                  <strong key={i}>{table.reservedFor!.customerName}</strong>
+                ) : part === '{link}' ? (
+                  <Link key={i} href="/app/reservas" className="text-primary underline">
+                    {t('Reservas')}
+                  </Link>
+                ) : (
+                  part
+                ),
+              )}
           </p>
         ) : null}
 
         {table.status === 'blocked' ? (
-          <p className="mt-6 text-[15px] text-muted-foreground">Esta mesa está bloqueada. El administrador la desbloquea en Plano.</p>
+          <p className="mt-6 text-[15px] text-muted-foreground">{t('Esta mesa está bloqueada. El administrador la desbloquea en Plano.')}</p>
         ) : null}
 
         {(table.status === 'free' || table.status === 'reserved') && canOpen ? (
@@ -286,9 +304,9 @@ function TableSheet({
               <>
                 <input type="hidden" name="tableId" value={table.id} />
                 <GuestStepper defaultValue={Number(state?.values?.guests) || Math.min(table.capacity, 2)} />
-                <Field label="Nota (opcional)" name="notes" placeholder="Cumpleaños, alergia…" maxLength={300} defaultValue={state?.values?.notes} />
-                <SubmitButton className="w-full py-3" pendingText="Abriendo…">
-                  Abrir mesa
+                <Field label={t('Nota (opcional)')} name="notes" placeholder={t('Cumpleaños, alergia…')} maxLength={300} defaultValue={state?.values?.notes} />
+                <SubmitButton className="w-full py-3" pendingText={t('Abriendo…')}>
+                  {t('Abrir mesa')}
                 </SubmitButton>
               </>
             )}
@@ -299,25 +317,25 @@ function TableSheet({
           <div className="mt-5 space-y-5">
             <div className="flex gap-2">
               <Link href={`/app/mesa/${session.id}`} className={`${primaryButton} flex-1 py-3 text-[15.5px]`}>
-                Pedido · {formatCop(session.total ?? 0)}
+                {t('Pedido · {total}', { total: formatCop(session.total ?? 0) })}
               </Link>
               {canClose ? (
                 <Link href={`/app/caja/mesa/${session.id}`} className={`${quietButton} py-3`}>
-                  Cobrar
+                  {t('Cobrar')}
                 </Link>
               ) : null}
             </div>
             <div className="grid grid-cols-2 gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-[14px]">
               <p>
-                <span className="block text-muted-foreground">Tiempo</span>
+                <span className="block text-muted-foreground">{t('Tiempo')}</span>
                 <span className={`font-display text-[20px] font-bold ${elapsedMinutes(session.openedAt, now) >= LONG_TABLE_MINUTES ? 'text-[#ffb4b5]' : ''}`}>
                   {formatElapsed(elapsedMinutes(session.openedAt, now))}
                 </span>
               </p>
               <p>
-                <span className="block text-muted-foreground">Abierta</span>
+                <span className="block text-muted-foreground">{t('Abierta')}</span>
                 <span className="font-medium">
-                  {formatTime(session.openedAt, timeZone)} · {session.openedBy}
+                  {formatTime(session.openedAt, timeZone, lang)} · {session.openedBy}
                 </span>
               </p>
             </div>
@@ -328,9 +346,9 @@ function TableSheet({
                   <>
                     <input type="hidden" name="sessionId" value={session.id} />
                     <GuestStepper defaultValue={session.guests} />
-                    <Field label="Nota" name="notes" maxLength={300} defaultValue={session.notes ?? ''} />
-                    <SubmitButton tone="quiet" pendingText="Guardando…">
-                      Guardar cambios
+                    <Field label={t('Nota')} name="notes" maxLength={300} defaultValue={session.notes ?? ''} />
+                    <SubmitButton tone="quiet" pendingText={t('Guardando…')}>
+                      {t('Guardar cambios')}
                     </SubmitButton>
                   </>
                 )}
@@ -343,13 +361,13 @@ function TableSheet({
                   <>
                     <input type="hidden" name="sessionId" value={session.id} />
                     <input type="hidden" name="bill" value={table.status === 'bill' ? '0' : '1'} />
-                    <SubmitButton tone="quiet">{table.status === 'bill' ? 'Volver a abrir' : 'Pedir la cuenta'}</SubmitButton>
+                    <SubmitButton tone="quiet">{table.status === 'bill' ? t('Volver a abrir') : t('Pedir la cuenta')}</SubmitButton>
                   </>
                 )}
               </ActionForm>
               {canClose && !closing ? (
                 <button type="button" className={quietButton} onClick={() => setClosing(true)}>
-                  Cerrar mesa
+                  {t('Cerrar mesa')}
                 </button>
               ) : null}
             </div>
@@ -360,14 +378,14 @@ function TableSheet({
                   <>
                     <input type="hidden" name="sessionId" value={session.id} />
                     {table.status === 'bill' ? (
-                      <p className="text-[14px] text-muted-foreground">La mesa queda libre y su tiempo queda guardado. Si tiene consumo, se cierra cobrando en Caja.</p>
+                      <p className="text-[14px] text-muted-foreground">{t('La mesa queda libre y su tiempo queda guardado. Si tiene consumo, se cierra cobrando en Caja.')}</p>
                     ) : (
-                      <TextArea label="¿Por qué se cierra sin pedir la cuenta?" name="reason" required minLength={3} maxLength={300} defaultValue={state?.values?.reason} />
+                      <TextArea label={t('¿Por qué se cierra sin pedir la cuenta?')} name="reason" required minLength={3} maxLength={300} defaultValue={state?.values?.reason} />
                     )}
                     <div className="flex gap-2">
-                      <SubmitButton pendingText="Cerrando…">Confirmar cierre</SubmitButton>
+                      <SubmitButton pendingText={t('Cerrando…')}>{t('Confirmar cierre')}</SubmitButton>
                       <button type="button" className={quietButton} onClick={() => setClosing(false)}>
-                        Cancelar
+                        {t('Cancelar')}
                       </button>
                     </div>
                   </>
@@ -380,18 +398,18 @@ function TableSheet({
                 {() => (
                   <>
                     <input type="hidden" name="sessionId" value={session.id} />
-                    <Select label="Pasar a otra mesa" name="toTableId" required defaultValue="">
+                    <Select label={t('Pasar a otra mesa')} name="toTableId" required defaultValue="">
                       <option value="" disabled>
-                        Elige una mesa libre
+                        {t('Elige una mesa libre')}
                       </option>
-                      {freeTables.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          Mesa {t.number} · {t.zone} · {t.capacity} p.
+                      {freeTables.map((ft) => (
+                        <option key={ft.id} value={ft.id}>
+                          {t('Mesa {n}', { n: ft.number })} · {ft.zone} · {t('{n} p.', { n: ft.capacity })}
                         </option>
                       ))}
                     </Select>
-                    <SubmitButton tone="quiet" pendingText="Moviendo…">
-                      Mover
+                    <SubmitButton tone="quiet" pendingText={t('Moviendo…')}>
+                      {t('Mover')}
                     </SubmitButton>
                   </>
                 )}
@@ -407,11 +425,12 @@ function TableSheet({
 function GuestStepper({ defaultValue }: { defaultValue: number }) {
   const [guests, setGuests] = useState(defaultValue);
   const set = (n: number) => setGuests(Math.min(60, Math.max(1, n)));
+  const t = useT();
   return (
     <div className="space-y-1.5">
-      <p className="text-sm font-medium text-foreground">Personas</p>
+      <p className="text-sm font-medium text-foreground">{t('Personas')}</p>
       <div className="flex items-center gap-3">
-        <button type="button" className={`${quietButton} size-12 text-[22px]`} onClick={() => set(guests - 1)} aria-label="Una persona menos">
+        <button type="button" className={`${quietButton} size-12 text-[22px]`} onClick={() => set(guests - 1)} aria-label={t('Una persona menos')}>
           −
         </button>
         <input
@@ -419,10 +438,10 @@ function GuestStepper({ defaultValue }: { defaultValue: number }) {
           value={guests}
           onChange={(e) => set(Number(e.target.value.replace(/\D/g, '')) || 1)}
           inputMode="numeric"
-          aria-label="Personas"
+          aria-label={t('Personas')}
           className="w-16 rounded-2xl border border-white/10 bg-white/[0.04] py-2.5 text-center font-display text-[22px] font-bold"
         />
-        <button type="button" className={`${quietButton} size-12 text-[22px]`} onClick={() => set(guests + 1)} aria-label="Una persona más">
+        <button type="button" className={`${quietButton} size-12 text-[22px]`} onClick={() => set(guests + 1)} aria-label={t('Una persona más')}>
           +
         </button>
       </div>
@@ -434,18 +453,20 @@ function GuestStepper({ defaultValue }: { defaultValue: number }) {
 function ReadyList({ ready, now }: { ready: Ready[]; now: number }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const t = useT();
+  const trx = useTr();
   return (
     <section className="rounded-[22px] border-2 border-success/40 bg-success/[0.06] p-4">
-      <h2 className="font-display text-[17px] font-bold">Listo para llevar</h2>
+      <h2 className="font-display text-[17px] font-bold">{t('Listo para llevar')}</h2>
       <ul className="mt-3 space-y-2.5">
         {ready.map((r) => (
           <li key={r.id} className="flex items-start justify-between gap-3">
             <span className="text-[14px]">
               <span className="font-semibold">
-                Mesa {r.tableNumber} · {STATION_LABEL[r.station]}
+                {t('Mesa {n}', { n: r.tableNumber })} · {t(STATION_LABEL[r.station])}
               </span>
               <span className="block text-muted-foreground">{r.items.join(', ')}</span>
-              <span className="block text-[12.5px] text-muted-foreground">hace {formatElapsed(elapsedMinutes(r.readyAt, now))}</span>
+              <span className="block text-[12.5px] text-muted-foreground">{t('hace {time}', { time: formatElapsed(elapsedMinutes(r.readyAt, now)) })}</span>
             </span>
             <button
               type="button"
@@ -459,12 +480,12 @@ function ReadyList({ ready, now }: { ready: Ready[]; now: number }) {
                 })
               }
             >
-              Entregado
+              {t('Entregado')}
             </button>
           </li>
         ))}
       </ul>
-      {error ? <p className="mt-2 text-[13px] text-[#ffb4b5]">{error}</p> : null}
+      {error ? <p className="mt-2 text-[13px] text-[#ffb4b5]">{trx(error)}</p> : null}
     </section>
   );
 }

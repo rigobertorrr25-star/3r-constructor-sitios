@@ -4,6 +4,7 @@ import { startTransition, useActionState, useState } from 'react';
 import { removeProductPhotoAction, saveProductPhotoAction } from '@/app/actions';
 import { shrink } from './background-forms';
 import { Alert, dangerButton, primaryButton, quietButton } from './ui';
+import { useT } from './i18n';
 
 /** Foto de un producto: se escoge, se ve antes de guardarla y se puede quitar. */
 export function ProductPhotoForm({ productId, current }: { productId: string; current: string | null }) {
@@ -12,6 +13,7 @@ export function ProductPhotoForm({ productId, current }: { productId: string; cu
   const [picked, setPicked] = useState<{ blob: Blob; url: string } | null>(null);
   const [readError, setReadError] = useState('');
   const [lastOk, setLastOk] = useState<number | undefined>(undefined);
+  const t = useT();
 
   if (saveState?.ok && saveState.ok !== lastOk) {
     setLastOk(saveState.ok);
@@ -33,15 +35,15 @@ export function ProductPhotoForm({ productId, current }: { productId: string; cu
         className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] bg-cover bg-center text-center text-[12px] text-muted-foreground"
         style={preview ? { backgroundImage: `url("${preview}")` } : undefined}
       >
-        {preview ? null : 'Sin foto'}
+        {preview ? null : t('Sin foto')}
       </div>
       <div className="space-y-2">
         <p className="text-sm font-medium">
-          Foto del producto {picked ? <span className="font-normal text-muted-foreground">(todavía sin guardar)</span> : null}
+          {t('Foto del producto')} {picked ? <span className="font-normal text-muted-foreground">{t('(todavía sin guardar)')}</span> : null}
         </p>
         <div className="flex flex-wrap gap-2">
           <label className={`${quietButton} cursor-pointer`}>
-            {preview ? 'Escoger otra' : 'Escoger foto'}
+            {preview ? t('Escoger otra') : t('Escoger foto')}
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
@@ -56,19 +58,19 @@ export function ProductPhotoForm({ productId, current }: { productId: string; cu
                   if (picked) URL.revokeObjectURL(picked.url);
                   setPicked({ blob, url: URL.createObjectURL(blob) });
                 } catch {
-                  setReadError('No pudimos leer esa foto. Prueba con otra (JPG, PNG o WebP).');
+                  setReadError(t('No pudimos leer esa foto. Prueba con otra (JPG, PNG o WebP).'));
                 }
               }}
             />
           </label>
           {picked ? (
             <button type="button" className={primaryButton} disabled={saving} onClick={() => send(save, picked.blob)}>
-              {saving ? 'Guardando…' : 'Guardar foto'}
+              {saving ? t('Guardando…') : t('Guardar foto')}
             </button>
           ) : null}
           {current && !picked ? (
             <button type="button" className={dangerButton} disabled={removing} onClick={() => send(remove)}>
-              {removing ? 'Quitando…' : 'Quitar foto'}
+              {removing ? t('Quitando…') : t('Quitar foto')}
             </button>
           ) : null}
         </div>

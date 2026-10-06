@@ -5,16 +5,18 @@ import { adminLoginAction, goToBusinessAction, loginPeopleAction, staffLoginActi
 import { ROLE_LABEL, type Role } from '@/lib/permissions';
 import { backgroundUrl } from '@/lib/background-url';
 import { BackgroundLayer } from './background-forms';
+import { useT } from './i18n';
 import { SubmitButton } from './submit-button';
 import { Alert, Field, inputClass } from './ui';
 
 export function FindBusinessForm() {
   const [state, action] = useActionState(goToBusinessAction, undefined);
+  const t = useT();
   return (
     <form action={action} className="space-y-4">
-      <Field label="Tu negocio" name="slug" placeholder="por ejemplo: azul-caribe" autoCapitalize="none" required defaultValue={state?.values?.slug} />
+      <Field label={t('Tu negocio')} name="slug" placeholder={t('por ejemplo: azul-caribe')} autoCapitalize="none" required defaultValue={state?.values?.slug} />
       {state?.error ? <Alert>{state.error}</Alert> : null}
-      <SubmitButton className="w-full">Continuar</SubmitButton>
+      <SubmitButton className="w-full" pendingText={t('Un momento…')}>{t('Continuar')}</SubmitButton>
     </form>
   );
 }
@@ -28,6 +30,7 @@ export function RestaurantLogin({ businesses, initialSlug, initialPeople }: { bu
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
   const latest = useRef(initialSlug);
+  const t = useT();
 
   const choose = async (next: string) => {
     latest.current = next;
@@ -51,11 +54,11 @@ export function RestaurantLogin({ businesses, initialSlug, initialPeople }: { bu
       <BackgroundLayer url={chosen ? backgroundUrl(chosen.slug, chosen.background) : null} />
       <div>
         <label htmlFor="restaurante" className="text-sm font-medium text-foreground">
-          Restaurante
+          {t('Restaurante')}
         </label>
         <select id="restaurante" value={slug} onChange={(e) => choose(e.target.value)} className={`${inputClass} mt-1.5 text-[16px]`}>
           <option value="" disabled>
-            Escoge tu restaurante
+            {t('Escoge tu restaurante')}
           </option>
           {businesses.map((b) => (
             <option key={b.slug} value={b.slug}>
@@ -64,8 +67,8 @@ export function RestaurantLogin({ businesses, initialSlug, initialPeople }: { bu
           ))}
         </select>
       </div>
-      {loading ? <p className="text-[14.5px] text-muted-foreground">Cargando el equipo…</p> : null}
-      {failed ? <Alert>No pudimos cargar el equipo. Revisa la conexión y vuelve a escoger el restaurante.</Alert> : null}
+      {loading ? <p className="text-[14.5px] text-muted-foreground">{t('Cargando el equipo…')}</p> : null}
+      {failed ? <Alert>{t('No pudimos cargar el equipo. Revisa la conexión y vuelve a escoger el restaurante.')}</Alert> : null}
       {slug && people ? <StaffLoginForm key={slug} slug={slug} people={people} /> : null}
     </div>
   );
@@ -73,11 +76,12 @@ export function RestaurantLogin({ businesses, initialSlug, initialPeople }: { bu
 
 export function AdminLoginForm() {
   const [state, action] = useActionState(adminLoginAction, undefined);
+  const t = useT();
   return (
     <form action={action} className="space-y-4">
-      <Field label="Clave de 3R" name="password" type="password" autoComplete="current-password" required />
+      <Field label={t('Clave de 3R')} name="password" type="password" autoComplete="current-password" required />
       {state?.error ? <Alert>{state.error}</Alert> : null}
-      <SubmitButton className="w-full">Entrar</SubmitButton>
+      <SubmitButton className="w-full" pendingText={t('Entrando…')}>{t('Entrar')}</SubmitButton>
     </form>
   );
 }
@@ -90,6 +94,7 @@ export function StaffLoginForm({ slug, people }: { slug: string; people: Person[
   const [person, setPerson] = useState<Person | null>(null);
   const [pin, setPin] = useState('');
   const [lastState, setLastState] = useState(state);
+  const t = useT();
 
   // Si hubo error, se vuelve a pedir el PIN de la misma persona.
   if (state !== lastState) {
@@ -130,7 +135,7 @@ export function StaffLoginForm({ slug, people }: { slug: string; people: Person[
         <input type="hidden" name="slug" value={slug} />
         <input type="hidden" name="code" value={person.code} />
         <input type="hidden" name="pin" value={pin} />
-        <p className="text-[15px] text-muted-foreground">{person.name}, ¿en qué sede vas a trabajar hoy?</p>
+        <p className="text-[15px] text-muted-foreground">{t('{name}, ¿en qué sede vas a trabajar hoy?', { name: person.name })}</p>
         {state.locations.map((l) => (
           <button
             key={l.id}
@@ -146,10 +151,10 @@ export function StaffLoginForm({ slug, people }: { slug: string; people: Person[
   }
 
   if (!person) {
-    if (people.length === 0) return <p className="text-[15px] text-muted-foreground">Este restaurante todavía no tiene personas activas. El dueño las crea en Equipo.</p>;
+    if (people.length === 0) return <p className="text-[15px] text-muted-foreground">{t('Este restaurante todavía no tiene personas activas. El dueño las crea en Equipo.')}</p>;
     return (
       <div>
-        <p className="text-sm font-medium text-foreground">¿Quién eres?</p>
+        <p className="text-sm font-medium text-foreground">{t('¿Quién eres?')}</p>
         <div className="mt-2 grid max-h-[420px] grid-cols-2 gap-2.5 overflow-y-auto">
           {people.map((p) => (
             <button
@@ -159,7 +164,7 @@ export function StaffLoginForm({ slug, people }: { slug: string; people: Person[
               className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3.5 text-left transition hover:border-primary/60 hover:bg-primary/10 active:scale-[0.98]"
             >
               <span className="block break-words font-display text-[16px] font-semibold leading-snug text-foreground">{p.name}</span>
-              <span className="block text-[12.5px] text-muted-foreground">{ROLE_LABEL[p.role]}</span>
+              <span className="block text-[12.5px] text-muted-foreground">{t(ROLE_LABEL[p.role])}</span>
             </button>
           ))}
         </div>
@@ -174,18 +179,18 @@ export function StaffLoginForm({ slug, people }: { slug: string; people: Person[
       <input type="hidden" name="code" value={person.code} />
       <input type="hidden" name="pin" value={pin} />
       <div>
-        <p className="text-sm font-medium text-foreground">PIN de {person.name}</p>
+        <p className="text-sm font-medium text-foreground">{t('PIN de {name}', { name: person.name })}</p>
         <div
           aria-live="polite"
-          aria-label={`PIN: ${pin.length} números`}
+          aria-label={t('PIN: {n} números', { n: pin.length })}
           className="mt-1.5 flex h-[60px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] font-display text-[28px] tracking-[0.4em] text-foreground"
         >
-          {'•'.repeat(pin.length) || <span className="text-[15px] tracking-normal text-muted-foreground/70">4 a 6 números</span>}
+          {'•'.repeat(pin.length) || <span className="text-[15px] tracking-normal text-muted-foreground/70">{t('4 a 6 números')}</span>}
         </div>
         <p className="mt-2 text-[13px] text-muted-foreground">
-          ¿No eres {person.name}?{' '}
+          {t('¿No eres {name}?', { name: person.name })}{' '}
           <button type="button" className="text-primary hover:underline" onClick={() => (setPerson(null), setPin(''))}>
-            Escoger otro nombre
+            {t('Escoger otro nombre')}
           </button>
         </p>
       </div>
@@ -196,7 +201,7 @@ export function StaffLoginForm({ slug, people }: { slug: string; people: Person[
               key={i}
               type="button"
               onClick={() => press(key)}
-              aria-label={key === '⌫' ? 'Borrar' : key}
+              aria-label={key === '⌫' ? t('Borrar') : key}
               className="rounded-2xl border border-white/[0.08] bg-white/[0.03] py-4 font-display text-[22px] font-semibold text-foreground transition active:scale-95 active:bg-white/[0.08]"
             >
               {key}
@@ -207,8 +212,8 @@ export function StaffLoginForm({ slug, people }: { slug: string; people: Person[
         )}
       </div>
       {state?.error ? <Alert>{state.error}</Alert> : null}
-      <SubmitButton className="w-full py-3.5 text-[16px]" pendingText="Entrando…">
-        Entrar
+      <SubmitButton className="w-full py-3.5 text-[16px]" pendingText={t('Entrando…')}>
+        {t('Entrar')}
       </SubmitButton>
     </form>
   );

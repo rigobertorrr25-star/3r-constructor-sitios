@@ -371,17 +371,10 @@ CREATE TABLE IF NOT EXISTS daily_briefs (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (business_id, scope, day)
 );
--- Una versión de prueba (6 oct 2026, sistema en inglés, que no se usó) cambió esta tabla: un resumen por idioma.
--- Si esa versión alcanzó a tocar la base, se deja como estaba para que el resumen del día siga guardándose.
-DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'daily_briefs' AND column_name = 'lang') THEN
-    DELETE FROM daily_briefs WHERE lang <> 'es';
-    ALTER TABLE daily_briefs DROP COLUMN lang;
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'daily_briefs_business_id_scope_day_key') THEN
-    ALTER TABLE daily_briefs ADD CONSTRAINT daily_briefs_business_id_scope_day_key UNIQUE (business_id, scope, day);
-  END IF;
-END $$;
+-- Un resumen por idioma (es / en): quien ve el sistema en inglés lo recibe escrito en inglés.
+ALTER TABLE daily_briefs ADD COLUMN IF NOT EXISTS lang VARCHAR(2) NOT NULL DEFAULT 'es';
+ALTER TABLE daily_briefs DROP CONSTRAINT IF EXISTS daily_briefs_business_id_scope_day_key;
+CREATE UNIQUE INDEX IF NOT EXISTS daily_briefs_one_per_lang ON daily_briefs (business_id, scope, day, lang);
 
 -- ───────── módulo 13: servicios y citas (barberías, peluquerías, spas) ─────────
 
@@ -506,6 +499,12 @@ CREATE TABLE IF NOT EXISTS business_backgrounds (
   image BYTEA NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Carta en inglés (opcional): si el restaurante escribe el nombre en inglés, la carta QR y quien use el sistema en
+-- inglés lo ven así. Las comandas impresas siguen con el nombre en español.
+ALTER TABLE menu_categories ADD COLUMN IF NOT EXISTS name_en VARCHAR(60);
+ALTER TABLE menu_products ADD COLUMN IF NOT EXISTS name_en VARCHAR(80);
+ALTER TABLE menu_products ADD COLUMN IF NOT EXISTS description_en VARCHAR(200);
 
 -- Foto de cada producto de la carta (la sube quien edita la carta); se ve en la carta QR y al tomar pedidos.
 CREATE TABLE IF NOT EXISTS product_photos (
