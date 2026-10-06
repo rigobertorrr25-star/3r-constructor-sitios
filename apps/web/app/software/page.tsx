@@ -35,6 +35,29 @@ export const metadata: Metadata = {
 
 const DEMO_MESSAGE = 'Hola, quiero conocer el software para empresas de 3R';
 const INSTAGRAM_URL = 'https://www.instagram.com/3r.paginas_/';
+const RESTAURANT_MESSAGE = 'Hola, quiero Restaurant Control para mi restaurante';
+
+const cop = (n: number) => `$${new Intl.NumberFormat('es-CO').format(n)}`;
+
+// Precios aprobados por Rigoberto (6 oct 2026). Los de los módulos también están en /admin/modulos (los que se cobran).
+const MODULE_FROM = 15000;
+const RESTAURANT_SETUP = 350000;
+const RESTAURANT_SETUP_WITH_PAGE = 200000;
+const restaurantPlans = [
+  {
+    name: 'Esencial',
+    price: 119000,
+    text: 'Para empezar a ordenar el servicio.',
+    items: ['Mesas y plano del local', 'Pedidos desde la tablet o el celular', 'Pantallas de cocina y barra', 'Caja, pagos y cierre de turno', 'Carta con QR y reservas en línea', 'Equipo sin límite, cada uno con su PIN'],
+  },
+  {
+    name: 'Completo',
+    price: 189000,
+    text: 'Para saber dónde se va la plata.',
+    items: ['Todo lo del Esencial', 'Inventario con recetas y control de botellas', 'Gastos y estado de resultados', 'Tablero del dueño con radar de fugas', 'Resumen del día escrito con IA', 'Registro de quién hizo cada cosa'],
+    featured: true,
+  },
+];
 
 // Mismo orden y áreas que el catálogo de la API (apps/api/src/companies/companies.constants.ts).
 const areas: { area: ModuleArea; hue: number; icon: ReactNode; pitch: string; modules: string[] }[] = [
@@ -96,7 +119,10 @@ const faqs = [
     q: '¿Tengo que pagar los módulos que no uso?',
     a: 'No. Pagas solo los módulos que tienes encendidos. Puedes agregar o quitar módulos cuando tu empresa lo necesite.',
   },
-  { q: '¿Cuánto cuesta?', a: 'Depende de los módulos que actives. Escríbenos por WhatsApp, nos cuentas qué necesitas y te armamos el plan.' },
+  {
+    q: '¿Cuánto cuesta?',
+    a: 'Desde $15.000 al mes por módulo. Los de tu equipo (comunicados, documentos, calendario…) cuestan $15.000; los de clientes y ventas, $29.000; y página web, marketing, WhatsApp e inteligencia artificial, $49.000. Escríbenos por WhatsApp y te armamos el plan con los que necesitas.',
+  },
   { q: '¿Cómo pago?', a: 'Cada mes recibes tu factura en la plataforma y la pagas en línea con Wompi o por transferencia.' },
   { q: '¿Hay que instalar algo?', a: 'No. Funciona en el navegador del celular o del computador. Cada persona entra con su correo y su contraseña.' },
   {
@@ -239,6 +265,9 @@ export default async function SoftwarePage() {
             <p className="mx-auto mt-3 max-w-xl text-center text-[16px] text-muted-foreground">
               Empieza con dos o tres y agrega más cuando los necesites. Todos comparten la misma información.
             </p>
+            <p className="mx-auto mt-4 w-fit rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-center text-[14.5px] text-foreground">
+              Desde <strong>{cop(MODULE_FROM)}</strong> por módulo al mes
+            </p>
           </Reveal>
           <div className="mt-10 space-y-[17px]">
             {areas.map((group, gi) => (
@@ -341,6 +370,58 @@ export default async function SoftwarePage() {
               </Reveal>
             ))}
           </div>
+        </section>
+
+        <section id="restaurantes" aria-labelledby="h-restaurantes" className="mx-auto max-w-[1224px] scroll-mt-24 px-4 pb-24 sm:px-[34px]">
+          <Reveal>
+            <p className="text-center text-[12.75px] uppercase tracking-[0.3em] text-muted-foreground">Para restaurantes y bares</p>
+            <h2 id="h-restaurantes" className="mt-4 text-center font-display text-[32px] font-bold tracking-tight text-foreground sm:text-[40px]">
+              Restaurant Control
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-center text-[16px] text-muted-foreground">
+              Mesas, pedidos, cocina, caja e inventario en la tablet del local. Precio mensual por sede.
+            </p>
+          </Reveal>
+          <div className="mx-auto mt-10 grid max-w-[900px] gap-[17px] md:grid-cols-2">
+            {restaurantPlans.map((plan, i) => (
+              <Reveal key={plan.name} delayMs={i * 60}>
+                <div className={`${card} flex h-full flex-col p-[26px] sm:p-8 ${plan.featured ? 'border-primary/40' : ''}`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="font-display text-[23px] font-bold text-foreground">{plan.name}</h3>
+                    {plan.featured ? <span className="rounded-full bg-primary/15 px-3 py-1 text-[12.5px] text-primary">El más pedido</span> : null}
+                  </div>
+                  <p className="mt-1 text-[15px] text-muted-foreground">{plan.text}</p>
+                  <p className="mt-5 font-display text-[36px] font-bold tracking-tight text-foreground">
+                    {cop(plan.price)}
+                    <span className="ml-1 text-[15px] font-normal text-muted-foreground">al mes por sede</span>
+                  </p>
+                  <ul className="mt-5 space-y-2.5">
+                    {plan.items.map((item) => (
+                      <li key={item} className="flex gap-2.5 text-[15px] leading-snug text-foreground">
+                        <span className="mt-[7px] size-2 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal className="mx-auto mt-6 max-w-[900px] text-center">
+            <p className="text-[14.5px] leading-[1.6] text-muted-foreground">
+              Instalación (carta, plano, equipo y capacitación): {cop(RESTAURANT_SETUP)} una sola vez, o {cop(RESTAURANT_SETUP_WITH_PAGE)} si también
+              haces tu página con 3R. Cada sede adicional paga la mitad. Pagando el año, te regalamos 2 meses.
+            </p>
+            <a
+              href={whatsappLink(RESTAURANT_MESSAGE)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${pill} shine mt-6 bg-primary font-medium text-primary-foreground hover:shadow-[var(--shadow-glow)]`}
+            >
+              Quiero verlo en mi restaurante
+              <ArrowRightIcon />
+            </a>
+          </Reveal>
         </section>
 
         <section className="px-4 pb-24 sm:px-[34px]">
