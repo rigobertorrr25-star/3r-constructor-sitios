@@ -39,6 +39,8 @@ export type MenuProduct = {
   isAvailable: boolean;
   isActive: boolean;
   sort: number;
+  /** Versión de la foto del producto (para armar su dirección), o null si no tiene. */
+  photo: number | null;
 };
 
 /** La carta completa. Para tomar pedidos, `activeOnly` deja solo lo que está en la carta. */
@@ -51,8 +53,9 @@ export async function getMenu(businessId: string, { activeOnly = false } = {}) {
     ),
     query<MenuProduct & { price: string }>(
       `SELECT p.id, p.category_id AS "categoryId", p.name, p.description, p.price, p.station, p.is_available AS "isAvailable",
-              p.is_active AS "isActive", p.sort
+              p.is_active AS "isActive", p.sort, (extract(epoch FROM f.updated_at) * 1000)::bigint::float8 AS photo
          FROM menu_products p JOIN menu_categories c ON c.id = p.category_id
+         LEFT JOIN product_photos f ON f.product_id = p.id
         WHERE p.business_id = $1 ${activeOnly ? 'AND p.is_active AND c.is_active' : ''} ORDER BY p.sort, p.name`,
       [businessId],
     ),

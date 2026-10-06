@@ -6,6 +6,7 @@ import { sendOrderAction, setBillAction, voidItemAction } from '@/app/actions';
 import { elapsedMinutes, formatCop, formatElapsed, formatTime } from '@/lib/format';
 import { isNetworkError, retryDelay } from '@/lib/offline';
 import type { MenuCategory, MenuProduct, OrderItemView } from '@/lib/orders';
+import { productPhotoUrl } from '@/lib/product-photo-url';
 import { STATION_LABEL } from '@/lib/stations';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
@@ -180,7 +181,7 @@ export function PosScreen({
       {closed ? <Alert>Esta mesa ya se cerró.</Alert> : null}
 
       <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
-        <section className="space-y-4">
+        <section className="min-w-0 space-y-4">
           <input
             type="search"
             className={inputClass}
@@ -224,7 +225,10 @@ export function PosScreen({
                     onClick={() => add(p)}
                     className="flex h-full min-h-[92px] w-full flex-col justify-between rounded-2xl border border-white/[0.08] bg-card p-3.5 text-left transition hover:border-primary/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
                   >
-                    <span className="text-[15px] font-medium leading-snug">{p.name}</span>
+                    <span className="flex items-start gap-2.5">
+                      {p.photo ? <img src={productPhotoUrl(p.id, p.photo)!} alt="" className="size-11 shrink-0 rounded-xl object-cover" loading="lazy" /> : null}
+                      <span className="text-[15px] font-medium leading-snug">{p.name}</span>
+                    </span>
                     <span className="mt-2 flex items-center justify-between text-[13.5px]">
                       <span className="text-muted-foreground">{p.isAvailable ? formatCop(p.price) : 'Agotado'}</span>
                       <span className="text-[11.5px] text-muted-foreground/70">{STATION_LABEL[p.station]}</span>

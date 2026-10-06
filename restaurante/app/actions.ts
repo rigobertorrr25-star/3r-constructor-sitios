@@ -26,6 +26,7 @@ import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment,
 import { saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { removeBackground, saveBackground } from '@/lib/backgrounds';
+import { removeProductPhoto, saveProductPhoto } from '@/lib/product-photos';
 import { createAgentCode, enqueueClosing, printBill, printTest, removePrinter, reprint, savePrinter } from '@/lib/printing';
 import {
   AppError,
@@ -729,6 +730,21 @@ export async function saveBackgroundAction(_prev: FormState, formData: FormData)
 export async function removeBackgroundAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff('locations.manage');
   return run(formData, () => removeBackground(staff), ['/', '/app', '/app/sedes'], 'Listo. Se quitó el fondo.');
+}
+
+// ───────── fotos de los productos ─────────
+
+export async function saveProductPhotoAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('menu.edit');
+  const file = formData.get('foto');
+  if (!(file instanceof File) || !file.size) return { error: 'Escoge una foto.' };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  return run(formData, () => saveProductPhoto(staff, text(formData, 'productId'), bytes), ['/app/carta', '/app/mesa'], 'Listo. Ya se ve la foto en la carta.');
+}
+
+export async function removeProductPhotoAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('menu.edit');
+  return run(formData, () => removeProductPhoto(staff, text(formData, 'productId')), ['/app/carta', '/app/mesa'], 'Listo. Se quitó la foto.');
 }
 
 // ───────── impresión ─────────

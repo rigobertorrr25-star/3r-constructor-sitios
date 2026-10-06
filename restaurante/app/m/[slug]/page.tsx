@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { formatCop } from '@/lib/format';
+import { productPhotoUrl } from '@/lib/product-photo-url';
 import { publicMenu } from '@/lib/reservations';
 
 export const dynamic = 'force-dynamic';
@@ -40,15 +41,27 @@ export default async function PublicMenuPage({ params, searchParams }: { params:
             <section key={c.id} id={`c-${c.id}`} className="scroll-mt-16">
               <h2 className="font-display text-[22px] font-bold">{c.name}</h2>
               <ul className="mt-3 divide-y divide-white/[0.06]">
-                {products.map((p) => (
-                  <li key={p.id} className={`flex items-baseline justify-between gap-4 py-3 ${p.isAvailable ? '' : 'opacity-50'}`}>
-                    <span>
-                      <span className="text-[16px] font-medium">{p.name}</span>
-                      {p.description ? <span className="block text-[14px] text-muted-foreground">{p.description}</span> : null}
-                    </span>
-                    <span className="shrink-0 text-[15.5px]">{p.isAvailable ? formatCop(p.price) : 'Agotado'}</span>
-                  </li>
-                ))}
+                {products.map((p) => {
+                  const photo = productPhotoUrl(p.id, p.photo);
+                  return photo ? (
+                    <li key={p.id} className={`flex items-center gap-4 py-3 ${p.isAvailable ? '' : 'opacity-50'}`}>
+                      <span className="min-w-0 flex-1">
+                        <span className="text-[16px] font-medium">{p.name}</span>
+                        {p.description ? <span className="block text-[14px] text-muted-foreground">{p.description}</span> : null}
+                        <span className="mt-1 block text-[15.5px]">{p.isAvailable ? formatCop(p.price) : 'Agotado'}</span>
+                      </span>
+                      <img src={photo} alt={p.name} className="size-24 shrink-0 rounded-2xl object-cover sm:size-28" loading="lazy" />
+                    </li>
+                  ) : (
+                    <li key={p.id} className={`flex items-baseline justify-between gap-4 py-3 ${p.isAvailable ? '' : 'opacity-50'}`}>
+                      <span>
+                        <span className="text-[16px] font-medium">{p.name}</span>
+                        {p.description ? <span className="block text-[14px] text-muted-foreground">{p.description}</span> : null}
+                      </span>
+                      <span className="shrink-0 text-[15.5px]">{p.isAvailable ? formatCop(p.price) : 'Agotado'}</span>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           );

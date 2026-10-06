@@ -371,6 +371,17 @@ CREATE TABLE IF NOT EXISTS daily_briefs (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (business_id, scope, day)
 );
+-- Una versión de prueba (6 oct 2026, sistema en inglés, que no se usó) cambió esta tabla: un resumen por idioma.
+-- Si esa versión alcanzó a tocar la base, se deja como estaba para que el resumen del día siga guardándose.
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'daily_briefs' AND column_name = 'lang') THEN
+    DELETE FROM daily_briefs WHERE lang <> 'es';
+    ALTER TABLE daily_briefs DROP COLUMN lang;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'daily_briefs_business_id_scope_day_key') THEN
+    ALTER TABLE daily_briefs ADD CONSTRAINT daily_briefs_business_id_scope_day_key UNIQUE (business_id, scope, day);
+  END IF;
+END $$;
 
 -- ───────── módulo 13: servicios y citas (barberías, peluquerías, spas) ─────────
 
@@ -494,6 +505,15 @@ CREATE TABLE IF NOT EXISTS business_backgrounds (
   mime VARCHAR(20) NOT NULL,
   image BYTEA NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Foto de cada producto de la carta (la sube quien edita la carta); se ve en la carta QR y al tomar pedidos.
+CREATE TABLE IF NOT EXISTS product_photos (
+  product_id  UUID PRIMARY KEY REFERENCES menu_products(id) ON DELETE CASCADE,
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  mime        VARCHAR(20) NOT NULL,
+  image       BYTEA NOT NULL,
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Impresión de comandas: impresoras térmicas de red de cada sede y lo que se les manda. Un programa de 3R en un
