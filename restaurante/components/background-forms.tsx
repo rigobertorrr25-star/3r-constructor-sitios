@@ -7,9 +7,9 @@ import { Alert, dangerButton, primaryButton, quietButton } from './ui';
 const MAX_SIDE = 1920;
 
 /** Achica la foto en el teléfono antes de subirla (más rápida y liviana); siempre sale en JPG. */
-async function shrink(file: File): Promise<Blob> {
+export async function shrink(file: File, maxSide = MAX_SIDE): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(bitmap.width * scale);
   canvas.height = Math.round(bitmap.height * scale);

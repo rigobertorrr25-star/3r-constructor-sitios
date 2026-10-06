@@ -7,6 +7,8 @@ import { orOffline } from '@/lib/offline';
 import { formatCop } from '@/lib/format';
 import type { MenuCategory, MenuProduct } from '@/lib/orders';
 import { STATION_LABEL } from '@/lib/stations';
+import { productPhotoUrl } from '@/lib/product-photo-url';
+import { ProductPhotoForm } from './product-photo-form';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Alert, CheckField, Empty, Field, Select, card, quietButton } from './ui';
@@ -146,6 +148,7 @@ function ProductRow({
 }) {
   const [editing, setEditing] = useState(false);
   const [pending, start] = useTransition();
+  const photo = productPhotoUrl(product.id, product.photo);
   const [error, setError] = useState<string | null>(null);
   const toggle = () =>
     start(async () => {
@@ -156,17 +159,20 @@ function ProductRow({
   return (
     <li className="py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className={product.isActive ? '' : 'opacity-60'}>
-          <p className="text-[15.5px] font-medium">
-            {product.name}
-            {!product.isAvailable ? <span className="ml-2 rounded-full bg-warning/15 px-2 py-0.5 text-[12px] text-warning">Agotado</span> : null}
-            {!product.isActive ? <span className="ml-2 text-[12.5px] text-muted-foreground">Fuera de la carta</span> : null}
-          </p>
-          <p className="text-[13.5px] text-muted-foreground">
-            {formatCop(product.price)} · {STATION_LABEL[product.station]}
-            {canRecipe ? (cost !== undefined ? ` · costo ${formatCop(cost)} (margen ${product.price ? Math.round(((product.price - cost) / product.price) * 100) : 0} %)` : ' · sin receta') : ''}
-            {product.description ? ` · ${product.description}` : ''}
-          </p>
+        <div className={`flex min-w-0 items-center gap-3 ${product.isActive ? '' : 'opacity-60'}`}>
+          {photo ? <img src={photo} alt="" className="size-12 shrink-0 rounded-xl object-cover" loading="lazy" /> : null}
+          <div className="min-w-0">
+            <p className="text-[15.5px] font-medium">
+              {product.name}
+              {!product.isAvailable ? <span className="ml-2 rounded-full bg-warning/15 px-2 py-0.5 text-[12px] text-warning">Agotado</span> : null}
+              {!product.isActive ? <span className="ml-2 text-[12.5px] text-muted-foreground">Fuera de la carta</span> : null}
+            </p>
+            <p className="text-[13.5px] text-muted-foreground">
+              {formatCop(product.price)} · {STATION_LABEL[product.station]}
+              {canRecipe ? (cost !== undefined ? ` · costo ${formatCop(cost)} (margen ${product.price ? Math.round(((product.price - cost) / product.price) * 100) : 0} %)` : ' · sin receta') : ''}
+              {product.description ? ` · ${product.description}` : ''}
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           {product.isActive ? (
@@ -187,7 +193,14 @@ function ProductRow({
         </div>
       </div>
       {error ? <Alert>{error}</Alert> : null}
-      {editing ? <ProductForm categories={categories} categoryId={product.categoryId} product={product} onDone={() => setEditing(false)} /> : null}
+      {editing ? (
+        <>
+          <ProductForm categories={categories} categoryId={product.categoryId} product={product} onDone={() => setEditing(false)} />
+          <div className="mt-3 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
+            <ProductPhotoForm productId={product.id} current={photo} />
+          </div>
+        </>
+      ) : null}
     </li>
   );
 }

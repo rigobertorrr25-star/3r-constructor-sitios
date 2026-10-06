@@ -496,6 +496,15 @@ CREATE TABLE IF NOT EXISTS business_backgrounds (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Foto de cada producto de la carta (la sube quien edita la carta); se ve en la carta QR y al tomar pedidos.
+CREATE TABLE IF NOT EXISTS product_photos (
+  product_id  UUID PRIMARY KEY REFERENCES menu_products(id) ON DELETE CASCADE,
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  mime        VARCHAR(20) NOT NULL,
+  image       BYTEA NOT NULL,
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Impresión de comandas: impresoras térmicas de red de cada sede y lo que se les manda. Un programa de 3R en un
 -- computador del local pide los trabajos con el código de la sede y los manda a cada impresora (puerto 9100).
 CREATE TABLE IF NOT EXISTS printers (

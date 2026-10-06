@@ -41,6 +41,10 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   JPG; el servidor solo acepta JPG, PNG o WebP de verdad y hasta 1,5 MB). Se ve en el ingreso al escoger ese restaurante
   y, más oscura, detrás de la app. Se guarda en la base (`business_backgrounds`) y se sirve en `/fondo/{negocio}?v=…`
   (la versión cambia al subir otra, así el navegador la guarda en caché sin mostrar la vieja). Sin foto, el fondo de 3R.
+- **Fotos de los productos:** en **Carta → Editar** (dueño y administrador) cada producto puede llevar una foto (se
+  achica en el teléfono a 900 px en JPG; el servidor acepta solo JPG, PNG o WebP de verdad y hasta 800 KB). Sale en la
+  carta QR de los clientes (al lado del nombre y el precio) y como miniatura en la pantalla de pedido del mesero. Se
+  guarda en la base (`product_photos`) y se sirve en `/foto/{producto}?v=…`. Cambiarla o quitarla queda en la auditoría.
 - **Roles** (fijos, revisados siempre en el servidor):
   - Dueño: todo, incluidas las sedes. Ve la auditoría de todas las sedes.
   - Administrador: plano, equipo (menos dueños y administradores) y auditoría de su sede.
