@@ -5,7 +5,9 @@ import { ROLE_LABEL, can, ownStation, type Permission } from '@/lib/permissions'
 import type { Station } from '@/lib/stations';
 import { AppNav } from '@/components/app-nav';
 import { ConnectionBanner } from '@/components/connection-banner';
+import Link from 'next/link';
 import { Lion, quietButton } from '@/components/ui';
+import { hasPrinter, stuckJobs } from '@/lib/printing';
 import { BackgroundLayer } from '@/components/background-forms';
 import { backgroundUrl } from '@/lib/background-url';
 
@@ -25,6 +27,7 @@ const LINKS: { href: string; label: string; permission: Permission; station?: St
   { href: '/app/equipo', label: 'Equipo', permission: 'staff.manage' },
   { href: '/app/sedes', label: 'Sedes', permission: 'locations.manage' },
   { href: '/app/qr', label: 'QR y enlaces', permission: 'locations.manage' },
+  { href: '/app/impresoras', label: 'Impresoras', permission: 'printers.manage' },
   { href: '/app/auditoria', label: 'Auditoría', permission: 'audit.view' },
 ];
 
@@ -33,7 +36,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const own = ownStation(staff.role);
   const visible = LINKS.filter((l) => can(staff.role, l.permission) && (!own || !l.station || l.station === own));
   const counts = visible.some((l) => l.station) ? await pendingCounts(staff) : {};
-  const links = visible.map(({ href, label, station }) => ({ href, label, badge: station ? (counts[station] ?? 0) : 0 }));
+  // Si la estación imprime sus comandas, nadie las marca en pantalla: el contador no diría nada útil.
+  const printed = { kitchen: await hasPrinter(staff, 'kitchen'), bar: await hasPrinter(staff, 'bar') };
+  const links = visible.map(({ href, label, station }) => ({ href, label, badge: station && !printed[station] ? (counts[station] ?? 0) : 0 }));
+  // Comandas que no han salido en la impresora: casi siempre es el computador de impresión apagado.
+  const stuck = await stuckJobs(staff);
   return (
     <div className="relative isolate min-h-screen" style={{ backgroundImage: 'var(--gradient-hero)' }}>
       <BackgroundLayer url={backgroundUrl(staff.businessSlug, staff.background)} strength="strong" />
@@ -55,6 +62,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
         <AppNav links={links} />
       </header>
+      {stuck ? (
+        <div role="alert" className="border-b border-destructive/30 bg-destructive/15 px-4 py-2.5 text-center text-[14px] text-[#ffd0d0]">
+          {stuck === 1 ? 'Hay 1 papel' : `Hay ${stuck} papeles`} sin imprimir: revisa que el computador de impresión esté prendido y las impresoras con papel.
+          {can(staff.role, 'printers.manage') ? (
+            <>
+              {' '}
+              <Link href="/app/impresoras" className="underline">
+                Ver impresoras
+              </Link>
+            </>
+          ) : null}
+        </div>
+      ) : null}
       <main className="mx-auto max-w-[1280px] px-4 py-6 pb-16 sm:px-6">{children}</main>
       <ConnectionBanner />
     </div>

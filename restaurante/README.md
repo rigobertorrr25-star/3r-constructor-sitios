@@ -96,6 +96,29 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 - Las comandas de una mesa ya cobrada y cerrada se siguen viendo hasta 3 horas después del cierre (se pudo cobrar antes
   de servir); después salen de las pantallas y del contador, para que no se acumulen comandas que nadie marcó.
 
+## Impresión de comandas (impresoras térmicas de red)
+
+- Cada sede configura sus impresoras en **Impresoras** (`/app/impresoras`, dueño y administrador): nombre, IP fija,
+  puerto (casi siempre 9100), papel (80 mm o 58 mm), copias y qué imprime: **comandas de cocina**, **comandas de barra**
+  y/o **caja** (precuentas y cierre de caja). Botón «Imprimir prueba» (tildes y eñes incluidas).
+- **Qué se imprime solo:** al enviar un pedido, una comanda por estación (mesa, zona, ronda, mesero, hora, cantidades en
+  letra grande y la nota de cada plato); al anular algo ya enviado, un papel de «ANULADO» para su estación (si ya se
+  había entregado, no); al cerrar la caja, el resumen del turno con firma. La **precuenta** se imprime con el botón
+  «Imprimir precuenta» (en la mesa y en la caja); si la sede no tiene impresora de caja, sigue abriendo la precuenta para
+  imprimir desde el navegador.
+- **Cómo llega a la impresora:** la app está en internet y no puede hablarle directo a una impresora del local. Cada
+  trabajo queda en una cola (`print_jobs`, con los bytes ESC/POS y una vista previa en texto) y un **programa de 3R** que
+  corre en un computador del local (`public/impresion/agente-3r.mjs`, Node 18+, sin dependencias; en Windows se abre con
+  `iniciar-windows.bat`) los pide cada 2 segundos a `GET /api/impresion/trabajos` con el **código de la sede**
+  (`Authorization: Bearer rc_…`; en la base solo queda su huella SHA-256; se crea o cambia en Impresoras) y los manda a
+  cada impresora por TCP. Avisa con `POST /api/impresion/trabajos/{id}` si salió o no.
+- Si no sale (impresora apagada, sin papel), se reintenta hasta 5 veces y queda «No salió» con el motivo. Lo que no se
+  alcanzó a imprimir en 6 horas (computador apagado) se descarta para no sacar comandas viejas. Todo se puede reimprimir
+  desde Impresoras («Ver el papel» muestra cómo salió). Si hay papeles sin salir hace más de 30 segundos, toda la app
+  muestra un aviso rojo («revisa que el computador de impresión esté prendido»).
+- Las pantallas de Cocina y Barra siguen funcionando para quien las quiera; si la estación tiene impresora, el menú ya no
+  muestra el contador de comandas pendientes en pantalla.
+
 ## Cómo funciona (módulo 04: caja y pagos)
 
 - **Caja** (`/app/caja`, dueño, administrador y cajero): se abre con la **base** en efectivo; sin caja abierta no se

@@ -5,6 +5,7 @@ import { formatCop } from '@/lib/format';
 import { invoiceForSession } from '@/lib/invoices';
 import { InvoiceCustomer } from '@/components/invoice-forms';
 import { can } from '@/lib/permissions';
+import { hasPrinter } from '@/lib/printing';
 import { CheckoutScreen } from '@/components/checkout-screen';
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export default async function CheckoutPage({ params }: { params: Promise<{ id: string }> }) {
   const staff = await requireStaff('cash.operate');
   const { id } = await params;
-  const [checkout, shift, invoice] = await Promise.all([getCheckout(staff, id), getOpenShift(staff), invoiceForSession(staff, id)]);
+  const [checkout, shift, invoice, printBill] = await Promise.all([getCheckout(staff, id), getOpenShift(staff), invoiceForSession(staff, id), hasPrinter(staff, 'cashier')]);
   if (!checkout) notFound();
   return (
     <>
@@ -34,6 +35,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
       canReverse={can(staff.role, 'payments.reverse')}
       canUnlimited={can(staff.role, 'discounts.unlimited')}
       timeZone={staff.timezone}
+      printBill={printBill}
     />
     </>
   );

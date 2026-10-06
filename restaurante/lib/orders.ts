@@ -3,6 +3,7 @@
 import { query, transaction, type Db } from './db';
 import { consumeForRound, returnForVoid } from './inventory';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
+import { enqueueRound, enqueueVoid } from './printing';
 
 import { STATIONS, isStation, type Station } from './stations';
 
@@ -262,6 +263,8 @@ export async function sendOrder(actor: Actor, sessionId: string, lines: CartLine
       }
       // Cada venta descuenta del inventario lo que diga la receta de cada producto.
       await consumeForRound(db, actor, round.id);
+      // Comanda impresa para cada estación que tenga impresora (si la sede no tiene, se ve solo en pantalla).
+      await enqueueRound(db, actor, round.id);
       // Pedir más con la cuenta pedida la vuelve a dejar abierta.
       if (session.status === 'bill') await db.query(`UPDATE table_sessions SET status = 'open', bill_at = NULL WHERE id = $1`, [sessionId]);
       const count = clean.reduce((n, l) => n + l.quantity, 0);
@@ -307,6 +310,8 @@ export async function voidItem(actor: Actor, itemId: string, reason: string) {
     await db.query(`UPDATE order_items SET voided_at = now(), voided_by = $2, void_reason = $3 WHERE id = $1`, [itemId, actor.id, why]);
     // Si la cocina no lo había empezado, los insumos vuelven al inventario; si ya lo preparó, se quedan gastados.
     if (item.ticketStatus === 'sent') await returnForVoid(db, actor, itemId);
+    // La estación recibe un papel de «ANULADO» para no prepararlo (o dejarlo de lado).
+    await enqueueVoid(db, actor, itemId, why);
     const amount = Number(item.unitPrice) * item.quantity;
     await audit(db, actor, {
       action: 'order.void',

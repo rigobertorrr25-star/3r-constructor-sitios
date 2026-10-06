@@ -495,6 +495,46 @@ CREATE TABLE IF NOT EXISTS business_backgrounds (
   image BYTEA NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Impresión de comandas: impresoras térmicas de red de cada sede y lo que se les manda. Un programa de 3R en un
+-- computador del local pide los trabajos con el código de la sede y los manda a cada impresora (puerto 9100).
+CREATE TABLE IF NOT EXISTS printers (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id    UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id    UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  name           VARCHAR(60) NOT NULL,
+  host           VARCHAR(100) NOT NULL,
+  port           INT NOT NULL DEFAULT 9100 CHECK (port BETWEEN 1 AND 65535),
+  width          INT NOT NULL DEFAULT 48 CHECK (width IN (32, 42, 48)),
+  prints_kitchen BOOLEAN NOT NULL DEFAULT FALSE,
+  prints_bar     BOOLEAN NOT NULL DEFAULT FALSE,
+  prints_cashier BOOLEAN NOT NULL DEFAULT FALSE,
+  copies         INT NOT NULL DEFAULT 1 CHECK (copies BETWEEN 1 AND 3),
+  is_active      BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS printers_location ON printers (location_id);
+CREATE TABLE IF NOT EXISTS print_jobs (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  printer_id  UUID NOT NULL REFERENCES printers(id) ON DELETE CASCADE,
+  kind        VARCHAR(12) NOT NULL CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'prueba')),
+  title       VARCHAR(160) NOT NULL,
+  data        BYTEA NOT NULL,
+  preview     TEXT NOT NULL,
+  status      VARCHAR(10) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'printing', 'done', 'failed')),
+  attempts    INT NOT NULL DEFAULT 0,
+  error       VARCHAR(300),
+  created_by  UUID REFERENCES staff(id),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  claimed_at  TIMESTAMPTZ,
+  printed_at  TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS print_jobs_queue ON print_jobs (location_id, status, created_at);
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS print_token_hash VARCHAR(64);
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS print_agent_seen_at TIMESTAMPTZ;
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_print_token ON locations (print_token_hash) WHERE print_token_hash IS NOT NULL;
 `;
 
 // En desarrollo, Next recarga los módulos: el pool se guarda en globalThis para no abrir conexiones de más.

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { requireStaff } from '@/lib/auth';
 import { getMenu, getSessionOrder } from '@/lib/orders';
 import { can } from '@/lib/permissions';
+import { hasPrinter } from '@/lib/printing';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { PosScreen } from '@/components/pos-screen';
 
@@ -10,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const staff = await requireStaff('orders.take');
   const { id } = await params;
-  const [order, menu] = await Promise.all([getSessionOrder(staff, id), getMenu(staff.businessId, { activeOnly: true })]);
+  const [order, menu, printBill] = await Promise.all([getSessionOrder(staff, id), getMenu(staff.businessId, { activeOnly: true }), hasPrinter(staff, 'cashier')]);
   if (!order) notFound();
   return (
     <>
@@ -28,6 +29,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         canVoid={can(staff.role, 'orders.void')}
         canCharge={can(staff.role, 'cash.operate')}
         timeZone={staff.timezone}
+        printBill={printBill}
       />
     </>
   );

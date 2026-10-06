@@ -9,6 +9,7 @@ import { isNetworkError, retryDelay } from '@/lib/offline';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Alert, Field, card, inputClass, primaryButton, quietButton } from './ui';
+import { PrintBillButton } from './printer-forms';
 
 type View = Omit<Checkout, 'session' | 'payments'> & {
   session: Omit<Checkout['session'], 'openedAt' | 'closedAt'> & { openedAt: string; closedAt: string | null };
@@ -23,7 +24,7 @@ const toInt = (value: string) => {
 };
 const tipFor = (amount: number, percent: number) => Math.round((amount * percent) / 100 / 100) * 100;
 
-export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, timeZone }: { checkout: View; shiftOpen: boolean; canReverse: boolean; canUnlimited: boolean; timeZone: string }) {
+export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, timeZone, printBill = false }: { checkout: View; shiftOpen: boolean; canReverse: boolean; canUnlimited: boolean; timeZone: string; printBill?: boolean }) {
   const c = checkout;
   const closed = c.session.status === 'closed';
   const [parts, setParts] = useState(1);
@@ -117,9 +118,13 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
             {closed ? ' · cerrada' : ''}
           </p>
         </div>
-        <Link href={`/cuenta/${c.session.id}`} target="_blank" className={quietButton}>
-          Imprimir precuenta
-        </Link>
+        {printBill ? (
+          <PrintBillButton sessionId={c.session.id} className="flex" />
+        ) : (
+          <Link href={`/cuenta/${c.session.id}`} target="_blank" className={quietButton}>
+            Imprimir precuenta
+          </Link>
+        )}
       </div>
       {done ? <Alert tone="ok">{done}</Alert> : null}
       {!shiftOpen && !closed ? (
