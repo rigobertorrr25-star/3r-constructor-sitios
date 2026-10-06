@@ -28,12 +28,15 @@ const duplicate = (error: unknown) => (error as { code?: string }).code === '235
 
 // ───────── carta ─────────
 
-export type MenuCategory = { id: string; name: string; station: Station; sort: number; isActive: boolean };
+export type MenuCategory = { id: string; name: string; nameEn: string | null; station: Station; sort: number; isActive: boolean };
 export type MenuProduct = {
   id: string;
   categoryId: string;
   name: string;
   description: string | null;
+  /** Nombre y descripción en inglés (opcionales). */
+  nameEn: string | null;
+  descriptionEn: string | null;
   price: number;
   station: Station;
   isAvailable: boolean;
@@ -47,12 +50,12 @@ export type MenuProduct = {
 export async function getMenu(businessId: string, { activeOnly = false } = {}) {
   const [categories, products] = await Promise.all([
     query<MenuCategory>(
-      `SELECT id, name, station, sort, is_active AS "isActive" FROM menu_categories
+      `SELECT id, name, name_en AS "nameEn", station, sort, is_active AS "isActive" FROM menu_categories
         WHERE business_id = $1 ${activeOnly ? 'AND is_active' : ''} ORDER BY sort, name`,
       [businessId],
     ),
     query<MenuProduct & { price: string }>(
-      `SELECT p.id, p.category_id AS "categoryId", p.name, p.description, p.price, p.station, p.is_available AS "isAvailable",
+      `SELECT p.id, p.category_id AS "categoryId", p.name, p.description, p.name_en AS "nameEn", p.description_en AS "descriptionEn", p.price, p.station, p.is_available AS "isAvailable",
               p.is_active AS "isActive", p.sort, (extract(epoch FROM f.updated_at) * 1000)::bigint::float8 AS photo
          FROM menu_products p JOIN menu_categories c ON c.id = p.category_id
          LEFT JOIN product_photos f ON f.product_id = p.id
@@ -63,9 +66,13 @@ export async function getMenu(businessId: string, { activeOnly = false } = {}) {
   return { categories, products: products.map((p) => ({ ...p, price: Number(p.price) })) };
 }
 
-export async function saveCategory(actor: Actor, input: { id?: string | null; name: string; station: string; sort?: number; isActive?: boolean }) {
+export async function saveCategory(
+  actor: Actor,
+  input: { id?: string | null; name: string; nameEn?: string; station: string; sort?: number; isActive?: boolean },
+) {
   requirePermission(actor, 'menu.edit');
   const name = requireText(input.name, 'Nombre de la categoría', 2, 60);
+  const nameEn = input.nameEn?.trim() ? requireText(input.nameEn, 'Nombre en inglés', 2, 60) : null;
   if (!isStation(input.station)) throw new AppError('INVALID', 'Elige si va a cocina o a barra.');
   const sort = Number.isInteger(input.sort) ? input.sort! : 0;
   return transaction(async (db) => {
@@ -73,18 +80,18 @@ export async function saveCategory(actor: Actor, input: { id?: string | null; na
       if (input.id) {
         if (!isUuid(input.id)) throw new AppError('NOT_FOUND', 'No encontramos esa categoría.');
         const res = await db.query(
-          `UPDATE menu_categories SET name = $3, station = $4, sort = $5, is_active = $6 WHERE id = $1 AND business_id = $2`,
-          [input.id, actor.businessId, name, input.station, sort, input.isActive ?? true],
+          `UPDATE menu_categories SET name = $3, station = $4, sort = $5, is_active = $6, name_en = $7 WHERE id = $1 AND business_id = $2`,
+          [input.id, actor.businessId, name, input.station, sort, input.isActive ?? true, nameEn],
         );
         if (!res.rowCount) throw new AppError('NOT_FOUND', 'No encontramos esa categoría.');
         await audit(db, actor, { action: 'menu.category', entity: 'menu_category', entityId: input.id, summary: `Cambió la categoría ${name}` });
         return input.id;
       }
       const res = await db.query<{ id: string }>(
-        `INSERT INTO menu_categories (business_id, name, station, sort)
-         VALUES ($1, $2, $3, COALESCE(NULLIF($4, 0), (SELECT COALESCE(max(sort), 0) + 10 FROM menu_categories WHERE business_id = $1)))
+        `INSERT INTO menu_categories (business_id, name, station, sort, name_en)
+         VALUES ($1, $2, $3, COALESCE(NULLIF($4, 0), (SELECT COALESCE(max(sort), 0) + 10 FROM menu_categories WHERE business_id = $1)), $5)
          RETURNING id`,
-        [actor.businessId, name, input.station, sort],
+        [actor.businessId, name, input.station, sort, nameEn],
       );
       await audit(db, actor, { action: 'menu.category', entity: 'menu_category', entityId: res.rows[0].id, summary: `Creó la categoría ${name}` });
       return res.rows[0].id;
@@ -97,11 +104,23 @@ export async function saveCategory(actor: Actor, input: { id?: string | null; na
 
 export async function saveProduct(
   actor: Actor,
-  input: { id?: string | null; categoryId: string; name: string; description?: string; price: string | number; station?: string; isActive?: boolean },
+  input: {
+    id?: string | null;
+    categoryId: string;
+    name: string;
+    description?: string;
+    nameEn?: string;
+    descriptionEn?: string;
+    price: string | number;
+    station?: string;
+    isActive?: boolean;
+  },
 ) {
   requirePermission(actor, 'menu.edit');
   const name = requireText(input.name, 'Nombre del producto', 2, 80);
   const description = input.description?.trim() ? requireText(input.description, 'Descripción', 2, 200) : null;
+  const nameEn = input.nameEn?.trim() ? requireText(input.nameEn, 'Nombre en inglés', 2, 80) : null;
+  const descriptionEn = input.descriptionEn?.trim() ? requireText(input.descriptionEn, 'Descripción en inglés', 2, 200) : null;
   const price = parsePrice(input.price);
   if (!isUuid(input.categoryId)) throw new AppError('INVALID', 'Elige una categoría.');
   return transaction(async (db) => {
@@ -124,8 +143,9 @@ export async function saveProduct(
       ).rows[0];
       if (!before) throw new AppError('NOT_FOUND', 'No encontramos ese producto.');
       await db.query(
-        `UPDATE menu_products SET category_id = $3, name = $4, description = $5, price = $6, station = $7, is_active = $8 WHERE id = $1 AND business_id = $2`,
-        [input.id, actor.businessId, input.categoryId, name, description, price, station, input.isActive ?? true],
+        `UPDATE menu_products SET category_id = $3, name = $4, description = $5, price = $6, station = $7, is_active = $8, name_en = $9, description_en = $10
+          WHERE id = $1 AND business_id = $2`,
+        [input.id, actor.businessId, input.categoryId, name, description, price, station, input.isActive ?? true, nameEn, descriptionEn],
       );
       const oldPrice = Number(before.price);
       // Los cambios de precio quedan siempre en la auditoría.
@@ -142,9 +162,9 @@ export async function saveProduct(
       return input.id;
     }
     const res = await db.query<{ id: string }>(
-      `INSERT INTO menu_products (business_id, category_id, name, description, price, station, sort)
-       VALUES ($1, $2, $3, $4, $5, $6, (SELECT COALESCE(max(sort), 0) + 10 FROM menu_products WHERE category_id = $2)) RETURNING id`,
-      [actor.businessId, input.categoryId, name, description, price, station],
+      `INSERT INTO menu_products (business_id, category_id, name, description, price, station, sort, name_en, description_en)
+       VALUES ($1, $2, $3, $4, $5, $6, (SELECT COALESCE(max(sort), 0) + 10 FROM menu_products WHERE category_id = $2), $7, $8) RETURNING id`,
+      [actor.businessId, input.categoryId, name, description, price, station, nameEn, descriptionEn],
     );
     await audit(db, actor, {
       action: 'menu.product',

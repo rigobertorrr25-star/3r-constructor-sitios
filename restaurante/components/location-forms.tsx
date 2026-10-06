@@ -6,16 +6,18 @@ import type { Location } from '@/lib/store';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { CheckField, Field, card, quietButton } from './ui';
+import { useT } from './i18n';
 
 export function CreateLocationForm() {
+  const t = useT();
   return (
     <ActionForm action={createLocationAction} resetOnOk className="grid gap-4 md:grid-cols-2">
       {(state) => (
         <>
-          <Field label="Nombre" name="name" required maxLength={80} defaultValue={state?.values?.name} />
-          <Field label="Dirección (opcional)" name="address" maxLength={160} defaultValue={state?.values?.address} />
+          <Field label={t('Nombre')} name="name" required maxLength={80} defaultValue={state?.values?.name} />
+          <Field label={t('Dirección (opcional)')} name="address" maxLength={160} defaultValue={state?.values?.address} />
           <div className="md:col-span-2">
-            <SubmitButton pendingText="Creando…">Crear sede</SubmitButton>
+            <SubmitButton pendingText={t('Creando…')}>{t('Crear sede')}</SubmitButton>
           </div>
         </>
       )}
@@ -25,20 +27,21 @@ export function CreateLocationForm() {
 
 export function LocationRow({ location, current }: { location: Location; current: boolean }) {
   const [editing, setEditing] = useState(false);
+  const t = useT();
   return (
     <li className={`${card} ${location.isActive ? '' : 'opacity-60'}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-display text-[17px] font-semibold">
-            {location.name} {current ? <span className="text-[13px] font-normal text-muted-foreground">(estás aquí)</span> : null}
+            {location.name} {current ? <span className="text-[13px] font-normal text-muted-foreground">{t('(estás aquí)')}</span> : null}
           </p>
           <p className="text-[14px] text-muted-foreground">
-            {location.address ?? 'Sin dirección'}
-            {location.isActive ? '' : ' · Desactivada'}
+            {location.address ?? t('Sin dirección')}
+            {location.isActive ? '' : ` · ${t('Desactivada')}`}
           </p>
         </div>
         <button type="button" className={quietButton} onClick={() => setEditing(!editing)}>
-          Editar
+          {t('Editar')}
         </button>
       </div>
       {editing ? (
@@ -46,11 +49,11 @@ export function LocationRow({ location, current }: { location: Location; current
           {() => (
             <>
               <input type="hidden" name="locationId" value={location.id} />
-              <Field label="Nombre" name="name" required defaultValue={location.name} />
-              <Field label="Dirección" name="address" defaultValue={location.address ?? ''} />
-              {current ? <input type="hidden" name="isActive" value="on" /> : <CheckField name="isActive" label="Activa" defaultChecked={location.isActive} />}
+              <Field label={t('Nombre')} name="name" required defaultValue={location.name} />
+              <Field label={t('Dirección')} name="address" defaultValue={location.address ?? ''} />
+              {current ? <input type="hidden" name="isActive" value="on" /> : <CheckField name="isActive" label={t('Activa')} defaultChecked={location.isActive} />}
               <div className="md:col-span-2">
-                <SubmitButton pendingText="Guardando…">Guardar</SubmitButton>
+                <SubmitButton pendingText={t('Guardando…')}>{t('Guardar')}</SubmitButton>
               </div>
             </>
           )}

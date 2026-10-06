@@ -10,12 +10,15 @@ export function formatElapsed(minutes: number) {
   return `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')}`;
 }
 
-export function formatTime(date: string | Date, timeZone = 'America/Bogota') {
-  return new Intl.DateTimeFormat('es-CO', { timeZone, hour: 'numeric', minute: '2-digit' }).format(new Date(date));
+// Fechas y horas en el idioma de quien mira (los pesos se escriben igual en los dos: $12.500).
+const LOCALE = { es: 'es-CO', en: 'en-US' } as const;
+
+export function formatTime(date: string | Date, timeZone = 'America/Bogota', lang: 'es' | 'en' = 'es') {
+  return new Intl.DateTimeFormat(LOCALE[lang], { timeZone, hour: 'numeric', minute: '2-digit' }).format(new Date(date));
 }
 
-export function formatDateTime(date: string | Date, timeZone = 'America/Bogota') {
-  return new Intl.DateTimeFormat('es-CO', { timeZone, day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(date));
+export function formatDateTime(date: string | Date, timeZone = 'America/Bogota', lang: 'es' | 'en' = 'es') {
+  return new Intl.DateTimeFormat(LOCALE[lang], { timeZone, day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(date));
 }
 
 /** Pesos enteros: 12500 → "$12.500". */

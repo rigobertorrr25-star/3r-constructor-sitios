@@ -13,6 +13,7 @@ import { SubmitButton } from './submit-button';
 import { useNow } from './table-board';
 import { Alert, Empty, Field, card, inputClass, primaryButton, quietButton } from './ui';
 import { PrintBillButton } from './printer-forms';
+import { useLang, useT, useTr } from './i18n';
 
 type Item = Omit<OrderItemView, 'voidedAt'> & { voidedAt: string | null };
 type Round = { id: string; number: number; sentAt: string; sentBy: string; items: Item[] };
@@ -87,6 +88,9 @@ export function PosScreen({
   printBill?: boolean;
 }) {
   const now = useNow();
+  const t = useT();
+  const lang = useLang();
+  const trx = useTr();
   const { lines, setLines, clientKey, pending: queued, setPending: setQueued, reset } = useCart(session.id);
   const attempt = useRef(0);
   const [category, setCategory] = useState<string>('');
@@ -98,7 +102,7 @@ export function PosScreen({
 
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (q) return products.filter((p) => p.name.toLowerCase().includes(q));
+    if (q) return products.filter((p) => p.name.toLowerCase().includes(q) || !!p.nameEn?.toLowerCase().includes(q));
     const current = category || categories[0]?.id;
     return products.filter((p) => p.categoryId === current);
   }, [products, categories, category, search]);
@@ -135,7 +139,7 @@ export function PosScreen({
     } catch (e) {
       // Sin conexión: queda pendiente en el aparato y se reintenta solo con el mismo identificador.
       if (isNetworkError(e)) setQueued(true);
-      else setError('Algo salió mal. Intenta otra vez.');
+      else setError(t('Algo salió mal. Intenta otra vez.'));
     }
   };
   const send = () => start(submit);
@@ -161,37 +165,37 @@ export function PosScreen({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link href="/app" className="text-[14px] text-muted-foreground hover:text-foreground">
-            ← Mesas
+            ← {t('Mesas')}
           </Link>
           <h1 className="mt-1 font-display text-[26px] font-bold">
-            Mesa {session.tableNumber} <span className="text-[16px] font-normal text-muted-foreground">· {session.zone}</span>
+            {t('Mesa {n}', { n: session.tableNumber })} <span className="text-[16px] font-normal text-muted-foreground">· {session.zone}</span>
           </h1>
           <p className="text-[14px] text-muted-foreground">
-            {session.guests} {session.guests === 1 ? 'persona' : 'personas'} · {formatElapsed(elapsedMinutes(session.openedAt, now))} · abrió {session.openedBy} a las{' '}
-            {formatTime(session.openedAt, timeZone)}
-            {session.status === 'bill' ? ' · pidió la cuenta' : ''}
+            {session.guests === 1 ? t('1 persona') : t('{n} personas', { n: session.guests })} · {formatElapsed(elapsedMinutes(session.openedAt, now))} ·{' '}
+            {t('abrió {name} a las {time}', { name: session.openedBy, time: formatTime(session.openedAt, timeZone, lang) })}
+            {session.status === 'bill' ? ` · ${t('pidió la cuenta')}` : ''}
           </p>
         </div>
         <p className="text-right">
-          <span className="block text-[13px] text-muted-foreground">Cuenta</span>
+          <span className="block text-[13px] text-muted-foreground">{t('Cuenta')}</span>
           <span className="font-display text-[28px] font-bold">{formatCop(total)}</span>
         </p>
       </div>
 
-      {closed ? <Alert>Esta mesa ya se cerró.</Alert> : null}
+      {closed ? <Alert>{t('Esta mesa ya se cerró.')}</Alert> : null}
 
       <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
         <section className="space-y-4">
           <input
             type="search"
             className={inputClass}
-            placeholder="Buscar en la carta…"
+            placeholder={t('Buscar en la carta…')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            aria-label="Buscar en la carta"
+            aria-label={t('Buscar en la carta')}
           />
           {!search ? (
-            <div className="flex gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label="Categorías">
+            <div className="flex gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label={t('Categorías')}>
               {categories.map((c) => {
                 const active = (category || categories[0]?.id) === c.id;
                 return (
@@ -202,7 +206,7 @@ export function PosScreen({
                     onClick={() => setCategory(c.id)}
                     className={`whitespace-nowrap rounded-full px-4 py-2 text-[14px] transition ${active ? 'bg-primary text-primary-foreground' : 'border border-white/[0.1] text-muted-foreground hover:text-foreground'}`}
                   >
-                    {c.name}
+                    {(lang === 'en' && c.nameEn) || c.name}
                   </button>
                 );
               })}
@@ -210,9 +214,9 @@ export function PosScreen({
           ) : null}
           {categories.length === 0 ? (
             <Empty>
-              La carta está vacía. {' '}
+              {t('La carta está vacía.')}{' '}
               <Link href="/app/carta" className="text-primary hover:underline">
-                Ir a la carta
+                {t('Ir a la carta')}
               </Link>
             </Empty>
           ) : (
@@ -227,11 +231,11 @@ export function PosScreen({
                   >
                     <span className="flex items-start gap-2.5">
                       {p.photo ? <img src={productPhotoUrl(p.id, p.photo)!} alt="" className="size-11 shrink-0 rounded-xl object-cover" loading="lazy" /> : null}
-                      <span className="text-[15px] font-medium leading-snug">{p.name}</span>
+                      <span className="text-[15px] font-medium leading-snug">{(lang === 'en' && p.nameEn) || p.name}</span>
                     </span>
                     <span className="mt-2 flex items-center justify-between text-[13.5px]">
-                      <span className="text-muted-foreground">{p.isAvailable ? formatCop(p.price) : 'Agotado'}</span>
-                      <span className="text-[11.5px] text-muted-foreground/70">{STATION_LABEL[p.station]}</span>
+                      <span className="text-muted-foreground">{p.isAvailable ? formatCop(p.price) : t('Agotado')}</span>
+                      <span className="text-[11.5px] text-muted-foreground/70">{t(STATION_LABEL[p.station])}</span>
                     </span>
                   </button>
                 </li>
@@ -242,9 +246,9 @@ export function PosScreen({
 
         <aside className="space-y-4 lg:sticky lg:top-[132px] lg:self-start">
           <div className={card}>
-            <h2 className="font-display text-[18px] font-bold">Pedido nuevo</h2>
+            <h2 className="font-display text-[18px] font-bold">{t('Pedido nuevo')}</h2>
             {lines.length === 0 ? (
-              <p className="mt-3 text-[14px] text-muted-foreground">{sent ? `Ronda ${sent} enviada. Toca productos para pedir más.` : 'Toca los productos para agregarlos.'}</p>
+              <p className="mt-3 text-[14px] text-muted-foreground">{sent ? t('Ronda {n} enviada. Toca productos para pedir más.', { n: sent }) : t('Toca los productos para agregarlos.')}</p>
             ) : (
               <ul className="mt-3 space-y-3">
                 {lines.map((l) => (
@@ -254,20 +258,20 @@ export function PosScreen({
             )}
             {queued ? (
               <p role="status" className="mt-3 rounded-2xl border border-warning/40 bg-warning/10 px-4 py-3 text-[14px] text-warning">
-                Sin conexión: este pedido quedó guardado en el aparato y se enviará solo cuando vuelva el internet. No lo vuelvas a pedir.
+                {t('Sin conexión: este pedido quedó guardado en el aparato y se enviará solo cuando vuelva el internet. No lo vuelvas a pedir.')}
               </p>
             ) : null}
             {error ? (
               <div className="mt-3">
-                <Alert>{error}</Alert>
+                <Alert>{trx(error)}</Alert>
               </div>
             ) : null}
             <div className="mt-4 flex items-center justify-between border-t border-white/[0.06] pt-4">
-              <span className="text-[14px] text-muted-foreground">Total del pedido</span>
+              <span className="text-[14px] text-muted-foreground">{t('Total del pedido')}</span>
               <span className="font-display text-[20px] font-bold">{formatCop(cartTotal)}</span>
             </div>
             <button type="button" className={`${primaryButton} mt-4 w-full py-3 text-[15.5px]`} disabled={lines.length === 0 || pending || queued || closed || !clientKey} onClick={send}>
-              {queued ? 'Esperando conexión…' : pending ? 'Enviando…' : 'Enviar a cocina y barra'}
+              {queued ? t('Esperando conexión…') : pending ? t('Enviando…') : t('Enviar a cocina y barra')}
             </button>
           </div>
 
@@ -276,12 +280,12 @@ export function PosScreen({
               <PrintBillButton sessionId={session.id} className="flex flex-1" />
             ) : (
               <Link href={`/cuenta/${session.id}`} target="_blank" className={`${quietButton} flex-1`}>
-                Precuenta
+                {t('Precuenta')}
               </Link>
             )}
             {canCharge && !closed ? (
               <Link href={`/app/caja/mesa/${session.id}`} className={`${quietButton} flex-1`}>
-                Cobrar
+                {t('Cobrar')}
               </Link>
             ) : null}
           </div>
@@ -292,7 +296,7 @@ export function PosScreen({
                   <input type="hidden" name="sessionId" value={session.id} />
                   <input type="hidden" name="bill" value={session.status === 'bill' ? '0' : '1'} />
                   <SubmitButton tone="quiet" className="w-full">
-                    {session.status === 'bill' ? 'Volver a abrir la mesa' : 'Pedir la cuenta'}
+                    {session.status === 'bill' ? t('Volver a abrir la mesa') : t('Pedir la cuenta')}
                   </SubmitButton>
                 </>
               )}
@@ -302,12 +306,12 @@ export function PosScreen({
       </div>
 
       <section className="space-y-3">
-        <h2 className="font-display text-[19px] font-bold">Ya enviado</h2>
-        {rounds.length === 0 ? <p className="text-[14px] text-muted-foreground">Nada todavía.</p> : null}
+        <h2 className="font-display text-[19px] font-bold">{t('Ya enviado')}</h2>
+        {rounds.length === 0 ? <p className="text-[14px] text-muted-foreground">{t('Nada todavía.')}</p> : null}
         {rounds.map((round) => (
           <div key={round.id} className={card}>
             <p className="text-[13.5px] text-muted-foreground">
-              Ronda {round.number} · {formatTime(round.sentAt, timeZone)} · {round.sentBy}
+              {t('Ronda {n}', { n: round.number })} · {formatTime(round.sentAt, timeZone, lang)} · {round.sentBy}
             </p>
             <ul className="mt-3 divide-y divide-white/[0.06]">
               {round.items.map((item) => (
@@ -323,6 +327,7 @@ export function PosScreen({
 
 function CartRow({ line, onChange }: { line: Line; onChange: (patch: Partial<Line>) => void }) {
   const [noting, setNoting] = useState(Boolean(line.notes));
+  const t = useT();
   return (
     <li className="rounded-2xl border border-white/[0.06] p-3">
       <div className="flex items-center justify-between gap-2">
@@ -330,29 +335,29 @@ function CartRow({ line, onChange }: { line: Line; onChange: (patch: Partial<Lin
         <span className="text-[14px]">{formatCop(line.price * line.quantity)}</span>
       </div>
       <div className="mt-2 flex items-center gap-2">
-        <button type="button" className={`${quietButton} size-9 p-0 text-[18px]`} onClick={() => onChange({ quantity: line.quantity - 1 })} aria-label={`Quitar un ${line.name}`}>
+        <button type="button" className={`${quietButton} size-9 p-0 text-[18px]`} onClick={() => onChange({ quantity: line.quantity - 1 })} aria-label={t('Quitar un {name}', { name: line.name })}>
           −
         </button>
-        <span className="w-7 text-center font-display text-[17px] font-bold" aria-label="Cantidad">
+        <span className="w-7 text-center font-display text-[17px] font-bold" aria-label={t('Cantidad')}>
           {line.quantity}
         </span>
-        <button type="button" className={`${quietButton} size-9 p-0 text-[18px]`} onClick={() => onChange({ quantity: Math.min(99, line.quantity + 1) })} aria-label={`Otro ${line.name}`}>
+        <button type="button" className={`${quietButton} size-9 p-0 text-[18px]`} onClick={() => onChange({ quantity: Math.min(99, line.quantity + 1) })} aria-label={t('Otro {name}', { name: line.name })}>
           +
         </button>
         {!noting ? (
           <button type="button" className="ml-auto text-[13px] text-primary hover:underline" onClick={() => setNoting(true)}>
-            + Nota
+            + {t('Nota')}
           </button>
         ) : null}
       </div>
       {noting ? (
         <input
           className={`${inputClass} mt-2 py-2 text-[14px]`}
-          placeholder="Sin cebolla, término medio…"
+          placeholder={t('Sin cebolla, término medio…')}
           maxLength={140}
           value={line.notes}
           onChange={(e) => onChange({ notes: e.target.value })}
-          aria-label={`Nota para ${line.name}`}
+          aria-label={t('Nota para {name}', { name: line.name })}
         />
       ) : null}
     </li>
@@ -362,6 +367,7 @@ function CartRow({ line, onChange }: { line: Line; onChange: (patch: Partial<Lin
 function SentRow({ item, sessionId, canVoid }: { item: Item; sessionId: string; canVoid: boolean }) {
   const [voiding, setVoiding] = useState(false);
   const voided = Boolean(item.voidedAt);
+  const t = useT();
   return (
     <li className="py-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -373,21 +379,21 @@ function SentRow({ item, sessionId, canVoid }: { item: Item; sessionId: string; 
         </div>
         <div className="flex items-center gap-2">
           {voided ? (
-            <span className="rounded-full bg-destructive/15 px-2.5 py-0.5 text-[12px] text-[#ffb4b5]">Anulado</span>
+            <span className="rounded-full bg-destructive/15 px-2.5 py-0.5 text-[12px] text-[#ffb4b5]">{t('Anulado')}</span>
           ) : (
             <span className={`rounded-full px-2.5 py-0.5 text-[12px] ${TICKET_STYLE[item.ticketStatus] ?? ''}`}>
-              {STATION_LABEL[item.station]} · {TICKET_LABEL[item.ticketStatus] ?? item.ticketStatus}
+              {t(STATION_LABEL[item.station])} · {t(TICKET_LABEL[item.ticketStatus] ?? item.ticketStatus)}
             </span>
           )}
           <span className={`text-[14px] ${voided ? 'opacity-50' : ''}`}>{formatCop(item.unitPrice * item.quantity)}</span>
           {canVoid && !voided ? (
             <button type="button" className="text-[13px] text-muted-foreground hover:text-[#ffb4b5]" onClick={() => setVoiding(!voiding)}>
-              Anular
+              {t('Anular')}
             </button>
           ) : null}
         </div>
       </div>
-      {voided && item.voidReason ? <p className="mt-1 text-[13px] text-muted-foreground">Motivo: {item.voidReason}</p> : null}
+      {voided && item.voidReason ? <p className="mt-1 text-[13px] text-muted-foreground">{t('Motivo: {reason}', { reason: item.voidReason })}</p> : null}
       {voiding ? (
         <ActionForm action={voidItemAction} onOk={() => setVoiding(false)} className="mt-2 flex flex-wrap items-end gap-2">
           {() => (
@@ -395,10 +401,10 @@ function SentRow({ item, sessionId, canVoid }: { item: Item; sessionId: string; 
               <input type="hidden" name="itemId" value={item.id} />
               <input type="hidden" name="sessionId" value={sessionId} />
               <div className="min-w-[220px] flex-1">
-                <Field label="Motivo de la anulación" name="reason" required minLength={3} maxLength={300} placeholder="Se equivocó el mesero, cliente cambió…" />
+                <Field label={t('Motivo de la anulación')} name="reason" required minLength={3} maxLength={300} placeholder={t('Se equivocó el mesero, cliente cambió…')} />
               </div>
-              <SubmitButton tone="danger" pendingText="Anulando…">
-                Anular
+              <SubmitButton tone="danger" pendingText={t('Anulando…')}>
+                {t('Anular')}
               </SubmitButton>
             </>
           )}

@@ -8,40 +8,42 @@ import { AutoRefresh } from '@/components/auto-refresh';
 import { TableBoard, type BoardTable } from '@/components/table-board';
 import { Empty, PageTitle } from '@/components/ui';
 import Link from 'next/link';
+import { getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function TablesPage() {
   const staff = await requireStaff('tables.view');
+  const t = await getT();
   const tables = await listTables(staff);
   const [totals, ready, held] = await Promise.all([
-    sessionTotals(staff.businessId, tables.flatMap((t) => (t.session ? [t.session.id] : []))),
+    sessionTotals(staff.businessId, tables.flatMap((tb) => (tb.session ? [tb.session.id] : []))),
     can(staff.role, 'tickets.deliver') ? readyToServe(staff) : Promise.resolve([]),
     heldTables(staff),
   ]);
-  const board: BoardTable[] = tables.map((t) => ({
-    ...t,
+  const board: BoardTable[] = tables.map((tb) => ({
+    ...tb,
     // Libre pero apartada por una reserva confirmada que está por llegar.
-    status: t.status === 'free' && held.has(t.id) ? 'reserved' : t.status,
-    reservedFor: held.has(t.id) ? { ...held.get(t.id)!, startsAt: held.get(t.id)!.startsAt.toISOString() } : null,
-    session: t.session
-      ? { ...t.session, openedAt: t.session.openedAt.toISOString(), billAt: t.session.billAt?.toISOString() ?? null, total: totals.get(t.session.id) ?? 0 }
+    status: tb.status === 'free' && held.has(tb.id) ? 'reserved' : tb.status,
+    reservedFor: held.has(tb.id) ? { ...held.get(tb.id)!, startsAt: held.get(tb.id)!.startsAt.toISOString() } : null,
+    session: tb.session
+      ? { ...tb.session, openedAt: tb.session.openedAt.toISOString(), billAt: tb.session.billAt?.toISOString() ?? null, total: totals.get(tb.session.id) ?? 0 }
       : null,
   }));
-  const open = tables.filter((t) => t.session).length;
+  const open = tables.filter((tb) => tb.session).length;
   return (
     <div className="space-y-6">
       <AutoRefresh everyMs={10_000} />
-      <PageTitle title="Mesas" text={tables.length ? `${open} de ${tables.length} ocupadas` : undefined} />
+      <PageTitle title={t('Mesas')} text={tables.length ? t('{open} de {total} ocupadas', { open, total: tables.length }) : undefined} />
       {tables.length === 0 ? (
         <Empty>
-          Esta sede todavía no tiene mesas.{' '}
+          {t('Esta sede todavía no tiene mesas.')}{' '}
           {can(staff.role, 'floor.edit') ? (
             <Link href="/app/plano" className="text-primary hover:underline">
-              Arma el plano
+              {t('Arma el plano')}
             </Link>
           ) : (
-            'Pídele al administrador que arme el plano.'
+            t('Pídele al administrador que arme el plano.')
           )}
         </Empty>
       ) : (

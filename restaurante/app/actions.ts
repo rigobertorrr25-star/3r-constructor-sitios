@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { getLang, trServer } from '@/lib/i18n/server';
 import {
   ADMIN_COOKIE,
   STAFF_COOKIE,
@@ -79,10 +80,10 @@ function fail(error: string, formData?: FormData): FormState {
   return { error, values };
 }
 
-function messageOf(error: unknown) {
-  if (error instanceof AppError) return error.message;
+async function messageOf(error: unknown) {
+  if (error instanceof AppError) return trServer(error.message);
   console.error(error);
-  return 'Algo salió mal. Intenta otra vez.';
+  return trServer('Algo salió mal. Intenta otra vez.');
 }
 
 /** Corre una acción del equipo y devuelve el error en el formulario en vez de romper la página. */
@@ -90,18 +91,18 @@ async function run(formData: FormData, work: () => Promise<unknown>, paths: stri
   try {
     await work();
   } catch (error) {
-    return fail(messageOf(error), formData);
+    return fail(await messageOf(error), formData);
   }
   for (const path of paths) revalidatePath(path);
-  return { ok: Date.now(), message };
+  return { ok: Date.now(), message: message && (await trServer(message)) };
 }
 
 // ───────── 3R ─────────
 
 export async function adminLoginAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!allow(`admin:${await clientIp()}`, 8, 60_000)) return { error: 'Demasiados intentos. Espera un minuto.' };
-  if (!authConfigured()) return { error: 'Falta configurar ADMIN_PASSWORD y SESSION_SECRET en el servidor.' };
-  if (!checkAdminPassword(String(formData.get('password') ?? ''))) return { error: 'Clave incorrecta.' };
+  if (!allow(`admin:${await clientIp()}`, 8, 60_000)) return { error: await trServer('Demasiados intentos. Espera un minuto.') };
+  if (!authConfigured()) return { error: await trServer('Falta configurar ADMIN_PASSWORD y SESSION_SECRET en el servidor.') };
+  if (!checkAdminPassword(String(formData.get('password') ?? ''))) return { error: await trServer('Clave incorrecta.') };
   const session = adminSessionValue();
   (await cookies()).set(ADMIN_COOKIE, session.value, cookieOptions(session.maxAge));
   redirect('/admin');
@@ -114,7 +115,7 @@ export async function adminLogoutAction() {
 
 export async function createBusinessAction(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
-  if (text(formData, 'ownerPin') !== text(formData, 'pin2')) return fail('Los dos PIN no coinciden.', formData);
+  if (text(formData, 'ownerPin') !== text(formData, 'pin2')) return fail(await trServer('Los dos PIN no coinciden.'), formData);
   try {
     const created = await createBusiness({
       name: text(formData, 'name'),
@@ -123,9 +124,9 @@ export async function createBusinessAction(_prev: FormState, formData: FormData)
       ownerPin: text(formData, 'ownerPin'),
     });
     revalidatePath('/admin');
-    return { ok: Date.now(), message: `Listo. El equipo entra en la página de inicio escogiendo «${text(formData, 'name')}» (o directo en /n/${created.slug}). El dueño usa el código ${created.ownerCode} y el PIN que pusiste.` };
+    return { ok: Date.now(), message: await trServer(`Listo. El equipo entra en la página de inicio escogiendo «${text(formData, 'name')}» (o directo en /n/${created.slug}). El dueño usa el código ${created.ownerCode} y el PIN que pusiste.`) };
   } catch (error) {
-    return fail(messageOf(error), formData);
+    return fail(await messageOf(error), formData);
   }
 }
 
@@ -140,9 +141,9 @@ export async function setBusinessActiveAction(businessId: string, active: boolea
 /** Desde la portada: el código del negocio lleva a su pantalla de ingreso. */
 export async function goToBusinessAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const slug = slugify(text(formData, 'slug'));
-  if (!allow(`find:${await clientIp()}`, 30, 60_000)) return { error: 'Demasiados intentos. Espera un minuto.' };
+  if (!allow(`find:${await clientIp()}`, 30, 60_000)) return { error: await trServer('Demasiados intentos. Espera un minuto.') };
   const business = await getBusinessBySlug(slug).catch(() => null);
-  if (!business) return fail('No encontramos ese negocio. Revisa el enlace que te dio tu administrador.', formData);
+  if (!business) return fail(await trServer('No encontramos ese negocio. Revisa el enlace que te dio tu administrador.'), formData);
   redirect(`/n/${business.slug}`);
 }
 
@@ -154,14 +155,14 @@ export async function loginPeopleAction(slug: string) {
 
 export async function staffLoginAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const ip = await clientIp();
-  if (!allow(`pin:${ip}`, 20, 60_000)) return { error: 'Demasiados intentos desde este aparato. Espera un minuto.' };
-  if (!authConfigured()) return { error: 'La app no está configurada todavía (faltan claves en el servidor).' };
+  if (!allow(`pin:${ip}`, 20, 60_000)) return { error: await trServer('Demasiados intentos desde este aparato. Espera un minuto.') };
+  if (!authConfigured()) return { error: await trServer('La app no está configurada todavía (faltan claves en el servidor).') };
   const slug = text(formData, 'slug');
   let result: Awaited<ReturnType<typeof loginStaff>>;
   try {
     result = await loginStaff({ slug, code: text(formData, 'code'), pin: text(formData, 'pin'), locationId: optionalId(formData, 'locationId'), ip });
   } catch (error) {
-    return fail(messageOf(error), formData);
+    return fail(await messageOf(error), formData);
   }
   if (result.kind === 'choose-location') return { locations: result.locations, values: { code: text(formData, 'code') } };
   const jar = await cookies();
@@ -255,7 +256,7 @@ export async function saveLayoutAction(positions: { id: string; x: number; y: nu
   try {
     await saveLayout(staff, positions);
   } catch (error) {
-    return messageOf(error);
+    return await messageOf(error);
   }
   revalidatePath('/app');
   revalidatePath('/app/plano');
@@ -266,7 +267,7 @@ export async function saveLayoutAction(positions: { id: string; x: number; y: nu
 
 export async function createStaffAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
-  if (text(formData, 'pin') !== text(formData, 'pin2')) return fail('Los dos PIN no coinciden.', formData);
+  if (text(formData, 'pin') !== text(formData, 'pin2')) return fail(await trServer('Los dos PIN no coinciden.'), formData);
   let code = '';
   const state = await run(
     formData,
@@ -275,7 +276,7 @@ export async function createStaffAction(_prev: FormState, formData: FormData): P
     },
     ['/app/equipo'],
   );
-  return state?.error ? state : { ...state, message: `Listo. Su código para entrar es ${code}.` };
+  return state?.error ? state : { ...state, message: await trServer(`Listo. Su código para entrar es ${code}.`) };
 }
 
 export async function updateStaffAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -296,7 +297,7 @@ export async function updateStaffAction(_prev: FormState, formData: FormData): P
 
 export async function resetPinAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
-  if (text(formData, 'pin') !== text(formData, 'pin2')) return fail('Los dos PIN no coinciden.', formData);
+  if (text(formData, 'pin') !== text(formData, 'pin2')) return fail(await trServer('Los dos PIN no coinciden.'), formData);
   return run(formData, () => resetPin(staff, text(formData, 'staffId'), text(formData, 'pin')), ['/app/equipo'], 'PIN cambiado. Ya puede entrar con el nuevo.');
 }
 
@@ -325,6 +326,7 @@ export async function saveCategoryAction(_prev: FormState, formData: FormData): 
       saveCategory(staff, {
         id: optionalId(formData, 'id'),
         name: text(formData, 'name'),
+        nameEn: text(formData, 'nameEn'),
         station: text(formData, 'station'),
         sort: int(formData, 'sort') || 0,
         isActive: formData.has('id') ? formData.get('isActive') === 'on' : true,
@@ -344,6 +346,8 @@ export async function saveProductAction(_prev: FormState, formData: FormData): P
         categoryId: text(formData, 'categoryId'),
         name: text(formData, 'name'),
         description: text(formData, 'description'),
+        nameEn: text(formData, 'nameEn'),
+        descriptionEn: text(formData, 'descriptionEn'),
         price: text(formData, 'price'),
         station: text(formData, 'station'),
         isActive: formData.has('id') ? formData.get('isActive') === 'on' : true,
@@ -359,7 +363,7 @@ export async function setAvailableAction(productId: string, available: boolean):
   try {
     await setProductAvailable(staff, productId, available);
   } catch (error) {
-    return messageOf(error);
+    return await messageOf(error);
   }
   revalidatePath('/app/carta');
   return null;
@@ -374,7 +378,7 @@ export async function sendOrderAction(sessionId: string, lines: CartLine[], clie
     revalidatePath(`/app/mesa/${sessionId}`);
     return { number: result.number };
   } catch (error) {
-    return { error: messageOf(error) };
+    return { error: await messageOf(error) };
   }
 }
 
@@ -391,7 +395,7 @@ export async function moveTicketAction(ticketId: string, to: string): Promise<st
   try {
     await moveTicket(staff, ticketId, to);
   } catch (error) {
-    return messageOf(error);
+    return await messageOf(error);
   }
   revalidatePath('/app');
   revalidatePath('/app/cocina');
@@ -464,7 +468,7 @@ export async function payAction(
     revalidatePath(`/app/caja/mesa/${sessionId}`);
     return { change: result.change, closed: result.closed };
   } catch (error) {
-    return { error: messageOf(error) };
+    return { error: await messageOf(error) };
   }
 }
 
@@ -512,7 +516,7 @@ export async function inventoryMoveAction(_prev: FormState, formData: FormData):
     },
     ['/app/inventario', `/app/inventario/${itemId}`],
   );
-  return state?.error ? state : { ...state, message };
+  return state?.error ? state : { ...state, message: await trServer(message) };
 }
 
 export async function saveRecipeAction(productId: string, lines: { itemId: string; quantity: string }[]): Promise<string | null> {
@@ -520,7 +524,7 @@ export async function saveRecipeAction(productId: string, lines: { itemId: strin
   try {
     await saveRecipe(staff, productId, lines);
   } catch (error) {
-    return messageOf(error);
+    return await messageOf(error);
   }
   revalidatePath('/app/carta');
   revalidatePath(`/app/carta/receta/${productId}`);
@@ -604,7 +608,7 @@ export async function publicSettingsAction(_prev: FormState, formData: FormData)
 
 /** Reserva pedida por el cliente desde el enlace público (sin cuenta). */
 export async function requestReservationAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!allow(`reserva:${await clientIp()}`, 5, 10 * 60_000)) return { error: 'Demasiadas solicitudes desde este aparato. Intenta más tarde.' };
+  if (!allow(`reserva:${await clientIp()}`, 5, 10 * 60_000)) return { error: await trServer('Demasiadas solicitudes desde este aparato. Intenta más tarde.') };
   try {
     const r = await requestReservation(text(formData, 'slug'), {
       name: text(formData, 'name'),
@@ -616,9 +620,9 @@ export async function requestReservationAction(_prev: FormState, formData: FormD
       notes: text(formData, 'notes'),
       locationId: optionalId(formData, 'locationId'),
     });
-    return { ok: Date.now(), message: `¡Listo! ${r.businessName} recibió tu solicitud para ${text(formData, 'date')} a las ${text(formData, 'time')}. Te confirman por teléfono o WhatsApp.` };
+    return { ok: Date.now(), message: await trServer(`¡Listo! ${r.businessName} recibió tu solicitud para ${text(formData, 'date')} a las ${text(formData, 'time')}. Te confirman por teléfono o WhatsApp.`) };
   } catch (error) {
-    return fail(messageOf(error), formData);
+    return fail(await messageOf(error), formData);
   }
 }
 
@@ -627,10 +631,11 @@ export async function requestReservationAction(_prev: FormState, formData: FormD
 /** Vuelve a escribir el resumen del día (por ejemplo, al cerrar la noche con todas las ventas). */
 export async function refreshBriefAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
-  if (!allow(`brief:${staff.businessId}`, 10, 60 * 60_000)) return { error: 'Ya se reescribió varias veces en la última hora. Intenta más tarde.' };
+  if (!allow(`brief:${staff.businessId}`, 10, 60 * 60_000)) return { error: await trServer('Ya se reescribió varias veces en la última hora. Intenta más tarde.') };
+  const lang = await getLang();
   return run(
     formData,
-    () => getBrief(staff, { day: text(formData, 'day'), locationId: optionalId(formData, 'scope'), timeZone: staff.timezone, refresh: true }),
+    () => getBrief(staff, { day: text(formData, 'day'), locationId: optionalId(formData, 'scope'), timeZone: staff.timezone, refresh: true, lang }),
     ['/app/tablero'],
   );
 }
@@ -691,7 +696,7 @@ export async function payAppointmentAction(
     revalidatePath('/app/caja');
     return { change: r.change };
   } catch (error) {
-    return { error: messageOf(error) };
+    return { error: await messageOf(error) };
   }
 }
 
@@ -722,7 +727,7 @@ export async function invoiceCustomerAction(_prev: FormState, formData: FormData
 export async function saveBackgroundAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff('locations.manage');
   const file = formData.get('foto');
-  if (!(file instanceof File) || !file.size) return { error: 'Escoge una foto.' };
+  if (!(file instanceof File) || !file.size) return { error: await trServer('Escoge una foto.') };
   const bytes = new Uint8Array(await file.arrayBuffer());
   return run(formData, () => saveBackground(staff, bytes), ['/', '/app', '/app/sedes'], 'Listo. Ya se ve el fondo nuevo.');
 }
@@ -737,7 +742,7 @@ export async function removeBackgroundAction(_prev: FormState, formData: FormDat
 export async function saveProductPhotoAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff('menu.edit');
   const file = formData.get('foto');
-  if (!(file instanceof File) || !file.size) return { error: 'Escoge una foto.' };
+  if (!(file instanceof File) || !file.size) return { error: await trServer('Escoge una foto.') };
   const bytes = new Uint8Array(await file.arrayBuffer());
   return run(formData, () => saveProductPhoto(staff, text(formData, 'productId'), bytes), ['/app/carta', '/app/mesa'], 'Listo. Ya se ve la foto en la carta.');
 }
