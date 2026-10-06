@@ -2,8 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import '@fontsource-variable/sora';
 import '@fontsource-variable/manrope';
 import './globals.css';
-import { LangProvider } from '@/components/i18n';
-import { getLang } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Restaurant Control — 3R',
@@ -13,13 +11,10 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: '#000103' };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const lang = await getLang();
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang={lang}>
-      <body>
-        <LangProvider lang={lang}>{children}</LangProvider>
-      </body>
+    <html lang="es">
+      <body>{children}</body>
     </html>
   );
 }

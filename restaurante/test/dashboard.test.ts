@@ -117,11 +117,6 @@ describe('módulo 12: resumen del día', { skip: url ? false : 'sin TEST_DATABAS
     assert.match(first.text, /todavía no hay ventas/);
     const again = await brief.getBrief(owner, { day, locationId: null, timeZone: 'America/Bogota' });
     assert.equal(again.cached, true);
-    // En inglés se escribe y se guarda aparte; el de español sigue igual.
-    const en = await brief.getBrief(owner, { day, locationId: null, timeZone: 'America/Bogota', lang: 'en' });
-    assert.equal(en.cached, false);
-    assert.match(en.text, /^Today: no paid sales yet/);
-    assert.equal((await brief.getBrief(owner, { day, locationId: null, timeZone: 'America/Bogota' })).text, first.text);
     await store.purgeBusiness(a.businessId);
     await db.closePool();
   });

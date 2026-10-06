@@ -12,7 +12,6 @@ import { ProductPhotoForm } from './product-photo-form';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Alert, CheckField, Empty, Field, Select, card, quietButton } from './ui';
-import { useT, useTr } from './i18n';
 
 export function MenuEditor({
   categories,
@@ -29,12 +28,11 @@ export function MenuEditor({
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
-  const t = useT();
   const visible = canEdit ? categories : categories.filter((c) => c.isActive);
 
   return (
     <div className="space-y-5">
-      {visible.length === 0 ? <Empty>{canEdit ? t('Empieza creando una categoría (Platos fuertes, Cócteles, Cervezas…).') : t('La carta está vacía.')}</Empty> : null}
+      {visible.length === 0 ? <Empty>{canEdit ? 'Empieza creando una categoría (Platos fuertes, Cócteles, Cervezas…).' : 'La carta está vacía.'}</Empty> : null}
       {visible.map((category) => {
         const list = products.filter((p) => p.categoryId === category.id && (canEdit || p.isActive));
         return (
@@ -43,18 +41,17 @@ export function MenuEditor({
               <div>
                 <h2 className="font-display text-[19px] font-bold">{category.name}</h2>
                 <p className="text-[13.5px] text-muted-foreground">
-                  {t('Va a {station}', { station: t(STATION_LABEL[category.station]).toLowerCase() })} ·{' '}
-                  {list.length === 1 ? t('1 producto') : t('{n} productos', { n: list.length })}
-                  {category.isActive ? '' : ` · ${t('Fuera de la carta')}`}
+                  Va a {STATION_LABEL[category.station].toLowerCase()} · {list.length} {list.length === 1 ? 'producto' : 'productos'}
+                  {category.isActive ? '' : ' · Fuera de la carta'}
                 </p>
               </div>
               {canEdit ? (
                 <div className="flex gap-2">
                   <button type="button" className={quietButton} onClick={() => setEditing(editing === category.id ? null : category.id)}>
-                    {t('Editar categoría')}
+                    Editar categoría
                   </button>
                   <button type="button" className={quietButton} onClick={() => setAdding(adding === category.id ? null : category.id)}>
-                    {t('+ Producto')}
+                    + Producto
                   </button>
                 </div>
               ) : null}
@@ -71,7 +68,7 @@ export function MenuEditor({
       })}
       {canEdit ? (
         <section className={card}>
-          <h2 className="font-display text-[18px] font-bold">{t('Nueva categoría')}</h2>
+          <h2 className="font-display text-[18px] font-bold">Nueva categoría</h2>
           <CategoryForm />
         </section>
       ) : null}
@@ -80,32 +77,24 @@ export function MenuEditor({
 }
 
 function CategoryForm({ category, onDone }: { category?: MenuCategory; onDone?: () => void }) {
-  const t = useT();
   return (
     <ActionForm action={saveCategoryAction} resetOnOk={!category} onOk={onDone} className="mt-4 grid gap-3 border-t border-white/[0.06] pt-4 sm:grid-cols-3">
       {(state) => (
         <>
           {category ? <input type="hidden" name="id" value={category.id} /> : null}
-          <Field label={t('Nombre')} name="name" required maxLength={60} defaultValue={state?.values?.name ?? category?.name} />
-          <Select label={t('Va a')} name="station" defaultValue={state?.values?.station ?? category?.station ?? 'kitchen'}>
-            <option value="kitchen">{t('Cocina')}</option>
-            <option value="bar">{t('Barra')}</option>
+          <Field label="Nombre" name="name" required maxLength={60} defaultValue={state?.values?.name ?? category?.name} />
+          <Select label="Va a" name="station" defaultValue={state?.values?.station ?? category?.station ?? 'kitchen'}>
+            <option value="kitchen">Cocina</option>
+            <option value="bar">Barra</option>
           </Select>
-          <Field label={t('Orden')} name="sort" type="number" min={0} max={9999} defaultValue={category?.sort ?? ''} hint={t('Menor sale primero')} />
-          <Field
-            label={t('Nombre en inglés (opcional)')}
-            name="nameEn"
-            maxLength={60}
-            defaultValue={state?.values?.nameEn ?? category?.nameEn ?? ''}
-            hint={t('Para la carta QR en inglés')}
-          />
+          <Field label="Orden" name="sort" type="number" min={0} max={9999} defaultValue={category?.sort ?? ''} hint="Menor sale primero" />
           {category ? (
             <div className="sm:col-span-3">
-              <CheckField name="isActive" label={t('En la carta')} hint={t('Si la quitas, sus productos no se pueden pedir.')} defaultChecked={category.isActive} />
+              <CheckField name="isActive" label="En la carta" hint="Si la quitas, sus productos no se pueden pedir." defaultChecked={category.isActive} />
             </div>
           ) : null}
           <div className="sm:col-span-3">
-            <SubmitButton pendingText={t('Guardando…')}>{category ? t('Guardar') : t('Crear categoría')}</SubmitButton>
+            <SubmitButton pendingText="Guardando…">{category ? 'Guardar' : 'Crear categoría'}</SubmitButton>
           </div>
         </>
       )}
@@ -114,38 +103,29 @@ function CategoryForm({ category, onDone }: { category?: MenuCategory; onDone?: 
 }
 
 function ProductForm({ categories, categoryId, product, onDone }: { categories: MenuCategory[]; categoryId: string; product?: MenuProduct; onDone?: () => void }) {
-  const t = useT();
   return (
     <ActionForm action={saveProductAction} resetOnOk={!product} onOk={onDone} className="mt-4 grid gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 sm:grid-cols-2">
       {(state) => (
         <>
           {product ? <input type="hidden" name="id" value={product.id} /> : null}
-          <Field label={t('Nombre')} name="name" required maxLength={80} defaultValue={state?.values?.name ?? product?.name} />
-          <Field label={t('Precio (pesos)')} name="price" inputMode="numeric" required defaultValue={state?.values?.price ?? product?.price} placeholder="18000" />
-          <Field label={t('Descripción (opcional)')} name="description" maxLength={200} defaultValue={state?.values?.description ?? product?.description ?? ''} />
-          <Field
-            label={t('Nombre en inglés (opcional)')}
-            name="nameEn"
-            maxLength={80}
-            defaultValue={state?.values?.nameEn ?? product?.nameEn ?? ''}
-            hint={t('Para la carta QR en inglés')}
-          />
-          <Field label={t('Descripción en inglés (opcional)')} name="descriptionEn" maxLength={200} defaultValue={state?.values?.descriptionEn ?? product?.descriptionEn ?? ''} />
-          <Select label={t('Categoría')} name="categoryId" defaultValue={state?.values?.categoryId ?? categoryId}>
+          <Field label="Nombre" name="name" required maxLength={80} defaultValue={state?.values?.name ?? product?.name} />
+          <Field label="Precio (pesos)" name="price" inputMode="numeric" required defaultValue={state?.values?.price ?? product?.price} placeholder="18000" />
+          <Field label="Descripción (opcional)" name="description" maxLength={200} defaultValue={state?.values?.description ?? product?.description ?? ''} />
+          <Select label="Categoría" name="categoryId" defaultValue={state?.values?.categoryId ?? categoryId}>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
             ))}
           </Select>
-          <Select label={t('Va a')} name="station" defaultValue={state?.values?.station ?? product?.station ?? ''}>
-            <option value="">{t('La de su categoría')}</option>
-            <option value="kitchen">{t('Cocina')}</option>
-            <option value="bar">{t('Barra')}</option>
+          <Select label="Va a" name="station" defaultValue={state?.values?.station ?? product?.station ?? ''}>
+            <option value="">La de su categoría</option>
+            <option value="kitchen">Cocina</option>
+            <option value="bar">Barra</option>
           </Select>
-          {product ? <CheckField name="isActive" label={t('En la carta')} defaultChecked={product.isActive} /> : null}
+          {product ? <CheckField name="isActive" label="En la carta" defaultChecked={product.isActive} /> : null}
           <div className="sm:col-span-2">
-            <SubmitButton pendingText={t('Guardando…')}>{product ? t('Guardar producto') : t('Agregar producto')}</SubmitButton>
+            <SubmitButton pendingText="Guardando…">{product ? 'Guardar producto' : 'Agregar producto'}</SubmitButton>
           </div>
         </>
       )}
@@ -168,8 +148,6 @@ function ProductRow({
 }) {
   const [editing, setEditing] = useState(false);
   const [pending, start] = useTransition();
-  const t = useT();
-  const trx = useTr();
   const photo = productPhotoUrl(product.id, product.photo);
   const [error, setError] = useState<string | null>(null);
   const toggle = () =>
@@ -186,16 +164,12 @@ function ProductRow({
           <div className="min-w-0">
             <p className="text-[15.5px] font-medium">
               {product.name}
-              {!product.isAvailable ? <span className="ml-2 rounded-full bg-warning/15 px-2 py-0.5 text-[12px] text-warning">{t('Agotado')}</span> : null}
-              {!product.isActive ? <span className="ml-2 text-[12.5px] text-muted-foreground">{t('Fuera de la carta')}</span> : null}
+              {!product.isAvailable ? <span className="ml-2 rounded-full bg-warning/15 px-2 py-0.5 text-[12px] text-warning">Agotado</span> : null}
+              {!product.isActive ? <span className="ml-2 text-[12.5px] text-muted-foreground">Fuera de la carta</span> : null}
             </p>
             <p className="text-[13.5px] text-muted-foreground">
-              {formatCop(product.price)} · {t(STATION_LABEL[product.station])}
-              {canRecipe
-                ? cost !== undefined
-                  ? ` · ${t('costo {cost} (margen {margin} %)', { cost: formatCop(cost), margin: product.price ? Math.round(((product.price - cost) / product.price) * 100) : 0 })}`
-                  : ` · ${t('sin receta')}`
-                : ''}
+              {formatCop(product.price)} · {STATION_LABEL[product.station]}
+              {canRecipe ? (cost !== undefined ? ` · costo ${formatCop(cost)} (margen ${product.price ? Math.round(((product.price - cost) / product.price) * 100) : 0} %)` : ' · sin receta') : ''}
               {product.description ? ` · ${product.description}` : ''}
             </p>
           </div>
@@ -203,22 +177,22 @@ function ProductRow({
         <div className="flex gap-2">
           {product.isActive ? (
             <button type="button" className={quietButton} disabled={pending} onClick={toggle}>
-              {product.isAvailable ? t('Se acabó') : t('Volvió a haber')}
+              {product.isAvailable ? 'Se acabó' : 'Volvió a haber'}
             </button>
           ) : null}
           {canRecipe ? (
             <Link href={`/app/carta/receta/${product.id}`} className={quietButton}>
-              {t('Receta')}
+              Receta
             </Link>
           ) : null}
           {canEdit ? (
             <button type="button" className={quietButton} onClick={() => setEditing(!editing)}>
-              {t('Editar')}
+              Editar
             </button>
           ) : null}
         </div>
       </div>
-      {error ? <Alert>{trx(error)}</Alert> : null}
+      {error ? <Alert>{error}</Alert> : null}
       {editing ? (
         <>
           <ProductForm categories={categories} categoryId={product.categoryId} product={product} onDone={() => setEditing(false)} />

@@ -3,7 +3,6 @@
 import { startTransition, useActionState, useState } from 'react';
 import { removeBackgroundAction, saveBackgroundAction } from '@/app/actions';
 import { Alert, dangerButton, primaryButton, quietButton } from './ui';
-import { useT } from './i18n';
 
 const MAX_SIDE = 1920;
 
@@ -26,7 +25,6 @@ export function BackgroundForm({ current }: { current: string | null }) {
   const [picked, setPicked] = useState<{ blob: Blob; url: string } | null>(null);
   const [readError, setReadError] = useState('');
   const [lastOk, setLastOk] = useState<number | undefined>(undefined);
-  const t = useT();
 
   // Al guardar bien, se suelta la vista previa: la página ya trae el fondo nuevo.
   if (saveState?.ok && saveState.ok !== lastOk) {
@@ -44,11 +42,11 @@ export function BackgroundForm({ current }: { current: string | null }) {
         style={preview ? { backgroundImage: `url("${preview}")` } : undefined}
       >
         {preview ? <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/75" /> : null}
-        <p className="relative text-[14px] text-muted-foreground">{preview ? (picked ? t('Así se verá (todavía sin guardar)') : '') : t('Sin fondo: se usa el de 3R')}</p>
+        <p className="relative text-[14px] text-muted-foreground">{preview ? (picked ? 'Así se verá (todavía sin guardar)' : '') : 'Sin fondo: se usa el de 3R'}</p>
       </div>
       <div className="flex flex-wrap gap-2.5">
         <label className={`${quietButton} cursor-pointer`}>
-          {preview ? t('Escoger otra foto') : t('Escoger foto')}
+          {preview ? 'Escoger otra foto' : 'Escoger foto'}
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
@@ -63,7 +61,7 @@ export function BackgroundForm({ current }: { current: string | null }) {
                 if (picked) URL.revokeObjectURL(picked.url);
                 setPicked({ blob, url: URL.createObjectURL(blob) });
               } catch {
-                setReadError(t('No pudimos leer esa foto. Prueba con otra (JPG, PNG o WebP).'));
+                setReadError('No pudimos leer esa foto. Prueba con otra (JPG, PNG o WebP).');
               }
             }}
           />
@@ -79,12 +77,12 @@ export function BackgroundForm({ current }: { current: string | null }) {
               startTransition(() => save(data));
             }}
           >
-            {saving ? t('Guardando…') : t('Guardar fondo')}
+            {saving ? 'Guardando…' : 'Guardar fondo'}
           </button>
         ) : null}
         {current && !picked ? (
           <button type="button" className={dangerButton} disabled={removing} onClick={() => startTransition(() => remove(new FormData()))}>
-            {removing ? t('Quitando…') : t('Quitar fondo')}
+            {removing ? 'Quitando…' : 'Quitar fondo'}
           </button>
         ) : null}
       </div>

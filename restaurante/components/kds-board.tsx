@@ -7,7 +7,6 @@ import { elapsedMinutes, formatElapsed, formatTime } from '@/lib/format';
 import type { KdsTicket, TicketStatus } from '@/lib/kds';
 import { useNow } from './table-board';
 import { Alert, quietButton } from './ui';
-import { useLang, useT, useTr } from './i18n';
 
 type Ticket = Omit<KdsTicket, 'sentAt' | 'startedAt' | 'readyAt'> & { sentAt: string; startedAt: string | null; readyAt: string | null };
 
@@ -43,9 +42,6 @@ function beep() {
 
 export function KdsBoard({ title, tickets, timeZone }: { title: string; tickets: Ticket[]; timeZone: string }) {
   const now = useNow(10_000);
-  const t = useT();
-  const lang = useLang();
-  const trx = useTr();
   const [sound, setSound] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -80,43 +76,43 @@ export function KdsBoard({ title, tickets, timeZone }: { title: string; tickets:
             setSound(!sound);
           }}
         >
-          {sound ? `🔔 ${t('Sonido activado')}` : `🔕 ${t('Activar sonido')}`}
+          {sound ? '🔔 Sonido activado' : '🔕 Activar sonido'}
         </button>
       </div>
-      {error ? <Alert>{trx(error)}</Alert> : null}
+      {error ? <Alert>{error}</Alert> : null}
       <div className="grid gap-4 lg:grid-cols-3">
         {COLUMNS.map((col) => {
           const list = tickets.filter((t) => t.status === col.status);
           return (
-            <section key={col.status} aria-label={t(col.title)} className="space-y-3">
+            <section key={col.status} aria-label={col.title} className="space-y-3">
               <h2 className="flex items-center gap-2 font-display text-[17px] font-bold text-muted-foreground">
-                {t(col.title)}
+                {col.title}
                 <span className="rounded-full bg-white/[0.08] px-2.5 py-0.5 text-[13px] text-foreground">{list.length}</span>
               </h2>
-              {list.length === 0 ? <p className="rounded-[20px] border border-dashed border-white/[0.1] px-4 py-6 text-center text-[14px] text-muted-foreground">{t('Nada aquí.')}</p> : null}
-              {list.map((tk) => {
-                const minutes = elapsedMinutes(tk.sentAt, now);
-                const tone = tk.status === 'ready' ? 'border-success/50' : minutes >= LATE_MINUTES ? 'border-destructive/70' : minutes >= WARN_MINUTES ? 'border-warning/70' : 'border-white/[0.1]';
-                const allVoided = tk.items.every((i) => i.voided);
-                const previous = PREVIOUS[tk.status];
+              {list.length === 0 ? <p className="rounded-[20px] border border-dashed border-white/[0.1] px-4 py-6 text-center text-[14px] text-muted-foreground">Nada aquí.</p> : null}
+              {list.map((t) => {
+                const minutes = elapsedMinutes(t.sentAt, now);
+                const tone = t.status === 'ready' ? 'border-success/50' : minutes >= LATE_MINUTES ? 'border-destructive/70' : minutes >= WARN_MINUTES ? 'border-warning/70' : 'border-white/[0.1]';
+                const allVoided = t.items.every((i) => i.voided);
+                const previous = PREVIOUS[t.status];
                 return (
-                  <article key={tk.id} className={`rounded-[22px] border-2 bg-card p-4 shadow-[var(--shadow-glass)] ${tone}`}>
+                  <article key={t.id} className={`rounded-[22px] border-2 bg-card p-4 shadow-[var(--shadow-glass)] ${tone}`}>
                     <header className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-display text-[24px] font-bold leading-none">{t('Mesa {n}', { n: tk.tableNumber })}</p>
+                        <p className="font-display text-[24px] font-bold leading-none">Mesa {t.tableNumber}</p>
                         <p className="mt-1 text-[13px] text-muted-foreground">
-                          {t('Ronda {n}', { n: tk.roundNumber })} · {tk.sentBy} · {formatTime(tk.sentAt, timeZone, lang)}
+                          Ronda {t.roundNumber} · {t.sentBy} · {formatTime(t.sentAt, timeZone)}
                         </p>
                       </div>
-                      <span className={`font-display text-[18px] font-bold ${minutes >= LATE_MINUTES && tk.status !== 'ready' ? 'text-[#ffb4b5]' : ''}`}>{formatElapsed(minutes)}</span>
+                      <span className={`font-display text-[18px] font-bold ${minutes >= LATE_MINUTES && t.status !== 'ready' ? 'text-[#ffb4b5]' : ''}`}>{formatElapsed(minutes)}</span>
                     </header>
                     <ul className="mt-3 space-y-1.5">
-                      {tk.items.map((i) => (
+                      {t.items.map((i) => (
                         <li key={i.id} className={i.voided ? 'text-muted-foreground line-through' : ''}>
                           <span className="text-[18px] font-semibold">
                             {i.quantity} × {i.name}
                           </span>
-                          {i.voided ? <span className="ml-2 text-[12px] font-semibold uppercase text-[#ffb4b5] no-underline">{t('Anulado')}</span> : null}
+                          {i.voided ? <span className="ml-2 text-[12px] font-semibold uppercase text-[#ffb4b5] no-underline">Anulado</span> : null}
                           {i.notes ? <span className="block text-[15px] font-medium text-warning">→ {i.notes}</span> : null}
                         </li>
                       ))}
@@ -125,13 +121,13 @@ export function KdsBoard({ title, tickets, timeZone }: { title: string; tickets:
                       <button
                         type="button"
                         disabled={pending}
-                        onClick={() => move(tk.id, allVoided ? 'delivered' : col.next)}
+                        onClick={() => move(t.id, allVoided ? 'delivered' : col.next)}
                         className="flex-1 rounded-full bg-primary px-4 py-3 text-[16px] font-semibold text-primary-foreground transition active:scale-[0.98] disabled:opacity-60"
                       >
-                        {allVoided ? t('Entendido (anulada)') : t(col.action)}
+                        {allVoided ? 'Entendido (anulada)' : col.action}
                       </button>
                       {previous ? (
-                        <button type="button" disabled={pending} onClick={() => move(tk.id, previous)} className={quietButton} aria-label={t('Deshacer: devolver un paso')}>
+                        <button type="button" disabled={pending} onClick={() => move(t.id, previous)} className={quietButton} aria-label="Deshacer: devolver un paso">
                           ↶
                         </button>
                       ) : null}
@@ -145,15 +141,15 @@ export function KdsBoard({ title, tickets, timeZone }: { title: string; tickets:
       </div>
       {delivered.length > 0 ? (
         <details className="rounded-[20px] border border-white/[0.08] bg-card px-5 py-3">
-          <summary className="cursor-pointer text-[14px] text-muted-foreground">{t('Entregadas en la última hora ({n})', { n: delivered.length })}</summary>
+          <summary className="cursor-pointer text-[14px] text-muted-foreground">Entregadas en la última hora ({delivered.length})</summary>
           <ul className="mt-3 space-y-2">
-            {delivered.map((tk) => (
-              <li key={tk.id} className="flex items-center justify-between gap-3 text-[14px]">
+            {delivered.map((t) => (
+              <li key={t.id} className="flex items-center justify-between gap-3 text-[14px]">
                 <span>
-                  {t('Mesa {n} · ronda {round}', { n: tk.tableNumber, round: tk.roundNumber })} · {tk.items.filter((i) => !i.voided).map((i) => `${i.quantity} × ${i.name}`).join(', ')}
+                  Mesa {t.tableNumber} · ronda {t.roundNumber} · {t.items.filter((i) => !i.voided).map((i) => `${i.quantity} × ${i.name}`).join(', ')}
                 </span>
-                <button type="button" disabled={pending} onClick={() => move(tk.id, 'ready')} className={quietButton}>
-                  ↶ {t('No se entregó')}
+                <button type="button" disabled={pending} onClick={() => move(t.id, 'ready')} className={quietButton}>
+                  ↶ No se entregó
                 </button>
               </li>
             ))}

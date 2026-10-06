@@ -45,14 +45,6 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   achica en el teléfono a 900 px en JPG; el servidor acepta solo JPG, PNG o WebP de verdad y hasta 800 KB). Sale en la
   carta QR de los clientes (al lado del nombre y el precio) y como miniatura en la pantalla de pedido del mesero. Se
   guarda en la base (`product_photos`) y se sirve en `/foto/{producto}?v=…`. Cambiarla o quitarla queda en la auditoría.
-- **Español e inglés:** botón **ES | EN** arriba a la derecha en todas las pantallas (equipo, ingreso, panel de 3R,
-  carta QR, reservas y cuenta). Cada persona escoge en su aparato (cookie `rc_lang`, un año); si nunca escogió, se usa el
-  idioma de su navegador. El texto en español es la llave: `t('Mesa {n}', { n })` en `lib/i18n` busca el inglés en
-  `lib/i18n/en/*.ts` (repartido por partes). Los mensajes del servidor y la auditoría se guardan en español y se traducen
-  al mostrarlos con moldes (`tr`). El resumen con IA se escribe y se guarda en el idioma de quien lo pide. La carta puede
-  llevar nombre y descripción en inglés por producto y categoría (opcionales; si faltan, sale el español). **Lo impreso
-  (comandas, precuentas, cierre) sigue en español** y lo que escribe el restaurante (nombres, notas) no se traduce.
-  Todo texto nuevo va con `t()` y su inglés en el diccionario (`test/i18n.test.ts` revisa que los huecos coincidan).
 - **Roles** (fijos, revisados siempre en el servidor):
   - Dueño: todo, incluidas las sedes. Ve la auditoría de todas las sedes.
   - Administrador: plano, equipo (menos dueños y administradores) y auditoría de su sede.

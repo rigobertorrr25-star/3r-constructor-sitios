@@ -2,13 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useT } from './i18n';
 
 export function AppNav({ links }: { links: { href: string; label: string; badge?: number }[] }) {
-  const t = useT();
   const path = usePathname();
   return (
-    <nav aria-label={t('Secciones')} className="mx-auto flex max-w-[1280px] gap-1 overflow-x-auto px-4 pb-2 sm:px-6 lg:flex-wrap lg:overflow-visible">
+    <nav aria-label="Secciones" className="mx-auto flex max-w-[1280px] gap-1 overflow-x-auto px-4 pb-2 sm:px-6 lg:flex-wrap lg:overflow-visible">
       {links.map((link) => {
         const active = link.href === '/app' ? path === '/app' : path.startsWith(link.href);
         return (

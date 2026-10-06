@@ -7,16 +7,12 @@ import { can } from '@/lib/permissions';
 import { PERIODS, periodRange } from '@/lib/periods';
 import { FiscalForm, InvoiceCustomer } from '@/components/invoice-forms';
 import { Empty, PageTitle, card, quietButton } from '@/components/ui';
-import { getLang } from '@/lib/i18n/server';
-import { makeT, tr } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
 export default async function InvoicesPage({ searchParams }: { searchParams: Promise<{ periodo?: string }> }) {
   const staff = await requireStaff('invoices.manage');
   const { periodo } = await searchParams;
-  const lang = await getLang();
-  const t = makeT(lang);
   const period = PERIODS.some((p) => p.key === periodo) ? periodo! : 'hoy';
   const range = periodRange(period, todayIn(staff.timezone));
   const [fiscal, invoices] = await Promise.all([getFiscal(staff.businessId), listInvoices(staff, range, staff.timezone)]);
@@ -25,29 +21,29 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const pending = live.filter((i) => i.status === 'pending').length;
   return (
     <div className="space-y-6">
-      <PageTitle title={t('Facturas')} text={t('Cada venta cobrada (mesa o cita) genera su factura, a nombre de consumidor final o del cliente que la pida.')} />
+      <PageTitle title="Facturas" text="Cada venta cobrada (mesa o cita) genera su factura, a nombre de consumidor final o del cliente que la pida." />
       <div className="rounded-[22px] border border-warning/40 bg-warning/[0.07] p-4 text-[14.5px]">
-        <strong>{t('Todavía no se envían a la DIAN.')}</strong>{' '}
-        {t('Para eso hay que conectar un proveedor de facturación electrónica (Alegra, Siigo u otro). Mientras tanto quedan como «pendientes» y puedes descargarlas para tu contador o para subirlas al proveedor.')}
+        <strong>Todavía no se envían a la DIAN.</strong> Para eso hay que conectar un proveedor de facturación electrónica (Alegra, Siigo u
+        otro). Mientras tanto quedan como «pendientes» y puedes descargarlas para tu contador o para subirlas al proveedor.
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
         {PERIODS.map((p) => (
           <Link key={p.key} href={`/app/facturas?periodo=${p.key}`} className={`rounded-full px-4 py-1.5 text-[14px] ${period === p.key ? 'bg-primary text-primary-foreground' : 'border border-white/[0.1] text-muted-foreground hover:text-foreground'}`}>
-            {t(p.label)}
+            {p.label}
           </Link>
         ))}
         <a href={`/app/facturas/csv?desde=${range.from}&hasta=${range.to}`} className={`${quietButton} ml-auto`}>
-          {t('Descargar para Excel')}
+          Descargar para Excel
         </a>
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[
-          [t('Facturas'), String(live.length)],
-          [t('Base'), formatCop(totals.base)],
-          [TAX_KINDS[fiscal.taxKind].rate ? t('Impuesto ({rate} %)', { rate: TAX_KINDS[fiscal.taxKind].rate }) : t('Impuesto'), formatCop(totals.tax)],
-          [t('Pendientes de enviar'), String(pending)],
+          ['Facturas', String(live.length)],
+          ['Base', formatCop(totals.base)],
+          [`${TAX_KINDS[fiscal.taxKind].rate ? `Impuesto (${TAX_KINDS[fiscal.taxKind].rate} %)` : 'Impuesto'}`, formatCop(totals.tax)],
+          ['Pendientes de enviar', String(pending)],
         ].map(([k, v]) => (
           <div key={k} className="rounded-[22px] border border-white/[0.08] bg-card p-4">
             <p className="text-[13px] text-muted-foreground">{k}</p>
@@ -57,23 +53,23 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
       </div>
 
       {invoices.length === 0 ? (
-        <Empty>{t('No hay facturas en este periodo.')}</Empty>
+        <Empty>No hay facturas en este periodo.</Empty>
       ) : (
         <ul className="divide-y divide-white/[0.06] overflow-hidden rounded-[22px] border border-white/[0.08] bg-card">
           {invoices.map((i) => (
             <li key={i.id} className={`px-4 py-3 text-[14px] ${i.status === 'void' ? 'opacity-50' : ''}`}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span>
-                  <span className="font-semibold">{t('Venta #{n}', { n: i.sequence })}</span> · {tr(lang, i.concept)} · {formatDateTime(i.createdAt, staff.timezone, lang)}
+                  <span className="font-semibold">Venta #{i.sequence}</span> · {i.concept} · {formatDateTime(i.createdAt, staff.timezone)}
                   <span className="block text-[13px] text-muted-foreground">
-                    {tr(lang, i.customerName)} · {DOC_TYPES[i.docType as keyof typeof DOC_TYPES] ? t(DOC_TYPES[i.docType as keyof typeof DOC_TYPES]) : i.docType} {i.docNumber}
+                    {i.customerName} · {DOC_TYPES[i.docType as keyof typeof DOC_TYPES] ?? i.docType} {i.docNumber}
                     {i.customerEmail ? ` · ${i.customerEmail}` : ''}
                   </span>
                 </span>
                 <span className="text-right">
                   <span className="font-semibold">{formatCop(i.total)}</span>
                   <span className="block text-[12.5px] text-muted-foreground">
-                    {t('base {base} + {tax}', { base: formatCop(i.base), tax: formatCop(i.tax) })} · {t(INVOICE_STATUS[i.status])}
+                    base {formatCop(i.base)} + {formatCop(i.tax)} · {INVOICE_STATUS[i.status]}
                   </span>
                 </span>
               </div>
@@ -85,8 +81,8 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
 
       {can(staff.role, 'locations.manage') ? (
         <section className={card}>
-          <h2 className="font-display text-[18px] font-bold">{t('Datos de facturación del negocio')}</h2>
-          <p className="mt-1 text-[14px] text-muted-foreground">{t('Los precios de la carta se toman con el impuesto incluido.')}</p>
+          <h2 className="font-display text-[18px] font-bold">Datos de facturación del negocio</h2>
+          <p className="mt-1 text-[14px] text-muted-foreground">Los precios de la carta se toman con el impuesto incluido.</p>
           <div className="mt-4">
             <FiscalForm fiscal={fiscal} />
           </div>

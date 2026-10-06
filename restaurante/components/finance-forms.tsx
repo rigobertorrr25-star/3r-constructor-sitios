@@ -6,7 +6,6 @@ import { formatCop } from '@/lib/format';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { CheckField, Field, Select } from './ui';
-import { useT } from './i18n';
 
 const CATEGORIES: [string, string][] = [
   ['suppliers', 'Proveedores'],
@@ -20,29 +19,28 @@ const CATEGORIES: [string, string][] = [
 ];
 
 export function ExpenseForm({ today }: { today: string }) {
-  const t = useT();
   return (
     <ActionForm action={addExpenseAction} resetOnOk className="grid gap-3 md:grid-cols-3">
       {(state) => (
         <>
-          <Select label={t('Tipo')} name="category" defaultValue={state?.values?.category ?? 'suppliers'}>
+          <Select label="Tipo" name="category" defaultValue={state?.values?.category ?? 'suppliers'}>
             {CATEGORIES.map(([v, l]) => (
               <option key={v} value={v}>
-                {t(l)}
+                {l}
               </option>
             ))}
           </Select>
-          <Field label={t('Valor')} name="amount" inputMode="numeric" required defaultValue={state?.values?.amount} />
-          <Field label={t('Fecha')} name="spentOn" type="date" required defaultValue={state?.values?.spentOn ?? today} />
+          <Field label="Valor" name="amount" inputMode="numeric" required defaultValue={state?.values?.amount} />
+          <Field label="Fecha" name="spentOn" type="date" required defaultValue={state?.values?.spentOn ?? today} />
           <div className="md:col-span-2">
-            <Field label={t('Descripción')} name="description" required minLength={3} maxLength={200} placeholder={t('Factura de carnes de la semana')} defaultValue={state?.values?.description} />
+            <Field label="Descripción" name="description" required minLength={3} maxLength={200} placeholder="Factura de carnes de la semana" defaultValue={state?.values?.description} />
           </div>
-          <Field label={t('Proveedor (opcional)')} name="supplier" maxLength={120} defaultValue={state?.values?.supplier} />
+          <Field label="Proveedor (opcional)" name="supplier" maxLength={120} defaultValue={state?.values?.supplier} />
           <div className="md:col-span-3">
-            <CheckField name="paidFromCash" label={t('Lo pagué con la plata de la caja')} hint={t('Sale de la caja abierta como una salida de efectivo.')} />
+            <CheckField name="paidFromCash" label="Lo pagué con la plata de la caja" hint="Sale de la caja abierta como una salida de efectivo." />
           </div>
           <div className="md:col-span-3">
-            <SubmitButton pendingText={t('Guardando…')}>{t('Registrar gasto')}</SubmitButton>
+            <SubmitButton pendingText="Guardando…">Registrar gasto</SubmitButton>
           </div>
         </>
       )}
@@ -66,7 +64,6 @@ type Row = {
 
 export function ExpenseRow({ expense: e, showLocation }: { expense: Row; showLocation: boolean }) {
   const [voiding, setVoiding] = useState(false);
-  const t = useT();
   return (
     <li className="px-4 py-3 text-[14px]">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -75,7 +72,7 @@ export function ExpenseRow({ expense: e, showLocation }: { expense: Row; showLoc
           {e.supplier ? ` · ${e.supplier}` : ''}
           <span className="block text-[12.5px] text-muted-foreground no-underline">
             {e.spentOn} · {e.createdBy}
-            {e.paidFromCash ? t(' · de la caja') : ''}
+            {e.paidFromCash ? ' · de la caja' : ''}
             {showLocation ? ` · ${e.locationName}` : ''}
           </span>
         </span>
@@ -83,24 +80,24 @@ export function ExpenseRow({ expense: e, showLocation }: { expense: Row; showLoc
           <span className={e.voided ? 'opacity-50' : ''}>{formatCop(e.amount)}</span>
           {!e.voided ? (
             <button type="button" className="text-[13px] text-muted-foreground hover:text-[#ffb4b5]" onClick={() => setVoiding(!voiding)}>
-              {t('Anular')}
+              Anular
             </button>
           ) : (
-            <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-[12px] text-[#ffb4b5]">{t('Anulado')}</span>
+            <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-[12px] text-[#ffb4b5]">Anulado</span>
           )}
         </span>
       </div>
-      {e.voidReason ? <p className="text-[12.5px] text-muted-foreground">{t('Motivo: {reason}', { reason: e.voidReason })}</p> : null}
+      {e.voidReason ? <p className="text-[12.5px] text-muted-foreground">Motivo: {e.voidReason}</p> : null}
       {voiding ? (
         <ActionForm action={voidExpenseAction} onOk={() => setVoiding(false)} className="mt-2 flex flex-wrap items-end gap-2">
           {() => (
             <>
               <input type="hidden" name="expenseId" value={e.id} />
               <div className="min-w-[200px] flex-1">
-                <Field label={t('Motivo')} name="reason" required minLength={3} maxLength={200} placeholder={t('Registrado dos veces…')} />
+                <Field label="Motivo" name="reason" required minLength={3} maxLength={200} placeholder="Registrado dos veces…" />
               </div>
-              <SubmitButton tone="danger" pendingText={t('Anulando…')}>
-                {t('Anular gasto')}
+              <SubmitButton tone="danger" pendingText="Anulando…">
+                Anular gasto
               </SubmitButton>
             </>
           )}

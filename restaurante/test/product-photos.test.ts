@@ -84,18 +84,4 @@ describe('fotos de los productos', { skip: url ? false : 'sin TEST_DATABASE_URL'
       ['Cambió la foto de Ceviche', 'Cambió la foto de Ceviche', 'Quitó la foto de Ceviche'],
     );
   });
-
-  it('la carta puede llevar nombre y descripción en inglés (opcionales)', async () => {
-    const menu0 = await orders.getMenu(owner.businessId);
-    const cat = menu0.categories[0];
-    await orders.saveCategory(owner, { id: cat.id, name: cat.name, nameEn: 'Starters', station: 'kitchen' });
-    await orders.saveProduct(owner, { id: ceviche, categoryId: cat.id, name: 'Ceviche', price: 28000, nameEn: 'Shrimp ceviche', descriptionEn: 'Lime, red onion and cilantro' });
-    await assert.rejects(orders.saveProduct(owner, { id: ceviche, categoryId: cat.id, name: 'Ceviche', price: 28000, nameEn: 'x' }), { code: 'INVALID' });
-    const menu = await reservations.publicMenu(slug);
-    assert.equal(menu!.categories[0].nameEn, 'Starters');
-    assert.equal(menu!.products[0].nameEn, 'Shrimp ceviche');
-    assert.equal(menu!.products[0].descriptionEn, 'Lime, red onion and cilantro');
-    await orders.saveProduct(owner, { id: ceviche, categoryId: cat.id, name: 'Ceviche', price: 28000 });
-    assert.equal((await orders.getMenu(owner.businessId)).products[0].nameEn, null, 'se puede borrar');
-  });
 });

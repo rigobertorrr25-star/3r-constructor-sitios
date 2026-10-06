@@ -7,7 +7,6 @@ import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { TableShape, ZoneTabs, type BoardTable } from './table-board';
 import { Alert, CheckField, Field, Select, card, primaryButton, quietButton } from './ui';
-import { useT, useTr } from './i18n';
 
 const W = 1000;
 const H = 640;
@@ -19,8 +18,6 @@ type Box = { x: number; y: number; w: number; h: number };
 const SHAPE_LABEL = { square: 'Cuadrada', round: 'Redonda', long: 'Larga' } as const;
 
 export function FloorEditor({ tables }: { tables: BoardTable[] }) {
-  const t = useT();
-  const trx = useTr();
   const zones = useMemo(() => {
     const list = [...new Set(tables.map((t) => t.zone))];
     return list.length ? list : ['Salón'];
@@ -104,13 +101,13 @@ export function FloorEditor({ tables }: { tables: BoardTable[] }) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <ZoneTabs zones={zones} zone={currentZone} onChange={setZone} />
           <div className="flex items-center gap-2">
-            {dirty ? <span className="text-[13px] text-warning">{t('Cambios sin guardar')}</span> : saved ? <span className="text-[13px] text-success">{t('Plano guardado')}</span> : null}
+            {dirty ? <span className="text-[13px] text-warning">Cambios sin guardar</span> : saved ? <span className="text-[13px] text-success">Plano guardado</span> : null}
             <button type="button" className={primaryButton} disabled={!dirty || pending} onClick={save}>
-              {pending ? t('Guardando…') : t('Guardar plano')}
+              {pending ? 'Guardando…' : 'Guardar plano'}
             </button>
           </div>
         </div>
-        {error ? <Alert>{trx(error)}</Alert> : null}
+        {error ? <Alert>{error}</Alert> : null}
         <div
           ref={canvas}
           onPointerMove={onPointerMove}
@@ -140,20 +137,20 @@ export function FloorEditor({ tables }: { tables: BoardTable[] }) {
               );
             })}
         </div>
-        <p className="text-[13px] text-muted-foreground">{t('Toca una mesa para editarla. El punto blanco de la esquina cambia su tamaño.')}</p>
+        <p className="text-[13px] text-muted-foreground">Toca una mesa para editarla. El punto blanco de la esquina cambia su tamaño.</p>
       </div>
 
       <aside className="space-y-4">
         {selected ? (
           <section className={card}>
-            <h2 className="font-display text-[18px] font-bold">{t('Mesa {n}', { n: selected.number })}</h2>
+            <h2 className="font-display text-[18px] font-bold">Mesa {selected.number}</h2>
             <ActionForm action={updateTableAction} className="mt-4 space-y-3">
               {() => (
                 <>
                   <input type="hidden" name="tableId" value={selected.id} />
                   <TableFields defaults={selected} />
-                  <CheckField name="isBlocked" label={t('Bloqueada')} hint={t('No se puede abrir (dañada, reservada para un evento…).')} defaultChecked={selected.isBlocked} />
-                  <SubmitButton pendingText={t('Guardando…')}>{t('Guardar mesa')}</SubmitButton>
+                  <CheckField name="isBlocked" label="Bloqueada" hint="No se puede abrir (dañada, reservada para un evento…)." defaultChecked={selected.isBlocked} />
+                  <SubmitButton pendingText="Guardando…">Guardar mesa</SubmitButton>
                 </>
               )}
             </ActionForm>
@@ -161,31 +158,31 @@ export function FloorEditor({ tables }: { tables: BoardTable[] }) {
               {() => (
                 <>
                   <input type="hidden" name="tableId" value={selected.id} />
-                  <SubmitButton tone="danger" pendingText={t('Quitando…')}>
-                    {t('Quitar del plano')}
+                  <SubmitButton tone="danger" pendingText="Quitando…">
+                    Quitar del plano
                   </SubmitButton>
-                  <p className="mt-2 text-[12.5px] text-muted-foreground">{t('Su historial se conserva. Si vuelves a crear una mesa con el mismo número, se recupera.')}</p>
+                  <p className="mt-2 text-[12.5px] text-muted-foreground">Su historial se conserva. Si vuelves a crear una mesa con el mismo número, se recupera.</p>
                 </>
               )}
             </ActionForm>
           </section>
         ) : null}
         <section className={card}>
-          <h2 className="font-display text-[18px] font-bold">{t('Agregar mesa')}</h2>
+          <h2 className="font-display text-[18px] font-bold">Agregar mesa</h2>
           <div onInput={(e) => (e.target as HTMLInputElement).name === 'zone' && (newZone.current = (e.target as HTMLInputElement).value.trim())}>
           <ActionForm action={createTableAction} className="mt-4 space-y-3" resetOnOk onOk={() => newZone.current && setZone(newZone.current)}>
             {(state) => (
               <>
                 <TableFields defaults={{ zone: state?.values?.zone ?? currentZone, number: state?.values?.number ?? '', capacity: Number(state?.values?.capacity) || 4, shape: (state?.values?.shape as BoardTable['shape']) ?? 'square' }} />
-                <SubmitButton pendingText={t('Agregando…')}>{t('Agregar')}</SubmitButton>
+                <SubmitButton pendingText="Agregando…">Agregar</SubmitButton>
               </>
             )}
           </ActionForm>
           </div>
-          <p className="mt-3 text-[12.5px] text-muted-foreground">{t('Para una zona nueva (Terraza, Segundo piso…), escribe su nombre en Zona.')}</p>
+          <p className="mt-3 text-[12.5px] text-muted-foreground">Para una zona nueva (Terraza, Segundo piso…), escribe su nombre en Zona.</p>
         </section>
         <button type="button" className={`${quietButton} w-full`} onClick={() => setSelectedId(null)} hidden={!selected}>
-          {t('Deseleccionar')}
+          Deseleccionar
         </button>
       </aside>
     </div>
@@ -193,16 +190,15 @@ export function FloorEditor({ tables }: { tables: BoardTable[] }) {
 }
 
 function TableFields({ defaults }: { defaults: Pick<BoardTable, 'zone' | 'number' | 'capacity' | 'shape'> }) {
-  const t = useT();
   return (
     <div className="grid grid-cols-2 gap-3">
-      <Field label={t('Número')} name="number" required maxLength={12} defaultValue={defaults.number} />
-      <Field label={t('Puestos')} name="capacity" type="number" min={1} max={40} required defaultValue={defaults.capacity} />
-      <Field label={t('Zona')} name="zone" required maxLength={40} defaultValue={defaults.zone} />
-      <Select label={t('Forma')} name="shape" defaultValue={defaults.shape}>
+      <Field label="Número" name="number" required maxLength={12} defaultValue={defaults.number} />
+      <Field label="Puestos" name="capacity" type="number" min={1} max={40} required defaultValue={defaults.capacity} />
+      <Field label="Zona" name="zone" required maxLength={40} defaultValue={defaults.zone} />
+      <Select label="Forma" name="shape" defaultValue={defaults.shape}>
         {Object.entries(SHAPE_LABEL).map(([value, label]) => (
           <option key={value} value={value}>
-            {t(label)}
+            {label}
           </option>
         ))}
       </Select>
