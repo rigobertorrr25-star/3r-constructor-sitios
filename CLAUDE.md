@@ -80,6 +80,8 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   escoge el restaurante de una lista (los activos) y se toca el nombre de la persona y se pone su PIN (el código de empleado queda interno; no puede haber dos nombres
   activos iguales); `/n/{negocio}` sigue sirviendo. Cada restaurante puede tener su foto de fondo (Sedes → Fondo del restaurante;
   se ve en el ingreso y detrás de la app). Fotos de cada producto (Carta → Editar, 6 oct 2026): salen en la carta QR y en
+  la pantalla de pedido del mesero. **El sistema va solo en español** (6 oct 2026: Rigoberto lo aclaró; lo que pidió en
+  inglés fueron los documentos de venta, no la app). Fotos de cada producto (Carta → Editar, 6 oct 2026): salen en la carta QR y en
   la pantalla de pedido del mesero. **Impresión de comandas** (6 oct 2026, pedido de Rigoberto: los restaurantes
   trabajan con comandas impresas, no con pantallas): impresoras térmicas de red por sede en `/app/impresoras`; comandas por
   estación, anulaciones, precuenta y cierre de caja salen impresos; un programa de 3R en un PC del local

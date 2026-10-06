@@ -371,6 +371,17 @@ CREATE TABLE IF NOT EXISTS daily_briefs (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (business_id, scope, day)
 );
+-- Una versión de prueba (6 oct 2026, sistema en inglés, que no se usó) cambió esta tabla: un resumen por idioma.
+-- Si esa versión alcanzó a tocar la base, se deja como estaba para que el resumen del día siga guardándose.
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'daily_briefs' AND column_name = 'lang') THEN
+    DELETE FROM daily_briefs WHERE lang <> 'es';
+    ALTER TABLE daily_briefs DROP COLUMN lang;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'daily_briefs_business_id_scope_day_key') THEN
+    ALTER TABLE daily_briefs ADD CONSTRAINT daily_briefs_business_id_scope_day_key UNIQUE (business_id, scope, day);
+  END IF;
+END $$;
 
 -- ───────── módulo 13: servicios y citas (barberías, peluquerías, spas) ─────────
 
