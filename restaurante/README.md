@@ -193,7 +193,7 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
 ## Cómo funciona (módulo 12: resumen del día con IA)
 
 - Arriba del tablero, **"¿Qué pasó?"**: un párrafo para el dueño con lo que pasó en el día y, como máximo, tres cosas
-  para revisar empezando por la señal más grave del radar. Lo escribe Claude (modelo `claude-opus-5-5`, esfuerzo bajo)
+  para revisar empezando por la señal más grave del radar. Lo escribe Claude (modelo `claude-sonnet-5-5`, la mitad del precio de Opus; esfuerzo bajo)
   con los **números reales** del tablero; se le pide no inventar cifras ni causas.
 - A la IA solo se le mandan **cifras agregadas** del negocio (ventas, costos, señales del radar, lo más vendido): nada de
   nombres de clientes ni de empleados.

@@ -7,7 +7,8 @@ import { query } from './db';
 import { getDashboard, type Dashboard } from './dashboard';
 import { requirePermission, type Actor } from './store';
 
-const MODEL = 'claude-opus-5-5';
+// Sonnet: la mitad del precio de Opus; para un párrafo corto sobre números ya calculados alcanza (pedido de Rigoberto, 6 oct 2026).
+const MODEL = 'claude-sonnet-5-5';
 
 const money = (n: number) => formatCop(n);
 

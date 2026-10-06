@@ -74,7 +74,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   construidos** (detalle en `restaurante/README.md`); 49 pruebas contra PostgreSQL real. **Publicado (5 oct 2026)** en
   https://3r-constructor-sitios-git1.vercel.app (proyecto propio de Vercel, Root Directory `restaurante`; base en el proyecto
   `restaurante` de Neon, id `misty-haze-65464257`). Variables en Vercel: `DATABASE_URL`, `ADMIN_PASSWORD`,
-  `SESSION_SECRET` y `ANTHROPIC_API_KEY` (puesta el 5 oct 2026, llave propia `restaurant-control`; el Tablero ya dice «Escrito con IA»). Usar siempre la dirección fija,
+  `SESSION_SECRET` y `ANTHROPIC_API_KEY` (puesta el 5 oct 2026, llave propia `restaurant-control`; el Tablero ya dice «Escrito con IA»; el resumen usa `claude-sonnet-5-5` desde el 6 oct 2026 para gastar la mitad). Usar siempre la dirección fija,
   no la de cada publicación. Pendiente de él: elegir proveedor de factura
   electrónica (Alegra, Siigo…) para el envío a la DIAN (módulo 10: todo lo demás listo). El esquema de la base se aplica solo cuando cambia (tabla `schema_meta`). Ingreso (5 oct 2026): en la portada se
   escoge el restaurante de una lista (los activos) y se toca el nombre de la persona y se pone su PIN (el código de empleado queda interno; no puede haber dos nombres
