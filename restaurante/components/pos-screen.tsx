@@ -11,6 +11,7 @@ import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { useNow } from './table-board';
 import { Alert, Empty, Field, card, inputClass, primaryButton, quietButton } from './ui';
+import { PrintBillButton } from './printer-forms';
 
 type Item = Omit<OrderItemView, 'voidedAt'> & { voidedAt: string | null };
 type Round = { id: string; number: number; sentAt: string; sentBy: string; items: Item[] };
@@ -71,6 +72,7 @@ export function PosScreen({
   canVoid,
   canCharge,
   timeZone,
+  printBill = false,
 }: {
   session: Session;
   rounds: Round[];
@@ -80,6 +82,8 @@ export function PosScreen({
   canVoid: boolean;
   canCharge: boolean;
   timeZone: string;
+  /** La sede tiene impresora de caja: la precuenta se imprime allá. */
+  printBill?: boolean;
 }) {
   const now = useNow();
   const { lines, setLines, clientKey, pending: queued, setPending: setQueued, reset } = useCart(session.id);
@@ -264,9 +268,13 @@ export function PosScreen({
           </div>
 
           <div className="flex gap-2">
-            <Link href={`/cuenta/${session.id}`} target="_blank" className={`${quietButton} flex-1`}>
-              Precuenta
-            </Link>
+            {printBill ? (
+              <PrintBillButton sessionId={session.id} className="flex flex-1" />
+            ) : (
+              <Link href={`/cuenta/${session.id}`} target="_blank" className={`${quietButton} flex-1`}>
+                Precuenta
+              </Link>
+            )}
             {canCharge && !closed ? (
               <Link href={`/app/caja/mesa/${session.id}`} className={`${quietButton} flex-1`}>
                 Cobrar

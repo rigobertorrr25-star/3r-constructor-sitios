@@ -26,6 +26,7 @@ import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment,
 import { saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { removeBackground, saveBackground } from '@/lib/backgrounds';
+import { createAgentCode, enqueueClosing, printBill, printTest, removePrinter, reprint, savePrinter } from '@/lib/printing';
 import {
   AppError,
   closeTable,
@@ -421,6 +422,8 @@ export async function closeShiftAction(_prev: FormState, formData: FormData): Pr
     ['/app/caja'],
   );
   if (state?.error) return state;
+  // El resumen sale en la impresora de caja; si falla, la caja igual quedó cerrada (se reimprime desde Impresoras).
+  await enqueueClosing(staff, shiftId).catch((error) => console.error('No se pudo mandar a imprimir el cierre:', error));
   redirect(`/app/caja/turno/${shiftId}`);
 }
 
@@ -726,4 +729,58 @@ export async function saveBackgroundAction(_prev: FormState, formData: FormData)
 export async function removeBackgroundAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff('locations.manage');
   return run(formData, () => removeBackground(staff), ['/', '/app', '/app/sedes'], 'Listo. Se quitó el fondo.');
+}
+
+// ───────── impresión ─────────
+
+const checked = (formData: FormData, name: string) => formData.get(name) === 'on' || formData.get(name) === '1';
+
+export async function savePrinterAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('printers.manage');
+  const id = optionalId(formData, 'printerId');
+  return run(
+    formData,
+    () =>
+      savePrinter(staff, id, {
+        name: text(formData, 'name'),
+        host: text(formData, 'host'),
+        port: int(formData, 'port'),
+        width: int(formData, 'width'),
+        printsKitchen: checked(formData, 'kitchen'),
+        printsBar: checked(formData, 'bar'),
+        printsCashier: checked(formData, 'cashier'),
+        copies: int(formData, 'copies'),
+        isActive: id ? checked(formData, 'isActive') : true,
+      }),
+    ['/app/impresoras'],
+    id ? 'Guardado.' : 'Impresora agregada. Imprime una prueba para revisar que quedó bien.',
+  );
+}
+
+export async function removePrinterAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('printers.manage');
+  return run(formData, () => removePrinter(staff, text(formData, 'printerId')), ['/app/impresoras'], 'Impresora quitada.');
+}
+
+export async function printTestAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('printers.manage');
+  return run(formData, () => printTest(staff, text(formData, 'printerId')), ['/app/impresoras'], 'Prueba enviada. Debe salir en unos segundos.');
+}
+
+export async function reprintAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('printers.manage');
+  return run(formData, () => reprint(staff, text(formData, 'jobId')), ['/app/impresoras'], 'Enviado otra vez.');
+}
+
+/** El código se muestra una sola vez en el mensaje (no se guarda tal cual). */
+export async function createAgentCodeAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('printers.manage');
+  let code = '';
+  const state = await run(formData, async () => (code = await createAgentCode(staff)), ['/app/impresoras']);
+  return state?.error ? state : { ok: Date.now(), message: code };
+}
+
+export async function printBillAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => printBill(staff, text(formData, 'sessionId')), [], 'Precuenta enviada a la impresora de caja.');
 }
