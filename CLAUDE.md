@@ -71,7 +71,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   solo Azul Caribe), y también barberías/peluquerías (módulo 13). Nace de los bocetos de 13 módulos de Rigoberto (ZIP): se
   tomaron las reglas y se reescribió con la tecnología de la asistencia, varios negocios desde el día uno, plata en pesos
   enteros, nada se borra (auditoría y movimientos de inventario protegidos en la base). **Los 13 módulos están
-  construidos** (detalle en `restaurante/README.md`); 49 pruebas contra PostgreSQL real. **Publicado (5 oct 2026)** en
+  construidos** (detalle en `restaurante/README.md`); 50 pruebas contra PostgreSQL real. **Publicado (5 oct 2026)** en
   https://3r-constructor-sitios-git1.vercel.app (proyecto propio de Vercel, Root Directory `restaurante`; base en el proyecto
   `restaurante` de Neon, id `misty-haze-65464257`). Variables en Vercel: `DATABASE_URL`, `ADMIN_PASSWORD`,
   `SESSION_SECRET` y `ANTHROPIC_API_KEY` (puesta el 5 oct 2026, llave propia `restaurant-control`; el Tablero ya dice «Escrito con IA»; el resumen usa `claude-sonnet-5-5` desde el 6 oct 2026 para gastar la mitad). Usar siempre la dirección fija,

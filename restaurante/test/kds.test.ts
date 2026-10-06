@@ -108,4 +108,21 @@ describe('módulo 03: cocina y barra', { skip: url ? false : 'sin TEST_DATABASE_
     await kds.moveTicket(bartender, after.id, 'delivered');
     assert.equal((await kds.listTickets(bartender, 'bar'))[0].status, 'delivered');
   });
+
+  it('las comandas de una mesa cerrada hace horas salen de las pantallas', async () => {
+    const food = (await db.query<{ id: string }>(`SELECT id FROM menu_products WHERE business_id = $1 AND name = 'Papas'`, [owner.businessId]))[0].id;
+    const table = await store.createTable(owner, { zone: 'Salón', number: '9', capacity: 2, shape: 'square' });
+    const old = await store.openTable(waiter, table, { guests: 1 });
+    await orders.sendOrder(waiter, old, [{ productId: food, quantity: 1 }], randomUUID());
+    const mine = async () => (await kds.listTickets(cook, 'kitchen')).filter((t) => t.tableNumber === '9');
+    const counted = async () => (await kds.pendingCounts(cook)).kitchen ?? 0;
+    const before = await counted();
+    // Cobrada y cerrada hace un momento: la cocina todavía la ve (pudieron cobrar antes de servir).
+    await db.query(`UPDATE table_sessions SET status = 'closed', closed_at = now() - interval '10 minutes' WHERE id = $1`, [old]);
+    assert.equal((await mine()).length, 1);
+    // Cerrada hace más de 3 horas: ya no estorba en la pantalla ni en el contador.
+    await db.query(`UPDATE table_sessions SET closed_at = now() - interval '4 hours' WHERE id = $1`, [old]);
+    assert.equal((await mine()).length, 0);
+    assert.equal(await counted(), before - 1);
+  });
 });

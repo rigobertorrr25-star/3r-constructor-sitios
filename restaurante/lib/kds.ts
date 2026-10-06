@@ -30,6 +30,12 @@ function checkStation(actor: Actor, station: string): Station {
 }
 
 /** Comandas por hacer de una estación (y las entregadas en la última hora, para deshacer un toque equivocado). */
+/**
+ * Comandas de una mesa ya cobrada y cerrada: se siguen viendo un rato (se pudo cobrar antes de que salieran los platos),
+ * pero pasadas 3 horas salen de las pantallas para que no se acumulen comandas viejas que nadie marcó.
+ */
+const NOT_STALE = `NOT (ts.status = 'closed' AND ts.closed_at < now() - interval '3 hours')`;
+
 export async function listTickets(actor: Actor, station: string): Promise<KdsTicket[]> {
   requirePermission(actor, 'kds.view');
   const st = checkStation(actor, station);
@@ -45,6 +51,7 @@ export async function listTickets(actor: Actor, station: string): Promise<KdsTic
        JOIN order_items i ON i.ticket_id = t.id
       WHERE t.location_id = $1 AND t.business_id = $2 AND t.station = $3
         AND (t.status <> 'delivered' OR t.delivered_at > now() - interval '1 hour')
+        AND ${NOT_STALE}
       ORDER BY r.sent_at, i.name`,
     [actor.locationId, actor.businessId, st],
   );
@@ -63,7 +70,10 @@ export async function listTickets(actor: Actor, station: string): Promise<KdsTic
 /** Cuántas comandas nuevas tiene cada estación (para el aviso en el menú). */
 export async function pendingCounts(actor: Actor) {
   const rows = await query<{ station: Station; n: number }>(
-    `SELECT station, count(*)::int AS n FROM station_tickets WHERE location_id = $1 AND business_id = $2 AND status = 'sent' GROUP BY station`,
+    `SELECT t.station, count(*)::int AS n
+       FROM station_tickets t JOIN order_rounds r ON r.id = t.round_id JOIN table_sessions ts ON ts.id = r.session_id
+      WHERE t.location_id = $1 AND t.business_id = $2 AND t.status = 'sent' AND ${NOT_STALE}
+      GROUP BY t.station`,
     [actor.locationId, actor.businessId],
   );
   return Object.fromEntries(rows.map((r) => [r.station, r.n])) as Partial<Record<Station, number>>;
@@ -134,7 +144,7 @@ export async function readyToServe(actor: Actor): Promise<ReadyTicket[]> {
        FROM station_tickets t JOIN order_rounds r ON r.id = t.round_id
        JOIN table_sessions ts ON ts.id = r.session_id JOIN dining_tables dt ON dt.id = ts.table_id
        JOIN order_items i ON i.ticket_id = t.id AND i.voided_at IS NULL
-      WHERE t.location_id = $1 AND t.business_id = $2 AND t.status = 'ready'
+      WHERE t.location_id = $1 AND t.business_id = $2 AND t.status = 'ready' AND ${NOT_STALE}
       ORDER BY t.ready_at, i.name`,
     [actor.locationId, actor.businessId],
   );

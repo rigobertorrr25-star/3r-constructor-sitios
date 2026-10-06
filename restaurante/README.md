@@ -93,6 +93,8 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   "Entregado". En la pantalla del pedido, cada producto muestra si está enviado, preparando, listo o entregado.
 - Se guardan las horas reales de inicio y de "lista" de cada comanda: el tablero del dueño (módulo 08) las usará para
   medir tiempos de preparación.
+- Las comandas de una mesa ya cobrada y cerrada se siguen viendo hasta 3 horas después del cierre (se pudo cobrar antes
+  de servir); después salen de las pantallas y del contador, para que no se acumulen comandas que nadie marcó.
 
 ## Cómo funciona (módulo 04: caja y pagos)
 
