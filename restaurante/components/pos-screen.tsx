@@ -185,7 +185,7 @@ export function PosScreen({
       {closed ? <Alert>{t('Esta mesa ya se cerró.')}</Alert> : null}
 
       <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
-        <section className="space-y-4">
+        <section className="min-w-0 space-y-4">
           <input
             type="search"
             className={inputClass}
