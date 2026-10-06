@@ -1,21 +1,23 @@
 import { formatCop } from '@/lib/format';
 import { addDays } from '@/lib/periods';
+import { makeT, type Lang } from '@/lib/i18n';
 
 /**
  * Ventas por día: una sola serie en barras delgadas (sin leyenda: el título la nombra). Cada barra muestra su
  * valor al pasar el cursor o al enfocarla, y hay una vista de tabla para quien no ve la gráfica.
  */
-export function SalesByDay({ days, from, to }: { days: { day: string; sales: number }[]; from: string; to: string }) {
+export function SalesByDay({ days, from, to, lang = 'es' }: { days: { day: string; sales: number }[]; from: string; to: string; lang?: Lang }) {
+  const t = makeT(lang);
   const all: { day: string; sales: number }[] = [];
   const by = new Map(days.map((d) => [d.day, d.sales]));
   for (let d = from; d <= to && all.length < 400; d = addDays(d, 1)) all.push({ day: d, sales: by.get(d) ?? 0 });
   const max = Math.max(...all.map((d) => d.sales), 1);
-  const label = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const label = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateString(lang === 'en' ? 'en-US' : 'es-CO', { day: 'numeric', month: 'short', timeZone: 'UTC' });
   if (all.length === 1) return <p className="mt-2 font-display text-[24px] font-bold">{formatCop(all[0].sales)}</p>;
   const best = all.reduce((a, b) => (b.sales > a.sales ? b : a));
   return (
     <div className="mt-3">
-      <div className="relative flex h-36 items-end gap-[2px] border-b border-white/[0.12]" role="img" aria-label={`Ventas por día del ${label(from)} al ${label(to)}. Mejor día: ${label(best.day)} con ${formatCop(best.sales)}.`}>
+      <div className="relative flex h-36 items-end gap-[2px] border-b border-white/[0.12]" role="img" aria-label={t('Ventas por día del {from} al {to}. Mejor día: {best} con {amount}.', { from: label(from), to: label(to), best: label(best.day), amount: formatCop(best.sales) })}>
         {all.map((d) => (
           <div key={d.day} tabIndex={0} className="group relative flex h-full flex-1 items-end outline-none" aria-label={`${label(d.day)}: ${formatCop(d.sales)}`}>
             <div className="mx-auto w-full max-w-[40px] rounded-t-[4px] bg-primary/85 transition group-hover:bg-primary group-focus:bg-primary" style={{ height: `${(d.sales / max) * 100}%`, minHeight: d.sales ? 2 : 0 }} />
@@ -30,7 +32,7 @@ export function SalesByDay({ days, from, to }: { days: { day: string; sales: num
         <span>{label(to)}</span>
       </div>
       <details className="mt-2 text-[13px]">
-        <summary className="cursor-pointer text-muted-foreground">Ver como tabla</summary>
+        <summary className="cursor-pointer text-muted-foreground">{t('Ver como tabla')}</summary>
         <table className="mt-2 w-full">
           <tbody>
             {all.map((d) => (

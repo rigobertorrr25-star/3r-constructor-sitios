@@ -5,8 +5,9 @@ import { useState, useTransition } from 'react';
 import { saveRecipeAction } from '@/app/actions';
 import { orOffline } from '@/lib/offline';
 import { formatCop } from '@/lib/format';
-import type { Unit } from '@/lib/units';
+import { UNIT_SHORT, type Unit } from '@/lib/units';
 import { Alert, card, inputClass, primaryButton, quietButton } from './ui';
+import { useT, useTr } from './i18n';
 
 type Item = { id: string; name: string; unit: Unit; unitCost: number; bottleSize: number | null };
 type Line = { itemId: string; quantity: string };
@@ -21,6 +22,8 @@ export function RecipeEditor({ productId, price, initial, items }: { productId: 
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, start] = useTransition();
+  const t = useT();
+  const trx = useTr();
   const byId = new Map(items.map((i) => [i.id, i]));
   const cost = lines.reduce((s, l) => s + num(l.quantity) * (byId.get(l.itemId)?.unitCost ?? 0), 0);
   const margin = price > 0 ? ((price - cost) / price) * 100 : 0;
@@ -29,9 +32,9 @@ export function RecipeEditor({ productId, price, initial, items }: { productId: 
   if (items.length === 0) {
     return (
       <p className="text-[15px] text-muted-foreground">
-        Primero crea los insumos en{' '}
+        {t('Primero crea los insumos en')}{' '}
         <Link href="/app/inventario" className="text-primary hover:underline">
-          Inventario
+          {t('Inventario')}
         </Link>
         .
       </p>
@@ -48,10 +51,10 @@ export function RecipeEditor({ productId, price, initial, items }: { productId: 
               <li key={i} className="grid grid-cols-[1fr_140px_auto] items-end gap-2">
                 <div>
                   <label className="text-sm font-medium" htmlFor={`item-${i}`}>
-                    Insumo
+                    {t('Insumo')}
                   </label>
                   <select id={`item-${i}`} className={`${inputClass} mt-1.5`} value={l.itemId} onChange={(e) => set(i, { itemId: e.target.value })}>
-                    <option value="">Elige…</option>
+                    <option value="">{t('Elige…')}</option>
                     {items.map((it) => (
                       <option key={it.id} value={it.id}>
                         {it.name}
@@ -61,11 +64,11 @@ export function RecipeEditor({ productId, price, initial, items }: { productId: 
                 </div>
                 <div>
                   <label className="text-sm font-medium" htmlFor={`qty-${i}`}>
-                    Cantidad {item ? `(${item.unit})` : ''}
+                    {item ? t('Cantidad ({unit})', { unit: t(UNIT_SHORT[item.unit]) }) : t('Cantidad')}
                   </label>
                   <input id={`qty-${i}`} className={`${inputClass} mt-1.5`} inputMode="decimal" value={l.quantity} onChange={(e) => set(i, { quantity: e.target.value })} placeholder={item?.bottleSize ? '45' : ''} />
                 </div>
-                <button type="button" className={`${quietButton} mb-1`} onClick={() => (setSaved(false), setLines((prev) => prev.filter((_, j) => j !== i)))} aria-label="Quitar">
+                <button type="button" className={`${quietButton} mb-1`} onClick={() => (setSaved(false), setLines((prev) => prev.filter((_, j) => j !== i)))} aria-label={t('Quitar')}>
                   ✕
                 </button>
               </li>
@@ -73,16 +76,16 @@ export function RecipeEditor({ productId, price, initial, items }: { productId: 
           })}
         </ul>
         <button type="button" className={`${quietButton} mt-4`} onClick={() => setLines((prev) => [...prev, { itemId: '', quantity: '' }])}>
-          + Otro insumo
+          {t('+ Otro insumo')}
         </button>
         {error ? (
           <div className="mt-4">
-            <Alert>{error}</Alert>
+            <Alert>{trx(error)}</Alert>
           </div>
         ) : null}
         {saved ? (
           <div className="mt-4">
-            <Alert tone="ok">Receta guardada.</Alert>
+            <Alert tone="ok">{t('Receta guardada.')}</Alert>
           </div>
         ) : null}
         <button
@@ -98,23 +101,23 @@ export function RecipeEditor({ productId, price, initial, items }: { productId: 
             })
           }
         >
-          {pending ? 'Guardando…' : 'Guardar receta'}
+          {pending ? t('Guardando…') : t('Guardar receta')}
         </button>
       </section>
       <aside className={`${card} space-y-2 text-[15px]`}>
         <p className="flex justify-between">
-          <span className="text-muted-foreground">Precio de venta</span> {formatCop(price)}
+          <span className="text-muted-foreground">{t('Precio de venta')}</span> {formatCop(price)}
         </p>
         <p className="flex justify-between">
-          <span className="text-muted-foreground">Costo de insumos</span> {formatCop(cost)}
+          <span className="text-muted-foreground">{t('Costo de insumos')}</span> {formatCop(cost)}
         </p>
         <p className="flex justify-between font-semibold">
-          <span>Margen</span>
+          <span>{t('Margen')}</span>
           <span className={margin < 50 ? 'text-warning' : 'text-success'}>
             {formatCop(price - cost)} ({Math.round(margin)} %)
           </span>
         </p>
-        <p className="pt-2 text-[12.5px] text-muted-foreground">El costo usa el promedio de las compras de cada insumo.</p>
+        <p className="pt-2 text-[12.5px] text-muted-foreground">{t('El costo usa el promedio de las compras de cada insumo.')}</p>
       </aside>
     </div>
   );

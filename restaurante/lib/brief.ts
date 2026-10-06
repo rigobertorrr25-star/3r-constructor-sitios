@@ -6,6 +6,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { query } from './db';
 import { getDashboard, type Dashboard } from './dashboard';
 import { requirePermission, type Actor } from './store';
+import { tr, type Lang } from './i18n';
 
 // Sonnet: la mitad del precio de Opus; para un párrafo corto sobre números ya calculados alcanza (pedido de Rigoberto, 6 oct 2026).
 const MODEL = 'claude-sonnet-5-5';
@@ -19,6 +20,13 @@ confianza: un párrafo corto que diga qué pasó hoy, y luego como máximo tres 
 la señal más grave del radar. Usa solo las cifras que recibes, escritas en pesos con punto de miles ($8.460.000). No
 inventes causas: si algo es una sospecha, dilo como sospecha. Si fue un día sin ventas, dilo en una frase. Sin títulos,
 sin viñetas, sin emojis. Máximo 120 palabras.`;
+
+// La misma instrucción cuando quien mira usa el sistema en inglés (los datos siguen llegando con llaves en español).
+const SYSTEM_EN = `${SYSTEM}
+
+IMPORTANT: write the message in plain, natural US English (not Spanish). Write amounts exactly as Colombian pesos with
+the same dot separators and add COP once (for example $8.460.000 COP). Translate the names of the leak-radar signals; keep
+product names as they are.`;
 
 /** Lo que se le manda a la IA: solo agregados del negocio (nada de clientes ni empleados por nombre). */
 export function briefFacts(d: Dashboard, label: string) {
@@ -62,8 +70,24 @@ export function templateBrief(d: Dashboard, label: string) {
   return parts.join(' ');
 }
 
+/** La plantilla en inglés. */
+function templateBriefEn(d: Dashboard, label: string) {
+  const st = d.statement;
+  if (st.sales === 0 && st.tables === 0) return `${label}: no paid sales yet.${d.openTables ? ` There are ${d.openTables} open tables with ${money(d.openTablesValue)} to collect.` : ''}`;
+  const parts = [
+    `${label}, sales were ${money(st.sales)} COP across ${st.tables} ${st.tables === 1 ? 'table' : 'tables'} (average check ${money(st.averageTicket)}), with an operating profit of ${money(st.operatingProfit)}.`,
+  ];
+  const top = d.topByStation.flatMap((t) => t.items)[0];
+  if (top) parts.push(`Best seller: ${top.name} (${top.quantity}).`);
+  const alerts = d.signals.filter((s) => s.level !== 'ok').sort((a, b) => b.points - a.points);
+  if (alerts.length) parts.push(`To review: ${alerts.slice(0, 3).map((s) => `${tr('en', s.title).toLowerCase()} (${s.value})`).join('; ')}. Leak radar index: ${d.score}/100.`);
+  else parts.push(`The leak radar shows no alerts (${d.score}/100).`);
+  if (d.lowStock.length) parts.push(`To buy: ${d.lowStock.map((l) => l.name).join(', ')}.`);
+  return parts.join(' ');
+}
+
 /** Pide el texto a Claude. Devuelve null si no hay llave, si declina o si falla (y se usa la plantilla). */
-async function writeWithClaude(facts: ReturnType<typeof briefFacts>): Promise<string | null> {
+async function writeWithClaude(facts: ReturnType<typeof briefFacts>, lang: Lang): Promise<string | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   const client = new Anthropic();
   try {
@@ -75,7 +99,7 @@ async function writeWithClaude(facts: ReturnType<typeof briefFacts>): Promise<st
       // Si el modelo declina por política, la API reintenta sola con otro modelo.
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
-      system: SYSTEM,
+      system: lang === 'en' ? SYSTEM_EN : SYSTEM,
       messages: [{ role: 'user', content: `Números del día (JSON):\n${JSON.stringify(facts)}` }],
     });
     if (response.stop_reason === 'refusal') return null;
@@ -99,31 +123,40 @@ export type Brief = { text: string; source: 'ia' | 'plantilla'; createdAt: Date;
  * El resumen de un día. Se guarda una vez por día y alcance; `refresh` lo vuelve a escribir (por ejemplo, al final
  * de la noche con todas las ventas). El día de hoy guardado con más de 1 hora se rehace solo.
  */
-export async function getBrief(actor: Actor, input: { day: string; locationId: string | null; timeZone: string; refresh?: boolean }): Promise<Brief> {
+export async function getBrief(actor: Actor, input: { day: string; locationId: string | null; timeZone: string; refresh?: boolean; lang?: Lang }): Promise<Brief> {
   requirePermission(actor, 'finance.view');
   const d = await getDashboard(actor, { from: input.day, to: input.day, locationId: input.locationId }, input.timeZone);
   const scope = d.statement.scope ?? 'all';
+  const lang: Lang = input.lang === 'en' ? 'en' : 'es';
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: input.timeZone }).format(new Date());
   if (!input.refresh) {
     const saved = (
       await query<{ text: string; source: string; createdAt: Date; stale: boolean }>(
         `SELECT text, source, created_at AS "createdAt", (day = $4::date AND created_at < now() - interval '1 hour') AS stale
-           FROM daily_briefs WHERE business_id = $1 AND scope = $2 AND day = $3`,
-        [actor.businessId, scope, input.day, today],
+           FROM daily_briefs WHERE business_id = $1 AND scope = $2 AND day = $3 AND lang = $5`,
+        [actor.businessId, scope, input.day, today, lang],
       )
     )[0];
     if (saved && !saved.stale) return { text: saved.text, source: saved.source === 'plantilla' ? 'plantilla' : 'ia', createdAt: saved.createdAt, cached: true };
   }
-  const label = input.day === today ? 'Hoy' : `El ${new Date(`${input.day}T12:00:00Z`).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', timeZone: 'UTC' })}`;
-  const ai = await writeWithClaude(briefFacts(d, label));
-  const text = ai ?? templateBrief(d, label);
+  const date = new Date(`${input.day}T12:00:00Z`);
+  const label =
+    lang === 'en'
+      ? input.day === today
+        ? 'Today'
+        : `On ${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' })}`
+      : input.day === today
+        ? 'Hoy'
+        : `El ${date.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', timeZone: 'UTC' })}`;
+  const ai = await writeWithClaude(briefFacts(d, label), lang);
+  const text = ai ?? (lang === 'en' ? templateBriefEn(d, label) : templateBrief(d, label));
   const source = ai ? 'ia' : 'plantilla';
   const row = (
     await query<{ createdAt: Date }>(
-      `INSERT INTO daily_briefs (business_id, scope, day, text, source, created_by) VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (business_id, scope, day) DO UPDATE SET text = EXCLUDED.text, source = EXCLUDED.source, created_by = EXCLUDED.created_by, created_at = now()
+      `INSERT INTO daily_briefs (business_id, scope, day, text, source, created_by, lang) VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (business_id, scope, day, lang) DO UPDATE SET text = EXCLUDED.text, source = EXCLUDED.source, created_by = EXCLUDED.created_by, created_at = now()
        RETURNING created_at AS "createdAt"`,
-      [actor.businessId, scope, input.day, text, source, actor.id],
+      [actor.businessId, scope, input.day, text, source, actor.id, lang],
     )
   )[0];
   return { text, source, createdAt: row.createdAt, cached: false };
