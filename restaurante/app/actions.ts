@@ -1,5 +1,6 @@
 'use server';
 
+import { createFixture, removeFixture, saveFixtureLayout, updateFixture } from '@/lib/floor';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
@@ -252,16 +253,44 @@ export async function removeTableAction(_prev: FormState, formData: FormData): P
 }
 
 /** Lo llama el editor del plano (no es un formulario): devuelve el error o nada. */
-export async function saveLayoutAction(positions: { id: string; x: number; y: number; w: number; h: number }[]): Promise<string | null> {
+export async function saveLayoutAction(
+  positions: { id: string; x: number; y: number; w: number; h: number }[],
+  fixtures: { id: string; x: number; y: number; w: number; h: number }[] = [],
+): Promise<string | null> {
   const staff = await requireStaff();
   try {
-    await saveLayout(staff, positions);
+    if (positions.length) await saveLayout(staff, positions);
+    if (fixtures.length) await saveFixtureLayout(staff, fixtures);
   } catch (error) {
     return await messageOf(error);
   }
   revalidatePath('/app');
   revalidatePath('/app/plano');
   return null;
+}
+
+export async function createFixtureAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () => createFixture(staff, { zone: text(formData, 'zone'), label: text(formData, 'label'), seats: int(formData, 'seats'), seatSide: text(formData, 'seatSide') }),
+    ['/app', '/app/plano'],
+  );
+}
+
+export async function updateFixtureAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () => updateFixture(staff, text(formData, 'fixtureId'), { label: text(formData, 'label'), seats: int(formData, 'seats'), seatSide: text(formData, 'seatSide') }),
+    ['/app', '/app/plano'],
+    'Barra guardada.',
+  );
+}
+
+export async function removeFixtureAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => removeFixture(staff, text(formData, 'fixtureId')), ['/app', '/app/plano']);
 }
 
 // ───────── equipo y sedes ─────────

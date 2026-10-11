@@ -6,6 +6,7 @@ import { orOffline } from '@/lib/offline';
 import Link from 'next/link';
 import { LONG_TABLE_MINUTES, elapsedMinutes, formatCop, formatElapsed, formatTime } from '@/lib/format';
 import type { FloorTable } from '@/lib/store';
+import type { Fixture } from '@/lib/floor';
 import type { ReadyTicket } from '@/lib/kds';
 import { STATION_LABEL } from '@/lib/stations';
 import { ActionForm } from './form-state';
@@ -38,163 +39,225 @@ const STATUS_STYLE: Record<BoardTable['status'], string> = {
   reserved: 'border-accent/70 border-dashed bg-accent/[0.1] text-foreground hover:bg-accent/[0.18]',
 };
 
-/** Color de la tapa y del canto de cada mesa en el plano en 3D (el canto es la sombra sólida de abajo). */
-const TOP_3D: Record<BoardTable['status'], { top: string; edge: string; border: string }> = {
-  free: {
-    top: 'color-mix(in oklab, var(--color-success) 26%, #111821)',
-    edge: 'color-mix(in oklab, var(--color-success) 22%, #05080c)',
-    border: 'color-mix(in oklab, var(--color-success) 55%, transparent)',
-  },
-  open: {
-    top: 'color-mix(in oklab, var(--color-primary) 42%, #111821)',
-    edge: 'color-mix(in oklab, var(--color-primary) 32%, #05080c)',
-    border: 'var(--color-primary)',
-  },
-  bill: {
-    top: 'color-mix(in oklab, var(--color-warning) 40%, #111821)',
-    edge: 'color-mix(in oklab, var(--color-warning) 30%, #05080c)',
-    border: 'var(--color-warning)',
-  },
-  blocked: { top: '#151a21', edge: '#07090c', border: '#ffffff1a' },
-  reserved: {
-    top: 'color-mix(in oklab, var(--color-accent) 30%, #111821)',
-    edge: 'color-mix(in oklab, var(--color-accent) 24%, #05080c)',
-    border: 'var(--color-accent)',
-  },
+/** El piso del local visto desde arriba: cemento cálido con luz tenue, como un bar de noche. */
+export const FLOOR_STYLE: React.CSSProperties = {
+  aspectRatio: '1000 / 640',
+  backgroundColor: '#211b15',
+  backgroundImage: [
+    'radial-gradient(circle at 18% 20%, rgba(255,196,120,0.10), transparent 38%)',
+    'radial-gradient(circle at 78% 30%, rgba(255,196,120,0.08), transparent 40%)',
+    'radial-gradient(circle at 50% 85%, rgba(255,196,120,0.07), transparent 45%)',
+    'repeating-radial-gradient(circle at 30% 40%, rgba(255,255,255,0.012) 0 2px, transparent 2px 5px)',
+  ].join(', '),
+  boxShadow: 'inset 0 0 0 6px #2c241c, inset 0 0 80px rgba(0,0,0,0.65)',
 };
+
+/** El aro de color alrededor de cada mesa dice cómo está: libre, ocupada, pidió la cuenta… */
+const RING: Record<BoardTable['status'], { ring: string; glow: string }> = {
+  free: { ring: 'color-mix(in oklab, var(--color-success) 70%, transparent)', glow: 'transparent' },
+  open: { ring: 'var(--color-primary)', glow: 'color-mix(in oklab, var(--color-primary) 45%, transparent)' },
+  bill: { ring: 'var(--color-warning)', glow: 'color-mix(in oklab, var(--color-warning) 50%, transparent)' },
+  blocked: { ring: '#ffffff26', glow: 'transparent' },
+  reserved: { ring: 'var(--color-accent)', glow: 'color-mix(in oklab, var(--color-accent) 35%, transparent)' },
+};
+
+const WOOD_ROUND = 'radial-gradient(circle at 38% 32%, #93603a 0%, #6e4427 48%, #4a2b17 100%)';
+const WOOD_RECT = 'repeating-linear-gradient(90deg, rgba(0,0,0,0.07) 0 2px, transparent 2px 11px), linear-gradient(135deg, #8a5a36, #64391f 58%, #4a2b17)';
 
 type Chair = { x: number; y: number; w: number; h: number; r: number };
 
-/** Dónde van las sillas alrededor de la mesa, en % de la caja de la mesa. Una por puesto. */
-export function chairsFor(shape: BoardTable['shape'], capacity: number, wide: boolean): Chair[] {
+/**
+ * Dónde van las sillas alrededor de la mesa (en % de la caja de la mesa) y hacia dónde mira el respaldo. Una por puesto.
+ * Las medidas salen en unidades del lienzo (1000 × 640, cuadradas en pantalla) para que las sillas no se deformen.
+ */
+export function chairsFor(shape: BoardTable['shape'], capacity: number, w: number, h: number): Chair[] {
   const n = Math.max(1, Math.min(capacity, 16));
+  const chair = (cx: number, cy: number, size: number, r: number): Chair => ({ x: (cx / w) * 100, y: (cy / h) * 100, w: (size / w) * 100, h: ((size * 0.9) / h) * 100, r });
   if (shape === 'round') {
+    const size = Math.min(38, (Math.PI * (w + 40)) / n - 6);
     return Array.from({ length: n }, (_, i) => {
       const a = (i / n) * Math.PI * 2 - Math.PI / 2;
-      return {
-        x: 50 + Math.cos(a) * 62,
-        y: 50 + Math.sin(a) * 62,
-        w: 26,
-        h: 26,
-        r: (a * 180) / Math.PI + 90,
-      };
+      return chair(w / 2 + Math.cos(a) * (w / 2 + size * 0.45), h / 2 + Math.sin(a) * (h / 2 + size * 0.45), size, (a * 180) / Math.PI + 90);
     });
   }
   // Mesa rectangular: sillas por los lados largos y, si sobra una o son muchas, en las cabeceras.
+  const wide = w >= h;
+  const long = wide ? w : h;
   const ends = n % 2 === 1 ? 1 : n >= 6 ? 2 : 0;
   const sides = n - ends;
-  const top = Math.ceil(sides / 2);
-  const bottom = sides - top;
+  const first = Math.ceil(sides / 2);
+  const second = sides - first;
+  const size = Math.min(38, long / Math.max(first, 1) - 8);
+  const out = size * 0.45;
   const chairs: Chair[] = [];
-  const along = (count: number, pos: number) => {
-    const size = Math.min(26, 70 / Math.max(count, 1));
-    for (let i = 0; i < count; i++)
-      chairs.push({
-        x: ((i + 1) / (count + 1)) * 100,
-        y: pos,
-        w: size,
-        h: 24,
-        r: 0,
-      });
+  const row = (count: number, side: 'a' | 'b') => {
+    for (let i = 0; i < count; i++) {
+      const along = ((i + 1) / (count + 1)) * long;
+      if (wide) chairs.push(chair(along, side === 'a' ? -out : h + out, size, side === 'a' ? 0 : 180));
+      else chairs.push(chair(side === 'a' ? -out : w + out, along, size, side === 'a' ? -90 : 90));
+    }
   };
-  along(top, -15);
-  along(bottom, 115);
-  if (ends >= 1) chairs.push({ x: -10, y: 50, w: 13, h: 40, r: 0 });
-  if (ends === 2) chairs.push({ x: 110, y: 50, w: 13, h: 40, r: 0 });
-  // Si la mesa es más alta que ancha, los lados largos son izquierda y derecha.
-  return wide ? chairs : chairs.map((c) => ({ x: c.y, y: c.x, w: c.h, h: c.w, r: c.r }));
+  row(first, 'a');
+  row(second, 'b');
+  const endSize = Math.min(38, (wide ? h : w) - 8);
+  if (ends >= 1) chairs.push(wide ? chair(-endSize * 0.45, h / 2, endSize, -90) : chair(w / 2, -endSize * 0.45, endSize, 0));
+  if (ends === 2) chairs.push(wide ? chair(w + endSize * 0.45, h / 2, endSize, 90) : chair(w / 2, h + endSize * 0.45, endSize, 180));
+  return chairs;
 }
 
-export function TableShape({
-  table,
-  now,
-  onClick,
-  selected,
-  hasReady,
-}: {
-  table: BoardTable;
-  now: number;
-  onClick?: () => void;
-  selected?: boolean;
-  hasReady?: boolean;
-}) {
+/** Silla tapizada vista desde arriba: respaldo grueso atrás (arriba, antes de girarla) y el cojín adelante. */
+function ChairTop({ c, seated }: { c: Chair; seated: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="absolute"
+      style={{
+        left: `${c.x}%`,
+        top: `${c.y}%`,
+        width: `${c.w}%`,
+        height: `${c.h}%`,
+        transform: `translate(-50%, -50%) rotate(${c.r}deg)`,
+        borderRadius: '46% 46% 34% 34%',
+        backgroundColor: seated ? '#34431f' : '#1d2616',
+        backgroundImage: `radial-gradient(ellipse 64% 48% at 50% 70%, ${seated ? '#8aa65c' : '#56683b'} 0 60%, transparent 63%), linear-gradient(rgba(255,255,255,0.10), transparent 40%)`,
+        boxShadow: seated ? '0 0 0 1.5px rgba(255,255,255,0.35), 0 5px 9px rgba(0,0,0,0.55)' : '0 5px 9px rgba(0,0,0,0.55)',
+      }}
+    />
+  );
+}
+
+export function TableShape({ table, now, onClick, selected, hasReady }: { table: BoardTable; now: number; onClick?: () => void; selected?: boolean; hasReady?: boolean }) {
   const minutes = table.session ? elapsedMinutes(table.session.openedAt, now) : 0;
   const late = table.session && minutes >= LONG_TABLE_MINUTES;
   const t = useT();
   const status = t(STATUS_LABEL[table.status]);
-  const look = TOP_3D[table.status];
+  const look = RING[table.status];
   const round = table.shape === 'round';
-  const chairs = chairsFor(table.shape, table.capacity, table.w / 1000 >= table.h / 640);
+  const chairs = chairsFor(table.shape, table.capacity, table.w, table.h);
   const seated = table.session?.guests ?? 0;
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={
-        table.session
-          ? t('Mesa {n}, {status}, {time}', {
-              n: table.number,
-              status,
-              time: formatElapsed(minutes),
-            })
-          : t('Mesa {n}, {status}', { n: table.number, status })
-      }
-      className="group absolute text-center"
-      style={{
-        left: `${(table.x / 1000) * 100}%`,
-        top: `${(table.y / 640) * 100}%`,
-        width: `${(table.w / 1000) * 100}%`,
-        height: `${(table.h / 640) * 100}%`,
-      }}
+      aria-label={table.session ? t('Mesa {n}, {status}, {time}', { n: table.number, status, time: formatElapsed(minutes) }) : t('Mesa {n}, {status}', { n: table.number, status })}
+      className={`group absolute text-center ${table.status === 'blocked' ? 'opacity-60 grayscale' : ''}`}
+      style={{ left: `${(table.x / 1000) * 100}%`, top: `${(table.y / 640) * 100}%`, width: `${(table.w / 1000) * 100}%`, height: `${(table.h / 640) * 100}%` }}
     >
       {chairs.map((c, i) => (
-        <span
-          key={i}
-          aria-hidden="true"
-          className={`absolute rounded-[35%] border-t ${i < seated ? 'border-white/40 bg-[#3a4a66]' : 'border-white/15 bg-[#232b36]'}`}
-          style={{
-            left: `${c.x}%`,
-            top: `${c.y}%`,
-            width: `${c.w}%`,
-            height: `${c.h}%`,
-            transform: `translate(-50%, -50%) rotate(${c.r}deg)`,
-            boxShadow: '0 3px 0 #0b0f14, 0 6px 10px rgba(0,0,0,0.45)',
-          }}
-        />
+        <ChairTop key={i} c={c} seated={i < seated} />
       ))}
       <span
-        className={`absolute inset-0 flex flex-col items-center justify-center border-2 transition group-hover:brightness-125 ${round ? 'rounded-full' : 'rounded-[14px]'} ${
-          table.status === 'reserved' ? 'border-dashed' : ''
-        } ${table.status === 'blocked' ? 'text-muted-foreground [background-image:repeating-linear-gradient(135deg,transparent_0_8px,#ffffff08_8px_16px)]' : 'text-foreground'} ${
-          selected ? 'ring-2 ring-foreground ring-offset-2 ring-offset-background' : ''
-        }`}
+        className={`absolute inset-0 flex flex-col items-center justify-center transition group-hover:brightness-110 ${round ? 'rounded-full' : 'rounded-[10px]'} ${
+          table.status === 'reserved' ? 'outline-dashed outline-2 outline-offset-4 outline-accent' : ''
+        } ${selected ? 'outline outline-2 outline-offset-[6px] outline-foreground' : ''}`}
         style={{
-          backgroundColor: look.top,
-          borderColor: look.border,
-          ...(table.status === 'blocked'
-            ? {}
-            : {
-                backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.16), rgba(255,255,255,0) 50%)',
-              }),
-          boxShadow: `0 7px 0 ${look.edge}, 0 16px 22px rgba(0,0,0,0.6)`,
+          backgroundImage: round ? WOOD_ROUND : WOOD_RECT,
+          boxShadow: `0 0 0 3px ${look.ring}, 0 0 22px 4px ${look.glow}, inset 0 0 0 1px rgba(255,255,255,0.08), 0 12px 20px rgba(0,0,0,0.6)`,
         }}
       >
-        {hasReady ? (
-          <span
-            className="absolute -right-1.5 -top-1.5 size-3.5 animate-pulse rounded-full border-2 border-background bg-success"
-            aria-label={t('Hay algo listo para llevar')}
-          />
-        ) : null}
-        <span className="font-display text-[clamp(14px,2.2vw,24px)] font-bold leading-none drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">{table.number}</span>
+        {/* La velita del centro: da la luz cálida de la foto. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-1/2 size-[46%] -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{ backgroundImage: 'radial-gradient(circle, rgba(255,214,140,0.55) 0%, rgba(255,190,110,0.18) 35%, transparent 70%)' }}
+        />
+        {hasReady ? <span className="absolute -right-1.5 -top-1.5 size-3.5 animate-pulse rounded-full border-2 border-background bg-success" aria-label={t('Hay algo listo para llevar')} /> : null}
+        <span className="relative font-display text-[clamp(14px,2.2vw,24px)] font-bold leading-none text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.85)]">{table.number}</span>
         {table.session ? (
-          <span className={`mt-1 text-[clamp(10px,1.2vw,13px)] font-medium leading-none ${late ? 'text-[#ffb4b5]' : 'text-foreground/85'}`}>
+          <span className={`relative mt-1 text-[clamp(10px,1.2vw,13px)] font-semibold leading-none [text-shadow:0_1px_2px_rgba(0,0,0,0.9)] ${late ? 'text-[#ffb4b5]' : 'text-white/90'}`}>
             {formatElapsed(minutes)}
           </span>
         ) : (
-          <span className="mt-1 text-[clamp(10px,1.1vw,12px)] leading-none text-foreground/60">{t('{n} p.', { n: table.capacity })}</span>
+          <span className="relative mt-1 text-[clamp(10px,1.1vw,12px)] leading-none text-white/75 [text-shadow:0_1px_2px_rgba(0,0,0,0.9)]">{t('{n} p.', { n: table.capacity })}</span>
         )}
       </span>
     </button>
+  );
+}
+
+export type BoardFixture = Fixture;
+
+/** La barra vista desde arriba: mostrador de madera del lado de los clientes, el fondo oscuro del bartender detrás y las sillas altas. */
+export function BarShape({ fixture, selected }: { fixture: BoardFixture; selected?: boolean }) {
+  const f = fixture;
+  const vertical = f.seatSide === 'left' || f.seatSide === 'right';
+  const long = vertical ? f.h : f.w;
+  const stool = Math.min(34, long / Math.max(f.seats, 1) - 8);
+  const stools = Array.from({ length: f.seats }, (_, i) => {
+    const along = ((i + 1) / (f.seats + 1)) * long;
+    const off = stool / 2 + 10;
+    const [cx, cy] =
+      f.seatSide === 'bottom' ? [along, f.h + off] : f.seatSide === 'top' ? [along, -off] : f.seatSide === 'left' ? [-off, along] : [f.w + off, along];
+    return { x: (cx / f.w) * 100, y: (cy / f.h) * 100, w: (stool / f.w) * 100, h: (stool / f.h) * 100 };
+  });
+  // El mostrador (madera) queda del lado de las sillas; el fondo del bartender, con las botellas, del lado contrario.
+  const back: React.CSSProperties =
+    f.seatSide === 'bottom'
+      ? { left: 0, right: 0, top: 0, height: '42%' }
+      : f.seatSide === 'top'
+        ? { left: 0, right: 0, bottom: 0, height: '42%' }
+        : f.seatSide === 'right'
+          ? { top: 0, bottom: 0, left: 0, width: '42%' }
+          : { top: 0, bottom: 0, right: 0, width: '42%' };
+  const wood: React.CSSProperties =
+    f.seatSide === 'bottom'
+      ? { left: 0, right: 0, bottom: 0, height: '58%' }
+      : f.seatSide === 'top'
+        ? { left: 0, right: 0, top: 0, height: '58%' }
+        : f.seatSide === 'right'
+          ? { top: 0, bottom: 0, right: 0, width: '58%' }
+          : { top: 0, bottom: 0, left: 0, width: '58%' };
+  return (
+    <div
+      className="absolute"
+      style={{ left: `${(f.x / 1000) * 100}%`, top: `${(f.y / 640) * 100}%`, width: `${(f.w / 1000) * 100}%`, height: `${(f.h / 640) * 100}%` }}
+      aria-label={f.label}
+    >
+      {stools.map((s, i) => (
+        <span
+          key={i}
+          aria-hidden="true"
+          className="absolute rounded-full"
+          style={{
+            left: `${s.x}%`,
+            top: `${s.y}%`,
+            width: `${s.w}%`,
+            height: `${s.h}%`,
+            transform: 'translate(-50%, -50%)',
+            backgroundImage: 'radial-gradient(circle at 40% 35%, #4a4a4a, #1a1a1a 70%)',
+            boxShadow: '0 0 0 2px #0c0c0c, 0 6px 10px rgba(0,0,0,0.6)',
+          }}
+        />
+      ))}
+      <div
+        className={`absolute inset-0 overflow-hidden rounded-[8px] ${selected ? 'outline outline-2 outline-offset-[6px] outline-foreground' : ''}`}
+        style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08), 0 14px 24px rgba(0,0,0,0.6)' }}
+      >
+        <span
+          aria-hidden="true"
+          className="absolute"
+          style={{
+            ...back,
+            backgroundColor: '#15181b',
+            // Una fila de botellas en el fondo de la barra, con su brillo tenue.
+            backgroundImage: 'radial-gradient(circle, rgba(217,164,65,0.85) 0 3px, transparent 4px), radial-gradient(circle, rgba(127,176,105,0.7) 0 3px, transparent 4px)',
+            backgroundSize: vertical ? '100% 24px, 100% 24px' : '24px 100%, 24px 100%',
+            backgroundPosition: vertical ? '0 0, 0 12px' : '0 0, 12px 0',
+            boxShadow: 'inset 0 0 0 2px #0b0d0f',
+          }}
+        />
+        <span
+          className="absolute flex items-center justify-center font-display text-[clamp(10px,1.2vw,13px)] font-bold uppercase tracking-[0.18em] text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.9)]"
+          style={{
+            ...wood,
+            backgroundImage: `repeating-linear-gradient(${vertical ? '0deg' : '90deg'}, rgba(0,0,0,0.08) 0 2px, transparent 2px 13px), linear-gradient(135deg, #8a5a36, #5e361d)`,
+            writingMode: vertical ? 'vertical-rl' : undefined,
+          }}
+        >
+          {f.label}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -239,12 +302,14 @@ type Ready = Omit<ReadyTicket, 'readyAt'> & { readyAt: string };
 
 export function TableBoard({
   tables,
+  fixtures = [],
   ready = [],
   canOpen,
   canClose,
   timeZone,
 }: {
   tables: BoardTable[];
+  fixtures?: BoardFixture[];
   ready?: Ready[];
   canOpen: boolean;
   canClose: boolean;
@@ -252,7 +317,7 @@ export function TableBoard({
 }) {
   const now = useNow();
   const t = useT();
-  const zones = useMemo(() => [...new Set(tables.map((t) => t.zone))], [tables]);
+  const zones = useMemo(() => [...new Set([...tables.map((t) => t.zone), ...fixtures.map((f) => f.zone)])], [tables, fixtures]);
   const [zone, setZone] = useState(zones[0]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const currentZone = zones.includes(zone) ? zone : zones[0];
@@ -267,33 +332,26 @@ export function TableBoard({
           <ZoneTabs zones={zones} zone={currentZone} onChange={setZone} />
           <Legend />
         </div>
-        {/* El plano en 3D: el piso inclinado y cada mesa con su canto, su sombra y sus sillas. En el celular se desliza de lado. */}
-        <div className="overflow-x-auto rounded-[24px] border border-white/[0.08] bg-[radial-gradient(ellipse_at_50%_0%,#0d1622,#04080d_70%)]">
-          <div className="min-w-[760px] px-[4%] pb-[2%] pt-[1%]" style={{ perspective: '1700px' }}>
-            <div
-              className="relative w-full rounded-[18px] border border-white/[0.06] bg-[#0a1017] shadow-[0_30px_60px_rgba(0,0,0,0.5)]"
-              style={{
-                aspectRatio: '1000 / 640',
-                transform: 'rotateX(28deg)',
-                transformOrigin: '50% 60%',
-                marginTop: '-3%',
-                marginBottom: '-4%',
-              }}
-            >
-              <div className="pointer-events-none absolute inset-0 rounded-[18px] [background-image:linear-gradient(#ffffff08_1px,transparent_1px),linear-gradient(90deg,#ffffff08_1px,transparent_1px)] [background-size:5%_7.8125%]" />
-              {tables
-                .filter((t) => t.zone === currentZone)
-                .map((t) => (
-                  <TableShape
-                    key={t.id}
-                    table={t}
-                    now={now}
-                    selected={t.id === selectedId}
-                    hasReady={readySessions.has(t.session?.id ?? '')}
-                    onClick={() => setSelectedId(t.id)}
-                  />
-                ))}
-            </div>
+        {/* El plano visto desde arriba, como el local de noche: barras, mesas de madera y sus sillas. En el celular se desliza de lado. */}
+        <div className="overflow-x-auto rounded-[24px] border border-white/[0.08]">
+          <div className="relative min-w-[760px]" style={FLOOR_STYLE}>
+            {fixtures
+              .filter((f) => f.zone === currentZone)
+              .map((f) => (
+                <BarShape key={f.id} fixture={f} />
+              ))}
+            {tables
+              .filter((t) => t.zone === currentZone)
+              .map((t) => (
+                <TableShape
+                  key={t.id}
+                  table={t}
+                  now={now}
+                  selected={t.id === selectedId}
+                  hasReady={readySessions.has(t.session?.id ?? '')}
+                  onClick={() => setSelectedId(t.id)}
+                />
+              ))}
           </div>
         </div>
         {/* En el celular el plano queda pequeño para el dedo: las mismas mesas en botones grandes. */}

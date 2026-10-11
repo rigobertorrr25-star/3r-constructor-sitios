@@ -163,6 +163,25 @@ CREATE TABLE IF NOT EXISTS order_items (
 );
 CREATE INDEX IF NOT EXISTS idx_items_session ON order_items (session_id);
 
+-- Barras del plano: solo se dibujan (no se abren como mesas). El dueño las pone donde están en el local,
+-- con sus sillas altas del lado de los clientes (seat_side: bottom, top, left o right).
+CREATE TABLE IF NOT EXISTS floor_fixtures (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  zone        VARCHAR(40) NOT NULL DEFAULT 'Salón',
+  kind        VARCHAR(12) NOT NULL DEFAULT 'bar' CHECK (kind IN ('bar')),
+  label       VARCHAR(30) NOT NULL DEFAULT 'Barra',
+  seats       INT NOT NULL DEFAULT 6 CHECK (seats BETWEEN 0 AND 30),
+  seat_side   VARCHAR(6) NOT NULL DEFAULT 'bottom' CHECK (seat_side IN ('bottom', 'top', 'left', 'right')),
+  x           INT NOT NULL DEFAULT 20,
+  y           INT NOT NULL DEFAULT 20,
+  w           INT NOT NULL DEFAULT 420,
+  h           INT NOT NULL DEFAULT 80,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_floor_fixtures_location ON floor_fixtures (location_id);
+
 -- ───────── módulo 04: caja y pagos ─────────
 
 -- Descuento máximo (en %) que un cajero puede dar sin el administrador.
