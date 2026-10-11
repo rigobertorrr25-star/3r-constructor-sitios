@@ -1,6 +1,6 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { requireStaff } from '@/lib/auth';
-import { getCheckout, getOpenShift } from '@/lib/cash';
+import { canCollectSession, getCheckout, getOpenShift } from '@/lib/cash';
 import { formatCop } from '@/lib/format';
 import { invoiceForSession } from '@/lib/invoices';
 import { InvoiceCustomer } from '@/components/invoice-forms';
@@ -12,9 +12,11 @@ import { getT } from '@/lib/i18n/server';
 export const dynamic = 'force-dynamic';
 
 export default async function CheckoutPage({ params }: { params: Promise<{ id: string }> }) {
-  const staff = await requireStaff('cash.operate');
+  const staff = await requireStaff();
   const t = await getT();
   const { id } = await params;
+  // La caja cobra cualquier mesa; en un bar sin cajero, cada mesero cobra las suyas.
+  if (!can(staff.role, 'cash.operate') && !(await canCollectSession(staff, id))) redirect('/app');
   const [checkout, shift, invoice, printBill] = await Promise.all([getCheckout(staff, id), getOpenShift(staff), invoiceForSession(staff, id), hasPrinter(staff, 'cashier')]);
   if (!checkout) notFound();
   return (
@@ -34,7 +36,8 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
         session: { ...checkout.session, openedAt: checkout.session.openedAt.toISOString(), closedAt: checkout.session.closedAt?.toISOString() ?? null },
         payments: checkout.payments.map((p) => ({ ...p, createdAt: p.createdAt.toISOString() })),
       }}
-      shiftOpen={Boolean(shift)}
+      shiftOpen={staff.waitersCollect || Boolean(shift)}
+      canDiscount={can(staff.role, 'cash.operate')}
       canReverse={can(staff.role, 'payments.reverse')}
       canUnlimited={can(staff.role, 'discounts.unlimited')}
       timeZone={staff.timezone}

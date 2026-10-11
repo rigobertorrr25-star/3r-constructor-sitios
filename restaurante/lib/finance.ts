@@ -81,7 +81,7 @@ export async function addExpense(
       // Pagado con la plata de la caja: sale de la caja abierta (y se revisa que alcance).
       const shift = (
         await db.query<{ id: string; opening: string }>(
-          `SELECT id, opening_amount AS opening FROM cash_shifts WHERE location_id = $1 AND business_id = $2 AND closed_at IS NULL FOR UPDATE`,
+          `SELECT id, opening_amount AS opening FROM cash_shifts WHERE location_id = $1 AND business_id = $2 AND closed_at IS NULL AND staff_id IS NULL FOR UPDATE`,
           [actor.locationId, actor.businessId],
         )
       ).rows[0];

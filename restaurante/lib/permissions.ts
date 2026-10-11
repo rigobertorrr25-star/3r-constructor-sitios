@@ -48,7 +48,8 @@ export type Permission =
   | 'agenda.view'
   | 'agenda.manage'
   | 'invoices.manage'
-  | 'printers.manage';
+  | 'printers.manage'
+  | 'waiters.verify';
 
 const GRANTS: Record<Permission, Role[]> = {
   'tables.view': ['owner', 'manager', 'cashier', 'waiter'],
@@ -84,6 +85,8 @@ const GRANTS: Record<Permission, Role[]> = {
   'invoices.manage': ['owner', 'manager', 'cashier'],
   // Impresoras de comandas y el programa de impresión del local.
   'printers.manage': ['owner', 'manager'],
+  // Bar sin cajero: ver la cuenta de cada mesero, cerrarla por él y verificar los cierres.
+  'waiters.verify': ['owner', 'manager'],
 };
 
 export const can = (role: Role, permission: Permission) => GRANTS[permission].includes(role);

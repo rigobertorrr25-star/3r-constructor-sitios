@@ -53,6 +53,18 @@ todo con la misma tecnología de la asistencia, para varios negocios a la vez de
   llevar nombre y descripción en inglés por producto y categoría (opcionales; si faltan, sale el español). **Lo impreso
   (comandas, precuentas, cierre) sigue en español** y lo que escribe el restaurante (nombres, notas) no se traduce.
   Todo texto nuevo va con `t()` y su inglés en el diccionario (`test/i18n.test.ts` revisa que los huecos coincidan).
+- **Bar sin cajero (cada mesero cobra sus mesas)** y **solo bar**: opciones del negocio en **Sedes → Forma de trabajo**
+  (solo el dueño; columnas `businesses.waiters_collect` y `bar_only`). Con «cada mesero cobra»:
+  - El mesero cobra **solo las mesas que él abrió** (efectivo, datáfono o transferencia; sin descuentos). El dueño y el
+    administrador pueden cobrar cualquiera. Cada pago entra a la **cuenta del mesero que abrió la mesa**: un turno de caja
+    con `staff_id` que se abre solo al primer cobro, con base cero (`lockWaiterShift` en `lib/cash.ts`).
+  - **Mi cuenta** (`/app/mi-cuenta`, meseros): lo vendido, por forma de pago, propinas, efectivo a entregar, mesas
+    cobradas y abiertas. El mesero entrega su cierre con el efectivo que tiene (no puede con mesas abiertas); sale
+    impreso en la impresora de caja («Cierre de {nombre}»).
+  - **Meseros** (`/app/meseros`, dueño y administrador, permiso `waiters.verify`): todo en vivo por mesero, cerrar la
+    cuenta de alguien y **verificar** cada cierre (`verified_by`, `verified_at`, nota). Todo queda en la auditoría.
+  - Se esconde la Caja de la sede. Con «solo bar» se esconden Cocina y Agenda, y la carta no pregunta la estación.
+  Lógica en `lib/waiters.ts`; pruebas en `test/waiters.test.ts`.
 - **Roles** (fijos, revisados siempre en el servidor):
   - Dueño: todo, incluidas las sedes. Ve la auditoría de todas las sedes.
   - Administrador: plano, equipo (menos dueños y administradores) y auditoría de su sede.

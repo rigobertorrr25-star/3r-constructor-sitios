@@ -3,7 +3,7 @@
 // local los pide con el código de la sede y los manda a cada impresora. Si la impresora falla, se reintenta y queda a la
 // vista en la pantalla de Impresoras para reimprimir.
 import { createHash, randomBytes } from 'node:crypto';
-import { getBill, METHOD_LABEL, METHODS, shiftSummary, suggestedTipFor } from './cash';
+import { getBill, METHOD_LABEL, METHODS, loadShiftSummary, suggestedTipFor } from './cash';
 import { query, transaction, type Db } from './db';
 import { anulacion, cierre, comanda, precuenta, prueba, type Ticket } from './escpos';
 import { formatCop, formatDateTime, formatTime } from './format';
@@ -248,15 +248,16 @@ export async function printBill(actor: Actor, sessionId: string) {
 }
 
 /** Resumen del cierre de caja a la impresora de caja (después de cerrar; si no hay impresora, no pasa nada). */
-export async function enqueueClosing(actor: Actor, shiftId: string) {
-  const s = await shiftSummary(actor, shiftId);
+export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: string) {
+  const s = await loadShiftSummary(actor, shiftId);
   if (!s || !s.shift.closedAt) return 0;
   return transaction(async (db) => {
     const place = await placeInfo(db, actor);
     const counted = s.shift.countedCash ?? 0;
     const diff = counted - (s.shift.expectedCash ?? 0);
-    return enqueue(db, actor, 'cashier', 'cierre', `Cierre de caja · ${formatDateTime(s.shift.closedAt!, place.timezone)}`, (w) =>
+    return enqueue(db, actor, 'cashier', 'cierre', `${waiter ? `Cierre de ${waiter}` : 'Cierre de caja'} · ${formatDateTime(s.shift.closedAt!, place.timezone)}`, (w) =>
       cierre(w, {
+        title: waiter ? `Cierre de ${waiter}` : undefined,
         business: place.business,
         location: place.locations > 1 ? place.location : null,
         openedBy: s.shift.openedBy,

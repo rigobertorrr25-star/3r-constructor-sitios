@@ -27,7 +27,7 @@ const PAPER = [
   { width: 32, label: '58 mm' },
 ];
 
-function PrinterFields({ p, values }: { p?: PrinterView; values?: Record<string, string> }) {
+function PrinterFields({ p, values, barOnly = false }: { p?: PrinterView; values?: Record<string, string>; barOnly?: boolean }) {
   const t = useT();
   return (
     <>
@@ -54,7 +54,9 @@ function PrinterFields({ p, values }: { p?: PrinterView; values?: Record<string,
       </div>
       <p className="mt-5 text-sm font-medium text-foreground">{t('¿Qué imprime?')}</p>
       <div className="mt-2 grid gap-3 md:grid-cols-3">
-        <CheckField name="kitchen" label={t('Comandas de cocina')} hint={t('Los platos de las categorías de cocina.')} defaultChecked={p?.printsKitchen} />
+        {barOnly && !p?.printsKitchen ? null : (
+          <CheckField name="kitchen" label={t('Comandas de cocina')} hint={t('Los platos de las categorías de cocina.')} defaultChecked={p?.printsKitchen} />
+        )}
         <CheckField name="bar" label={t('Comandas de barra')} hint={t('Los tragos de las categorías de barra.')} defaultChecked={p?.printsBar} />
         <CheckField name="cashier" label={t('Caja')} hint={t('Precuentas y cierre de caja.')} defaultChecked={p?.printsCashier} />
       </div>
@@ -62,13 +64,13 @@ function PrinterFields({ p, values }: { p?: PrinterView; values?: Record<string,
   );
 }
 
-export function NewPrinterForm() {
+export function NewPrinterForm({ barOnly = false }: { barOnly?: boolean }) {
   const t = useT();
   return (
     <ActionForm action={savePrinterAction} resetOnOk>
       {(state) => (
         <>
-          <PrinterFields values={state?.values} />
+          <PrinterFields values={state?.values} barOnly={barOnly} />
           <SubmitButton pendingText={t('Agregando…')}>{t('Agregar impresora')}</SubmitButton>
         </>
       )}
@@ -79,7 +81,7 @@ export function NewPrinterForm() {
 const targets = (p: PrinterView, t: T) =>
   [p.printsKitchen ? t('Cocina') : null, p.printsBar ? t('Barra') : null, p.printsCashier ? t('Caja') : null].filter(Boolean).join(' · ') || t('No imprime nada todavía');
 
-export function PrinterRow({ printer }: { printer: PrinterView }) {
+export function PrinterRow({ printer, barOnly = false }: { printer: PrinterView; barOnly?: boolean }) {
   const [mode, setMode] = useState<'view' | 'edit' | 'remove'>('view');
   const t = useT();
   const paper = PAPER.find((o) => o.width === printer.width)?.label;
@@ -116,7 +118,7 @@ export function PrinterRow({ printer }: { printer: PrinterView }) {
             {(state) => (
               <>
                 <input type="hidden" name="printerId" value={printer.id} />
-                <PrinterFields p={printer} values={state?.values} />
+                <PrinterFields p={printer} values={state?.values} barOnly={barOnly} />
                 <CheckField name="isActive" label={t('Prendida')} hint={t('Apagada no recibe nada (por ejemplo, si está dañada).')} defaultChecked={printer.isActive} />
                 <div className="flex flex-wrap gap-2">
                   <SubmitButton pendingText={t('Guardando…')}>{t('Guardar')}</SubmitButton>

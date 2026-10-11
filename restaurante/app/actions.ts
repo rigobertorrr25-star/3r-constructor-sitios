@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getLang, trServer } from '@/lib/i18n/server';
+import { closeWaiterShift, updateWorkMode, verifyWaiterShift } from '@/lib/waiters';
 import {
   ADMIN_COOKIE,
   STAFF_COOKIE,
@@ -432,6 +433,42 @@ export async function closeShiftAction(_prev: FormState, formData: FormData): Pr
   redirect(`/app/caja/turno/${shiftId}`);
 }
 
+// ───────── bar sin cajero: cada mesero cobra y entrega su cierre ─────────
+
+export async function updateWorkModeAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('locations.manage');
+  return run(
+    formData,
+    () => updateWorkMode(staff, { waitersCollect: formData.get('waitersCollect') === 'on', barOnly: formData.get('barOnly') === 'on' }),
+    ['/app', '/app/sedes', '/app/meseros', '/app/mi-cuenta'],
+    'Guardado.',
+  );
+}
+
+/** El mesero entrega su cuenta (o el administrador la cierra por él). El cierre sale en la impresora de caja. */
+export async function closeWaiterShiftAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const staffId = text(formData, 'staffId') || staff.id;
+  let result: { shiftId: string; waiter: string } | null = null;
+  const state = await run(
+    formData,
+    async () => {
+      result = await closeWaiterShift(staff, staffId, pesos(formData, 'countedCash'), text(formData, 'notes'));
+    },
+    ['/app/mi-cuenta', '/app/meseros'],
+    'Cuenta cerrada. El administrador la va a verificar.',
+  );
+  if (state?.error || !result) return state;
+  const done: { shiftId: string; waiter: string } = result;
+  await enqueueClosing(staff, done.shiftId, done.waiter).catch((error) => console.error('No se pudo mandar a imprimir el cierre:', error));
+  return state;
+}
+
+export async function verifyWaiterShiftAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('waiters.verify');
+  return run(formData, () => verifyWaiterShift(staff, text(formData, 'shiftId'), text(formData, 'note')), ['/app/meseros', '/app/mi-cuenta'], 'Cierre verificado.');
+}
+
 export async function movementAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   return run(formData, () => addMovement(staff, { kind: text(formData, 'kind'), amount: pesos(formData, 'amount'), reason: text(formData, 'reason') }), ['/app/caja'], 'Registrado.');
@@ -466,6 +503,8 @@ export async function payAction(
     revalidatePath('/app');
     revalidatePath('/app/caja');
     revalidatePath(`/app/caja/mesa/${sessionId}`);
+    revalidatePath('/app/mi-cuenta');
+    revalidatePath('/app/meseros');
     return { change: result.change, closed: result.closed };
   } catch (error) {
     return { error: await messageOf(error) };

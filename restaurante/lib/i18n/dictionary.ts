@@ -7,5 +7,6 @@ import { en as dinero } from './en/dinero';
 import { en as gestion } from './en/gestion';
 import { en as agenda } from './en/agenda';
 import { en as carta } from './en/carta';
+import { en as meseros } from './en/meseros';
 
-export const EN: Record<string, string> = { ...comun, ...servidor, ...ingreso, ...salon, ...dinero, ...gestion, ...agenda, ...carta };
+export const EN: Record<string, string> = { ...comun, ...servidor, ...ingreso, ...salon, ...dinero, ...gestion, ...agenda, ...carta, ...meseros };
