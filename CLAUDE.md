@@ -90,7 +90,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 - **DELIRIUM** (11 oct 2026): bar que solo vende licores, sin cajera. Meseros Caridad, Paola, Johan e Isabel; bartender
   Breiner; administrador Agusto. Para ellos se hizo la «forma de trabajo» de Restaurant Control (Sedes): cada mesero cobra
   sus mesas y entrega su cierre, el administrador lo verifica en «Meseros»; y «solo bar». Hay que crearlo en el sistema en
-  vivo desde `/admin` (lo hace Rigoberto, que es el dueño; faltan los PIN de cada uno y confirmar si es «Agusto» o «Augusto»).
+  vivo desde `/admin` (lo hace Rigoberto, que es el dueño; el administrador se llama Agusto, así, sin «u»).
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto
