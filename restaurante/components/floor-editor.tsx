@@ -99,7 +99,7 @@ export function FloorEditor({ tables }: { tables: BoardTable[] }) {
     });
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
+    <div className="grid gap-6">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <ZoneTabs zones={zones} zone={currentZone} onChange={setZone} />
