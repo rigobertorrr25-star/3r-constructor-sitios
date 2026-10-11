@@ -96,6 +96,10 @@ export const isRole = (value: string): value is Role => (ROLES as readonly strin
 /** Roles que `actor` puede dar o quitar: el administrador no crea dueños ni toca a otros administradores. */
 export const assignableRoles = (actor: Role): Role[] => (actor === 'owner' ? [...ROLES] : ROLES.filter((r) => r !== 'owner' && r !== 'manager'));
 
+/** Los roles que se ofrecen al agregar a alguien: un bar solo de licores no tiene cocina ni agenda, y sin cajero no se ofrece cajero. */
+export const offeredRoles = (actor: Role, mode: { waitersCollect: boolean; barOnly: boolean }): Role[] =>
+  assignableRoles(actor).filter((r) => !(mode.barOnly && (r === 'kitchen' || r === 'pro')) && !(mode.waitersCollect && r === 'cashier'));
+
 /** Pantalla inicial de cada rol al entrar. */
 export const homeOf = (role: Role) =>
   role === 'owner' ? '/app/tablero' : role === 'kitchen' ? '/app/cocina' : role === 'bar' ? '/app/barra' : role === 'pro' ? '/app/agenda' : '/app';

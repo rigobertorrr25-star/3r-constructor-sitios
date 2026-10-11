@@ -1,5 +1,5 @@
 import { requireStaff } from '@/lib/auth';
-import { assignableRoles } from '@/lib/permissions';
+import { assignableRoles, offeredRoles } from '@/lib/permissions';
 import { listLocations, listStaff } from '@/lib/store';
 import { CreateStaffForm, StaffRow } from '@/components/staff-forms';
 import { PageTitle, card } from '@/components/ui';
@@ -11,6 +11,7 @@ export default async function StaffPage() {
   const staff = await requireStaff('staff.manage');
   const [members, locations] = await Promise.all([listStaff(staff), listLocations(staff.businessId, { activeOnly: true })]);
   const roles = assignableRoles(staff.role);
+  const offered = offeredRoles(staff.role, staff);
   const t = await getT();
   const sedes = locations.map(({ id, name }) => ({ id, name }));
   return (
@@ -22,7 +23,7 @@ export default async function StaffPage() {
       <section className={card}>
         <h2 className="font-display text-[18px] font-bold">{t('Agregar a alguien')}</h2>
         <div className="mt-4">
-          <CreateStaffForm roles={roles} locations={sedes} />
+          <CreateStaffForm roles={offered} locations={sedes} />
         </div>
       </section>
       <ul className="space-y-3">
@@ -30,7 +31,7 @@ export default async function StaffPage() {
           <StaffRow
             key={m.id}
             member={{ ...m, lockedUntil: m.lockedUntil && m.lockedUntil > new Date() ? m.lockedUntil.toISOString() : null, createdAt: m.createdAt.toISOString() }}
-            roles={roles}
+            roles={offered.includes(m.role) ? offered : [...offered, m.role]}
             locations={sedes}
             editable={roles.includes(m.role)}
             isMe={m.id === staff.id}

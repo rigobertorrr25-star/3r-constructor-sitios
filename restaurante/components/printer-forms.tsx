@@ -32,7 +32,7 @@ function PrinterFields({ p, values, barOnly = false }: { p?: PrinterView; values
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label={t('Nombre')} name="name" required maxLength={60} placeholder={t('Cocina')} defaultValue={values?.name ?? p?.name} />
+        <Field label={t('Nombre')} name="name" required maxLength={60} placeholder={barOnly ? t('Barra') : t('Cocina')} defaultValue={values?.name ?? p?.name} />
         <div className="grid grid-cols-[1fr_110px] gap-3">
           <Field label={t('Dirección IP')} name="host" required placeholder="192.168.1.50" defaultValue={values?.host ?? p?.host} autoCapitalize="none" />
           <Field label={t('Puerto')} name="port" inputMode="numeric" required defaultValue={values?.port ?? String(p?.port ?? 9100)} />
