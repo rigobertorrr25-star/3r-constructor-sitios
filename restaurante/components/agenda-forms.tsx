@@ -123,7 +123,7 @@ function PayForm({ id, price, onDone }: { id: string; price: number; onDone: () 
       <div className="grid grid-cols-3 gap-1.5">
         {(['cash', 'card', 'transfer'] as const).map((m) => (
           <button key={m} type="button" onClick={() => setMethod(m)} className={`rounded-xl px-2 py-2 text-[13px] ${method === m ? 'bg-primary text-primary-foreground' : 'border border-white/[0.1]'}`}>
-            {m === 'cash' ? t('Efectivo') : m === 'card' ? t('Tarjeta') : t('Transferencia')}
+            {m === 'cash' ? t('Efectivo') : m === 'card' ? t('Datáfono') : t('Transferencia')}
           </button>
         ))}
       </div>

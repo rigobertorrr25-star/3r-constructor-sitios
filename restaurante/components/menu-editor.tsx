@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { createContext, useContext, useState, useTransition } from 'react';
 import { saveCategoryAction, saveProductAction, setAvailableAction } from '@/app/actions';
 import { orOffline } from '@/lib/offline';
 import { formatCop } from '@/lib/format';
@@ -14,18 +14,23 @@ import { SubmitButton } from './submit-button';
 import { Alert, CheckField, Empty, Field, Select, card, quietButton } from './ui';
 import { useT, useTr } from './i18n';
 
+// Solo bar (licores): todo va a barra, así que no se pregunta a qué estación va cada cosa.
+const BarOnly = createContext(false);
+
 export function MenuEditor({
   categories,
   products,
   canEdit,
   canRecipe = false,
   costs = {},
+  barOnly = false,
 }: {
   categories: MenuCategory[];
   products: MenuProduct[];
   canEdit: boolean;
   canRecipe?: boolean;
   costs?: Record<string, number>;
+  barOnly?: boolean;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
@@ -33,6 +38,7 @@ export function MenuEditor({
   const visible = canEdit ? categories : categories.filter((c) => c.isActive);
 
   return (
+    <BarOnly.Provider value={barOnly}>
     <div className="space-y-5">
       {visible.length === 0 ? <Empty>{canEdit ? t('Empieza creando una categoría (Platos fuertes, Cócteles, Cervezas…).') : t('La carta está vacía.')}</Empty> : null}
       {visible.map((category) => {
@@ -76,21 +82,27 @@ export function MenuEditor({
         </section>
       ) : null}
     </div>
+    </BarOnly.Provider>
   );
 }
 
 function CategoryForm({ category, onDone }: { category?: MenuCategory; onDone?: () => void }) {
   const t = useT();
+  const barOnly = useContext(BarOnly);
   return (
     <ActionForm action={saveCategoryAction} resetOnOk={!category} onOk={onDone} className="mt-4 grid gap-3 border-t border-white/[0.06] pt-4 sm:grid-cols-3">
       {(state) => (
         <>
           {category ? <input type="hidden" name="id" value={category.id} /> : null}
           <Field label={t('Nombre')} name="name" required maxLength={60} defaultValue={state?.values?.name ?? category?.name} />
-          <Select label={t('Va a')} name="station" defaultValue={state?.values?.station ?? category?.station ?? 'kitchen'}>
-            <option value="kitchen">{t('Cocina')}</option>
-            <option value="bar">{t('Barra')}</option>
-          </Select>
+          {barOnly ? (
+            <input type="hidden" name="station" value="bar" />
+          ) : (
+            <Select label={t('Va a')} name="station" defaultValue={state?.values?.station ?? category?.station ?? 'kitchen'}>
+              <option value="kitchen">{t('Cocina')}</option>
+              <option value="bar">{t('Barra')}</option>
+            </Select>
+          )}
           <Field label={t('Orden')} name="sort" type="number" min={0} max={9999} defaultValue={category?.sort ?? ''} hint={t('Menor sale primero')} />
           <Field
             label={t('Nombre en inglés (opcional)')}
@@ -115,6 +127,7 @@ function CategoryForm({ category, onDone }: { category?: MenuCategory; onDone?: 
 
 function ProductForm({ categories, categoryId, product, onDone }: { categories: MenuCategory[]; categoryId: string; product?: MenuProduct; onDone?: () => void }) {
   const t = useT();
+  const barOnly = useContext(BarOnly);
   return (
     <ActionForm action={saveProductAction} resetOnOk={!product} onOk={onDone} className="mt-4 grid gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 sm:grid-cols-2">
       {(state) => (
@@ -138,11 +151,13 @@ function ProductForm({ categories, categoryId, product, onDone }: { categories: 
               </option>
             ))}
           </Select>
-          <Select label={t('Va a')} name="station" defaultValue={state?.values?.station ?? product?.station ?? ''}>
-            <option value="">{t('La de su categoría')}</option>
-            <option value="kitchen">{t('Cocina')}</option>
-            <option value="bar">{t('Barra')}</option>
-          </Select>
+          {barOnly ? null : (
+            <Select label={t('Va a')} name="station" defaultValue={state?.values?.station ?? product?.station ?? ''}>
+              <option value="">{t('La de su categoría')}</option>
+              <option value="kitchen">{t('Cocina')}</option>
+              <option value="bar">{t('Barra')}</option>
+            </Select>
+          )}
           {product ? <CheckField name="isActive" label={t('En la carta')} defaultChecked={product.isActive} /> : null}
           <div className="sm:col-span-2">
             <SubmitButton pendingText={t('Guardando…')}>{product ? t('Guardar producto') : t('Agregar producto')}</SubmitButton>

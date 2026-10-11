@@ -517,6 +517,10 @@ export type StaffSession = Actor & {
   /** Versión del fondo propio del restaurante (null = sin fondo). */
   background: number | null;
   locationCount: number;
+  /** Bar sin cajero: cada mesero cobra sus mesas y entrega su propio cierre. */
+  waitersCollect: boolean;
+  /** Solo bar (licores): sin cocina. */
+  barOnly: boolean;
 };
 
 /** La sesión vigente de alguien del equipo, o null si lo desactivaron, le cambiaron el PIN o el rol, o la sede ya no está. */
@@ -527,6 +531,7 @@ export async function getStaffSession(staffId: string, locationId: string, epoch
       `SELECT s.id, s.name, s.code, s.role, s.business_id AS "businessId", l.id AS "locationId", s.session_epoch AS epoch,
               s.location_id AS "homeLocation", b.name AS "businessName", b.slug AS "businessSlug", b.timezone, l.name AS "locationName",
               (SELECT count(*)::int FROM locations x WHERE x.business_id = b.id AND x.is_active) AS "locationCount",
+              b.waiters_collect AS "waitersCollect", b.bar_only AS "barOnly",
               (SELECT (extract(epoch FROM g.updated_at) * 1000)::bigint::float8 FROM business_backgrounds g WHERE g.business_id = b.id) AS background
          FROM staff s
          JOIN businesses b ON b.id = s.business_id AND b.is_active

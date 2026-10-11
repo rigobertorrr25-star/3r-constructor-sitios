@@ -169,6 +169,9 @@ CREATE INDEX IF NOT EXISTS idx_items_session ON order_items (session_id);
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS cashier_discount_limit INT NOT NULL DEFAULT 10;
 -- Propina sugerida (en %). En Colombia es voluntaria: el cliente decide.
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS suggested_tip INT NOT NULL DEFAULT 10;
+-- Forma de trabajo: «cada mesero cobra sus mesas» (sin cajero) y «solo bar» (sin cocina). Las prende el dueño en Sedes.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS waiters_collect BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS bar_only BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- Turno de caja de una sede: se abre con una base en efectivo y se cierra contando la plata.
 CREATE TABLE IF NOT EXISTS cash_shifts (
@@ -184,8 +187,17 @@ CREATE TABLE IF NOT EXISTS cash_shifts (
   counted_cash   BIGINT,
   notes          VARCHAR(300)
 );
--- Una sola caja abierta por sede.
-CREATE UNIQUE INDEX IF NOT EXISTS uniq_open_shift_per_location ON cash_shifts (location_id) WHERE closed_at IS NULL;
+-- Cuenta propia de cada mesero (bares sin cajero: cada mesero cobra sus mesas y al final entrega su cierre).
+-- staff_id NULL = la caja de la sede; con staff_id = la cuenta de ese mesero. El administrador verifica cada cierre.
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS staff_id UUID REFERENCES staff(id);
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS verified_by UUID REFERENCES staff(id);
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS verify_note VARCHAR(300);
+-- Una sola caja abierta por sede, y una sola cuenta abierta por mesero en cada sede.
+DROP INDEX IF EXISTS uniq_open_shift_per_location;
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_open_location_shift ON cash_shifts (location_id) WHERE closed_at IS NULL AND staff_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_open_waiter_shift ON cash_shifts (location_id, staff_id) WHERE closed_at IS NULL AND staff_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_shifts_staff ON cash_shifts (business_id, staff_id, opened_at);
 
 -- Entradas y salidas de efectivo que no son ventas (cambio que trae el dueño, pago a un proveedor…). No se borran.
 CREATE TABLE IF NOT EXISTS cash_movements (

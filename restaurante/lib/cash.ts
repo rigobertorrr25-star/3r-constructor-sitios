@@ -9,7 +9,7 @@ import { AppError, audit, isUuid, requirePermission, type Actor } from './store'
 export const METHODS = ['cash', 'card', 'transfer'] as const;
 export const isMethod = (v: string): v is Method => (METHODS as readonly string[]).includes(v);
 export type Method = (typeof METHODS)[number];
-export const METHOD_LABEL: Record<Method, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia' };
+export const METHOD_LABEL: Record<Method, string> = { cash: 'Efectivo', card: 'Datáfono', transfer: 'Transferencia' };
 
 const money = (n: number) => formatCop(n);
 
@@ -44,13 +44,13 @@ const toShift = (r: ShiftRow): Shift => ({
 });
 
 export async function getOpenShift(actor: Actor): Promise<Shift | null> {
-  const rows = await query<ShiftRow>(`${SHIFT_SELECT} WHERE c.location_id = $1 AND c.business_id = $2 AND c.closed_at IS NULL`, [actor.locationId, actor.businessId]);
+  const rows = await query<ShiftRow>(`${SHIFT_SELECT} WHERE c.location_id = $1 AND c.business_id = $2 AND c.closed_at IS NULL AND c.staff_id IS NULL`, [actor.locationId, actor.businessId]);
   return rows[0] ? toShift(rows[0]) : null;
 }
 
 export async function listShifts(actor: Actor, limit = 15): Promise<Shift[]> {
   requirePermission(actor, 'cash.operate');
-  const rows = await query<ShiftRow>(`${SHIFT_SELECT} WHERE c.location_id = $1 AND c.business_id = $2 ORDER BY c.opened_at DESC LIMIT $3`, [
+  const rows = await query<ShiftRow>(`${SHIFT_SELECT} WHERE c.location_id = $1 AND c.business_id = $2 AND c.staff_id IS NULL ORDER BY c.opened_at DESC LIMIT $3`, [
     actor.locationId,
     actor.businessId,
     limit,
@@ -79,12 +79,65 @@ export async function openShift(actor: Actor, openingAmount: number) {
 export async function lockOpenShift(db: Db, actor: Actor) {
   const shift = (
     await db.query<{ id: string; openingAmount: string }>(
-      `SELECT id, opening_amount AS "openingAmount" FROM cash_shifts WHERE location_id = $1 AND business_id = $2 AND closed_at IS NULL FOR UPDATE`,
+      `SELECT id, opening_amount AS "openingAmount" FROM cash_shifts WHERE location_id = $1 AND business_id = $2 AND closed_at IS NULL AND staff_id IS NULL FOR UPDATE`,
       [actor.locationId, actor.businessId],
     )
   ).rows[0];
   if (!shift) throw new AppError('CONFLICT', 'La caja está cerrada. Ábrela para cobrar.');
   return shift;
+}
+
+/** Forma de trabajo del negocio (las opciones que prende el dueño en Sedes). */
+export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean }> {
+  const row = (
+    await query<{ waitersCollect: boolean; barOnly: boolean }>(`SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly" FROM businesses WHERE id = $1`, [
+      businessId,
+    ])
+  )[0];
+  return row ?? { waitersCollect: false, barOnly: false };
+}
+
+/**
+ * La cuenta abierta de un mesero en la sede (bares sin cajero). Si no tiene, se abre sola con base cero: el mesero
+ * no recibe base, solo junta lo que cobra.
+ */
+export async function lockWaiterShift(db: Db, actor: Actor, staffId: string) {
+  const find = () =>
+    db.query<{ id: string; openingAmount: string }>(
+      `SELECT id, opening_amount AS "openingAmount" FROM cash_shifts
+        WHERE location_id = $1 AND business_id = $2 AND staff_id = $3 AND closed_at IS NULL FOR UPDATE`,
+      [actor.locationId, actor.businessId, staffId],
+    );
+  const open = (await find()).rows[0];
+  if (open) return open;
+  await db.query(
+    `INSERT INTO cash_shifts (business_id, location_id, opened_by, opening_amount, staff_id) VALUES ($1, $2, $3, 0, $3)
+     ON CONFLICT (location_id, staff_id) WHERE closed_at IS NULL AND staff_id IS NOT NULL DO NOTHING`,
+    [actor.businessId, actor.locationId, staffId],
+  );
+  return (await find()).rows[0];
+}
+
+/** Quién puede cobrar una mesa: la caja (dueño, administrador, cajero) o, si cada mesero cobra, el mesero que la abrió. */
+async function assertMayCollect(actor: Actor, openedBy: string, waitersCollect: boolean) {
+  if (can(actor.role, 'cash.operate')) return;
+  if (waitersCollect && actor.role === 'waiter' && openedBy === actor.id) return;
+  throw new AppError('FORBIDDEN', waitersCollect && actor.role === 'waiter' ? 'Solo puedes cobrar las mesas que tú abriste.' : 'No tienes permiso para hacer esto.');
+}
+
+/** Para la pantalla del mesero: si puede cobrar esa mesa él mismo. */
+export async function canCollectSession(actor: Actor, sessionId: string) {
+  if (can(actor.role, 'cash.operate')) return true;
+  if (actor.role !== 'waiter' || !isUuid(sessionId)) return false;
+  const [mode, rows] = await Promise.all([
+    workMode(actor.businessId),
+    query<{ openedBy: string }>(`SELECT opened_by AS "openedBy" FROM table_sessions WHERE id = $1 AND business_id = $2 AND location_id = $3`, [
+      sessionId,
+      actor.businessId,
+      actor.locationId,
+    ]),
+  ]);
+  return mode.waitersCollect && rows[0]?.openedBy === actor.id;
 }
 
 export async function addMovement(actor: Actor, input: { kind: string; amount: number; reason: string }) {
@@ -143,6 +196,11 @@ export type ShiftSummary = {
 /** Cuadre de un turno (abierto o cerrado). */
 export async function shiftSummary(actor: Actor, shiftId: string): Promise<ShiftSummary | null> {
   requirePermission(actor, 'cash.operate');
+  return loadShiftSummary(actor, shiftId);
+}
+
+/** El resumen de una caja o de la cuenta de un mesero, sin revisar permisos (quien llama ya los revisó). */
+export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<ShiftSummary | null> {
   if (!isUuid(shiftId)) return null;
   const row = (await query<ShiftRow>(`${SHIFT_SELECT} WHERE c.id = $1 AND c.location_id = $2 AND c.business_id = $3`, [shiftId, actor.locationId, actor.businessId]))[0];
   if (!row) return null;
@@ -280,7 +338,9 @@ async function loadCheckout(db: Db, actor: Actor, sessionId: string): Promise<Ch
 }
 
 export async function getCheckout(actor: Actor, sessionId: string) {
-  requirePermission(actor, 'cash.operate');
+  if (!can(actor.role, 'cash.operate')) {
+    if (!(await canCollectSession(actor, sessionId))) requirePermission(actor, 'cash.operate');
+  }
   if (!isUuid(sessionId)) return null;
   return loadCheckout(pooled(), actor, sessionId);
 }
@@ -288,8 +348,8 @@ export async function getCheckout(actor: Actor, sessionId: string) {
 async function lockSessionForCash(db: Db, actor: Actor, sessionId: string) {
   if (!isUuid(sessionId)) throw new AppError('NOT_FOUND', 'No encontramos esa cuenta.');
   const row = (
-    await db.query<{ id: string; status: string; number: string; tableId: string }>(
-      `SELECT ts.id, ts.status, t.number, ts.table_id AS "tableId" FROM table_sessions ts JOIN dining_tables t ON t.id = ts.table_id
+    await db.query<{ id: string; status: string; number: string; tableId: string; openedBy: string }>(
+      `SELECT ts.id, ts.status, t.number, ts.table_id AS "tableId", ts.opened_by AS "openedBy" FROM table_sessions ts JOIN dining_tables t ON t.id = ts.table_id
         WHERE ts.id = $1 AND ts.location_id = $2 AND ts.business_id = $3 FOR UPDATE OF ts`,
       [sessionId, actor.locationId, actor.businessId],
     )
@@ -358,7 +418,9 @@ export type PaymentInput = { method: string; amount: number; tip?: number; recei
  * Si llega dos veces el mismo `clientKey`, no cobra dos veces.
  */
 export async function pay(actor: Actor, sessionId: string, input: PaymentInput) {
-  requirePermission(actor, 'cash.operate');
+  const mode = await workMode(actor.businessId);
+  // Bar sin cajero: el mesero cobra sus propias mesas (se revisa abajo, con la mesa ya bloqueada).
+  if (!(mode.waitersCollect && actor.role === 'waiter')) requirePermission(actor, 'cash.operate');
   if (!(METHODS as readonly string[]).includes(input.method)) throw new AppError('INVALID', 'Elige cómo paga.');
   const method = input.method as Method;
   if (!isUuid(input.clientKey)) throw new AppError('INVALID', 'Pago sin identificador. Recarga la página.');
@@ -381,8 +443,10 @@ export async function pay(actor: Actor, sessionId: string, input: PaymentInput) 
 
   try {
     return await transaction(async (db) => {
-      const shift = await lockOpenShift(db, actor);
       const session = await lockSessionForCash(db, actor, sessionId);
+      await assertMayCollect(actor, session.openedBy, mode.waitersCollect);
+      // Sin cajero, cada pago entra a la cuenta del mesero que abrió la mesa (aunque lo registre el administrador).
+      const shift = mode.waitersCollect ? await lockWaiterShift(db, actor, session.openedBy) : await lockOpenShift(db, actor);
       if (session.status === 'closed') throw new AppError('CONFLICT', 'Esa mesa ya se cerró.');
       const checkout = (await loadCheckout(db, actor, sessionId))!;
       if (checkout.balance <= 0) throw new AppError('CONFLICT', 'Esta cuenta no tiene nada por pagar.');

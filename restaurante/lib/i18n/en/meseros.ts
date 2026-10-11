@@ -1,0 +1,100 @@
+// Textos en inglés: bar sin cajero (cada mesero cobra sus mesas y entrega su cierre) y «solo bar».
+// La llave es el texto exacto en español (con sus {huecos}).
+export const en: Record<string, string> = {
+  // Menú y pantallas
+  'Mi cuenta': 'My account',
+  Meseros: 'Servers',
+  Datáfono: 'Card terminal',
+  datáfono: 'card terminal',
+  'Lo que llevas cobrado en este turno. Cuando termines, entrega tu cierre y el administrador lo revisa.':
+    'What you have collected this shift. When you finish, hand in your closing and the manager will check it.',
+  'Cerrar mi cuenta': 'Close my account',
+  'Entregar mi cierre': 'Hand in my closing',
+  'Mis cierres recientes': 'My recent closings',
+  'Cuánto lleva cobrado cada mesero y cómo le pagaron en cada mesa. Cuando entreguen su cierre, cuenta la plata y márcalo como verificado.':
+    'How much each server has collected and how each table paid. When they hand in their closing, count the money and mark it as verified.',
+  'Vendido por todos en el turno': 'Sold by everyone this shift',
+  '1 cierre por verificar': '1 closing to verify',
+  '{n} cierres por verificar': '{n} closings to verify',
+  'En el turno': 'On shift',
+  'Cerrar la cuenta de {name}': 'Close {name}’s account',
+  'Cerrar cuenta': 'Close account',
+  'Todavía no hay meseros. Agrégalos en «Equipo» con el rol Mesero.': 'No servers yet. Add them in “Staff” with the Server role.',
+  'Verificados (últimos 3 días)': 'Verified (last 3 days)',
+
+  // Cuenta del mesero
+  '1 pago': '1 payment',
+  '{n} pagos': '{n} payments',
+  'propina {amount}': 'tip {amount}',
+  'Todavía no hay mesas cobradas.': 'No tables collected yet.',
+  'Cuenta abierta desde {time}': 'Account open since {time}',
+  'Sin cobros en este turno': 'No payments this shift',
+  'Lleva vendido': 'Sold so far',
+  '+ {amount} de propinas': '+ {amount} in tips',
+  'Efectivo que debe entregar:': 'Cash to hand in:',
+  'Mesas abiertas': 'Open tables',
+  'pidió la cuenta': 'asked for the check',
+  'falta {amount}': '{amount} due',
+  'Mesas cobradas': 'Tables collected',
+
+  // Cierres
+  'cerró {name}': 'closed by {name}',
+  'Verificado por {name}': 'Verified by {name}',
+  'Por verificar': 'To verify',
+  Vendido: 'Sold',
+  Propinas: 'Tips',
+  'Efectivo: entregó {counted} de {expected}': 'Cash: handed in {counted} of {expected}',
+  '· cuadra': '· balanced',
+  '· sobran {amount}': '· {amount} over',
+  '· faltan {amount}': '· {amount} short',
+  'Nota del cierre: {note}': 'Closing note: {note}',
+  'Nota de la verificación: {note}': 'Verification note: {note}',
+  'Ver la mesa cobrada': 'See the table collected',
+  'Ver las {n} mesas cobradas': 'See the {n} tables collected',
+
+  'Enviar a barra': 'Send to bar',
+  'Enviar a cocina': 'Send to kitchen',
+
+  // Formularios
+  'Forma de trabajo': 'How you work',
+  'Cómo se cobra y qué se prepara en tu negocio. Vale para todas las sedes.': 'How payments are taken and what is prepared in your business. Applies to every location.',
+  'Cada mesero cobra sus mesas': 'Each server collects their own tables',
+  'Para negocios sin cajero: el mesero registra si le pagaron en efectivo, datáfono o transferencia, lleva su propia cuenta y al final entrega su cierre. El administrador lo verifica en «Meseros».':
+    'For businesses without a cashier: the server records whether each table paid by cash, card terminal or transfer, keeps their own account and hands in a closing at the end. The manager checks it in “Servers”.',
+  'Solo bar (sin cocina)': 'Bar only (no kitchen)',
+  'Para negocios que solo venden licores y bebidas: se esconde la cocina.': 'For businesses that only sell liquor and drinks: the kitchen is hidden.',
+  'Efectivo que entrega': 'Cash handed in',
+  'Cuenta los billetes y escribe lo que hay.': 'Count the bills and enter the total.',
+  'Nota (opcional)': 'Note (optional)',
+  'Por ejemplo: un cliente quedó debiendo': 'For example: a customer still owes money',
+  'Cerrando…': 'Closing…',
+  'Por ejemplo: revisado con los vouchers del datáfono': 'For example: checked against the card terminal slips',
+  'Marcar como verificado': 'Mark as verified',
+
+  // Mensajes del servidor
+  'Solo puedes cobrar las mesas que tú abriste.': 'You can only collect the tables you opened.',
+  'Cuenta cerrada. El administrador la va a verificar.': 'Account closed. The manager will verify it.',
+  'Cierre verificado.': 'Closing verified.',
+  'Efectivo que entrega: escribe un valor en pesos.': 'Cash handed in: enter an amount in pesos.',
+  'Nota: entre 2 y 300 caracteres.': 'Note: 2 to 300 characters.',
+  'Todavía no has cobrado nada en este turno.': 'You haven’t collected anything this shift yet.',
+  'Esa persona no tiene cobros en este turno.': 'That person has no payments this shift.',
+  'Todavía tienes la mesa {n} abierta. Cóbrala antes de cerrar tu cuenta.': 'Table {n} is still open. Collect it before closing your account.',
+  'Todavía tienes {n} mesas abiertas. Cóbralas antes de cerrar tu cuenta.': 'You still have {n} open tables. Collect them before closing your account.',
+  'No encontramos ese cierre.': 'We couldn’t find that closing.',
+  'Esa cuenta todavía está abierta. Primero se cierra.': 'That account is still open. Close it first.',
+  'Ese cierre ya estaba verificado.': 'That closing was already verified.',
+
+  // Auditoría
+  'Cambió la forma de trabajo: cada mesero cobra sus mesas, solo bar': 'Changed how the business works: each server collects their tables, bar only',
+  'Cambió la forma de trabajo: cada mesero cobra sus mesas, con cocina': 'Changed how the business works: each server collects their tables, with kitchen',
+  'Cambió la forma de trabajo: cobra la caja, solo bar': 'Changed how the business works: the cashier collects, bar only',
+  'Cambió la forma de trabajo: cobra la caja, con cocina': 'Changed how the business works: the cashier collects, with kitchen',
+  'Cerró su cuenta: entregó {counted} en efectivo de {expected} (cuadra)': 'Closed their account: handed in {counted} cash of {expected} (balanced)',
+  'Cerró su cuenta: entregó {counted} en efectivo de {expected} (sobran {diff})': 'Closed their account: handed in {counted} cash of {expected} ({diff} over)',
+  'Cerró su cuenta: entregó {counted} en efectivo de {expected} (faltan {diff})': 'Closed their account: handed in {counted} cash of {expected} ({diff} short)',
+  'Cerró la cuenta de {name}: {counted} en efectivo de {expected} (cuadra)': 'Closed {name}’s account: {counted} cash of {expected} (balanced)',
+  'Cerró la cuenta de {name}: {counted} en efectivo de {expected} (sobran {diff})': 'Closed {name}’s account: {counted} cash of {expected} ({diff} over)',
+  'Cerró la cuenta de {name}: {counted} en efectivo de {expected} (faltan {diff})': 'Closed {name}’s account: {counted} cash of {expected} ({diff} short)',
+  'Verificó el cierre de {name}: {counted} en efectivo de {expected}': 'Verified {name}’s closing: {counted} cash of {expected}',
+};

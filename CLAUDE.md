@@ -71,7 +71,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   solo Azul Caribe), y también barberías/peluquerías (módulo 13). Nace de los bocetos de 13 módulos de Rigoberto (ZIP): se
   tomaron las reglas y se reescribió con la tecnología de la asistencia, varios negocios desde el día uno, plata en pesos
   enteros, nada se borra (auditoría y movimientos de inventario protegidos en la base). **Los 13 módulos están
-  construidos** (detalle en `restaurante/README.md`); 69 pruebas contra PostgreSQL real. **Publicado (5 oct 2026)** en
+  construidos** (detalle en `restaurante/README.md`); 75 pruebas contra PostgreSQL real. **Publicado (5 oct 2026)** en
   https://3r-constructor-sitios-git1.vercel.app (proyecto propio de Vercel, Root Directory `restaurante`; base en el proyecto
   `restaurante` de Neon, id `misty-haze-65464257`). Variables en Vercel: `DATABASE_URL`, `ADMIN_PASSWORD`,
   `SESSION_SECRET` y `ANTHROPIC_API_KEY` (puesta el 5 oct 2026, llave propia `restaurant-control`; el Tablero ya dice «Escrito con IA»; el resumen usa `claude-sonnet-5-5` desde el 6 oct 2026 para gastar la mitad). Usar siempre la dirección fija,
@@ -87,6 +87,10 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   estación, anulaciones, precuenta y cierre de caja salen impresos; un programa de 3R en un PC del local
   (`restaurante/public/impresion/agente-3r.mjs` + `iniciar-windows.bat`, necesita Node.js) los pide con el código de la sede
   y los manda por la red (puerto 9100). Detalle en `restaurante/README.md`.
+- **DELIRIUM** (11 oct 2026): bar que solo vende licores, sin cajera. Meseros Caridad, Paola, Johan e Isabel; bartender
+  Breiner; administrador Agusto. Para ellos se hizo la «forma de trabajo» de Restaurant Control (Sedes): cada mesero cobra
+  sus mesas y entrega su cierre, el administrador lo verifica en «Meseros»; y «solo bar». Hay que crearlo en el sistema en
+  vivo desde `/admin` (lo hace Rigoberto: falta el nombre del dueño y los PIN de cada uno).
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto

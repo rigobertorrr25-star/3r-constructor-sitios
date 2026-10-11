@@ -25,7 +25,7 @@ export default async function MenuPage() {
             : t('Marca aquí lo que se acabó: los meseros ya no lo podrán pedir hasta que vuelva a haber.')
         }
       />
-      <MenuEditor categories={menu.categories} products={menu.products} canEdit={canEdit} canRecipe={canRecipe} costs={costs} />
+      <MenuEditor categories={menu.categories} products={menu.products} canEdit={canEdit} canRecipe={canRecipe} costs={costs} barOnly={staff.barOnly} />
     </div>
   );
 }

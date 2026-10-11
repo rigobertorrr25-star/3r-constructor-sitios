@@ -202,6 +202,8 @@ export function precuenta(width: number, p: PrecuentaInput) {
 }
 
 export type CierreInput = {
+  /** Título del papel; sin título, «Cierre de caja». */
+  title?: string;
   business: string;
   location: string | null;
   openedBy: string;
@@ -226,7 +228,7 @@ export type CierreInput = {
 export function cierre(width: number, c: CierreInput) {
   const t = new Ticket(width).line(c.business, { align: 'center', bold: true });
   if (c.location) t.line(c.location, { align: 'center' });
-  t.line('CIERRE DE CAJA', { align: 'center', big: true })
+  t.line((c.title ?? 'Cierre de caja').toUpperCase(), { align: 'center', big: true })
     .line(`Abrió: ${c.openedBy} · ${c.openedAt}`)
     .line(`Cerró: ${c.closedBy} · ${c.closedAt}`)
     .rule()

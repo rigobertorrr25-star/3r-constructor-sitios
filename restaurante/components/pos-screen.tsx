@@ -92,6 +92,9 @@ export function PosScreen({
   const lang = useLang();
   const trx = useTr();
   const { lines, setLines, clientKey, pending: queued, setPending: setQueued, reset } = useCart(session.id);
+  // A dónde va el pedido: si todo es de barra (un bar de licores), no se habla de cocina.
+  const stations = new Set(lines.map((l) => products.find((p) => p.id === l.productId)?.station));
+  const sendLabel = !stations.has('kitchen') && lines.length ? t('Enviar a barra') : !stations.has('bar') && lines.length ? t('Enviar a cocina') : t('Enviar a cocina y barra');
   const attempt = useRef(0);
   const [category, setCategory] = useState<string>('');
   const [search, setSearch] = useState('');
@@ -271,7 +274,7 @@ export function PosScreen({
               <span className="font-display text-[20px] font-bold">{formatCop(cartTotal)}</span>
             </div>
             <button type="button" className={`${primaryButton} mt-4 w-full py-3 text-[15.5px]`} disabled={lines.length === 0 || pending || queued || closed || !clientKey} onClick={send}>
-              {queued ? t('Esperando conexión…') : pending ? t('Enviando…') : t('Enviar a cocina y barra')}
+              {queued ? t('Esperando conexión…') : pending ? t('Enviando…') : sendLabel}
             </button>
           </div>
 

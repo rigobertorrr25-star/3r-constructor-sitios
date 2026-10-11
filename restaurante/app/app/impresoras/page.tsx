@@ -96,7 +96,7 @@ export default async function PrintersPage() {
         {printers.length ? (
           <ul className="space-y-3">
             {printers.map((p) => (
-              <PrinterRow key={p.id} printer={p} />
+              <PrinterRow key={p.id} printer={p} barOnly={staff.barOnly} />
             ))}
           </ul>
         ) : (
@@ -107,7 +107,7 @@ export default async function PrintersPage() {
       <section className={card}>
         <h2 className="font-display text-[18px] font-bold">{t('Agregar impresora')}</h2>
         <div className="mt-4">
-          <NewPrinterForm />
+          <NewPrinterForm barOnly={staff.barOnly} />
         </div>
       </section>
 

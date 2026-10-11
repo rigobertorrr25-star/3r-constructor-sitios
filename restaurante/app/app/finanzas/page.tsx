@@ -12,7 +12,7 @@ import { makeT, tr } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
-const METHOD: Record<string, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia' };
+const METHOD: Record<string, string> = { cash: 'Efectivo', card: 'Datáfono', transfer: 'Transferencia' };
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default async function FinancePage({ searchParams }: { searchParams: Promise<{ periodo?: string; desde?: string; hasta?: string; sede?: string }> }) {

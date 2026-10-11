@@ -13,14 +13,17 @@ import { backgroundUrl } from '@/lib/background-url';
 import { LangSwitch } from '@/components/i18n';
 import { getT } from '@/lib/i18n/server';
 
-const LINKS: { href: string; label: string; permission: Permission; station?: Station }[] = [
+// only: «collect» = solo en bares donde cada mesero cobra; «register» = solo donde cobra la caja; «waiter» = además, solo meseros.
+const LINKS: { href: string; label: string; permission: Permission; station?: Station; only?: 'collect' | 'register' | 'waiter' }[] = [
   { href: '/app/tablero', label: 'Tablero', permission: 'finance.view' },
   { href: '/app', label: 'Mesas', permission: 'tables.view' },
+  { href: '/app/mi-cuenta', label: 'Mi cuenta', permission: 'tables.open', only: 'waiter' },
   { href: '/app/cocina', label: 'Cocina', permission: 'kds.view', station: 'kitchen' },
   { href: '/app/barra', label: 'Barra', permission: 'kds.view', station: 'bar' },
   { href: '/app/reservas', label: 'Reservas', permission: 'reservations.manage' },
   { href: '/app/agenda', label: 'Agenda', permission: 'agenda.view' },
-  { href: '/app/caja', label: 'Caja', permission: 'cash.operate' },
+  { href: '/app/caja', label: 'Caja', permission: 'cash.operate', only: 'register' },
+  { href: '/app/meseros', label: 'Meseros', permission: 'waiters.verify', only: 'collect' },
   { href: '/app/finanzas', label: 'Finanzas', permission: 'finance.view' },
   { href: '/app/facturas', label: 'Facturas', permission: 'invoices.manage' },
   { href: '/app/carta', label: 'Carta', permission: 'orders.take' },
@@ -37,7 +40,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const staff = await requireStaff();
   const t = await getT();
   const own = ownStation(staff.role);
-  const visible = LINKS.filter((l) => can(staff.role, l.permission) && (!own || !l.station || l.station === own));
+  const fits = (l: (typeof LINKS)[number]) =>
+    l.only === 'collect' ? staff.waitersCollect : l.only === 'register' ? !staff.waitersCollect : l.only === 'waiter' ? staff.waitersCollect && staff.role === 'waiter' : true;
+  const visible = LINKS.filter(
+    (l) => can(staff.role, l.permission) && (!own || !l.station || l.station === own) && fits(l) && !(staff.barOnly && (l.station === 'kitchen' || l.href === '/app/agenda')),
+  );
   const counts = visible.some((l) => l.station) ? await pendingCounts(staff) : {};
   // Si la estación imprime sus comandas, nadie las marca en pantalla: el contador no diría nada útil.
   const printed = { kitchen: await hasPrinter(staff, 'kitchen'), bar: await hasPrinter(staff, 'bar') };

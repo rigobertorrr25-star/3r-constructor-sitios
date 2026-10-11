@@ -17,7 +17,7 @@ type View = Omit<Checkout, 'session' | 'payments'> & {
   payments: (Omit<Checkout['payments'][number], 'createdAt'> & { createdAt: string })[];
 };
 
-const METHOD_LABEL: Record<Method, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia' };
+const METHOD_LABEL: Record<Method, string> = { cash: 'Efectivo', card: 'Datáfono', transfer: 'Transferencia' };
 const newKey = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
 const toInt = (value: string) => {
   const n = Number(value.replace(/[.\s$]/g, ''));
@@ -25,7 +25,23 @@ const toInt = (value: string) => {
 };
 const tipFor = (amount: number, percent: number) => Math.round((amount * percent) / 100 / 100) * 100;
 
-export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, timeZone, printBill = false }: { checkout: View; shiftOpen: boolean; canReverse: boolean; canUnlimited: boolean; timeZone: string; printBill?: boolean }) {
+export function CheckoutScreen({
+  checkout,
+  shiftOpen,
+  canReverse,
+  canUnlimited,
+  canDiscount = true,
+  timeZone,
+  printBill = false,
+}: {
+  checkout: View;
+  shiftOpen: boolean;
+  canReverse: boolean;
+  canUnlimited: boolean;
+  canDiscount?: boolean;
+  timeZone: string;
+  printBill?: boolean;
+}) {
   const c = checkout;
   const t = useT();
   const lang = useLang();
@@ -114,8 +130,8 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <Link href="/app/caja" className="text-[14px] text-muted-foreground hover:text-foreground">
-            ← {t('Caja')}
+          <Link href={canDiscount ? '/app/caja' : '/app'} className="text-[14px] text-muted-foreground hover:text-foreground">
+            ← {canDiscount ? t('Caja') : t('Mesas')}
           </Link>
           <h1 className="mt-1 font-display text-[26px] font-bold">{t('Cobrar mesa {n}', { n: c.session.tableNumber })}</h1>
           <p className="text-[14px] text-muted-foreground">
@@ -202,7 +218,7 @@ export function CheckoutScreen({ checkout, shiftOpen, canReverse, canUnlimited, 
             </>
           ) : null}
 
-          {!closed && c.balance > 0 ? (
+          {!closed && c.balance > 0 && canDiscount ? (
             <details className="mt-6 rounded-2xl border border-white/[0.08] px-4 py-3">
               <summary className="cursor-pointer text-[14.5px] font-medium">{t('Aplicar descuento')}</summary>
               <ActionForm action={discountAction} resetOnOk className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr]">
