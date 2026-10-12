@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
-import { createFixtureAction, createTableAction, createTablesAction, removeFixtureAction, removeTableAction, saveLayoutAction, updateFixtureAction, updateTableAction } from '@/app/actions';
+import { createFixtureAction, createTableAction, createTablesAction, removeFixtureAction, removeTableAction, removeTablesAction, saveLayoutAction, updateFixtureAction, updateTableAction } from '@/app/actions';
 import { orOffline } from '@/lib/offline';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
@@ -33,6 +33,9 @@ export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; f
   const [boxes, setBoxes] = useState<Record<string, Box>>(() => Object.fromEntries(items.map((t) => [t.id, { x: t.x, y: t.y, w: t.w, h: t.h }])));
   const [dirty, setDirty] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // «Seleccionar varias»: se tocan las mesas una por una y se quitan juntas.
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, start] = useTransition();
@@ -62,6 +65,10 @@ export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; f
   const onPointerDown = (e: React.PointerEvent, id: string, mode: 'move' | 'resize') => {
     e.preventDefault();
     e.stopPropagation();
+    if (picking) {
+      if (!isBar(id)) setPicked((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
+      return;
+    }
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     drag.current = { id, mode, startX: e.clientX, startY: e.clientY, box: boxes[id] };
     setSelectedId(id);
@@ -114,7 +121,18 @@ export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; f
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <ZoneTabs zones={zones} zone={currentZone} onChange={setZone} />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className={quietButton}
+              onClick={() => {
+                setPicking(!picking);
+                setPicked([]);
+                setSelectedId(null);
+              }}
+            >
+              {picking ? t('Terminar selección') : t('Seleccionar varias')}
+            </button>
             {dirty ? <span className="text-[13px] text-warning">{t('Cambios sin guardar')}</span> : saved ? <span className="text-[13px] text-success">{t('Plano guardado')}</span> : null}
             <button type="button" className={primaryButton} disabled={!dirty || pending} onClick={save}>
               {pending ? t('Guardando…') : t('Guardar plano')}
@@ -124,6 +142,50 @@ export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; f
         {error ? <Alert>{trx(error)}</Alert> : null}
         {/* Lo que se toca se edita en un cuadro que flota abajo a la derecha: siempre a la vista y sin mover el plano. */}
         <div className="fixed bottom-4 right-4 z-30 max-h-[70vh] w-[min(420px,calc(100vw-2rem))] overflow-y-auto rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.7)] empty:hidden">
+        {picking ? (
+          <section className={card}>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-display text-[18px] font-bold">{t('{n} mesas seleccionadas', { n: picked.length })}</h2>
+              <button
+                type="button"
+                aria-label={t('Cerrar')}
+                onClick={() => {
+                  setPicking(false);
+                  setPicked([]);
+                }}
+                className="grid size-9 place-items-center rounded-full border border-white/[0.12] text-[18px] text-muted-foreground hover:text-foreground"
+              >
+                ×
+              </button>
+            </div>
+            <p className="mt-1 text-[13px] text-muted-foreground">{t('Toca las mesas que quieres quitar; si tocas una marcada, se desmarca.')}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" className={quietButton} onClick={() => setPicked(tables.filter((x) => x.zone === currentZone).map((x) => x.id))}>
+                {t('Marcar todas las de esta zona')}
+              </button>
+              <button type="button" className={quietButton} disabled={!picked.length} onClick={() => setPicked([])}>
+                {t('Desmarcar todas')}
+              </button>
+            </div>
+            <ActionForm
+              action={removeTablesAction}
+              onOk={() => setPicked([])}
+              className="mt-4 border-t border-white/[0.06] pt-4"
+            >
+              {() => (
+                <>
+                  {picked.map((id) => (
+                    <input key={id} type="hidden" name="tableId" value={id} />
+                  ))}
+                  <SubmitButton tone="danger" disabled={!picked.length} pendingText={t('Quitando…')}>
+                    {t('Quitar {n} mesas', { n: picked.length })}
+                  </SubmitButton>
+                  <p className="mt-2 text-[12.5px] text-muted-foreground">{t('Las mesas abiertas no se quitan. El historial se conserva.')}</p>
+                </>
+              )}
+            </ActionForm>
+          </section>
+        ) : null}
         {selectedBar ? (
           <section className={card}>
             <div className="flex items-center justify-between gap-3">
@@ -212,7 +274,16 @@ export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; f
               const box = boxes[t.id] ?? { x: t.x, y: t.y, w: t.w, h: t.h };
               return (
                 <div key={t.id} onPointerDown={(e) => onPointerDown(e, t.id, 'move')} className="cursor-grab active:cursor-grabbing">
-                  <TableShape table={{ ...t, ...box }} now={0} selected={t.id === selectedId} />
+                  <TableShape table={{ ...t, ...box }} now={0} selected={t.id === selectedId || picked.includes(t.id)} />
+                  {picked.includes(t.id) ? (
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute grid size-6 place-items-center rounded-full bg-destructive text-[14px] font-bold text-white shadow"
+                      style={{ left: `${(box.x / W) * 100}%`, top: `${(box.y / H) * 100}%`, transform: 'translate(-30%, -30%)' }}
+                    >
+                      ✓
+                    </span>
+                  ) : null}
                   {t.id === selectedId ? <ResizeHandle box={box} onPointerDown={(e) => onPointerDown(e, t.id, 'resize')} /> : null}
                 </div>
               );
@@ -275,6 +346,21 @@ export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; f
         <button type="button" className={`${quietButton} w-full`} onClick={() => setSelectedId(null)} hidden={!selected && !selectedBar}>
           {t('Deseleccionar')}
         </button>
+        <section className={card}>
+          <h2 className="font-display text-[18px] font-bold">{t('Quitar todas las mesas')}</h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">{t('Para volver a armar el plano desde cero. Las mesas abiertas se quedan y el historial se conserva.')}</p>
+          <ActionForm action={removeTablesAction} resetOnOk className="mt-4 space-y-3">
+            {() => (
+              <>
+                <input type="hidden" name="scope" value="all" />
+                <CheckField name="confirm" label={t('Sí, quiero quitar todas las mesas')} />
+                <SubmitButton tone="danger" pendingText={t('Quitando…')}>
+                  {t('Quitar todas las mesas')}
+                </SubmitButton>
+              </>
+            )}
+          </ActionForm>
+        </section>
       </aside>
     </div>
   );

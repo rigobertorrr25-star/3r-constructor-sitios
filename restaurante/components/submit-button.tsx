@@ -12,6 +12,7 @@ export function SubmitButton({
   className = '',
   name,
   value,
+  disabled = false,
 }: {
   children: ReactNode;
   pendingText?: string;
@@ -19,12 +20,13 @@ export function SubmitButton({
   className?: string;
   name?: string;
   value?: string;
+  disabled?: boolean;
 }) {
   const t = useT();
   const { pending } = useFormStatus();
   const base = tone === 'primary' ? primaryButton : tone === 'danger' ? dangerButton : quietButton;
   return (
-    <button type="submit" name={name} value={value} disabled={pending} className={`${base} ${className}`}>
+    <button type="submit" name={name} value={value} disabled={pending || disabled} className={`${base} ${className}`}>
       {pending ? (pendingText ?? t('Un momento…')) : children}
     </button>
   );

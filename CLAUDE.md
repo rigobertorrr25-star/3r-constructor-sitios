@@ -89,7 +89,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   y los manda por la red (puerto 9100). Detalle en `restaurante/README.md`.
   **Plano** (12 oct 2026, con fotos de referencia de Rigoberto): visto desde arriba, piso cálido, mesas de madera con sillas
   tapizadas y aro de color por estado (en las redondas, la mitad de las sillas a cada lado, juntas: no en cruz); el dueño pone las barras en Plano → «Agregar barra» (tabla `floor_fixtures`, solo dibujo). «Agregar varias mesas» (12 oct 2026) crea hasta 60 mesas
-  numeradas seguidas y acomodadas en filas; al tocar una mesa, su cuadro de edición flota abajo a la derecha. **Importar carta** (Carta → «Importar carta», 12 oct 2026): se pega
+  numeradas seguidas y acomodadas en filas; al tocar una mesa, su cuadro de edición flota abajo a la derecha. «Seleccionar varias» marca mesas con un toque y las quita juntas; «Quitar todas las mesas» (con casilla de confirmación) deja el plano vacío; las abiertas nunca se quitan. **Importar carta** (Carta → «Importar carta», 12 oct 2026): se pega
   la carta en texto (categoría en su línea, cada producto con su precio al final) y se cargan categorías y productos; no repite
   y actualiza precios. **Biblioteca de fotos de 3R** (12 oct 2026): 76 fotos de bebidas creadas con IA
   (Higgsfield, calidad media, ~38 créditos de Rigoberto) en `restaurante/public/biblioteca`; Carta → «Poner fotos de la biblioteca» se las
