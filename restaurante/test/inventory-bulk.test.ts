@@ -110,4 +110,17 @@ describe('inventario masivo', { skip: url ? false : 'sin TEST_DATABASE_URL' }, (
     assert.equal((await inv.listMovements(agusto, { staffId: breiner.id, days: { from: '2020-01-01', to: '2020-01-01', timeZone: tz } })).length, 0);
     await assert.rejects(inv.movementPeople(breiner), { code: 'FORBIDDEN' });
   });
+
+  it('el mesero ve cuántas quedan: sube cuando el bartender carga y baja con cada venta', async () => {
+    const stock = () => inv.sellableStock(waiter);
+    const club = (await orders.getMenu(owner.businessId)).products.find((p) => p.name === 'Club Colombia')!;
+    assert.equal((await stock())[mojito], undefined, 'sin inventario cargado no dice nada');
+    await bulk.bulkStock(owner, [{ itemId: (await byName('Club Colombia')).id, counted: '25' }]);
+    assert.equal((await stock())[club.id], 25);
+    const session = await store.openTable(waiter, (await store.createTable(owner, { zone: 'Salón', number: '9', capacity: 4, shape: 'square' })), { guests: 2 });
+    await orders.sendOrder(waiter, session, [{ productId: club.id, quantity: 3 }], randomUUID());
+    assert.equal((await stock())[club.id], 22);
+    await bulk.bulkStock(owner, [{ itemId: (await byName('Club Colombia')).id, counted: '0' }]);
+    assert.equal((await stock())[club.id], 0);
+  });
 });

@@ -3,6 +3,9 @@ import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTML
 
 export const card = 'rounded-[28px] border border-white/[0.08] bg-card p-6 shadow-[var(--shadow-glass)]';
 
+/** Tarjeta transparente para la pantalla de ingreso: deja ver la foto de fondo del restaurante. Sin backdrop-blur: volvería contenedor del fondo fijo que va adentro y la foto quedaría solo detrás de la tarjeta. */
+export const glassCard = 'rounded-[28px] border border-white/[0.14] bg-[rgba(4,8,13,0.28)] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.45)]';
+
 export const quietButton =
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/[0.1] px-4 py-2 text-[14px] transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)] disabled:opacity-50';
 

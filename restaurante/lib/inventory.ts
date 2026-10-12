@@ -345,6 +345,26 @@ export async function productCosts(businessId: string) {
   return new Map(rows.map((r) => [r.productId, Number(r.cost)]));
 }
 
+/**
+ * Cuántas unidades de cada producto alcanzan con lo que hay en la sede, según su receta (el insumo que menos alcance
+ * manda). Solo cuentan los productos cuyos insumos ya se cargaron o contaron alguna vez: si nadie ha cargado el
+ * inventario, el producto no dice nada (no aparece como agotado por falta de datos). Para la pantalla del mesero.
+ */
+export async function sellableStock(actor: Pick<Actor, 'businessId' | 'locationId'>): Promise<Record<string, number>> {
+  const rows = await query<{ productId: string; available: string }>(
+    `WITH st AS (
+       SELECT item_id, sum(quantity) AS stock FROM inventory_movements WHERE location_id = $2 AND business_id = $1 GROUP BY item_id
+     )
+     SELECT r.product_id AS "productId", min(floor(st.stock / r.quantity)) AS available
+       FROM recipe_lines r JOIN menu_products p ON p.id = r.product_id LEFT JOIN st ON st.item_id = r.item_id
+      WHERE p.business_id = $1
+      GROUP BY r.product_id
+     HAVING bool_and(st.item_id IS NOT NULL)`,
+    [actor.businessId, actor.locationId],
+  );
+  return Object.fromEntries(rows.map((r) => [r.productId, Math.max(0, Number(r.available))]));
+}
+
 // ───────── lo que llaman los pedidos ─────────
 
 /** Descuenta los insumos de lo enviado en una ronda (va dentro de la misma transacción del pedido). */
