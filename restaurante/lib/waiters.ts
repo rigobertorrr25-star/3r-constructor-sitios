@@ -10,15 +10,25 @@ import { AppError, audit, isUuid, requirePermission, type Actor } from './store'
 const money = formatCop;
 
 /** El dueño escoge la forma de trabajo del negocio. */
-export async function updateWorkMode(actor: Actor, input: { waitersCollect: boolean; barOnly: boolean }) {
+export async function updateWorkMode(actor: Actor, input: { waitersCollect: boolean; barOnly: boolean; suggestedTip?: number }) {
   requirePermission(actor, 'locations.manage');
+  // Propina sugerida en %; 0 = el negocio no maneja propina (no se ofrece al cobrar ni sale en la precuenta).
+  const tip = input.suggestedTip ?? null;
+  if (tip !== null && (!Number.isInteger(tip) || tip < 0 || tip > 30)) throw new AppError('INVALID', 'Propina sugerida: de 0 a 30 %.');
   await transaction(async (db) => {
-    await db.query(`UPDATE businesses SET waiters_collect = $2, bar_only = $3 WHERE id = $1`, [actor.businessId, input.waitersCollect, input.barOnly]);
+    await db.query(`UPDATE businesses SET waiters_collect = $2, bar_only = $3, suggested_tip = COALESCE($4, suggested_tip) WHERE id = $1`, [
+      actor.businessId,
+      input.waitersCollect,
+      input.barOnly,
+      tip,
+    ]);
     await audit(db, actor, {
       action: 'business.mode',
       entity: 'business',
       entityId: actor.businessId,
-      summary: `Cambió la forma de trabajo: ${input.waitersCollect ? 'cada mesero cobra sus mesas' : 'cobra la caja'}, ${input.barOnly ? 'solo bar' : 'con cocina'}`,
+      summary: `Cambió la forma de trabajo: ${input.waitersCollect ? 'cada mesero cobra sus mesas' : 'cobra la caja'}, ${input.barOnly ? 'solo bar' : 'con cocina'}${
+        tip === null ? '' : tip === 0 ? ', sin propina' : `, propina sugerida ${tip} %`
+      }`,
     });
   });
 }

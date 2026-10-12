@@ -50,7 +50,8 @@ export function CheckoutScreen({
   const [parts, setParts] = useState(1);
   const [method, setMethod] = useState<Method>('cash');
   const [amount, setAmount] = useState(String(c.balance));
-  const [tipOn, setTipOn] = useState(true);
+  // Sin propina sugerida (0 %), el negocio no maneja propina: ni se ofrece.
+  const [tipOn, setTipOn] = useState(c.suggestedTipPercent > 0);
   const [tip, setTip] = useState('');
   const [received, setReceived] = useState('');
   const [reference, setReference] = useState('');
@@ -287,6 +288,7 @@ export function CheckoutScreen({
               ))}
             </div>
             <Field label={t('Valor a pagar')} name="amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            {c.suggestedTipPercent > 0 ? (
             <div className="space-y-1.5">
               <label className="flex items-center gap-2 text-sm font-medium">
                 <input type="checkbox" className="size-4 accent-[#8a9bff]" checked={tipOn} onChange={(e) => setTipOn(e.target.checked)} />
@@ -296,6 +298,7 @@ export function CheckoutScreen({
                 <input className={inputClass} inputMode="numeric" placeholder={String(suggestedTip)} value={tip} onChange={(e) => setTip(e.target.value)} aria-label={t('Valor de la propina')} />
               ) : null}
             </div>
+            ) : null}
             {method === 'cash' ? (
               <div className="space-y-1.5">
                 <Field label={t('Recibido en efectivo')} name="received" inputMode="numeric" placeholder={String(value + tipValue)} value={received} onChange={(e) => setReceived(e.target.value)} />
@@ -308,7 +311,7 @@ export function CheckoutScreen({
             )}
             <div className="rounded-2xl bg-white/[0.04] p-3 text-[14.5px]">
               <Row label={t('Abona a la cuenta')} value={formatCop(value)} />
-              <Row label={t('Propina')} value={formatCop(tipValue)} />
+              {c.suggestedTipPercent > 0 ? <Row label={t('Propina')} value={formatCop(tipValue)} /> : null}
               <Row label={t('Total a cobrar')} value={formatCop(value + tipValue)} strong />
             </div>
             {queued ? (

@@ -138,4 +138,17 @@ describe('cada mesero cobra sus mesas', { skip: url ? false : 'sin TEST_DATABASE
     assert.equal(acc.byMethod.transfer.amount, 100000);
     assert.equal((await waiters.waiterAccount(owner, owner.id)).sales, 0, 'no entra a la cuenta del dueño');
   });
+
+  it('sin propina (0 %): no se sugiere y se puede volver a poner', async () => {
+    await assert.rejects(waiters.updateWorkMode(owner, { waitersCollect: true, barOnly: true, suggestedTip: 31 }), /de 0 a 30/);
+    await waiters.updateWorkMode(owner, { waitersCollect: true, barOnly: true, suggestedTip: 0 });
+    assert.equal((await cash.workMode(owner.businessId)).suggestedTip, 0);
+    const t4 = await store.createTable(owner, { zone: 'Salón', number: '4', capacity: 4, shape: 'square' });
+    const mesa4 = await store.openTable(isabel, t4, { guests: 2 });
+    await order(isabel, mesa4, 1);
+    assert.equal((await cash.getCheckout(isabel, mesa4))!.suggestedTipPercent, 0);
+    // Guardar sin tocar la propina no la cambia.
+    await waiters.updateWorkMode(owner, { waitersCollect: true, barOnly: true });
+    assert.equal((await cash.workMode(owner.businessId)).suggestedTip, 0);
+  });
 });
