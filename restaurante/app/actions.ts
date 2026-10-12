@@ -40,6 +40,7 @@ import {
   createLocation,
   createStaff,
   createTable,
+  createTables,
   getBusinessBySlug,
   listLoginPeople,
   loginStaff,
@@ -230,6 +231,19 @@ export async function createTableAction(_prev: FormState, formData: FormData): P
     () => createTable(staff, { zone: text(formData, 'zone'), number: text(formData, 'number'), capacity: int(formData, 'capacity'), shape: text(formData, 'shape') }),
     ['/app', '/app/plano'],
   );
+}
+
+export async function createTablesAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  let created: string[] = [];
+  try {
+    created = await createTables(staff, { zone: text(formData, 'zone'), count: int(formData, 'count'), capacity: int(formData, 'capacity'), shape: text(formData, 'shape') });
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+  revalidatePath('/app');
+  revalidatePath('/app/plano');
+  return { ok: Date.now(), message: await trServer(`Listo: ${created.length} mesas nuevas, de la ${created[0]} a la ${created.at(-1)}.`) };
 }
 
 export async function updateTableAction(_prev: FormState, formData: FormData): Promise<FormState> {

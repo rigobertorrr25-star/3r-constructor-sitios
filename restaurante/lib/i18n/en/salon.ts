@@ -233,4 +233,13 @@ export const en: Record<string, string> = {
   'Puso «{label}» en el plano ({n} sillas)': 'Placed “{label}” on the floor plan ({n} stools)',
   'Cambió «{label}» del plano ({n} sillas)': 'Changed “{label}” on the floor plan ({n} stools)',
   'Quitó «{label}» del plano': 'Removed “{label}” from the floor plan',
+  // Plano: varias mesas de una vez
+  'Agregar varias mesas': 'Add several tables',
+  'Se numeran solas desde la siguiente libre y quedan acomodadas en filas. Después las arrastras a su sitio.':
+    'They are numbered automatically from the next free number and laid out in rows. Then drag them into place.',
+  'Cuántas': 'How many',
+  'Agregar mesas': 'Add tables',
+  'Cantidad de mesas: de 1 a 60.': 'Number of tables: 1 to 60.',
+  'Listo: {n} mesas nuevas, de la {a} a la {b}.': 'Done: {n} new tables, from {a} to {b}.',
+  'Agregó {n} mesas (de la {a} a la {b}) en {zone}': 'Added {n} tables ({a} to {b}) in {zone}',
 };

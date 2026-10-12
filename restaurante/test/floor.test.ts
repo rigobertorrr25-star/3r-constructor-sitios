@@ -65,4 +65,19 @@ describe('barras del plano', { skip: url ? false : 'sin TEST_DATABASE_URL' }, ()
     await floor.removeFixture(owner, id);
     assert.equal((await floor.listFixtures(owner)).length, 0);
   });
+
+  it('agrega 25 mesas de una vez: numeradas seguidas, dentro del lienzo y sin montarse', async () => {
+    const created = await store.createTables(owner, { zone: 'Salón', count: 25, capacity: 4, shape: 'square' });
+    assert.equal(created.length, 25);
+    assert.deepEqual(created.slice(0, 2), ['2', '3']); // la mesa 1 ya existía
+    assert.equal(created.at(-1), '26');
+    const tables = (await store.listTables(owner)).filter((t) => t.zone === 'Salón');
+    assert.equal(tables.length, 26);
+    for (const t of tables) assert.ok(t.x >= 0 && t.y >= 0 && t.x + t.w <= 1000 && t.y + t.h <= 640, `mesa ${t.number} fuera del lienzo`);
+    for (const a of tables)
+      for (const b of tables)
+        if (a !== b) assert.ok(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y, `mesas ${a.number} y ${b.number} montadas`);
+    await assert.rejects(store.createTables(owner, { zone: 'Salón', count: 61, capacity: 4, shape: 'square' }), /de 1 a 60/);
+    await assert.rejects(store.createTables(waiter, { zone: 'Salón', count: 2, capacity: 4, shape: 'square' }), /permiso/);
+  });
 });

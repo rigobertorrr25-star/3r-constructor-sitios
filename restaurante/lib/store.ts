@@ -672,6 +672,56 @@ export async function createTable(actor: Actor, input: { zone: string; number: s
   });
 }
 
+/**
+ * Plano → «Agregar varias mesas»: crea de una vez `count` mesas numeradas seguidas (desde la siguiente libre), con los
+ * mismos puestos y forma, acomodadas en filas en los huecos libres de la zona. Los números que ya existen se saltan.
+ */
+export async function createTables(actor: Actor, input: { zone: string; count: number; capacity: number; shape: string }) {
+  requirePermission(actor, 'floor.edit');
+  if (!Number.isInteger(input.count) || input.count < 1 || input.count > 60) throw new AppError('INVALID', 'Cantidad de mesas: de 1 a 60.');
+  const data = readTableInput({ zone: input.zone, number: '1', capacity: input.capacity, shape: input.shape });
+  return transaction(async (db) => {
+    const existing = (
+      await db.query<{ number: string; zone: string; isActive: boolean; x: number; y: number; w: number; h: number }>(
+        `SELECT number, zone, is_active AS "isActive", x, y, w, h FROM dining_tables WHERE location_id = $1 FOR UPDATE`,
+        [actor.locationId],
+      )
+    ).rows;
+    const active = new Set(existing.filter((t) => t.isActive).map((t) => t.number));
+    const numeric = [...active].map(Number).filter((n) => Number.isInteger(n) && n > 0);
+    let next = numeric.length ? Math.max(...numeric) + 1 : 1;
+    const taken = existing.filter((t) => t.isActive && t.zone === data.zone).map(({ x, y, w, h }) => ({ x, y, w, h }));
+    // Muchas mesas no caben grandes en el lienzo: se achican un poco para que entren todas.
+    const base = SIZE[data.shape];
+    const scale = taken.length + input.count > 28 ? 0.75 : 1;
+    const size = { w: Math.round(base.w * scale), h: Math.round(base.h * scale) };
+    const created: string[] = [];
+    for (let i = 0; i < input.count; i++) {
+      while (active.has(String(next))) next++;
+      const number = String(next++);
+      const spot = freeSpot(taken, size);
+      taken.push({ ...spot, ...size });
+      await db.query(
+        `INSERT INTO dining_tables (business_id, location_id, zone, number, capacity, shape, x, y, w, h)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         ON CONFLICT (location_id, number) DO UPDATE
+           SET zone = EXCLUDED.zone, capacity = EXCLUDED.capacity, shape = EXCLUDED.shape, x = EXCLUDED.x, y = EXCLUDED.y,
+               w = EXCLUDED.w, h = EXCLUDED.h, is_active = TRUE, is_blocked = FALSE`,
+        [actor.businessId, actor.locationId, data.zone, number, data.capacity, data.shape, spot.x, spot.y, size.w, size.h],
+      );
+      active.add(number);
+      created.push(number);
+    }
+    await audit(db, actor, {
+      action: 'table.create',
+      entity: 'location',
+      entityId: actor.locationId,
+      summary: `Agregó ${created.length} mesas (de la ${created[0]} a la ${created.at(-1)}) en ${data.zone}`,
+    });
+    return created;
+  });
+}
+
 export async function updateTable(actor: Actor, tableId: string, input: { zone: string; number: string; capacity: number; shape: string; isBlocked: boolean }) {
   requirePermission(actor, 'floor.edit');
   const data = readTableInput(input);
