@@ -3,11 +3,12 @@
 // que el producto, se cuenta en unidades y cada venta descuenta 1.
 import { query, transaction } from './db';
 import { parseQuantity } from './inventory';
+import { can } from './permissions';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 
 /** Categorías de la carta con cuántos productos les falta inventario (sin receta). */
 export async function menuForInventory(actor: Actor) {
-  requirePermission(actor, 'inventory.manage');
+  requirePermission(actor, 'inventory.load');
   return query<{ id: string; name: string; products: number; withoutRecipe: number }>(
     `SELECT c.id, c.name, count(p.id)::int AS products,
             count(p.id) FILTER (WHERE NOT EXISTS (SELECT 1 FROM recipe_lines r WHERE r.product_id = p.id))::int AS "withoutRecipe"
@@ -23,7 +24,7 @@ export async function menuForInventory(actor: Actor) {
  * y la receta «1 unidad». Si ya hay un insumo con ese nombre en unidades, lo usa. Los que ya tienen receta no se tocan.
  */
 export async function inventoryFromMenu(actor: Actor, categoryIds: string[]) {
-  requirePermission(actor, 'inventory.manage');
+  requirePermission(actor, 'inventory.load');
   const ids = [...new Set(categoryIds)].filter(isUuid);
   if (!ids.length) throw new AppError('INVALID', 'Marca al menos una categoría de la carta.');
   return transaction(async (db) => {
@@ -84,7 +85,10 @@ export type StockRow = { itemId: string; counted?: string; unitCost?: string; mi
  * Todo en la unidad en que se cuenta (unidades, botellas, kg o L).
  */
 export async function bulkStock(actor: Actor, rows: StockRow[], reason = 'Carga de inventario') {
-  requirePermission(actor, 'inventory.manage');
+  requirePermission(actor, 'inventory.load');
+  // El bartender carga cantidades y mínimos; los costos (plata) solo el dueño y el administrador.
+  if (!can(actor.role, 'inventory.manage') && rows.some((r) => r.unitCost !== undefined && String(r.unitCost).trim() !== ''))
+    throw new AppError('FORBIDDEN', 'Los costos solo los cambia el dueño o el administrador.');
   const filled = rows.filter((r) => [r.counted, r.unitCost, r.minStock].some((v) => v !== undefined && String(v).trim() !== ''));
   if (!filled.length) throw new AppError('INVALID', 'Escribe al menos una cantidad, un costo o un mínimo.');
   if (filled.length > 500) throw new AppError('INVALID', 'Son demasiados insumos de una vez (hasta 500).');

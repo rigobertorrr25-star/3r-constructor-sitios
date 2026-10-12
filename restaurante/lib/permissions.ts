@@ -42,6 +42,7 @@ export type Permission =
   | 'discounts.unlimited'
   | 'inventory.view'
   | 'inventory.manage'
+  | 'inventory.load'
   | 'inventory.waste'
   | 'finance.view'
   | 'reservations.manage'
@@ -74,6 +75,8 @@ const GRANTS: Record<Permission, Role[]> = {
   'inventory.view': ['owner', 'manager', 'kitchen', 'bar'],
   // Insumos, recetas, compras y conteos.
   'inventory.manage': ['owner', 'manager'],
+  // Inventario masivo (armarlo desde la carta y cargar cantidades y mínimos): también el bartender. Los costos, no.
+  'inventory.load': ['owner', 'manager', 'bar'],
   // Mermas (se cayó, se dañó): las registra quien las ve.
   'inventory.waste': ['owner', 'manager', 'kitchen', 'bar'],
   // Gastos y estado de resultados. El dueño ve todas las sedes; el administrador, la suya.

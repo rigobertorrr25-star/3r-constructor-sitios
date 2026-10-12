@@ -645,7 +645,7 @@ export async function saveItemAction(_prev: FormState, formData: FormData): Prom
 
 /** Arma el inventario desde la carta: un insumo por producto de las categorías marcadas, y cada venta descuenta 1. */
 export async function inventoryFromMenuAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const staff = await requireStaff('inventory.manage');
+  const staff = await requireStaff('inventory.load');
   let r: { created: number; linked: number; skipped: string[] };
   try {
     r = await inventoryFromMenu(staff, formData.getAll('categoryId').map(String));
@@ -661,7 +661,7 @@ export async function inventoryFromMenuAction(_prev: FormState, formData: FormDa
 
 /** Carga de existencias, costos y mínimos de muchos insumos a la vez (campos count:ID, cost:ID, min:ID). */
 export async function bulkStockAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const staff = await requireStaff('inventory.manage');
+  const staff = await requireStaff('inventory.load');
   const rows = new Map<string, StockRow>();
   for (const [key, value] of formData.entries()) {
     const m = /^(count|cost|min):(.+)$/.exec(key);

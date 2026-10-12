@@ -16,10 +16,11 @@ export const dynamic = 'force-dynamic';
 export default async function InventoryPage() {
   const staff = await requireStaff('inventory.view');
   const manage = can(staff.role, 'inventory.manage');
+  const load = can(staff.role, 'inventory.load');
   const lang = await getLang();
   const t = makeT(lang);
   const qty = (...args: Parameters<typeof formatQuantity>) => tr(lang, formatQuantity(...args));
-  const [items, moves, menu] = await Promise.all([listItems(staff), listMovements(staff, { limit: 40 }), manage ? menuForInventory(staff) : Promise.resolve([])]);
+  const [items, moves, menu] = await Promise.all([listItems(staff), listMovements(staff, { limit: 40 }), load ? menuForInventory(staff) : Promise.resolve([])]);
   const active = items.filter((i) => i.isActive);
   const value = active.reduce((s, i) => s + Math.max(0, i.stock) * i.unitCost, 0);
   const low = active.filter((i) => i.minStock > 0 && i.stock < i.minStock);
@@ -47,10 +48,10 @@ export default async function InventoryPage() {
         </div>
       ) : null}
 
-      {manage ? (
+      {load ? (
         <>
           <InventoryFromMenu categories={menu} open={items.length === 0} />
-          <BulkStock items={active.map((i) => ({ id: i.id, name: i.name, unit: i.unit, bottleSize: i.bottleSize, stock: i.stock, unitCost: i.unitCost, minStock: i.minStock }))} />
+          <BulkStock showCost={manage} items={active.map((i) => ({ id: i.id, name: i.name, unit: i.unit, bottleSize: i.bottleSize, stock: i.stock, unitCost: i.unitCost, minStock: i.minStock }))} />
         </>
       ) : null}
 
@@ -110,7 +111,14 @@ export default async function InventoryPage() {
       ) : null}
 
       <section className="space-y-3">
-        <h2 className="font-display text-[19px] font-bold">{t('Últimos movimientos')}</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-[19px] font-bold">{t('Últimos movimientos')}</h2>
+          {manage ? (
+            <Link href="/app/inventario/movimientos" className="text-[14px] text-primary hover:underline">
+              {t('Ver todos, por persona y por día →')}
+            </Link>
+          ) : null}
+        </div>
         {moves.length === 0 ? (
           <p className="text-[14px] text-muted-foreground">{t('Nada todavía.')}</p>
         ) : (

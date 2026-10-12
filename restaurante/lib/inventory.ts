@@ -238,7 +238,10 @@ export type Movement = {
   createdAt: Date;
 };
 
-export async function listMovements(actor: Actor, options: { itemId?: string; kind?: string; limit?: number } = {}): Promise<Movement[]> {
+export async function listMovements(
+  actor: Actor,
+  options: { itemId?: string; kind?: string; staffId?: string; days?: { from: string; to: string; timeZone: string }; limit?: number } = {},
+): Promise<Movement[]> {
   requirePermission(actor, 'inventory.view');
   const params: unknown[] = [actor.locationId, actor.businessId, Math.min(options.limit ?? 100, 500)];
   let where = 'm.location_id = $1 AND m.business_id = $2';
@@ -249,6 +252,16 @@ export async function listMovements(actor: Actor, options: { itemId?: string; ki
   if (options.kind) {
     params.push(options.kind);
     where += ` AND m.kind = $${params.length}`;
+  }
+  if (options.staffId && isUuid(options.staffId)) {
+    params.push(options.staffId);
+    where += ` AND m.created_by = $${params.length}`;
+  }
+  // Días del calendario del negocio (no de UTC): «hoy» en Colombia es hoy en Colombia.
+  if (options.days && /^\d{4}-\d{2}-\d{2}$/.test(options.days.from) && /^\d{4}-\d{2}-\d{2}$/.test(options.days.to)) {
+    params.push(options.days.timeZone, options.days.from, options.days.to);
+    const n = params.length;
+    where += ` AND (m.created_at AT TIME ZONE $${n - 2})::date BETWEEN $${n - 1}::date AND $${n}::date`;
   }
   const rows = await query<Omit<Movement, 'quantity' | 'unitCost' | 'expected' | 'counted'> & { quantity: string; unitCost: string; expected: string | null; counted: string | null }>(
     `SELECT m.id, m.item_id AS "itemId", i.name AS "itemName", i.unit, m.kind, m.quantity, m.unit_cost AS "unitCost", m.reason, m.expected, m.counted,
@@ -264,6 +277,17 @@ export async function listMovements(actor: Actor, options: { itemId?: string; ki
     expected: r.expected === null ? null : Number(r.expected),
     counted: r.counted === null ? null : Number(r.counted),
   }));
+}
+
+/** Quiénes han movido el inventario de la sede (para filtrar el historial por persona). */
+export async function movementPeople(actor: Actor) {
+  requirePermission(actor, 'inventory.manage');
+  return query<{ id: string; name: string; role: string }>(
+    `SELECT s.id, s.name, s.role FROM staff s
+      WHERE s.business_id = $1 AND EXISTS (SELECT 1 FROM inventory_movements m WHERE m.created_by = s.id AND m.location_id = $2)
+      ORDER BY s.name`,
+    [actor.businessId, actor.locationId],
+  );
 }
 
 // ───────── recetas ─────────

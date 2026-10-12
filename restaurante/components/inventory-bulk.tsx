@@ -62,7 +62,7 @@ export function InventoryFromMenu({ categories, open = false }: { categories: Ca
 }
 
 /** Una tabla con todos los insumos para escribir de una vez lo que hay, lo que costó y el mínimo. */
-export function BulkStock({ items }: { items: Row[] }) {
+export function BulkStock({ items, showCost = true }: { items: Row[]; showCost?: boolean }) {
   const t = useT();
   if (!items.length) return null;
   return (
@@ -70,7 +70,9 @@ export function BulkStock({ items }: { items: Row[] }) {
       <summary className="cursor-pointer list-none font-display text-[18px] font-bold">
         {t('Cargar existencias de una vez')}
         <span className="mt-1 block font-sans text-[13.5px] font-normal text-muted-foreground">
-          {t('Escribe solo lo que quieras cambiar. «Hay» queda como un conteo; el costo es lo que pagas por una (unidad, botella, kilo o litro).')}
+          {showCost
+            ? t('Escribe solo lo que quieras cambiar. «Hay» queda como un conteo; el costo es lo que pagas por una (unidad, botella, kilo o litro).')
+            : t('Escribe solo lo que quieras cambiar. «Hay» queda como un conteo con tu nombre, y el administrador lo ve en los movimientos.')}
         </span>
       </summary>
       <ActionForm action={bulkStockAction} resetOnOk className="mt-4 space-y-4">
@@ -82,7 +84,7 @@ export function BulkStock({ items }: { items: Row[] }) {
                   <tr className="border-b border-white/[0.06]">
                     <th className="px-3 py-2.5 font-medium">{t('Insumo')}</th>
                     <th className="px-3 py-2.5 font-medium">{t('Hay')}</th>
-                    <th className="px-3 py-2.5 font-medium">{t('Costo de una')}</th>
+                    {showCost ? <th className="px-3 py-2.5 font-medium">{t('Costo de una')}</th> : null}
                     <th className="px-3 py-2.5 font-medium">{t('Mínimo')}</th>
                   </tr>
                 </thead>
@@ -101,6 +103,7 @@ export function BulkStock({ items }: { items: Row[] }) {
                         <td className="px-3 py-2">
                           <input className={inputClass} name={`count:${i.id}`} inputMode="decimal" placeholder={u} defaultValue={state?.values?.[`count:${i.id}`]} aria-label={t('{item}: cuántas hay', { item: i.name })} />
                         </td>
+                        {showCost ? (
                         <td className="px-3 py-2">
                           <input
                             className={inputClass}
@@ -111,6 +114,7 @@ export function BulkStock({ items }: { items: Row[] }) {
                             aria-label={t('{item}: costo de una', { item: i.name })}
                           />
                         </td>
+                        ) : null}
                         <td className="px-3 py-2">
                           <input
                             className={inputClass}

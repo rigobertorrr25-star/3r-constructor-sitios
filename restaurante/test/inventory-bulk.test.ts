@@ -87,4 +87,27 @@ describe('inventario masivo', { skip: url ? false : 'sin TEST_DATABASE_URL' }, (
     await inv.saveItem(owner, { name: 'Mojito', unit: 'ml', minStock: 0 });
     assert.deepEqual(await bulk.inventoryFromMenu(owner, [cocktails]), { created: 0, linked: 0, skipped: ['Mojito'] });
   });
+
+  it('el bartender carga cantidades y mínimos (no costos) y el administrador ve quién lo hizo', async () => {
+    await store.createStaff(owner, { name: 'Breiner', role: 'bar', locationId: null, pin: '7391' });
+    await store.createStaff(owner, { name: 'Agusto', role: 'manager', locationId: null, pin: '6149' });
+    const slug = (await db.query<{ slug: string }>('SELECT slug FROM businesses WHERE id = $1', [owner.businessId]))[0].slug;
+    const breiner = await login(slug, '0003', '7391');
+    const agusto = await login(slug, '0004', '6149');
+    const club = await byName('Club Colombia');
+    await assert.rejects(bulk.bulkStock(breiner, [{ itemId: club.id, counted: '10', unitCost: '3000' }]), /dueño o el administrador/);
+    await bulk.bulkStock(breiner, [{ itemId: club.id, counted: '24', minStock: '12' }]);
+    assert.deepEqual([(await byName('Club Colombia')).stock, (await byName('Club Colombia')).minStock], [24, 12]);
+    await assert.rejects(bulk.bulkStock(waiter, [{ itemId: club.id, counted: '1' }]), { code: 'FORBIDDEN' });
+
+    const tz = 'America/Bogota';
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
+    const people = await inv.movementPeople(agusto);
+    assert.ok(people.some((p) => p.name === 'Breiner'));
+    const hisMoves = await inv.listMovements(agusto, { staffId: breiner.id, days: { from: today, to: today, timeZone: tz } });
+    assert.equal(hisMoves.length, 1);
+    assert.deepEqual([hisMoves[0].itemName, hisMoves[0].kind, hisMoves[0].counted, hisMoves[0].createdBy], ['Club Colombia', 'count', 24, 'Breiner']);
+    assert.equal((await inv.listMovements(agusto, { staffId: breiner.id, days: { from: '2020-01-01', to: '2020-01-01', timeZone: tz } })).length, 0);
+    await assert.rejects(inv.movementPeople(breiner), { code: 'FORBIDDEN' });
+  });
 });

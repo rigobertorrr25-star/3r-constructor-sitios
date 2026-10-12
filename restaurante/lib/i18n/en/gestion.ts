@@ -306,4 +306,18 @@ export const en: Record<string, string> = {
   'Armó el inventario desde la carta: {a} insumos nuevos, {b} productos descuentan 1 unidad por venta': 'Built the inventory from the menu: {a} new items, {b} products deduct 1 unit per sale',
   'Cargó el inventario de una vez: {a} cantidades, {b} costos y {c} mínimos': 'Loaded the inventory at once: {a} quantities, {b} costs and {c} minimums',
   'Carga de inventario': 'Inventory load',
+  'Movimientos del inventario': 'Inventory movements',
+  'Todo lo que entra y sale del inventario de {location}, con quién lo hizo y a qué hora. No se puede borrar ni cambiar.':
+    'Everything that goes in and out of the {location} inventory, with who did it and when. It cannot be deleted or changed.',
+  Período: 'Period',
+  Persona: 'Person',
+  Todos: 'Everyone',
+  'No hay movimientos con esos filtros.': 'No movements with those filters.',
+  'Los últimos 500 movimientos.': 'The latest 500 movements.',
+  '{n} movimientos.': '{n} movements.',
+  'Debía haber {expected} y contó {counted}': 'Should have been {expected}, counted {counted}',
+  'Ver todos, por persona y por día →': 'See all, by person and by day →',
+  'Escribe solo lo que quieras cambiar. «Hay» queda como un conteo con tu nombre, y el administrador lo ve en los movimientos.':
+    'Fill in only what you want to change. "On hand" is saved as a count under your name, and the manager sees it in the movements.',
+  'Los costos solo los cambia el dueño o el administrador.': 'Only the owner or the manager can change costs.',
 };
