@@ -263,4 +263,5 @@ export const en: Record<string, string> = {
   'Propina sugerida (%)': 'Suggested tip (%)',
   'Pon 0 si tu negocio no maneja propina: no se ofrece al cobrar ni sale en la precuenta.': "Set 0 if your business doesn't take tips: it won't be offered when charging or shown on the pre-check.",
   'Propina sugerida: de 0 a 30 %.': 'Suggested tip: 0 to 30%.',
+  'Quedan {n}': '{n} left',
 };

@@ -74,6 +74,7 @@ export function PosScreen({
   canVoid,
   canCharge,
   waitersCollect = false,
+  stock = {},
   timeZone,
   printBill = false,
 }: {
@@ -86,6 +87,8 @@ export function PosScreen({
   canCharge: boolean;
   /** Bar sin cajero: el mesero cobra; no hay a quién «pedirle la cuenta». */
   waitersCollect?: boolean;
+  /** Cuántas quedan de cada producto según el inventario (solo los que tienen inventario cargado). */
+  stock?: Record<string, number>;
   timeZone: string;
   /** La sede tiene impresora de caja: la precuenta se imprime allá. */
   printBill?: boolean;
@@ -113,9 +116,13 @@ export function PosScreen({
     return products.filter((p) => p.categoryId === current);
   }, [products, categories, category, search]);
 
+  // Lo que ya está en el carrito cuenta contra lo que queda.
+  const inCart = (productId: string) => lines.filter((l) => l.productId === productId).reduce((s, l) => s + l.quantity, 0);
+  const left = (productId: string) => (stock[productId] === undefined ? Infinity : stock[productId] - inCart(productId));
+
   const add = (p: MenuProduct) => {
     // Con un pedido pendiente de enviar, el carrito no cambia (se reintenta tal cual, sin duplicar).
-    if (queued) return;
+    if (queued || left(p.id) <= 0) return;
     setSent(null);
     setLines((prev) => {
       const plain = prev.find((l) => l.productId === p.id && !l.notes);
@@ -123,7 +130,18 @@ export function PosScreen({
       return [...prev, { key: newKey(), productId: p.id, name: p.name, price: p.price, quantity: 1, notes: '' }];
     });
   };
-  const change = (key: string, patch: Partial<Line>) => !queued && setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)).filter((l) => l.quantity > 0));
+  const change = (key: string, patch: Partial<Line>) =>
+    !queued &&
+    setLines((prev) =>
+      prev
+        .map((l) => {
+          if (l.key !== key) return l;
+          // No deja pedir más de lo que queda en el inventario.
+          const room = stock[l.productId] === undefined ? 99 : stock[l.productId] - (inCart(l.productId) - l.quantity);
+          return { ...l, ...patch, quantity: Math.min(patch.quantity ?? l.quantity, Math.max(room, 0)) };
+        })
+        .filter((l) => l.quantity > 0),
+    );
   const cartTotal = lines.reduce((sum, l) => sum + l.price * l.quantity, 0);
 
   const submit = async () => {
@@ -227,11 +245,14 @@ export function PosScreen({
             </Empty>
           ) : (
             <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
-              {shown.map((p) => (
+              {shown.map((p) => {
+                const known = stock[p.id];
+                const out = known !== undefined && known <= 0;
+                return (
                 <li key={p.id}>
                   <button
                     type="button"
-                    disabled={!p.isAvailable || closed}
+                    disabled={!p.isAvailable || out || closed || left(p.id) <= 0}
                     onClick={() => add(p)}
                     className="flex h-full min-h-[92px] w-full flex-col justify-between rounded-2xl border border-white/[0.08] bg-card p-3.5 text-left transition hover:border-primary/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
                   >
@@ -240,12 +261,17 @@ export function PosScreen({
                       <span className="text-[15px] font-medium leading-snug">{(lang === 'en' && p.nameEn) || p.name}</span>
                     </span>
                     <span className="mt-2 flex items-center justify-between text-[13.5px]">
-                      <span className="text-muted-foreground">{p.isAvailable ? formatCop(p.price) : t('Agotado')}</span>
-                      <span className="text-[11.5px] text-muted-foreground/70">{t(STATION_LABEL[p.station])}</span>
+                      <span className="text-muted-foreground">{p.isAvailable && !out ? formatCop(p.price) : t('Agotado')}</span>
+                      {known !== undefined && !out ? (
+                        <span className={`text-[12px] ${known <= 5 ? 'font-semibold text-warning' : 'text-muted-foreground/80'}`}>{t('Quedan {n}', { n: known })}</span>
+                      ) : (
+                        <span className="text-[11.5px] text-muted-foreground/70">{t(STATION_LABEL[p.station])}</span>
+                      )}
                     </span>
                   </button>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </section>
