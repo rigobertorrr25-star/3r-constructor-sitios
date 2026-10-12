@@ -3,7 +3,7 @@
 import { importMenu } from '@/lib/menu-import';
 import { applyLibraryPhotos } from '@/lib/photo-library';
 import { createFixture, removeFixture, saveFixtureLayout, updateFixture } from '@/lib/floor';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getLang, trServer } from '@/lib/i18n/server';
@@ -355,7 +355,8 @@ export async function applyLibraryPhotosAction(_prev: FormState, formData: FormD
   const staff = await requireStaff();
   let result: Awaited<ReturnType<typeof applyLibraryPhotos>>;
   try {
-    result = await applyLibraryPhotos(staff);
+    const h = await headers();
+    result = await applyLibraryPhotos(staff, h.get('host') ? `${h.get('x-forwarded-proto') ?? 'https'}://${h.get('host')}` : undefined);
   } catch (error) {
     return fail(await messageOf(error), formData);
   }
