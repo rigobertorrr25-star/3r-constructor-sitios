@@ -570,7 +570,7 @@ export type FloorTable = {
   h: number;
   isBlocked: boolean;
   status: TableStatus;
-  session: { id: string; guests: number; notes: string | null; openedAt: Date; billAt: Date | null; openedBy: string } | null;
+  session: { id: string; guests: number; notes: string | null; openedAt: Date; billAt: Date | null; openedBy: string; openedById: string; openedByRole: string | null } | null;
 };
 
 export async function listTables(actor: Actor): Promise<FloorTable[]> {
@@ -582,11 +582,13 @@ export async function listTables(actor: Actor): Promise<FloorTable[]> {
     openedAt: Date | null;
     billAt: Date | null;
     openedBy: string | null;
+    openedById: string | null;
+    openedByRole: string | null;
     sessionStatus: string | null;
   }>(
     `SELECT t.id, t.zone, t.number, t.capacity, t.shape, t.x, t.y, t.w, t.h, t.is_blocked AS "isBlocked",
             ts.id AS "sessionId", ts.guests, ts.notes, ts.opened_at AS "openedAt", ts.bill_at AS "billAt",
-            ts.status AS "sessionStatus", s.name AS "openedBy"
+            ts.status AS "sessionStatus", s.name AS "openedBy", ts.opened_by AS "openedById", s.role AS "openedByRole"
        FROM dining_tables t
        LEFT JOIN table_sessions ts ON ts.table_id = t.id AND ts.status <> 'closed'
        LEFT JOIN staff s ON s.id = ts.opened_by
@@ -594,10 +596,12 @@ export async function listTables(actor: Actor): Promise<FloorTable[]> {
       ORDER BY t.zone, length(t.number), t.number`,
     [actor.locationId, actor.businessId],
   );
-  return rows.map(({ sessionId, guests, notes, openedAt, billAt, openedBy, sessionStatus, ...table }) => ({
+  return rows.map(({ sessionId, guests, notes, openedAt, billAt, openedBy, openedById, openedByRole, sessionStatus, ...table }) => ({
     ...table,
     status: sessionId ? (sessionStatus === 'bill' ? 'bill' : 'open') : table.isBlocked ? 'blocked' : 'free',
-    session: sessionId ? { id: sessionId, guests: guests!, notes, openedAt: openedAt!, billAt, openedBy: openedBy ?? '' } : null,
+    session: sessionId
+      ? { id: sessionId, guests: guests!, notes, openedAt: openedAt!, billAt, openedBy: openedBy ?? '', openedById: openedById!, openedByRole }
+      : null,
   }));
 }
 

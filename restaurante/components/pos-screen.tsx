@@ -73,6 +73,7 @@ export function PosScreen({
   products,
   canVoid,
   canCharge,
+  waitersCollect = false,
   timeZone,
   printBill = false,
 }: {
@@ -83,6 +84,8 @@ export function PosScreen({
   products: MenuProduct[];
   canVoid: boolean;
   canCharge: boolean;
+  /** Bar sin cajero: el mesero cobra; no hay a quién «pedirle la cuenta». */
+  waitersCollect?: boolean;
   timeZone: string;
   /** La sede tiene impresora de caja: la precuenta se imprime allá. */
   printBill?: boolean;
@@ -278,6 +281,11 @@ export function PosScreen({
             </button>
           </div>
 
+          {canCharge && !closed ? (
+            <Link href={`/app/caja/mesa/${session.id}`} className={`${primaryButton} w-full py-3 text-center text-[15.5px]`}>
+              {t('Cobrar cuenta')}
+            </Link>
+          ) : null}
           <div className="flex gap-2">
             {printBill ? (
               <PrintBillButton sessionId={session.id} className="flex flex-1" />
@@ -286,13 +294,8 @@ export function PosScreen({
                 {t('Precuenta')}
               </Link>
             )}
-            {canCharge && !closed ? (
-              <Link href={`/app/caja/mesa/${session.id}`} className={`${quietButton} flex-1`}>
-                {t('Cobrar')}
-              </Link>
-            ) : null}
           </div>
-          {!closed ? (
+          {!closed && !waitersCollect ? (
             <ActionForm action={setBillAction} showOk={false} className="flex">
               {() => (
                 <>

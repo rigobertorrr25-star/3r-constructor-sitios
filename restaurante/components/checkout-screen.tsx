@@ -144,7 +144,7 @@ export function CheckoutScreen({
           <PrintBillButton sessionId={c.session.id} className="flex" />
         ) : (
           <Link href={`/cuenta/${c.session.id}`} target="_blank" className={quietButton}>
-            {t('Imprimir precuenta')}
+            {t('Precuenta')}
           </Link>
         )}
       </div>

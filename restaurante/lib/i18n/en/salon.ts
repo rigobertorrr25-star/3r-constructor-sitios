@@ -35,6 +35,7 @@ export const en: Record<string, string> = {
   'Abrir mesa': 'Open table',
   'Pedido · {total}': 'Order · {total}',
   Cobrar: 'Charge',
+  'Cobrar cuenta': 'Charge bill',
   Tiempo: 'Time',
   Abierta: 'Opened',
   Nota: 'Note',

@@ -34,6 +34,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         products={menu.products}
         canVoid={can(staff.role, 'orders.void')}
         canCharge={canCharge}
+        waitersCollect={staff.waitersCollect}
         timeZone={staff.timezone}
         printBill={printBill}
       />
