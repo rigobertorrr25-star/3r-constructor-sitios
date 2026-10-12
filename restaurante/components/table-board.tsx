@@ -106,11 +106,19 @@ export function chairsFor(shape: BoardTable['shape'], capacity: number, w: numbe
   const n = Math.max(1, Math.min(capacity, 16));
   const chair = (cx: number, cy: number, size: number, r: number): Chair => ({ x: (cx / w) * 100, y: (cy / h) * 100, w: (size / w) * 100, h: ((size * 1.1) / h) * 100, r });
   if (shape === 'round') {
-    const size = Math.min(38, (Math.PI * (w + 40)) / n - 6);
-    return Array.from({ length: n }, (_, i) => {
-      const a = (i / n) * Math.PI * 2 - Math.PI / 2;
-      return chair(w / 2 + Math.cos(a) * (w / 2 + size * 0.55), h / 2 + Math.sin(a) * (h / 2 + size * 0.55), size, (a * 180) / Math.PI + 90);
-    });
+    // Mesa redonda: la mitad de las sillas a la izquierda y la otra mitad a la derecha, pegadas entre sí (no en cruz).
+    const perSide = Math.ceil(n / 2);
+    const spread = 2.6; // lo más que ocupa cada lado del círculo (unos 150°)
+    let size = 38;
+    if ((perSide * size) / (w / 2 + size * 0.55) > spread) size = Math.max(16, (spread * (w / 2)) / (perSide - spread * 0.55));
+    const radius = w / 2 + size * 0.55;
+    const step = (size / radius) * 1.04;
+    const side = (count: number, center: number) =>
+      Array.from({ length: count }, (_, i) => {
+        const a = center + (i - (count - 1) / 2) * step;
+        return chair(w / 2 + Math.cos(a) * radius, h / 2 + Math.sin(a) * (h / 2 + size * 0.55), size, (a * 180) / Math.PI + 90);
+      });
+    return [...side(perSide, Math.PI), ...side(n - perSide, 0)];
   }
   // Mesa rectangular: sillas por los lados largos y, si sobra una o son muchas, en las cabeceras.
   const wide = w >= h;
