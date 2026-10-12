@@ -124,4 +124,18 @@ describe('cada mesero cobra sus mesas', { skip: url ? false : 'sin TEST_DATABASE
     assert.equal(mine[0].verifiedBy, 'Agusto');
     assert.equal((await waiters.waiterAccount(isabel)).sales, 0, 'la cuenta nueva empieza en cero');
   });
+
+  it('una mesa que abrió el dueño la cobra el mesero que la atiende y entra a su cuenta', async () => {
+    const t3 = await store.createTable(owner, { zone: 'Salón', number: '3', capacity: 4, shape: 'square' });
+    const mesa3 = await store.openTable(owner, t3, { guests: 2 });
+    await order(owner, mesa3, 2);
+    assert.equal(await cash.canCollectSession(johan, mesa3), true);
+    assert.equal((await cash.getCheckout(johan, mesa3))!.balance, 100000);
+    const done = await pay(johan, mesa3, 'transfer', 100000);
+    assert.equal(done.closed, true);
+    const acc = await waiters.waiterAccount(johan);
+    assert.equal(acc.sales, 100000);
+    assert.equal(acc.byMethod.transfer.amount, 100000);
+    assert.equal((await waiters.waiterAccount(owner, owner.id)).sales, 0, 'no entra a la cuenta del dueño');
+  });
 });

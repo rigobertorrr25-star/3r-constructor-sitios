@@ -15,7 +15,15 @@ import { Field, Select, TextArea, primaryButton, quietButton } from './ui';
 import { useLang, useT, useTr } from './i18n';
 
 export type BoardTable = Omit<FloorTable, 'session'> & {
-  session: (Omit<NonNullable<FloorTable['session']>, 'openedAt' | 'billAt'> & { openedAt: string; billAt: string | null; total?: number }) | null;
+  session:
+    | (Omit<NonNullable<FloorTable['session']>, 'openedAt' | 'billAt' | 'openedById' | 'openedByRole'> & {
+        openedAt: string;
+        billAt: string | null;
+        total?: number;
+        /** Si quien mira la puede cobrar (en un bar sin cajero, el mesero cobra sus mesas). */
+        canCharge?: boolean;
+      })
+    | null;
   reservedFor?: { customerName: string; startsAt: string; guests: number } | null;
 };
 
@@ -321,6 +329,7 @@ export function TableBoard({
   ready = [],
   canOpen,
   canClose,
+  waitersCollect = false,
   timeZone,
 }: {
   tables: BoardTable[];
@@ -328,6 +337,7 @@ export function TableBoard({
   ready?: Ready[];
   canOpen: boolean;
   canClose: boolean;
+  waitersCollect?: boolean;
   timeZone: string;
 }) {
   const now = useNow();
@@ -429,6 +439,7 @@ export function TableBoard({
           freeTables={tables.filter((ft) => ft.status === 'free')}
           canOpen={canOpen}
           canClose={canClose}
+          waitersCollect={waitersCollect}
           now={now}
           timeZone={timeZone}
           onClose={() => setSelectedId(null)}
@@ -444,6 +455,7 @@ function TableSheet({
   freeTables,
   canOpen,
   canClose,
+  waitersCollect = false,
   now,
   timeZone,
   onClose,
@@ -452,6 +464,7 @@ function TableSheet({
   freeTables: BoardTable[];
   canOpen: boolean;
   canClose: boolean;
+  waitersCollect?: boolean;
   now: number;
   timeZone: string;
   onClose: () => void;
@@ -540,9 +553,9 @@ function TableSheet({
               <Link href={`/app/mesa/${session.id}`} className={`${primaryButton} flex-1 py-3 text-[15.5px]`}>
                 {t('Pedido · {total}', { total: formatCop(session.total ?? 0) })}
               </Link>
-              {canClose ? (
+              {canClose || session.canCharge ? (
                 <Link href={`/app/caja/mesa/${session.id}`} className={`${quietButton} py-3`}>
-                  {t('Cobrar')}
+                  {t('Cobrar cuenta')}
                 </Link>
               ) : null}
             </div>
@@ -577,15 +590,18 @@ function TableSheet({
             ) : null}
 
             <div className="flex flex-wrap gap-2 border-t border-white/[0.06] pt-5">
-              <ActionForm action={setBillAction} className="contents" showOk={false}>
-                {() => (
-                  <>
-                    <input type="hidden" name="sessionId" value={session.id} />
-                    <input type="hidden" name="bill" value={table.status === 'bill' ? '0' : '1'} />
-                    <SubmitButton tone="quiet">{table.status === 'bill' ? t('Volver a abrir') : t('Pedir la cuenta')}</SubmitButton>
-                  </>
-                )}
-              </ActionForm>
+              {/* En un bar sin cajero el mesero cobra: no hay a quién pedirle la cuenta. */}
+              {!waitersCollect || table.status === 'bill' ? (
+                <ActionForm action={setBillAction} className="contents" showOk={false}>
+                  {() => (
+                    <>
+                      <input type="hidden" name="sessionId" value={session.id} />
+                      <input type="hidden" name="bill" value={table.status === 'bill' ? '0' : '1'} />
+                      <SubmitButton tone="quiet">{table.status === 'bill' ? t('Volver a abrir') : t('Pedir la cuenta')}</SubmitButton>
+                    </>
+                  )}
+                </ActionForm>
+              ) : null}
               {canClose && !closing ? (
                 <button type="button" className={quietButton} onClick={() => setClosing(true)}>
                   {t('Cerrar mesa')}

@@ -29,7 +29,15 @@ export default async function TablesPage() {
     status: tb.status === 'free' && held.has(tb.id) ? 'reserved' : tb.status,
     reservedFor: held.has(tb.id) ? { ...held.get(tb.id)!, startsAt: held.get(tb.id)!.startsAt.toISOString() } : null,
     session: tb.session
-      ? { ...tb.session, openedAt: tb.session.openedAt.toISOString(), billAt: tb.session.billAt?.toISOString() ?? null, total: totals.get(tb.session.id) ?? 0 }
+      ? (({ openedById, openedByRole, ...s }) => ({
+          ...s,
+          openedAt: s.openedAt.toISOString(),
+          billAt: s.billAt?.toISOString() ?? null,
+          total: totals.get(s.id) ?? 0,
+          // Sin cajero, el mesero cobra sus mesas y las que abrió alguien que no es mesero (el dueño, el administrador).
+          canCharge:
+            can(staff.role, 'cash.operate') || (staff.waitersCollect && staff.role === 'waiter' && (openedById === staff.id || openedByRole !== 'waiter')),
+        }))(tb.session)
       : null,
   }));
   const open = tables.filter((tb) => tb.session).length;
@@ -55,6 +63,7 @@ export default async function TablesPage() {
           ready={ready.map((r) => ({ ...r, readyAt: r.readyAt.toISOString() }))}
           canOpen={can(staff.role, 'tables.open')}
           canClose={can(staff.role, 'tables.close')}
+          waitersCollect={staff.waitersCollect}
           timeZone={staff.timezone}
         />
       )}

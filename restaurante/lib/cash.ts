@@ -118,11 +118,23 @@ export async function lockWaiterShift(db: Db, actor: Actor, staffId: string) {
   return (await find()).rows[0];
 }
 
-/** Quién puede cobrar una mesa: la caja (dueño, administrador, cajero) o, si cada mesero cobra, el mesero que la abrió. */
-async function assertMayCollect(actor: Actor, openedBy: string, waitersCollect: boolean) {
+/**
+ * Quién puede cobrar una mesa: la caja (dueño, administrador, cajero) o, si cada mesero cobra, el mesero que la abrió.
+ * Una mesa que abrió alguien que no es mesero (el dueño, el administrador) la puede cobrar cualquier mesero.
+ */
+function waiterMayCollect(actor: Actor, openedBy: string, openedByRole: string | null) {
+  return actor.role === 'waiter' && (openedBy === actor.id || openedByRole !== 'waiter');
+}
+
+async function assertMayCollect(actor: Actor, openedBy: string, openedByRole: string | null, waitersCollect: boolean) {
   if (can(actor.role, 'cash.operate')) return;
-  if (waitersCollect && actor.role === 'waiter' && openedBy === actor.id) return;
+  if (waitersCollect && waiterMayCollect(actor, openedBy, openedByRole)) return;
   throw new AppError('FORBIDDEN', waitersCollect && actor.role === 'waiter' ? 'Solo puedes cobrar las mesas que tú abriste.' : 'No tienes permiso para hacer esto.');
+}
+
+/** En la cuenta de qué mesero entra un pago: la del mesero que abrió la mesa; si no la abrió un mesero, la de quien cobra. */
+function creditedWaiter(actor: Actor, openedBy: string, openedByRole: string | null) {
+  return openedByRole !== 'waiter' && actor.role === 'waiter' ? actor.id : openedBy;
 }
 
 /** Para la pantalla del mesero: si puede cobrar esa mesa él mismo. */
@@ -131,13 +143,16 @@ export async function canCollectSession(actor: Actor, sessionId: string) {
   if (actor.role !== 'waiter' || !isUuid(sessionId)) return false;
   const [mode, rows] = await Promise.all([
     workMode(actor.businessId),
-    query<{ openedBy: string }>(`SELECT opened_by AS "openedBy" FROM table_sessions WHERE id = $1 AND business_id = $2 AND location_id = $3`, [
+    query<{ openedBy: string; openedByRole: string | null }>(
+      `SELECT ts.opened_by AS "openedBy", s.role AS "openedByRole" FROM table_sessions ts LEFT JOIN staff s ON s.id = ts.opened_by
+        WHERE ts.id = $1 AND ts.business_id = $2 AND ts.location_id = $3`,
+      [
       sessionId,
       actor.businessId,
       actor.locationId,
     ]),
   ]);
-  return mode.waitersCollect && rows[0]?.openedBy === actor.id;
+  return mode.waitersCollect && Boolean(rows[0]) && waiterMayCollect(actor, rows[0].openedBy, rows[0].openedByRole);
 }
 
 export async function addMovement(actor: Actor, input: { kind: string; amount: number; reason: string }) {
@@ -348,8 +363,10 @@ export async function getCheckout(actor: Actor, sessionId: string) {
 async function lockSessionForCash(db: Db, actor: Actor, sessionId: string) {
   if (!isUuid(sessionId)) throw new AppError('NOT_FOUND', 'No encontramos esa cuenta.');
   const row = (
-    await db.query<{ id: string; status: string; number: string; tableId: string; openedBy: string }>(
-      `SELECT ts.id, ts.status, t.number, ts.table_id AS "tableId", ts.opened_by AS "openedBy" FROM table_sessions ts JOIN dining_tables t ON t.id = ts.table_id
+    await db.query<{ id: string; status: string; number: string; tableId: string; openedBy: string; openedByRole: string | null }>(
+      `SELECT ts.id, ts.status, t.number, ts.table_id AS "tableId", ts.opened_by AS "openedBy",
+              (SELECT role FROM staff WHERE id = ts.opened_by) AS "openedByRole"
+         FROM table_sessions ts JOIN dining_tables t ON t.id = ts.table_id
         WHERE ts.id = $1 AND ts.location_id = $2 AND ts.business_id = $3 FOR UPDATE OF ts`,
       [sessionId, actor.locationId, actor.businessId],
     )
@@ -444,9 +461,11 @@ export async function pay(actor: Actor, sessionId: string, input: PaymentInput) 
   try {
     return await transaction(async (db) => {
       const session = await lockSessionForCash(db, actor, sessionId);
-      await assertMayCollect(actor, session.openedBy, mode.waitersCollect);
+      await assertMayCollect(actor, session.openedBy, session.openedByRole, mode.waitersCollect);
       // Sin cajero, cada pago entra a la cuenta del mesero que abrió la mesa (aunque lo registre el administrador).
-      const shift = mode.waitersCollect ? await lockWaiterShift(db, actor, session.openedBy) : await lockOpenShift(db, actor);
+      const shift = mode.waitersCollect
+        ? await lockWaiterShift(db, actor, creditedWaiter(actor, session.openedBy, session.openedByRole))
+        : await lockOpenShift(db, actor);
       if (session.status === 'closed') throw new AppError('CONFLICT', 'Esa mesa ya se cerró.');
       const checkout = (await loadCheckout(db, actor, sessionId))!;
       if (checkout.balance <= 0) throw new AppError('CONFLICT', 'Esta cuenta no tiene nada por pagar.');
