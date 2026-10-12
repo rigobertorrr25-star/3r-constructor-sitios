@@ -19,4 +19,15 @@ export const en: Record<string, string> = {
   'Línea {n}: «{text}» no tiene precio y no sirve como categoría.': 'Line {n}: “{text}” has no price and doesn’t work as a category.',
   'Listo: {c} categorías nuevas, {p} productos nuevos y {u} precios cambiados; {s} sin cambios.': 'Done: {c} new categories, {p} new products and {u} prices changed; {s} unchanged.',
   'Importó la carta: {c} categorías nuevas, {p} productos nuevos y {u} precios cambiados': 'Imported the menu: {c} new categories, {p} new products and {u} prices changed',
+  // Biblioteca de fotos de 3R (lib/photo-library.ts)
+  'Fotos de la biblioteca de 3R': '3R photo library',
+  '3R tiene fotos de las bebidas más comunes (cervezas, whisky, ron, aguardiente, tequila, cócteles…). Se ponen solas en los productos que no tienen foto; las que ya subiste no se tocan.':
+    '3R has photos of the most common drinks (beers, whisky, rum, aguardiente, tequila, cocktails…). They go automatically on products without a photo; the ones you uploaded are not touched.',
+  'Hay {n} productos sin foto.': '{n} products have no photo.',
+  'Todos los productos tienen foto.': 'Every product has a photo.',
+  'Poniendo fotos…': 'Adding photos…',
+  'Poner fotos de la biblioteca': 'Add photos from the library',
+  'Listo: {n} productos quedaron con foto.': 'Done: {n} products now have a photo.',
+  'Sin foto en la biblioteca: {names}.': 'No photo in the library for: {names}.',
+  'Puso {n} fotos de la biblioteca de 3R en la carta': 'Added {n} photos from the 3R library to the menu',
 };

@@ -1,4 +1,4 @@
-import { MenuImport } from '@/components/menu-import';
+import { LibraryPhotos, MenuImport } from '@/components/menu-import';
 import { requireStaff } from '@/lib/auth';
 import { getMenu } from '@/lib/orders';
 import { productCosts } from '@/lib/inventory';
@@ -29,6 +29,7 @@ export default async function MenuPage() {
         }
       />
       {canEdit ? <MenuImport barOnly={staff.barOnly} open={menu.categories.length === 0} /> : null}
+      {canEdit && menu.products.length ? <LibraryPhotos withoutPhoto={menu.products.filter((p) => p.isActive && !p.photo).length} /> : null}
       <MenuEditor categories={menu.categories} products={menu.products} canEdit={canEdit} canRecipe={canRecipe} costs={costs} barOnly={staff.barOnly} />
     </div>
   );

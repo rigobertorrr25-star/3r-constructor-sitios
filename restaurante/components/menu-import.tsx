@@ -1,6 +1,6 @@
 'use client';
 
-import { importMenuAction } from '@/app/actions';
+import { applyLibraryPhotosAction, importMenuAction } from '@/app/actions';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Select, TextArea, card } from './ui';
@@ -39,5 +39,24 @@ export function MenuImport({ barOnly, open }: { barOnly: boolean; open: boolean 
         )}
       </ActionForm>
     </details>
+  );
+}
+
+/** Carta → «Fotos de la biblioteca»: cada producto sin foto recibe la de la biblioteca de 3R (por su nombre). */
+export function LibraryPhotos({ withoutPhoto }: { withoutPhoto: number }) {
+  const t = useT();
+  return (
+    <section className={card}>
+      <h2 className="font-display text-[18px] font-bold">{t('Fotos de la biblioteca de 3R')}</h2>
+      <p className="mt-2 text-[14px] text-muted-foreground">
+        {t('3R tiene fotos de las bebidas más comunes (cervezas, whisky, ron, aguardiente, tequila, cócteles…). Se ponen solas en los productos que no tienen foto; las que ya subiste no se tocan.')}{' '}
+        {withoutPhoto ? t('Hay {n} productos sin foto.', { n: withoutPhoto }) : t('Todos los productos tienen foto.')}
+      </p>
+      {withoutPhoto ? (
+        <ActionForm action={applyLibraryPhotosAction} className="mt-4 space-y-3">
+          {() => <SubmitButton pendingText={t('Poniendo fotos…')}>{t('Poner fotos de la biblioteca')}</SubmitButton>}
+        </ActionForm>
+      ) : null}
+    </section>
   );
 }

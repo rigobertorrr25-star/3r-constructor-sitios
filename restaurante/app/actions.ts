@@ -1,6 +1,7 @@
 'use server';
 
 import { importMenu } from '@/lib/menu-import';
+import { applyLibraryPhotos } from '@/lib/photo-library';
 import { createFixture, removeFixture, saveFixtureLayout, updateFixture } from '@/lib/floor';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -348,6 +349,22 @@ export async function updateLocationAction(_prev: FormState, formData: FormData)
 }
 
 // ───────── carta y pedidos ─────────
+
+/** Carta → «Poner fotos de la biblioteca»: los productos sin foto reciben la de la biblioteca de 3R. */
+export async function applyLibraryPhotosAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  let result: Awaited<ReturnType<typeof applyLibraryPhotos>>;
+  try {
+    result = await applyLibraryPhotos(staff);
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+  revalidatePath('/app/carta');
+  revalidatePath('/app');
+  const parts = [await trServer(`Listo: ${result.placed} productos quedaron con foto.`)];
+  if (result.missing.length) parts.push(await trServer(`Sin foto en la biblioteca: ${result.missing.slice(0, 12).join(', ')}${result.missing.length > 12 ? '…' : ''}.`));
+  return { ok: Date.now(), message: parts.join(' ') };
+}
 
 /** Importar la carta pegada en texto (Carta → Importar carta). */
 export async function importMenuAction(_prev: FormState, formData: FormData): Promise<FormState> {

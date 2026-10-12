@@ -90,7 +90,9 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   **Plano** (12 oct 2026, con fotos de referencia de Rigoberto): visto desde arriba, piso cálido, mesas de madera con sillas
   tapizadas y aro de color por estado; el dueño pone las barras en Plano → «Agregar barra» (tabla `floor_fixtures`, solo dibujo). **Importar carta** (Carta → «Importar carta», 12 oct 2026): se pega
   la carta en texto (categoría en su línea, cada producto con su precio al final) y se cargan categorías y productos; no repite
-  y actualiza precios.
+  y actualiza precios. **Biblioteca de fotos de 3R** (12 oct 2026): 76 fotos de bebidas creadas con IA
+  (Higgsfield, calidad media, ~38 créditos de Rigoberto) en `restaurante/lib/biblioteca`; Carta → «Poner fotos de la biblioteca» se las
+  pone a los productos sin foto según el nombre (`lib/photo-library.ts`). Para una bebida nueva: agregar la foto y su nombre a `LIBRARY`.
 - **DELIRIUM** (11 oct 2026): bar que solo vende licores, sin cajera. Meseros Caridad, Paola, Johan e Isabel; bartender
   Breiner; administrador Agusto. Para ellos se hizo la «forma de trabajo» de Restaurant Control (Sedes): cada mesero cobra
   sus mesas y entrega su cierre, el administrador lo verifica en «Meseros»; y «solo bar». Hay que crearlo en el sistema en
