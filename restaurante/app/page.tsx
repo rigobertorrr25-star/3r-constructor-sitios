@@ -4,7 +4,7 @@ import { getStaff } from '@/lib/auth';
 import { ROLE_LABEL, homeOf } from '@/lib/permissions';
 import { listActiveBusinesses, listLoginPeople } from '@/lib/store';
 import { FindBusinessForm, RestaurantLogin } from '@/components/login-forms';
-import { Lion, card } from '@/components/ui';
+import { Lion, glassCard } from '@/components/ui';
 import { LangSwitch } from '@/components/i18n';
 import { getT } from '@/lib/i18n/server';
 
@@ -42,7 +42,7 @@ export default async function Home() {
             <span className="text-primary">{t('Seguir →')}</span>
           </Link>
         ) : null}
-        <div className={`${card} mt-6`}>
+        <div className={`${glassCard} mt-6`}>
           <h1 className="font-display text-[22px] font-bold text-foreground">{t('Entra a tu restaurante')}</h1>
           <p className="mb-5 mt-1 text-[14.5px] text-muted-foreground">{t('Escoge tu restaurante, toca tu nombre y escribe tu PIN.')}</p>
           {businesses === null ? (

@@ -4,7 +4,7 @@ import { getStaff } from '@/lib/auth';
 import { ROLE_LABEL, homeOf } from '@/lib/permissions';
 import { getBusinessBySlug, listLoginPeople } from '@/lib/store';
 import { StaffLoginForm } from '@/components/login-forms';
-import { Lion, card } from '@/components/ui';
+import { Lion, glassCard } from '@/components/ui';
 import { BackgroundLayer } from '@/components/background-forms';
 import { backgroundUrl } from '@/lib/background-url';
 import { backgroundVersion } from '@/lib/backgrounds';
@@ -46,7 +46,7 @@ export default async function StaffLogin({ params }: { params: Promise<{ slug: s
             <span className="text-primary">{t('Seguir →')}</span>
           </Link>
         ) : null}
-        <div className={`${card} mt-6`}>
+        <div className={`${glassCard} mt-6`}>
           {current && business.isActive ? <p className="mb-4 text-[14px] text-muted-foreground">{t('¿Es otra persona? Que toque su nombre y ponga su PIN.')}</p> : null}
           {business.isActive ? (
             <StaffLoginForm slug={business.slug} people={people} />

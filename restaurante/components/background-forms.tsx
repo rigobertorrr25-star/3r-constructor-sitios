@@ -102,7 +102,7 @@ export function BackgroundLayer({ url, strength = 'soft' }: { url: string | null
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
       <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${url}")` }} />
       <div
-        className={`absolute inset-0 ${strength === 'strong' ? 'bg-[rgba(5,9,13,0.86)]' : 'bg-gradient-to-b from-[rgba(5,9,13,0.55)] via-[rgba(5,9,13,0.7)] to-[rgba(5,9,13,0.9)]'}`}
+        className={`absolute inset-0 ${strength === 'strong' ? 'bg-[rgba(5,9,13,0.86)]' : 'bg-gradient-to-b from-[rgba(5,9,13,0.3)] via-[rgba(5,9,13,0.4)] to-[rgba(5,9,13,0.6)]'}`}
       />
     </div>
   );
