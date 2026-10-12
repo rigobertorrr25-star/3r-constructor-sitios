@@ -539,7 +539,12 @@ export async function updateWorkModeAction(_prev: FormState, formData: FormData)
   const staff = await requireStaff('locations.manage');
   return run(
     formData,
-    () => updateWorkMode(staff, { waitersCollect: formData.get('waitersCollect') === 'on', barOnly: formData.get('barOnly') === 'on' }),
+    () =>
+      updateWorkMode(staff, {
+        waitersCollect: formData.get('waitersCollect') === 'on',
+        barOnly: formData.get('barOnly') === 'on',
+        suggestedTip: int(formData, 'suggestedTip'),
+      }),
     ['/app', '/app/sedes', '/app/meseros', '/app/mi-cuenta'],
     'Guardado.',
   );

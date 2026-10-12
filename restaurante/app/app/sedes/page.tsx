@@ -6,12 +6,13 @@ import { BackgroundForm } from '@/components/background-forms';
 import { backgroundUrl } from '@/lib/background-url';
 import { getT } from '@/lib/i18n/server';
 import { WorkModeForm } from '@/components/waiter-forms';
+import { workMode } from '@/lib/cash';
 
 export const dynamic = 'force-dynamic';
 
 export default async function LocationsPage() {
   const staff = await requireStaff('locations.manage');
-  const locations = await listLocations(staff.businessId);
+  const [locations, mode] = await Promise.all([listLocations(staff.businessId), workMode(staff.businessId)]);
   const t = await getT();
   return (
     <div className="space-y-6">
@@ -25,7 +26,7 @@ export default async function LocationsPage() {
         <h2 className="font-display text-[18px] font-bold">{t('Forma de trabajo')}</h2>
         <p className="mt-1 text-[14.5px] text-muted-foreground">{t('Cómo se cobra y qué se prepara en tu negocio. Vale para todas las sedes.')}</p>
         <div className="mt-4">
-          <WorkModeForm waitersCollect={staff.waitersCollect} barOnly={staff.barOnly} />
+          <WorkModeForm waitersCollect={staff.waitersCollect} barOnly={staff.barOnly} suggestedTip={mode.suggestedTip} />
         </div>
       </section>
       <section className={card}>

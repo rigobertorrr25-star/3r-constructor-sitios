@@ -76,20 +76,24 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
                 <dd>{formatCop(bill.balance)}</dd>
               </div>
             ) : null}
-            <div className="flex justify-between pt-1">
-              <dt>{t('Propina sugerida ({n} %)', { n: bill.suggestedTipPercent })}</dt>
-              <dd>{formatCop(tip)}</dd>
-            </div>
-            <div className="flex justify-between font-semibold">
-              <dt>{t('Total con propina')}</dt>
-              <dd>{formatCop(bill.balance + tip)}</dd>
-            </div>
+            {bill.suggestedTipPercent > 0 ? (
+              <>
+                <div className="flex justify-between pt-1">
+                  <dt>{t('Propina sugerida ({n} %)', { n: bill.suggestedTipPercent })}</dt>
+                  <dd>{formatCop(tip)}</dd>
+                </div>
+                <div className="flex justify-between font-semibold">
+                  <dt>{t('Total con propina')}</dt>
+                  <dd>{formatCop(bill.balance + tip)}</dd>
+                </div>
+              </>
+            ) : null}
           </>
         ) : (
           <p className="pt-1 text-center font-semibold">{bill.tips ? t('Cuenta pagada · propina {amount}', { amount: formatCop(bill.tips) }) : t('Cuenta pagada')}</p>
         )}
       </dl>
-      <p className="mt-3 text-center text-[11.5px]">{t('La propina es voluntaria. Puedes pedir que se quite o se cambie.')}</p>
+      {bill.suggestedTipPercent > 0 ? <p className="mt-3 text-center text-[11.5px]">{t('La propina es voluntaria. Puedes pedir que se quite o se cambie.')}</p> : null}
       <p className="mt-1 text-center text-[11.5px]">{t('Este documento no es una factura.')}</p>
       <div className="mt-5 text-center print:hidden">
         <PrintButton />
