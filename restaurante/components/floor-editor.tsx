@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
-import { createFixtureAction, createTableAction, removeFixtureAction, removeTableAction, saveLayoutAction, updateFixtureAction, updateTableAction } from '@/app/actions';
+import { createFixtureAction, createTableAction, createTablesAction, removeFixtureAction, removeTableAction, saveLayoutAction, updateFixtureAction, updateTableAction } from '@/app/actions';
 import { orOffline } from '@/lib/offline';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
@@ -122,6 +122,69 @@ export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; f
           </div>
         </div>
         {error ? <Alert>{trx(error)}</Alert> : null}
+        {/* Lo que se toca se edita en un cuadro que flota abajo a la derecha: siempre a la vista y sin mover el plano. */}
+        <div className="fixed bottom-4 right-4 z-30 max-h-[70vh] w-[min(420px,calc(100vw-2rem))] overflow-y-auto rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.7)] empty:hidden">
+        {selectedBar ? (
+          <section className={card}>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-display text-[18px] font-bold">{selectedBar.label}</h2>
+              <button type="button" aria-label={t('Cerrar')} onClick={() => setSelectedId(null)} className="grid size-9 place-items-center rounded-full border border-white/[0.12] text-[18px] text-muted-foreground hover:text-foreground">
+                ×
+              </button>
+            </div>
+            <ActionForm key={selectedBar.id} action={updateFixtureAction} className="mt-4 space-y-3">
+              {() => (
+                <>
+                  <input type="hidden" name="fixtureId" value={selectedBar.id} />
+                  <BarFields defaults={selectedBar} />
+                  <SubmitButton pendingText={t('Guardando…')}>{t('Guardar barra')}</SubmitButton>
+                </>
+              )}
+            </ActionForm>
+            <ActionForm action={removeFixtureAction} onOk={() => setSelectedId(null)} className="mt-4 border-t border-white/[0.06] pt-4">
+              {() => (
+                <>
+                  <input type="hidden" name="fixtureId" value={selectedBar.id} />
+                  <SubmitButton tone="danger" pendingText={t('Quitando…')}>
+                    {t('Quitar del plano')}
+                  </SubmitButton>
+                </>
+              )}
+            </ActionForm>
+          </section>
+        ) : null}
+        {selected ? (
+          <section className={card}>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-display text-[18px] font-bold">{t('Mesa {n}', { n: selected.number })}</h2>
+              <button type="button" aria-label={t('Cerrar')} onClick={() => setSelectedId(null)} className="grid size-9 place-items-center rounded-full border border-white/[0.12] text-[18px] text-muted-foreground hover:text-foreground">
+                ×
+              </button>
+            </div>
+            <ActionForm action={updateTableAction} className="mt-4 space-y-3">
+              {() => (
+                <>
+                  <input type="hidden" name="tableId" value={selected.id} />
+                  <TableFields defaults={selected} />
+                  <CheckField name="isBlocked" label={t('Bloqueada')} hint={t('No se puede abrir (dañada, reservada para un evento…).')} defaultChecked={selected.isBlocked} />
+                  <SubmitButton pendingText={t('Guardando…')}>{t('Guardar mesa')}</SubmitButton>
+                </>
+              )}
+            </ActionForm>
+            <ActionForm action={removeTableAction} onOk={() => setSelectedId(null)} className="mt-4 border-t border-white/[0.06] pt-4">
+              {() => (
+                <>
+                  <input type="hidden" name="tableId" value={selected.id} />
+                  <SubmitButton tone="danger" pendingText={t('Quitando…')}>
+                    {t('Quitar del plano')}
+                  </SubmitButton>
+                  <p className="mt-2 text-[12.5px] text-muted-foreground">{t('Su historial se conserva. Si vuelves a crear una mesa con el mismo número, se recupera.')}</p>
+                </>
+              )}
+            </ActionForm>
+          </section>
+        ) : null}
+        </div>
         <div
           ref={canvas}
           onPointerMove={onPointerMove}
@@ -158,57 +221,30 @@ export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; f
         <p className="text-[13px] text-muted-foreground">{t('Toca una mesa o la barra para editarla. El punto blanco de la esquina cambia su tamaño.')}</p>
       </div>
 
-      <aside className="space-y-4">
-        {selectedBar ? (
-          <section className={card}>
-            <h2 className="font-display text-[18px] font-bold">{selectedBar.label}</h2>
-            <ActionForm key={selectedBar.id} action={updateFixtureAction} className="mt-4 space-y-3">
-              {() => (
-                <>
-                  <input type="hidden" name="fixtureId" value={selectedBar.id} />
-                  <BarFields defaults={selectedBar} />
-                  <SubmitButton pendingText={t('Guardando…')}>{t('Guardar barra')}</SubmitButton>
-                </>
-              )}
-            </ActionForm>
-            <ActionForm action={removeFixtureAction} onOk={() => setSelectedId(null)} className="mt-4 border-t border-white/[0.06] pt-4">
-              {() => (
-                <>
-                  <input type="hidden" name="fixtureId" value={selectedBar.id} />
-                  <SubmitButton tone="danger" pendingText={t('Quitando…')}>
-                    {t('Quitar del plano')}
-                  </SubmitButton>
-                </>
-              )}
-            </ActionForm>
-          </section>
-        ) : null}
-        {selected ? (
-          <section className={card}>
-            <h2 className="font-display text-[18px] font-bold">{t('Mesa {n}', { n: selected.number })}</h2>
-            <ActionForm action={updateTableAction} className="mt-4 space-y-3">
-              {() => (
-                <>
-                  <input type="hidden" name="tableId" value={selected.id} />
-                  <TableFields defaults={selected} />
-                  <CheckField name="isBlocked" label={t('Bloqueada')} hint={t('No se puede abrir (dañada, reservada para un evento…).')} defaultChecked={selected.isBlocked} />
-                  <SubmitButton pendingText={t('Guardando…')}>{t('Guardar mesa')}</SubmitButton>
-                </>
-              )}
-            </ActionForm>
-            <ActionForm action={removeTableAction} onOk={() => setSelectedId(null)} className="mt-4 border-t border-white/[0.06] pt-4">
-              {() => (
-                <>
-                  <input type="hidden" name="tableId" value={selected.id} />
-                  <SubmitButton tone="danger" pendingText={t('Quitando…')}>
-                    {t('Quitar del plano')}
-                  </SubmitButton>
-                  <p className="mt-2 text-[12.5px] text-muted-foreground">{t('Su historial se conserva. Si vuelves a crear una mesa con el mismo número, se recupera.')}</p>
-                </>
-              )}
-            </ActionForm>
-          </section>
-        ) : null}
+      <aside className="grid gap-4 md:grid-cols-2">
+        <section className={card}>
+          <h2 className="font-display text-[18px] font-bold">{t('Agregar varias mesas')}</h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">{t('Se numeran solas desde la siguiente libre y quedan acomodadas en filas. Después las arrastras a su sitio.')}</p>
+          <ActionForm action={createTablesAction} className="mt-4 space-y-3">
+            {() => (
+              <>
+                <input type="hidden" name="zone" value={currentZone} />
+                <div className="grid grid-cols-3 gap-3">
+                  <Field label={t('Cuántas')} name="count" type="number" min={1} max={60} required defaultValue={10} />
+                  <Field label={t('Puestos')} name="capacity" type="number" min={1} max={40} required defaultValue={4} />
+                  <Select label={t('Forma')} name="shape" defaultValue="square">
+                    {Object.entries(SHAPE_LABEL).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {t(label)}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <SubmitButton pendingText={t('Agregando…')}>{t('Agregar mesas')}</SubmitButton>
+              </>
+            )}
+          </ActionForm>
+        </section>
         <section className={card}>
           <h2 className="font-display text-[18px] font-bold">{t('Agregar mesa')}</h2>
           <div onInput={(e) => (e.target as HTMLInputElement).name === 'zone' && (newZone.current = (e.target as HTMLInputElement).value.trim())}>
