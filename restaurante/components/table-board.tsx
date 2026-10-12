@@ -39,17 +39,19 @@ const STATUS_STYLE: Record<BoardTable['status'], string> = {
   reserved: 'border-accent/70 border-dashed bg-accent/[0.1] text-foreground hover:bg-accent/[0.18]',
 };
 
-/** El piso del local visto desde arriba: cemento cálido con luz tenue, como un bar de noche. */
+/** El piso del local visto desde arriba: foto de cemento pulido cálido, con luz tenue de bar de noche. */
 export const FLOOR_STYLE: React.CSSProperties = {
   aspectRatio: '1000 / 640',
   backgroundColor: '#211b15',
   backgroundImage: [
     'radial-gradient(circle at 18% 20%, rgba(255,196,120,0.10), transparent 38%)',
     'radial-gradient(circle at 78% 30%, rgba(255,196,120,0.08), transparent 40%)',
-    'radial-gradient(circle at 50% 85%, rgba(255,196,120,0.07), transparent 45%)',
-    'repeating-radial-gradient(circle at 30% 40%, rgba(255,255,255,0.012) 0 2px, transparent 2px 5px)',
+    'linear-gradient(rgba(18,12,6,0.45), rgba(18,12,6,0.45))',
+    "url('/plano/piso.webp')",
   ].join(', '),
-  boxShadow: 'inset 0 0 0 6px #2c241c, inset 0 0 80px rgba(0,0,0,0.65)',
+  backgroundSize: '100% 100%, 100% 100%, 100% 100%, cover',
+  backgroundPosition: 'center',
+  boxShadow: 'inset 0 0 0 6px #2c241c, inset 0 0 90px rgba(0,0,0,0.7)',
 };
 
 /** El aro de color alrededor de cada mesa dice cómo está: libre, ocupada, pidió la cuenta… */
@@ -61,8 +63,38 @@ const RING: Record<BoardTable['status'], { ring: string; glow: string }> = {
   reserved: { ring: 'var(--color-accent)', glow: 'color-mix(in oklab, var(--color-accent) 35%, transparent)' },
 };
 
-const WOOD_ROUND = 'radial-gradient(circle at 38% 32%, #93603a 0%, #6e4427 48%, #4a2b17 100%)';
-const WOOD_RECT = 'repeating-linear-gradient(90deg, rgba(0,0,0,0.07) 0 2px, transparent 2px 11px), linear-gradient(135deg, #8a5a36, #64391f 58%, #4a2b17)';
+/** Fotos de los muebles vistos desde arriba (en public/plano, creadas con IA para que el plano se vea como el local). */
+const PHOTO = {
+  chair: '/plano/silla.webp',
+  round: '/plano/mesa-redonda.webp',
+  square: '/plano/mesa-cuadrada.webp',
+  long: '/plano/mesa-larga.webp',
+  stool: '/plano/banco.webp',
+  bar: '/plano/barra.webp',
+} as const;
+
+/**
+ * Una foto que llena su caja aunque haya que girarla 90°: girada, su ancho es el alto de la caja y al revés.
+ * `turn` en grados (0, 90, 180, -90); w y h son las medidas de la caja en unidades del lienzo.
+ */
+function TurnedPhoto({ src, turn, w, h, style }: { src: string; turn: number; w: number; h: number; style?: React.CSSProperties }) {
+  const sideways = turn === 90 || turn === -90;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      draggable={false}
+      className="pointer-events-none absolute left-1/2 top-1/2 max-w-none select-none"
+      style={{
+        width: sideways ? `${(h / w) * 100}%` : '100%',
+        height: sideways ? `${(w / h) * 100}%` : '100%',
+        transform: `translate(-50%, -50%) rotate(${turn}deg)`,
+        ...style,
+      }}
+    />
+  );
+}
 
 type Chair = { x: number; y: number; w: number; h: number; r: number };
 
@@ -72,12 +104,12 @@ type Chair = { x: number; y: number; w: number; h: number; r: number };
  */
 export function chairsFor(shape: BoardTable['shape'], capacity: number, w: number, h: number): Chair[] {
   const n = Math.max(1, Math.min(capacity, 16));
-  const chair = (cx: number, cy: number, size: number, r: number): Chair => ({ x: (cx / w) * 100, y: (cy / h) * 100, w: (size / w) * 100, h: ((size * 0.9) / h) * 100, r });
+  const chair = (cx: number, cy: number, size: number, r: number): Chair => ({ x: (cx / w) * 100, y: (cy / h) * 100, w: (size / w) * 100, h: ((size * 1.1) / h) * 100, r });
   if (shape === 'round') {
     const size = Math.min(38, (Math.PI * (w + 40)) / n - 6);
     return Array.from({ length: n }, (_, i) => {
       const a = (i / n) * Math.PI * 2 - Math.PI / 2;
-      return chair(w / 2 + Math.cos(a) * (w / 2 + size * 0.45), h / 2 + Math.sin(a) * (h / 2 + size * 0.45), size, (a * 180) / Math.PI + 90);
+      return chair(w / 2 + Math.cos(a) * (w / 2 + size * 0.55), h / 2 + Math.sin(a) * (h / 2 + size * 0.55), size, (a * 180) / Math.PI + 90);
     });
   }
   // Mesa rectangular: sillas por los lados largos y, si sobra una o son muchas, en las cabeceras.
@@ -88,7 +120,7 @@ export function chairsFor(shape: BoardTable['shape'], capacity: number, w: numbe
   const first = Math.ceil(sides / 2);
   const second = sides - first;
   const size = Math.min(38, long / Math.max(first, 1) - 8);
-  const out = size * 0.45;
+  const out = size * 0.55;
   const chairs: Chair[] = [];
   const row = (count: number, side: 'a' | 'b') => {
     for (let i = 0; i < count; i++) {
@@ -100,27 +132,30 @@ export function chairsFor(shape: BoardTable['shape'], capacity: number, w: numbe
   row(first, 'a');
   row(second, 'b');
   const endSize = Math.min(38, (wide ? h : w) - 8);
-  if (ends >= 1) chairs.push(wide ? chair(-endSize * 0.45, h / 2, endSize, -90) : chair(w / 2, -endSize * 0.45, endSize, 0));
-  if (ends === 2) chairs.push(wide ? chair(w + endSize * 0.45, h / 2, endSize, 90) : chair(w / 2, h + endSize * 0.45, endSize, 180));
+  if (ends >= 1) chairs.push(wide ? chair(-endSize * 0.55, h / 2, endSize, -90) : chair(w / 2, -endSize * 0.55, endSize, 0));
+  if (ends === 2) chairs.push(wide ? chair(w + endSize * 0.55, h / 2, endSize, 90) : chair(w / 2, h + endSize * 0.55, endSize, 180));
   return chairs;
 }
 
-/** Silla tapizada vista desde arriba: respaldo grueso atrás (arriba, antes de girarla) y el cojín adelante. */
+/** Silla tapizada (foto vista desde arriba): el respaldo va hacia afuera. Si hay alguien sentado, se ilumina. */
 function ChairTop({ c, seated }: { c: Chair; seated: boolean }) {
   return (
-    <span
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={PHOTO.chair}
+      alt=""
       aria-hidden="true"
-      className="absolute"
+      draggable={false}
+      className="pointer-events-none absolute max-w-none select-none"
       style={{
         left: `${c.x}%`,
         top: `${c.y}%`,
         width: `${c.w}%`,
         height: `${c.h}%`,
         transform: `translate(-50%, -50%) rotate(${c.r}deg)`,
-        borderRadius: '46% 46% 34% 34%',
-        backgroundColor: seated ? '#34431f' : '#1d2616',
-        backgroundImage: `radial-gradient(ellipse 64% 48% at 50% 70%, ${seated ? '#8aa65c' : '#56683b'} 0 60%, transparent 63%), linear-gradient(rgba(255,255,255,0.10), transparent 40%)`,
-        boxShadow: seated ? '0 0 0 1.5px rgba(255,255,255,0.35), 0 5px 9px rgba(0,0,0,0.55)' : '0 5px 9px rgba(0,0,0,0.55)',
+        filter: seated
+          ? 'brightness(1.35) saturate(1.15) drop-shadow(0 0 5px rgba(255,236,190,0.75))'
+          : 'drop-shadow(0 5px 6px rgba(0,0,0,0.65))',
       }}
     />
   );
@@ -146,14 +181,20 @@ export function TableShape({ table, now, onClick, selected, hasReady }: { table:
       {chairs.map((c, i) => (
         <ChairTop key={i} c={c} seated={i < seated} />
       ))}
+      {/* La tapa de la mesa: foto de madera. Las mesas largas usan la tabla larga, girada si la mesa está de pie. */}
+      <span className="absolute inset-0 transition group-hover:brightness-110" style={{ filter: 'drop-shadow(0 12px 14px rgba(0,0,0,0.6))' }}>
+        <TurnedPhoto
+          src={round ? PHOTO.round : Math.max(table.w, table.h) / Math.min(table.w, table.h) >= 1.4 ? PHOTO.long : PHOTO.square}
+          turn={!round && table.h > table.w * 1.4 ? 90 : 0}
+          w={table.w}
+          h={table.h}
+        />
+      </span>
       <span
-        className={`absolute inset-0 flex flex-col items-center justify-center transition group-hover:brightness-110 ${round ? 'rounded-full' : 'rounded-[10px]'} ${
+        className={`absolute inset-0 flex flex-col items-center justify-center ${round ? 'rounded-full' : 'rounded-[8px]'} ${
           table.status === 'reserved' ? 'outline-dashed outline-2 outline-offset-4 outline-accent' : ''
         } ${selected ? 'outline outline-2 outline-offset-[6px] outline-foreground' : ''}`}
-        style={{
-          backgroundImage: round ? WOOD_ROUND : WOOD_RECT,
-          boxShadow: `0 0 0 3px ${look.ring}, 0 0 22px 4px ${look.glow}, inset 0 0 0 1px rgba(255,255,255,0.08), 0 12px 20px rgba(0,0,0,0.6)`,
-        }}
+        style={{ boxShadow: `0 0 0 ${table.status === 'free' ? 2 : 3}px ${look.ring}, 0 0 22px 4px ${look.glow}` }}
       >
         {/* La velita del centro: da la luz cálida de la foto. */}
         <span
@@ -190,23 +231,8 @@ export function BarShape({ fixture, selected }: { fixture: BoardFixture; selecte
       f.seatSide === 'bottom' ? [along, f.h + off] : f.seatSide === 'top' ? [along, -off] : f.seatSide === 'left' ? [-off, along] : [f.w + off, along];
     return { x: (cx / f.w) * 100, y: (cy / f.h) * 100, w: (stool / f.w) * 100, h: (stool / f.h) * 100 };
   });
-  // El mostrador (madera) queda del lado de las sillas; el fondo del bartender, con las botellas, del lado contrario.
-  const back: React.CSSProperties =
-    f.seatSide === 'bottom'
-      ? { left: 0, right: 0, top: 0, height: '42%' }
-      : f.seatSide === 'top'
-        ? { left: 0, right: 0, bottom: 0, height: '42%' }
-        : f.seatSide === 'right'
-          ? { top: 0, bottom: 0, left: 0, width: '42%' }
-          : { top: 0, bottom: 0, right: 0, width: '42%' };
-  const wood: React.CSSProperties =
-    f.seatSide === 'bottom'
-      ? { left: 0, right: 0, bottom: 0, height: '58%' }
-      : f.seatSide === 'top'
-        ? { left: 0, right: 0, top: 0, height: '58%' }
-        : f.seatSide === 'right'
-          ? { top: 0, bottom: 0, right: 0, width: '58%' }
-          : { top: 0, bottom: 0, left: 0, width: '58%' };
+  // La foto de la barra tiene la madera (lado de los clientes) abajo: se gira para que quede del lado de las sillas.
+  const turn = { bottom: 0, top: 180, left: 90, right: -90 }[f.seatSide];
   return (
     <div
       className="absolute"
@@ -214,48 +240,29 @@ export function BarShape({ fixture, selected }: { fixture: BoardFixture; selecte
       aria-label={f.label}
     >
       {stools.map((s, i) => (
-        <span
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
           key={i}
+          src={PHOTO.stool}
+          alt=""
           aria-hidden="true"
-          className="absolute rounded-full"
+          draggable={false}
+          className="pointer-events-none absolute max-w-none select-none"
           style={{
             left: `${s.x}%`,
             top: `${s.y}%`,
             width: `${s.w}%`,
             height: `${s.h}%`,
             transform: 'translate(-50%, -50%)',
-            backgroundImage: 'radial-gradient(circle at 40% 35%, #4a4a4a, #1a1a1a 70%)',
-            boxShadow: '0 0 0 2px #0c0c0c, 0 6px 10px rgba(0,0,0,0.6)',
+            filter: 'drop-shadow(0 6px 6px rgba(0,0,0,0.6))',
           }}
         />
       ))}
       <div
-        className={`absolute inset-0 overflow-hidden rounded-[8px] ${selected ? 'outline outline-2 outline-offset-[6px] outline-foreground' : ''}`}
-        style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08), 0 14px 24px rgba(0,0,0,0.6)' }}
+        className={`absolute inset-0 overflow-hidden rounded-[6px] ${selected ? 'outline outline-2 outline-offset-[6px] outline-foreground' : ''}`}
+        style={{ boxShadow: '0 14px 24px rgba(0,0,0,0.65)' }}
       >
-        <span
-          aria-hidden="true"
-          className="absolute"
-          style={{
-            ...back,
-            backgroundColor: '#15181b',
-            // Una fila de botellas en el fondo de la barra, con su brillo tenue.
-            backgroundImage: 'radial-gradient(circle, rgba(217,164,65,0.85) 0 3px, transparent 4px), radial-gradient(circle, rgba(127,176,105,0.7) 0 3px, transparent 4px)',
-            backgroundSize: vertical ? '100% 24px, 100% 24px' : '24px 100%, 24px 100%',
-            backgroundPosition: vertical ? '0 0, 0 12px' : '0 0, 12px 0',
-            boxShadow: 'inset 0 0 0 2px #0b0d0f',
-          }}
-        />
-        <span
-          className="absolute flex items-center justify-center font-display text-[clamp(10px,1.2vw,13px)] font-bold uppercase tracking-[0.18em] text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.9)]"
-          style={{
-            ...wood,
-            backgroundImage: `repeating-linear-gradient(${vertical ? '0deg' : '90deg'}, rgba(0,0,0,0.08) 0 2px, transparent 2px 13px), linear-gradient(135deg, #8a5a36, #5e361d)`,
-            writingMode: vertical ? 'vertical-rl' : undefined,
-          }}
-        >
-          {f.label}
-        </span>
+        <TurnedPhoto src={PHOTO.bar} turn={turn} w={f.w} h={f.h} />
       </div>
     </div>
   );
