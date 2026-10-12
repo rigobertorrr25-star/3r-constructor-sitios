@@ -5,6 +5,8 @@ import { can } from '@/lib/permissions';
 import { formatCop, formatDateTime } from '@/lib/format';
 import { formatQuantity } from '@/lib/units';
 import { InventoryActions, ItemForm } from '@/components/inventory-forms';
+import { BulkStock, InventoryFromMenu } from '@/components/inventory-bulk';
+import { menuForInventory } from '@/lib/inventory-bulk';
 import { Empty, PageTitle, card } from '@/components/ui';
 import { makeT, tr } from '@/lib/i18n';
 import { getLang } from '@/lib/i18n/server';
@@ -14,10 +16,11 @@ export const dynamic = 'force-dynamic';
 export default async function InventoryPage() {
   const staff = await requireStaff('inventory.view');
   const manage = can(staff.role, 'inventory.manage');
+  const load = can(staff.role, 'inventory.load');
   const lang = await getLang();
   const t = makeT(lang);
   const qty = (...args: Parameters<typeof formatQuantity>) => tr(lang, formatQuantity(...args));
-  const [items, moves] = await Promise.all([listItems(staff), listMovements(staff, { limit: 40 })]);
+  const [items, moves, menu] = await Promise.all([listItems(staff), listMovements(staff, { limit: 40 }), load ? menuForInventory(staff) : Promise.resolve([])]);
   const active = items.filter((i) => i.isActive);
   const value = active.reduce((s, i) => s + Math.max(0, i.stock) * i.unitCost, 0);
   const low = active.filter((i) => i.minStock > 0 && i.stock < i.minStock);
@@ -43,6 +46,13 @@ export default async function InventoryPage() {
             <p className="mt-1 font-display text-[22px] font-bold">{active.length}</p>
           </div>
         </div>
+      ) : null}
+
+      {load ? (
+        <>
+          <InventoryFromMenu categories={menu} open={items.length === 0} />
+          <BulkStock showCost={manage} items={active.map((i) => ({ id: i.id, name: i.name, unit: i.unit, bottleSize: i.bottleSize, stock: i.stock, unitCost: i.unitCost, minStock: i.minStock }))} />
+        </>
       ) : null}
 
       <section className={card}>
@@ -101,7 +111,14 @@ export default async function InventoryPage() {
       ) : null}
 
       <section className="space-y-3">
-        <h2 className="font-display text-[19px] font-bold">{t('Últimos movimientos')}</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-[19px] font-bold">{t('Últimos movimientos')}</h2>
+          {manage ? (
+            <Link href="/app/inventario/movimientos" className="text-[14px] text-primary hover:underline">
+              {t('Ver todos, por persona y por día →')}
+            </Link>
+          ) : null}
+        </div>
         {moves.length === 0 ? (
           <p className="text-[14px] text-muted-foreground">{t('Nada todavía.')}</p>
         ) : (
