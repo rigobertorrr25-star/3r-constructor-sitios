@@ -1,3 +1,4 @@
+import { MenuImport } from '@/components/menu-import';
 import { requireStaff } from '@/lib/auth';
 import { getMenu } from '@/lib/orders';
 import { productCosts } from '@/lib/inventory';
@@ -27,6 +28,7 @@ export default async function MenuPage() {
             : t('Marca aquí lo que se acabó: los meseros ya no lo podrán pedir hasta que vuelva a haber.')
         }
       />
+      {canEdit ? <MenuImport barOnly={staff.barOnly} open={menu.categories.length === 0} /> : null}
       <MenuEditor categories={menu.categories} products={menu.products} canEdit={canEdit} canRecipe={canRecipe} costs={costs} barOnly={staff.barOnly} />
     </div>
   );

@@ -1,5 +1,6 @@
 'use server';
 
+import { importMenu } from '@/lib/menu-import';
 import { createFixture, removeFixture, saveFixtureLayout, updateFixture } from '@/lib/floor';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -347,6 +348,25 @@ export async function updateLocationAction(_prev: FormState, formData: FormData)
 }
 
 // ───────── carta y pedidos ─────────
+
+/** Importar la carta pegada en texto (Carta → Importar carta). */
+export async function importMenuAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  let counts: Awaited<ReturnType<typeof importMenu>>;
+  try {
+    counts = await importMenu(staff, String(formData.get('menu') ?? ''), staff.barOnly ? 'bar' : text(formData, 'station') === 'kitchen' ? 'kitchen' : 'bar');
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+  revalidatePath('/app/carta');
+  revalidatePath('/app');
+  return {
+    ok: Date.now(),
+    message: await trServer(
+      `Listo: ${counts.categories} categorías nuevas, ${counts.products} productos nuevos y ${counts.prices} precios cambiados; ${counts.same} sin cambios.`,
+    ),
+  };
+}
 
 export async function saveCategoryAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
