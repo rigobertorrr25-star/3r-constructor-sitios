@@ -5,6 +5,8 @@ import { can } from '@/lib/permissions';
 import { formatCop, formatDateTime } from '@/lib/format';
 import { formatQuantity } from '@/lib/units';
 import { InventoryActions, ItemForm } from '@/components/inventory-forms';
+import { BulkStock, InventoryFromMenu } from '@/components/inventory-bulk';
+import { menuForInventory } from '@/lib/inventory-bulk';
 import { Empty, PageTitle, card } from '@/components/ui';
 import { makeT, tr } from '@/lib/i18n';
 import { getLang } from '@/lib/i18n/server';
@@ -17,7 +19,7 @@ export default async function InventoryPage() {
   const lang = await getLang();
   const t = makeT(lang);
   const qty = (...args: Parameters<typeof formatQuantity>) => tr(lang, formatQuantity(...args));
-  const [items, moves] = await Promise.all([listItems(staff), listMovements(staff, { limit: 40 })]);
+  const [items, moves, menu] = await Promise.all([listItems(staff), listMovements(staff, { limit: 40 }), manage ? menuForInventory(staff) : Promise.resolve([])]);
   const active = items.filter((i) => i.isActive);
   const value = active.reduce((s, i) => s + Math.max(0, i.stock) * i.unitCost, 0);
   const low = active.filter((i) => i.minStock > 0 && i.stock < i.minStock);
@@ -43,6 +45,13 @@ export default async function InventoryPage() {
             <p className="mt-1 font-display text-[22px] font-bold">{active.length}</p>
           </div>
         </div>
+      ) : null}
+
+      {manage ? (
+        <>
+          <InventoryFromMenu categories={menu} open={items.length === 0} />
+          <BulkStock items={active.map((i) => ({ id: i.id, name: i.name, unit: i.unit, bottleSize: i.bottleSize, stock: i.stock, unitCost: i.unitCost, minStock: i.minStock }))} />
+        </>
       ) : null}
 
       <section className={card}>

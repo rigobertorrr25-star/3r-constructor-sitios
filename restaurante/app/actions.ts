@@ -1,6 +1,7 @@
 'use server';
 
 import { importMenu } from '@/lib/menu-import';
+import { bulkStock, inventoryFromMenu, type StockRow } from '@/lib/inventory-bulk';
 import { applyLibraryPhotos } from '@/lib/photo-library';
 import { createFixture, removeFixture, saveFixtureLayout, updateFixture } from '@/lib/floor';
 import { cookies, headers } from 'next/headers';
@@ -640,6 +641,45 @@ export async function saveItemAction(_prev: FormState, formData: FormData): Prom
     ['/app/inventario'],
     'Insumo guardado.',
   );
+}
+
+/** Arma el inventario desde la carta: un insumo por producto de las categorías marcadas, y cada venta descuenta 1. */
+export async function inventoryFromMenuAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('inventory.manage');
+  let r: { created: number; linked: number; skipped: string[] };
+  try {
+    r = await inventoryFromMenu(staff, formData.getAll('categoryId').map(String));
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+  revalidatePath('/app/inventario');
+  revalidatePath('/app/carta');
+  const base = await trServer(`Listo: ${r.created} insumos nuevos y ${r.linked} productos que descuentan 1 por venta.`);
+  const skipped = r.skipped.length ? ' ' + (await trServer(`Sin tocar (ya hay un insumo con ese nombre en ml o g): ${r.skipped.join(', ')}.`)) : '';
+  return { ok: Date.now(), message: base + skipped };
+}
+
+/** Carga de existencias, costos y mínimos de muchos insumos a la vez (campos count:ID, cost:ID, min:ID). */
+export async function bulkStockAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('inventory.manage');
+  const rows = new Map<string, StockRow>();
+  for (const [key, value] of formData.entries()) {
+    const m = /^(count|cost|min):(.+)$/.exec(key);
+    if (!m || typeof value !== 'string') continue;
+    const row = rows.get(m[2]) ?? { itemId: m[2] };
+    if (m[1] === 'count') row.counted = value;
+    else if (m[1] === 'cost') row.unitCost = value;
+    else row.minStock = value;
+    rows.set(m[2], row);
+  }
+  let r: { counted: number; costs: number; mins: number };
+  try {
+    r = await bulkStock(staff, [...rows.values()]);
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+  revalidatePath('/app/inventario');
+  return { ok: Date.now(), message: await trServer(`Guardado: ${r.counted} cantidades, ${r.costs} costos y ${r.mins} mínimos.`) };
 }
 
 export async function inventoryMoveAction(_prev: FormState, formData: FormData): Promise<FormState> {
