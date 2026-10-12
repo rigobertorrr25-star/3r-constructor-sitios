@@ -80,4 +80,23 @@ describe('barras del plano', { skip: url ? false : 'sin TEST_DATABASE_URL' }, ()
     await assert.rejects(store.createTables(owner, { zone: 'Salón', count: 61, capacity: 4, shape: 'square' }), /de 1 a 60/);
     await assert.rejects(store.createTables(waiter, { zone: 'Salón', count: 2, capacity: 4, shape: 'square' }), /permiso/);
   });
+
+  it('quita varias mesas elegidas y luego todas, menos las abiertas', async () => {
+    let tables = (await store.listTables(owner)).filter((t) => t.zone === 'Salón');
+    const byNumber = (n: string) => tables.find((t) => t.number === n)!.id;
+    const five = ['2', '3', '4', '5', '6'].map(byNumber);
+    assert.deepEqual(await store.removeTables(owner, five), { removed: 5, kept: [] });
+    tables = await store.listTables(owner);
+    assert.equal(tables.length, 21);
+    assert.ok(!tables.some((t) => ['2', '3', '4', '5', '6'].includes(t.number)));
+
+    await store.openTable(owner, byNumber('7'), { guests: 2 });
+    await assert.rejects(store.removeTables(waiter, 'all'), /permiso/);
+    await assert.rejects(store.removeTables(owner, []), /Elige/);
+    assert.deepEqual(await store.removeTables(owner, 'all'), { removed: 20, kept: ['7'] });
+    assert.deepEqual((await store.listTables(owner)).map((t) => t.number), ['7']);
+
+    // Después se pueden volver a crear: la numeración sigue desde la que quedó.
+    assert.deepEqual(await store.createTables(owner, { zone: 'Salón', count: 2, capacity: 4, shape: 'round' }), ['8', '9']);
+  });
 });

@@ -48,6 +48,7 @@ import {
   moveSession,
   openTable,
   removeTable,
+  removeTables,
   resetPin,
   saveLayout,
   setBill,
@@ -266,6 +267,24 @@ export async function updateTableAction(_prev: FormState, formData: FormData): P
 export async function removeTableAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   return run(formData, () => removeTable(staff, text(formData, 'tableId')), ['/app', '/app/plano']);
+}
+
+export async function removeTablesAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  if (formData.get('scope') === 'all' && formData.get('confirm') !== 'on')
+    return { error: await trServer('Marca la casilla para confirmar que quieres quitar todas las mesas.') };
+  let result: { removed: number; kept: string[] };
+  try {
+    result = await removeTables(staff, formData.get('scope') === 'all' ? 'all' : formData.getAll('tableId').map(String));
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+  revalidatePath('/app');
+  revalidatePath('/app/plano');
+  const message = result.kept.length
+    ? await trServer(`Listo: se quitaron ${result.removed} mesas. Quedan las abiertas: ${result.kept.join(', ')}.`)
+    : await trServer(`Listo: se quitaron ${result.removed} mesas.`);
+  return { ok: Date.now(), message };
 }
 
 /** Lo llama el editor del plano (no es un formulario): devuelve el error o nada. */

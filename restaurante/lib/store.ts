@@ -783,6 +783,34 @@ export async function removeTable(actor: Actor, tableId: string) {
   });
 }
 
+/**
+ * Quita varias mesas de una vez (las elegidas, o todas para volver a armar el plano). Las abiertas se quedan: tienen cuenta.
+ * Como con una sola, el historial se conserva y una mesa nueva con el mismo número la recupera.
+ */
+export async function removeTables(actor: Actor, ids: string[] | 'all') {
+  requirePermission(actor, 'floor.edit');
+  if (ids !== 'all' && (!Array.isArray(ids) || !ids.length || ids.length > 200 || !ids.every(isUuid))) throw new AppError('INVALID', 'Elige las mesas que quieres quitar.');
+  return transaction(async (db) => {
+    const rows = (
+      await db.query<{ id: string; number: string; open: boolean }>(
+        `SELECT t.id, t.number,
+                EXISTS (SELECT 1 FROM table_sessions s WHERE s.table_id = t.id AND s.status <> 'closed') AS open
+           FROM dining_tables t WHERE t.location_id = $1 AND t.business_id = $2 AND t.is_active
+            AND ($3::uuid[] IS NULL OR t.id = ANY($3::uuid[])) FOR UPDATE`,
+        [actor.locationId, actor.businessId, ids === 'all' ? null : ids],
+      )
+    ).rows;
+    const removed = rows.filter((r) => !r.open);
+    const kept = rows.filter((r) => r.open).map((r) => r.number);
+    if (!rows.length) throw new AppError('INVALID', 'No hay mesas para quitar.');
+    if (removed.length) {
+      await db.query(`UPDATE dining_tables SET is_active = FALSE WHERE id = ANY($1::uuid[])`, [removed.map((r) => r.id)]);
+      await audit(db, actor, { action: 'table.remove', entity: 'location', entityId: actor.locationId, summary: `Quitó ${removed.length} mesas del plano de una vez: ${removed.map((r) => r.number).join(', ')}` });
+    }
+    return { removed: removed.length, kept };
+  });
+}
+
 // ───────── abrir, mover y cerrar mesas ─────────
 
 export async function openTable(actor: Actor, tableId: string, input: { guests: number; notes?: string }) {
