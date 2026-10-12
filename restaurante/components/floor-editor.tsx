@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
-import { createTableAction, removeTableAction, saveLayoutAction, updateTableAction } from '@/app/actions';
+import { createFixtureAction, createTableAction, removeFixtureAction, removeTableAction, saveLayoutAction, updateFixtureAction, updateTableAction } from '@/app/actions';
 import { orOffline } from '@/lib/offline';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
-import { TableShape, ZoneTabs, type BoardTable } from './table-board';
+import { BarShape, FLOOR_STYLE, TableShape, ZoneTabs, type BoardFixture, type BoardTable } from './table-board';
 import { Alert, CheckField, Field, Select, card, primaryButton, quietButton } from './ui';
 import { useT, useTr } from './i18n';
 
@@ -18,15 +18,19 @@ type Box = { x: number; y: number; w: number; h: number };
 
 const SHAPE_LABEL = { square: 'Cuadrada', round: 'Redonda', long: 'Larga' } as const;
 
-export function FloorEditor({ tables }: { tables: BoardTable[] }) {
+const SIDE_LABEL = { bottom: 'Abajo', top: 'Arriba', left: 'A la izquierda', right: 'A la derecha' } as const;
+
+export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; fixtures?: BoardFixture[] }) {
   const t = useT();
   const trx = useTr();
   const zones = useMemo(() => {
-    const list = [...new Set(tables.map((t) => t.zone))];
+    const list = [...new Set([...tables.map((t) => t.zone), ...fixtures.map((f) => f.zone)])];
     return list.length ? list : ['Salón'];
-  }, [tables]);
+  }, [tables, fixtures]);
+  // Mesas y barras se arrastran igual; cada una guarda su caja (x, y, ancho, alto).
+  const items = useMemo(() => [...tables, ...fixtures].map((i) => ({ id: i.id, x: i.x, y: i.y, w: i.w, h: i.h })), [tables, fixtures]);
   const [zone, setZone] = useState(zones[0]);
-  const [boxes, setBoxes] = useState<Record<string, Box>>(() => Object.fromEntries(tables.map((t) => [t.id, { x: t.x, y: t.y, w: t.w, h: t.h }])));
+  const [boxes, setBoxes] = useState<Record<string, Box>>(() => Object.fromEntries(items.map((t) => [t.id, { x: t.x, y: t.y, w: t.w, h: t.h }])));
   const [dirty, setDirty] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,16 +41,18 @@ export function FloorEditor({ tables }: { tables: BoardTable[] }) {
   const newZone = useRef('');
 
   // Cuando llegan datos nuevos del servidor (otra mesa, otro número…), se toman sus posiciones si no hay arrastres sin guardar.
-  const signature = tables.map((t) => `${t.id}:${t.x},${t.y},${t.w},${t.h}`).join('|');
+  const signature = items.map((t) => `${t.id}:${t.x},${t.y},${t.w},${t.h}`).join('|');
   useEffect(() => {
     if (dirty) return;
-    setBoxes(Object.fromEntries(tables.map((t) => [t.id, { x: t.x, y: t.y, w: t.w, h: t.h }])));
+    setBoxes(Object.fromEntries(items.map((t) => [t.id, { x: t.x, y: t.y, w: t.w, h: t.h }])));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature]);
   const drag = useRef<{ id: string; mode: 'move' | 'resize'; startX: number; startY: number; box: Box } | null>(null);
 
   const currentZone = zones.includes(zone) ? zone : zones[0];
   const selected = tables.find((t) => t.id === selectedId) ?? null;
+  const selectedBar = fixtures.find((f) => f.id === selectedId) ?? null;
+  const isBar = (id: string) => fixtures.some((f) => f.id === id);
 
   const toUnits = (dx: number, dy: number) => {
     const rect = canvas.current!.getBoundingClientRect();
@@ -69,7 +75,9 @@ export function FloorEditor({ tables }: { tables: BoardTable[] }) {
     if (d.mode === 'move') {
       next = { ...d.box, x: Math.min(Math.max(snap(d.box.x + dx), 0), W - d.box.w), y: Math.min(Math.max(snap(d.box.y + dy), 0), H - d.box.h) };
     } else {
-      next = { ...d.box, w: Math.min(Math.max(snap(d.box.w + dx), 60), Math.min(400, W - d.box.x)), h: Math.min(Math.max(snap(d.box.h + dy), 60), Math.min(400, H - d.box.y)) };
+      // Las barras pueden ser largas (todo el ancho del local); las mesas, hasta 400.
+      const [min, max] = isBar(d.id) ? [40, 1000] : [60, 400];
+      next = { ...d.box, w: Math.min(Math.max(snap(d.box.w + dx), min), Math.min(max, W - d.box.x)), h: Math.min(Math.max(snap(d.box.h + dy), min), Math.min(max, H - d.box.y)) };
     }
     setBoxes((prev) => ({ ...prev, [d.id]: next }));
     setDirty(true);
@@ -83,14 +91,17 @@ export function FloorEditor({ tables }: { tables: BoardTable[] }) {
   const save = () =>
     start(async () => {
       setError(null);
-      const changed = tables
-        .filter((t) => {
-          const b = boxes[t.id];
-          return b && (b.x !== t.x || b.y !== t.y || b.w !== t.w || b.h !== t.h);
-        })
-        .map((t) => ({ id: t.id, ...boxes[t.id] }));
-      if (changed.length === 0) return setDirty(false);
-      const result = await orOffline(saveLayoutAction(changed));
+      const moved = <T extends Box & { id: string }>(list: T[]) =>
+        list
+          .filter((t) => {
+            const b = boxes[t.id];
+            return b && (b.x !== t.x || b.y !== t.y || b.w !== t.w || b.h !== t.h);
+          })
+          .map((t) => ({ id: t.id, ...boxes[t.id] }));
+      const changed = moved(tables);
+      const changedBars = moved(fixtures);
+      if (changed.length === 0 && changedBars.length === 0) return setDirty(false);
+      const result = await orOffline(saveLayoutAction(changed, changedBars));
       if (result) setError(result);
       else {
         setDirty(false);
@@ -99,7 +110,7 @@ export function FloorEditor({ tables }: { tables: BoardTable[] }) {
     });
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
+    <div className="grid gap-6">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <ZoneTabs zones={zones} zone={currentZone} onChange={setZone} />
@@ -117,10 +128,21 @@ export function FloorEditor({ tables }: { tables: BoardTable[] }) {
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           onPointerDown={() => setSelectedId(null)}
-          className="relative w-full touch-none select-none overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#04080d]"
-          style={{ aspectRatio: `${W} / ${H}` }}
+          className="relative w-full touch-none select-none overflow-hidden rounded-[24px] border border-white/[0.08]"
+          style={FLOOR_STYLE}
         >
-          <div className="pointer-events-none absolute inset-0 [background-image:radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:4%_6.25%]" />
+          <div className="pointer-events-none absolute inset-0 [background-image:radial-gradient(#ffffff10_1px,transparent_1px)] [background-size:4%_6.25%]" />
+          {fixtures
+            .filter((f) => f.zone === currentZone)
+            .map((f) => {
+              const box = boxes[f.id] ?? { x: f.x, y: f.y, w: f.w, h: f.h };
+              return (
+                <div key={f.id} onPointerDown={(e) => onPointerDown(e, f.id, 'move')} className="cursor-grab active:cursor-grabbing">
+                  <BarShape fixture={{ ...f, ...box }} selected={f.id === selectedId} />
+                  {f.id === selectedId ? <ResizeHandle box={box} onPointerDown={(e) => onPointerDown(e, f.id, 'resize')} /> : null}
+                </div>
+              );
+            })}
           {tables
             .filter((t) => t.zone === currentZone)
             .map((t) => {
@@ -128,22 +150,39 @@ export function FloorEditor({ tables }: { tables: BoardTable[] }) {
               return (
                 <div key={t.id} onPointerDown={(e) => onPointerDown(e, t.id, 'move')} className="cursor-grab active:cursor-grabbing">
                   <TableShape table={{ ...t, ...box }} now={0} selected={t.id === selectedId} />
-                  {t.id === selectedId ? (
-                    <span
-                      role="presentation"
-                      onPointerDown={(e) => onPointerDown(e, t.id, 'resize')}
-                      className="absolute z-10 size-5 -translate-x-1/2 -translate-y-1/2 cursor-nwse-resize rounded-full border-2 border-background bg-foreground"
-                      style={{ left: `${((box.x + box.w) / W) * 100}%`, top: `${((box.y + box.h) / H) * 100}%` }}
-                    />
-                  ) : null}
+                  {t.id === selectedId ? <ResizeHandle box={box} onPointerDown={(e) => onPointerDown(e, t.id, 'resize')} /> : null}
                 </div>
               );
             })}
         </div>
-        <p className="text-[13px] text-muted-foreground">{t('Toca una mesa para editarla. El punto blanco de la esquina cambia su tamaño.')}</p>
+        <p className="text-[13px] text-muted-foreground">{t('Toca una mesa o la barra para editarla. El punto blanco de la esquina cambia su tamaño.')}</p>
       </div>
 
       <aside className="space-y-4">
+        {selectedBar ? (
+          <section className={card}>
+            <h2 className="font-display text-[18px] font-bold">{selectedBar.label}</h2>
+            <ActionForm key={selectedBar.id} action={updateFixtureAction} className="mt-4 space-y-3">
+              {() => (
+                <>
+                  <input type="hidden" name="fixtureId" value={selectedBar.id} />
+                  <BarFields defaults={selectedBar} />
+                  <SubmitButton pendingText={t('Guardando…')}>{t('Guardar barra')}</SubmitButton>
+                </>
+              )}
+            </ActionForm>
+            <ActionForm action={removeFixtureAction} onOk={() => setSelectedId(null)} className="mt-4 border-t border-white/[0.06] pt-4">
+              {() => (
+                <>
+                  <input type="hidden" name="fixtureId" value={selectedBar.id} />
+                  <SubmitButton tone="danger" pendingText={t('Quitando…')}>
+                    {t('Quitar del plano')}
+                  </SubmitButton>
+                </>
+              )}
+            </ActionForm>
+          </section>
+        ) : null}
         {selected ? (
           <section className={card}>
             <h2 className="font-display text-[18px] font-bold">{t('Mesa {n}', { n: selected.number })}</h2>
@@ -184,7 +223,20 @@ export function FloorEditor({ tables }: { tables: BoardTable[] }) {
           </div>
           <p className="mt-3 text-[12.5px] text-muted-foreground">{t('Para una zona nueva (Terraza, Segundo piso…), escribe su nombre en Zona.')}</p>
         </section>
-        <button type="button" className={`${quietButton} w-full`} onClick={() => setSelectedId(null)} hidden={!selected}>
+        <section className={card}>
+          <h2 className="font-display text-[18px] font-bold">{t('Agregar barra')}</h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">{t('Aparece en el plano para que se parezca al local. Arrástrala a su sitio y estírala con el punto blanco.')}</p>
+          <ActionForm action={createFixtureAction} className="mt-4 space-y-3" resetOnOk>
+            {() => (
+              <>
+                <input type="hidden" name="zone" value={currentZone} />
+                <BarFields defaults={{ label: t('Barra'), seats: 6, seatSide: 'bottom' }} />
+                <SubmitButton pendingText={t('Agregando…')}>{t('Agregar barra')}</SubmitButton>
+              </>
+            )}
+          </ActionForm>
+        </section>
+        <button type="button" className={`${quietButton} w-full`} onClick={() => setSelectedId(null)} hidden={!selected && !selectedBar}>
           {t('Deseleccionar')}
         </button>
       </aside>
@@ -206,6 +258,37 @@ function TableFields({ defaults }: { defaults: Pick<BoardTable, 'zone' | 'number
           </option>
         ))}
       </Select>
+    </div>
+  );
+}
+
+/** El punto blanco de la esquina: se arrastra para cambiar el tamaño. */
+function ResizeHandle({ box, onPointerDown }: { box: Box; onPointerDown: (e: React.PointerEvent) => void }) {
+  return (
+    <span
+      role="presentation"
+      onPointerDown={onPointerDown}
+      className="absolute z-10 size-5 -translate-x-1/2 -translate-y-1/2 cursor-nwse-resize rounded-full border-2 border-background bg-foreground"
+      style={{ left: `${((box.x + box.w) / W) * 100}%`, top: `${((box.y + box.h) / H) * 100}%` }}
+    />
+  );
+}
+
+function BarFields({ defaults }: { defaults: Pick<BoardFixture, 'label' | 'seats' | 'seatSide'> }) {
+  const t = useT();
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <Field label={t('Nombre')} name="label" maxLength={30} defaultValue={defaults.label} />
+      <Field label={t('Sillas altas')} name="seats" type="number" min={0} max={30} required defaultValue={defaults.seats} />
+      <div className="col-span-2">
+        <Select label={t('Lado de las sillas')} name="seatSide" defaultValue={defaults.seatSide}>
+          {(Object.keys(SIDE_LABEL) as (keyof typeof SIDE_LABEL)[]).map((side) => (
+            <option key={side} value={side}>
+              {t(SIDE_LABEL[side])}
+            </option>
+          ))}
+        </Select>
+      </div>
     </div>
   );
 }

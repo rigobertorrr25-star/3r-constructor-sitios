@@ -87,10 +87,12 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   estación, anulaciones, precuenta y cierre de caja salen impresos; un programa de 3R en un PC del local
   (`restaurante/public/impresion/agente-3r.mjs` + `iniciar-windows.bat`, necesita Node.js) los pide con el código de la sede
   y los manda por la red (puerto 9100). Detalle en `restaurante/README.md`.
+  **Plano** (12 oct 2026, con fotos de referencia de Rigoberto): visto desde arriba, piso cálido, mesas de madera con sillas
+  tapizadas y aro de color por estado; el dueño pone las barras en Plano → «Agregar barra» (tabla `floor_fixtures`, solo dibujo).
 - **DELIRIUM** (11 oct 2026): bar que solo vende licores, sin cajera. Meseros Caridad, Paola, Johan e Isabel; bartender
   Breiner; administrador Agusto. Para ellos se hizo la «forma de trabajo» de Restaurant Control (Sedes): cada mesero cobra
   sus mesas y entrega su cierre, el administrador lo verifica en «Meseros»; y «solo bar». Hay que crearlo en el sistema en
-  vivo desde `/admin` (lo hace Rigoberto: falta el nombre del dueño y los PIN de cada uno).
+  vivo desde `/admin` (lo hace Rigoberto, que es el dueño; el administrador se llama Agusto, así, sin «u»).
 - 3R Burgers: no está confirmado si es cliente real o página de muestra; no presentarlo como cliente sin preguntar.
 
 ## Este proyecto

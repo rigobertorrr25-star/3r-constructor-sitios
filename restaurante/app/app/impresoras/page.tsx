@@ -100,7 +100,7 @@ export default async function PrintersPage() {
             ))}
           </ul>
         ) : (
-          <Empty>{t('Todavía no hay impresoras. Mientras tanto, las comandas se ven en las pantallas de Cocina y Barra.')}</Empty>
+          <Empty>{staff.barOnly ? t('Todavía no hay impresoras. Mientras tanto, las comandas se ven en la pantalla de Barra.') : t('Todavía no hay impresoras. Mientras tanto, las comandas se ven en las pantallas de Cocina y Barra.')}</Empty>
         )}
       </section>
 

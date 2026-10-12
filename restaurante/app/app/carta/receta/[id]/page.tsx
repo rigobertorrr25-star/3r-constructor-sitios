@@ -21,7 +21,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
       <Link href="/app/carta" className="text-[14px] text-muted-foreground hover:text-foreground">
         ← {t('Carta')}
       </Link>
-      <PageTitle title={t('Receta: {name}', { name: product.name })} text={t('Lo que gasta una unidad vendida. Cada vez que se envíe a cocina o barra, esto se descuenta del inventario.')} />
+      <PageTitle title={t('Receta: {name}', { name: product.name })} text={staff.barOnly ? t('Lo que gasta una unidad vendida. Cada vez que se envíe a la barra, esto se descuenta del inventario.') : t('Lo que gasta una unidad vendida. Cada vez que se envíe a cocina o barra, esto se descuenta del inventario.')} />
       <RecipeEditor
         productId={product.id}
         price={product.price}

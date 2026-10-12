@@ -6,6 +6,7 @@ import { orOffline } from '@/lib/offline';
 import Link from 'next/link';
 import { LONG_TABLE_MINUTES, elapsedMinutes, formatCop, formatElapsed, formatTime } from '@/lib/format';
 import type { FloorTable } from '@/lib/store';
+import type { Fixture } from '@/lib/floor';
 import type { ReadyTicket } from '@/lib/kds';
 import { STATION_LABEL } from '@/lib/stations';
 import { ActionForm } from './form-state';
@@ -38,29 +39,232 @@ const STATUS_STYLE: Record<BoardTable['status'], string> = {
   reserved: 'border-accent/70 border-dashed bg-accent/[0.1] text-foreground hover:bg-accent/[0.18]',
 };
 
+/** El piso del local visto desde arriba: foto de cemento pulido cálido, con luz tenue de bar de noche. */
+export const FLOOR_STYLE: React.CSSProperties = {
+  aspectRatio: '1000 / 640',
+  backgroundColor: '#211b15',
+  backgroundImage: [
+    'radial-gradient(circle at 18% 20%, rgba(255,196,120,0.10), transparent 38%)',
+    'radial-gradient(circle at 78% 30%, rgba(255,196,120,0.08), transparent 40%)',
+    'linear-gradient(rgba(18,12,6,0.45), rgba(18,12,6,0.45))',
+    "url('/plano/piso.webp')",
+  ].join(', '),
+  backgroundSize: '100% 100%, 100% 100%, 100% 100%, cover',
+  backgroundPosition: 'center',
+  boxShadow: 'inset 0 0 0 6px #2c241c, inset 0 0 90px rgba(0,0,0,0.7)',
+};
+
+/** El aro de color alrededor de cada mesa dice cómo está: libre, ocupada, pidió la cuenta… */
+const RING: Record<BoardTable['status'], { ring: string; glow: string }> = {
+  free: { ring: 'color-mix(in oklab, var(--color-success) 70%, transparent)', glow: 'transparent' },
+  open: { ring: 'var(--color-primary)', glow: 'color-mix(in oklab, var(--color-primary) 45%, transparent)' },
+  bill: { ring: 'var(--color-warning)', glow: 'color-mix(in oklab, var(--color-warning) 50%, transparent)' },
+  blocked: { ring: '#ffffff26', glow: 'transparent' },
+  reserved: { ring: 'var(--color-accent)', glow: 'color-mix(in oklab, var(--color-accent) 35%, transparent)' },
+};
+
+/** Fotos de los muebles vistos desde arriba (en public/plano, creadas con IA para que el plano se vea como el local). */
+const PHOTO = {
+  chair: '/plano/silla.webp',
+  round: '/plano/mesa-redonda.webp',
+  square: '/plano/mesa-cuadrada.webp',
+  long: '/plano/mesa-larga.webp',
+  stool: '/plano/banco.webp',
+  bar: '/plano/barra.webp',
+} as const;
+
+/**
+ * Una foto que llena su caja aunque haya que girarla 90°: girada, su ancho es el alto de la caja y al revés.
+ * `turn` en grados (0, 90, 180, -90); w y h son las medidas de la caja en unidades del lienzo.
+ */
+function TurnedPhoto({ src, turn, w, h, style }: { src: string; turn: number; w: number; h: number; style?: React.CSSProperties }) {
+  const sideways = turn === 90 || turn === -90;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      draggable={false}
+      className="pointer-events-none absolute left-1/2 top-1/2 max-w-none select-none"
+      style={{
+        width: sideways ? `${(h / w) * 100}%` : '100%',
+        height: sideways ? `${(w / h) * 100}%` : '100%',
+        transform: `translate(-50%, -50%) rotate(${turn}deg)`,
+        ...style,
+      }}
+    />
+  );
+}
+
+type Chair = { x: number; y: number; w: number; h: number; r: number };
+
+/**
+ * Dónde van las sillas alrededor de la mesa (en % de la caja de la mesa) y hacia dónde mira el respaldo. Una por puesto.
+ * Las medidas salen en unidades del lienzo (1000 × 640, cuadradas en pantalla) para que las sillas no se deformen.
+ */
+export function chairsFor(shape: BoardTable['shape'], capacity: number, w: number, h: number): Chair[] {
+  const n = Math.max(1, Math.min(capacity, 16));
+  const chair = (cx: number, cy: number, size: number, r: number): Chair => ({ x: (cx / w) * 100, y: (cy / h) * 100, w: (size / w) * 100, h: ((size * 1.1) / h) * 100, r });
+  if (shape === 'round') {
+    const size = Math.min(38, (Math.PI * (w + 40)) / n - 6);
+    return Array.from({ length: n }, (_, i) => {
+      const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+      return chair(w / 2 + Math.cos(a) * (w / 2 + size * 0.55), h / 2 + Math.sin(a) * (h / 2 + size * 0.55), size, (a * 180) / Math.PI + 90);
+    });
+  }
+  // Mesa rectangular: sillas por los lados largos y, si sobra una o son muchas, en las cabeceras.
+  const wide = w >= h;
+  const long = wide ? w : h;
+  const ends = n % 2 === 1 ? 1 : n >= 6 ? 2 : 0;
+  const sides = n - ends;
+  const first = Math.ceil(sides / 2);
+  const second = sides - first;
+  const size = Math.min(38, long / Math.max(first, 1) - 8);
+  const out = size * 0.55;
+  const chairs: Chair[] = [];
+  const row = (count: number, side: 'a' | 'b') => {
+    for (let i = 0; i < count; i++) {
+      const along = ((i + 1) / (count + 1)) * long;
+      if (wide) chairs.push(chair(along, side === 'a' ? -out : h + out, size, side === 'a' ? 0 : 180));
+      else chairs.push(chair(side === 'a' ? -out : w + out, along, size, side === 'a' ? -90 : 90));
+    }
+  };
+  row(first, 'a');
+  row(second, 'b');
+  const endSize = Math.min(38, (wide ? h : w) - 8);
+  if (ends >= 1) chairs.push(wide ? chair(-endSize * 0.55, h / 2, endSize, -90) : chair(w / 2, -endSize * 0.55, endSize, 0));
+  if (ends === 2) chairs.push(wide ? chair(w + endSize * 0.55, h / 2, endSize, 90) : chair(w / 2, h + endSize * 0.55, endSize, 180));
+  return chairs;
+}
+
+/** Silla tapizada (foto vista desde arriba): el respaldo va hacia afuera. Si hay alguien sentado, se ilumina. */
+function ChairTop({ c, seated }: { c: Chair; seated: boolean }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={PHOTO.chair}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      className="pointer-events-none absolute max-w-none select-none"
+      style={{
+        left: `${c.x}%`,
+        top: `${c.y}%`,
+        width: `${c.w}%`,
+        height: `${c.h}%`,
+        transform: `translate(-50%, -50%) rotate(${c.r}deg)`,
+        filter: seated
+          ? 'brightness(1.35) saturate(1.15) drop-shadow(0 0 5px rgba(255,236,190,0.75))'
+          : 'drop-shadow(0 5px 6px rgba(0,0,0,0.65))',
+      }}
+    />
+  );
+}
+
 export function TableShape({ table, now, onClick, selected, hasReady }: { table: BoardTable; now: number; onClick?: () => void; selected?: boolean; hasReady?: boolean }) {
   const minutes = table.session ? elapsedMinutes(table.session.openedAt, now) : 0;
   const late = table.session && minutes >= LONG_TABLE_MINUTES;
   const t = useT();
   const status = t(STATUS_LABEL[table.status]);
+  const look = RING[table.status];
+  const round = table.shape === 'round';
+  const chairs = chairsFor(table.shape, table.capacity, table.w, table.h);
+  const seated = table.session?.guests ?? 0;
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={table.session ? t('Mesa {n}, {status}, {time}', { n: table.number, status, time: formatElapsed(minutes) }) : t('Mesa {n}, {status}', { n: table.number, status })}
-      className={`absolute flex flex-col items-center justify-center border-2 text-center transition ${STATUS_STYLE[table.status]} ${
-        table.shape === 'round' ? 'rounded-full' : 'rounded-[14px]'
-      } ${selected ? 'ring-2 ring-foreground ring-offset-2 ring-offset-background' : ''}`}
+      className={`group absolute text-center ${table.status === 'blocked' ? 'opacity-60 grayscale' : ''}`}
       style={{ left: `${(table.x / 1000) * 100}%`, top: `${(table.y / 640) * 100}%`, width: `${(table.w / 1000) * 100}%`, height: `${(table.h / 640) * 100}%` }}
     >
-      {hasReady ? <span className="absolute -right-1.5 -top-1.5 size-3.5 animate-pulse rounded-full border-2 border-background bg-success" aria-label={t('Hay algo listo para llevar')} /> : null}
-      <span className="font-display text-[clamp(13px,2.2vw,22px)] font-bold leading-none">{table.number}</span>
-      {table.session ? (
-        <span className={`mt-1 text-[clamp(10px,1.2vw,13px)] font-medium leading-none ${late ? 'text-[#ffb4b5]' : 'text-foreground/80'}`}>{formatElapsed(minutes)}</span>
-      ) : (
-        <span className="mt-1 text-[clamp(10px,1.1vw,12px)] leading-none text-muted-foreground">{t('{n} p.', { n: table.capacity })}</span>
-      )}
+      {chairs.map((c, i) => (
+        <ChairTop key={i} c={c} seated={i < seated} />
+      ))}
+      {/* La tapa de la mesa: foto de madera. Las mesas largas usan la tabla larga, girada si la mesa está de pie. */}
+      <span className="absolute inset-0 transition group-hover:brightness-110" style={{ filter: 'drop-shadow(0 12px 14px rgba(0,0,0,0.6))' }}>
+        <TurnedPhoto
+          src={round ? PHOTO.round : Math.max(table.w, table.h) / Math.min(table.w, table.h) >= 1.4 ? PHOTO.long : PHOTO.square}
+          turn={!round && table.h > table.w * 1.4 ? 90 : 0}
+          w={table.w}
+          h={table.h}
+        />
+      </span>
+      <span
+        className={`absolute inset-0 flex flex-col items-center justify-center ${round ? 'rounded-full' : 'rounded-[8px]'} ${
+          table.status === 'reserved' ? 'outline-dashed outline-2 outline-offset-4 outline-accent' : ''
+        } ${selected ? 'outline outline-2 outline-offset-[6px] outline-foreground' : ''}`}
+        style={{ boxShadow: `0 0 0 ${table.status === 'free' ? 2 : 3}px ${look.ring}, 0 0 22px 4px ${look.glow}` }}
+      >
+        {/* La velita del centro: da la luz cálida de la foto. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-1/2 size-[46%] -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{ backgroundImage: 'radial-gradient(circle, rgba(255,214,140,0.55) 0%, rgba(255,190,110,0.18) 35%, transparent 70%)' }}
+        />
+        {hasReady ? <span className="absolute -right-1.5 -top-1.5 size-3.5 animate-pulse rounded-full border-2 border-background bg-success" aria-label={t('Hay algo listo para llevar')} /> : null}
+        <span className="relative font-display text-[clamp(14px,2.2vw,24px)] font-bold leading-none text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.85)]">{table.number}</span>
+        {table.session ? (
+          <span className={`relative mt-1 text-[clamp(10px,1.2vw,13px)] font-semibold leading-none [text-shadow:0_1px_2px_rgba(0,0,0,0.9)] ${late ? 'text-[#ffb4b5]' : 'text-white/90'}`}>
+            {formatElapsed(minutes)}
+          </span>
+        ) : (
+          <span className="relative mt-1 text-[clamp(10px,1.1vw,12px)] leading-none text-white/75 [text-shadow:0_1px_2px_rgba(0,0,0,0.9)]">{t('{n} p.', { n: table.capacity })}</span>
+        )}
+      </span>
     </button>
+  );
+}
+
+export type BoardFixture = Fixture;
+
+/** La barra vista desde arriba: mostrador de madera del lado de los clientes, el fondo oscuro del bartender detrás y las sillas altas. */
+export function BarShape({ fixture, selected }: { fixture: BoardFixture; selected?: boolean }) {
+  const f = fixture;
+  const vertical = f.seatSide === 'left' || f.seatSide === 'right';
+  const long = vertical ? f.h : f.w;
+  const stool = Math.min(34, long / Math.max(f.seats, 1) - 8);
+  const stools = Array.from({ length: f.seats }, (_, i) => {
+    const along = ((i + 1) / (f.seats + 1)) * long;
+    const off = stool / 2 + 10;
+    const [cx, cy] =
+      f.seatSide === 'bottom' ? [along, f.h + off] : f.seatSide === 'top' ? [along, -off] : f.seatSide === 'left' ? [-off, along] : [f.w + off, along];
+    return { x: (cx / f.w) * 100, y: (cy / f.h) * 100, w: (stool / f.w) * 100, h: (stool / f.h) * 100 };
+  });
+  // La foto de la barra tiene la madera (lado de los clientes) abajo: se gira para que quede del lado de las sillas.
+  const turn = { bottom: 0, top: 180, left: 90, right: -90 }[f.seatSide];
+  return (
+    <div
+      className="absolute"
+      style={{ left: `${(f.x / 1000) * 100}%`, top: `${(f.y / 640) * 100}%`, width: `${(f.w / 1000) * 100}%`, height: `${(f.h / 640) * 100}%` }}
+      aria-label={f.label}
+    >
+      {stools.map((s, i) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={i}
+          src={PHOTO.stool}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="pointer-events-none absolute max-w-none select-none"
+          style={{
+            left: `${s.x}%`,
+            top: `${s.y}%`,
+            width: `${s.w}%`,
+            height: `${s.h}%`,
+            transform: 'translate(-50%, -50%)',
+            filter: 'drop-shadow(0 6px 6px rgba(0,0,0,0.6))',
+          }}
+        />
+      ))}
+      <div
+        className={`absolute inset-0 overflow-hidden rounded-[6px] ${selected ? 'outline outline-2 outline-offset-[6px] outline-foreground' : ''}`}
+        style={{ boxShadow: '0 14px 24px rgba(0,0,0,0.65)' }}
+      >
+        <TurnedPhoto src={PHOTO.bar} turn={turn} w={f.w} h={f.h} />
+      </div>
+    </div>
   );
 }
 
@@ -105,12 +309,14 @@ type Ready = Omit<ReadyTicket, 'readyAt'> & { readyAt: string };
 
 export function TableBoard({
   tables,
+  fixtures = [],
   ready = [],
   canOpen,
   canClose,
   timeZone,
 }: {
   tables: BoardTable[];
+  fixtures?: BoardFixture[];
   ready?: Ready[];
   canOpen: boolean;
   canClose: boolean;
@@ -118,7 +324,7 @@ export function TableBoard({
 }) {
   const now = useNow();
   const t = useT();
-  const zones = useMemo(() => [...new Set(tables.map((t) => t.zone))], [tables]);
+  const zones = useMemo(() => [...new Set([...tables.map((t) => t.zone), ...fixtures.map((f) => f.zone)])], [tables, fixtures]);
   const [zone, setZone] = useState(zones[0]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const currentZone = zones.includes(zone) ? zone : zones[0];
@@ -127,26 +333,33 @@ export function TableBoard({
   const readySessions = new Set(ready.map((r) => r.sessionId));
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
+    <div className="space-y-6">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <ZoneTabs zones={zones} zone={currentZone} onChange={setZone} />
           <Legend />
         </div>
-        <div className="relative w-full overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#04080d]" style={{ aspectRatio: '1000 / 640' }}>
-          <div className="pointer-events-none absolute inset-0 [background-image:radial-gradient(#ffffff10_1px,transparent_1px)] [background-size:4%_6.25%]" />
-          {tables
-            .filter((t) => t.zone === currentZone)
-            .map((t) => (
-              <TableShape
-                key={t.id}
-                table={t}
-                now={now}
-                selected={t.id === selectedId}
-                hasReady={readySessions.has(t.session?.id ?? '')}
-                onClick={() => setSelectedId(t.id)}
-              />
-            ))}
+        {/* El plano visto desde arriba, como el local de noche: barras, mesas de madera y sus sillas. En el celular se desliza de lado. */}
+        <div className="overflow-x-auto rounded-[24px] border border-white/[0.08]">
+          <div className="relative min-w-[760px]" style={FLOOR_STYLE}>
+            {fixtures
+              .filter((f) => f.zone === currentZone)
+              .map((f) => (
+                <BarShape key={f.id} fixture={f} />
+              ))}
+            {tables
+              .filter((t) => t.zone === currentZone)
+              .map((t) => (
+                <TableShape
+                  key={t.id}
+                  table={t}
+                  now={now}
+                  selected={t.id === selectedId}
+                  hasReady={readySessions.has(t.session?.id ?? '')}
+                  onClick={() => setSelectedId(t.id)}
+                />
+              ))}
+          </div>
         </div>
         {/* En el celular el plano queda pequeño para el dedo: las mismas mesas en botones grandes. */}
         <ul className="grid grid-cols-4 gap-2 sm:hidden" aria-label={t('Mesas de la zona')}>

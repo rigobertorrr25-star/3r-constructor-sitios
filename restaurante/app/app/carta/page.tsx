@@ -20,7 +20,9 @@ export default async function MenuPage() {
       <PageTitle
         title={t('Carta')}
         text={
-          canEdit
+          canEdit && staff.barOnly
+            ? t('La misma carta para todas las sedes. Todo lo que se pide va a la barra. Los cambios de precio quedan en la auditoría y no tocan lo ya pedido.')
+            : canEdit
             ? t('La misma carta para todas las sedes. Cada categoría va a cocina o a barra; un producto puede ir a otra estación. Los cambios de precio quedan en la auditoría y no tocan lo ya pedido.')
             : t('Marca aquí lo que se acabó: los meseros ya no lo podrán pedir hasta que vuelva a haber.')
         }

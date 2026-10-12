@@ -97,4 +97,10 @@ export const en: Record<string, string> = {
   'Cerró la cuenta de {name}: {counted} en efectivo de {expected} (sobran {diff})': 'Closed {name}’s account: {counted} cash of {expected} ({diff} over)',
   'Cerró la cuenta de {name}: {counted} en efectivo de {expected} (faltan {diff})': 'Closed {name}’s account: {counted} cash of {expected} ({diff} short)',
   'Verificó el cierre de {name}: {counted} en efectivo de {expected}': 'Verified {name}’s closing: {counted} cash of {expected}',
+  // Solo bar: textos sin cocina
+  'La misma carta para todas las sedes. Todo lo que se pide va a la barra. Los cambios de precio quedan en la auditoría y no tocan lo ya pedido.':
+    'The same menu for every location. Everything ordered goes to the bar. Price changes are logged in the audit trail and do not affect what was already ordered.',
+  'Todavía no hay impresoras. Mientras tanto, las comandas se ven en la pantalla de Barra.': 'No printers yet. Meanwhile, tickets show on the Bar screen.',
+  'Lo que gasta una unidad vendida. Cada vez que se envíe a la barra, esto se descuenta del inventario.':
+    'What one unit sold uses up. Every time it is sent to the bar, this is taken out of inventory.',
 };

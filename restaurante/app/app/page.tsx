@@ -1,6 +1,7 @@
 import { requireStaff } from '@/lib/auth';
 import { can } from '@/lib/permissions';
 import { listTables } from '@/lib/store';
+import { listFixtures } from '@/lib/floor';
 import { sessionTotals } from '@/lib/orders';
 import { readyToServe } from '@/lib/kds';
 import { heldTables } from '@/lib/reservations';
@@ -16,10 +17,11 @@ export default async function TablesPage() {
   const staff = await requireStaff('tables.view');
   const t = await getT();
   const tables = await listTables(staff);
-  const [totals, ready, held] = await Promise.all([
+  const [totals, ready, held, fixtures] = await Promise.all([
     sessionTotals(staff.businessId, tables.flatMap((tb) => (tb.session ? [tb.session.id] : []))),
     can(staff.role, 'tickets.deliver') ? readyToServe(staff) : Promise.resolve([]),
     heldTables(staff),
+    listFixtures(staff),
   ]);
   const board: BoardTable[] = tables.map((tb) => ({
     ...tb,
@@ -49,6 +51,7 @@ export default async function TablesPage() {
       ) : (
         <TableBoard
           tables={board}
+          fixtures={fixtures}
           ready={ready.map((r) => ({ ...r, readyAt: r.readyAt.toISOString() }))}
           canOpen={can(staff.role, 'tables.open')}
           canClose={can(staff.role, 'tables.close')}

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { requireStaff } from '@/lib/auth';
 import { APPOINTMENT_STATUS, commissions, listAgenda, listProfessionals, listServices } from '@/lib/appointments';
 import { addDays, todayIn } from '@/lib/finance';
@@ -13,6 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ dia?: string }> }) {
   const staff = await requireStaff('agenda.view');
+  if (staff.barOnly) redirect('/app');
   const lang = await getLang();
   const t = makeT(lang);
   const today = todayIn(staff.timezone);
