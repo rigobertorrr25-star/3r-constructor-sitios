@@ -13,7 +13,7 @@ describe('biblioteca de fotos: nombres', () => {
     for (const name of DELIRIUM) {
       const file = libraryPhotoFor(name);
       assert.ok(file, `sin foto: ${name}`);
-      assert.ok(existsSync(path.join(process.cwd(), 'lib', 'biblioteca', `${file}.webp`)), `no existe el archivo de ${name}`);
+      assert.ok(existsSync(path.join(process.cwd(), 'public', 'biblioteca', `${file}.webp`)), `no existe el archivo de ${name}`);
     }
   });
 
@@ -67,7 +67,7 @@ describe('biblioteca de fotos: en la carta', { skip: url ? false : 'sin TEST_DAT
     await imp.importMenu(owner, 'Cervezas\nCorona 12000\nClub Colombia 8000\nPicadas\nPicada de la casa 35000');
     const menu = await orders.getMenu(owner.businessId);
     const club = menu.products.find((p) => p.name === 'Club Colombia')!;
-    const own = await (await import('node:fs/promises')).readFile(path.join(process.cwd(), 'lib', 'biblioteca', 'budweiser.webp'));
+    const own = await (await import('node:fs/promises')).readFile(path.join(process.cwd(), 'public', 'biblioteca', 'budweiser.webp'));
     await photos.saveProductPhoto(owner, club.id, own);
     const result = await lib.applyLibraryPhotos(owner);
     assert.deepEqual(result, { placed: 1, missing: ['Picada de la casa'] });
@@ -75,5 +75,31 @@ describe('biblioteca de fotos: en la carta', { skip: url ? false : 'sin TEST_DAT
     assert.equal(clubPhoto!.image.length, own.length);
     const corona = (await orders.getMenu(owner.businessId)).products.find((p) => p.name === 'Corona')!;
     assert.ok(corona.photo);
+  });
+
+  it('si la foto no está en el disco (como en Vercel), la pide a la misma página', async () => {
+    const http = await import('node:http');
+    const fs = await import('node:fs/promises');
+    const served: string[] = [];
+    const root = process.cwd();
+    const server = http.createServer(async (req, res) => {
+      served.push(req.url ?? '');
+      res.end(await fs.readFile(path.join(root, 'public', req.url!.slice(1))));
+    });
+    await new Promise<void>((ok) => server.listen(0, ok));
+    const port = (server.address() as { port: number }).port;
+    await imp.importMenu(owner, 'Cervezas\nStella 15000');
+    const cwd = process.cwd();
+    const tmp = await fs.mkdtemp(path.join((await import('node:os')).tmpdir(), 'sin-fotos-'));
+    process.chdir(tmp);
+    try {
+      const result = await lib.applyLibraryPhotos(owner, `http://localhost:${port}`);
+      assert.equal(result.placed, 1);
+    } finally {
+      process.chdir(cwd);
+      server.closeAllConnections();
+      server.close();
+    }
+    assert.deepEqual(served, ['/biblioteca/stella-artois.webp']);
   });
 });

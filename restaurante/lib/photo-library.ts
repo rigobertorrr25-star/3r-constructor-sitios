@@ -1,11 +1,11 @@
-// Biblioteca de fotos de 3R: fotos de bebidas comunes en Colombia (creadas con IA, en lib/biblioteca) que se le ponen
+// Biblioteca de fotos de 3R: fotos de bebidas comunes en Colombia (creadas con IA, en public/biblioteca) que se le ponen
 // solas a los productos de la carta que no tienen foto, buscando por el nombre. Sirve para cualquier bar, no solo DELIRIUM.
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { imageMime } from './backgrounds';
-import { transaction } from './db';
+import { query, transaction } from './db';
 import { PRODUCT_PHOTO_MAX_BYTES } from './product-photos';
-import { audit, requirePermission, type Actor } from './store';
+import { AppError, audit, requirePermission, type Actor } from './store';
 
 /** [archivo, nombres con los que suele aparecer en una carta…] */
 const LIBRARY: [string, ...string[]][] = [
@@ -118,37 +118,56 @@ export function libraryPhotoFor(productName: string): string | null {
 export const LIBRARY_SIZE = LIBRARY.length;
 
 /**
- * Carta → «Poner fotos de la biblioteca»: a cada producto sin foto le pone la de la biblioteca que le corresponde.
- * Las fotos que el negocio ya subió no se tocan.
+ * Lee una foto de la biblioteca: del disco si está (pruebas y servidor propio) y, si no, de la misma página
+ * (en Vercel los archivos de public/ se sirven por la web y no siempre están en el disco de la función).
  */
-export async function applyLibraryPhotos(actor: Actor) {
+async function loadLibraryPhoto(file: string, origin?: string): Promise<Uint8Array | null> {
+  try {
+    return await readFile(path.join(process.cwd(), 'public', 'biblioteca', `${file}.webp`));
+  } catch {
+    if (!origin) return null;
+    try {
+      const res = await fetch(`${origin}/biblioteca/${file}.webp`, { cache: 'no-store' });
+      return res.ok ? new Uint8Array(await res.arrayBuffer()) : null;
+    } catch {
+      return null;
+    }
+  }
+}
+
+/**
+ * Carta → «Poner fotos de la biblioteca»: a cada producto sin foto le pone la de la biblioteca que le corresponde.
+ * Las fotos que el negocio ya subió no se tocan. `origin` es la dirección de la página, por si hay que pedir las fotos por la web.
+ */
+export async function applyLibraryPhotos(actor: Actor, origin?: string) {
   requirePermission(actor, 'menu.edit');
+  const products = await query<{ id: string; name: string }>(
+    `SELECT p.id, p.name FROM menu_products p LEFT JOIN product_photos f ON f.product_id = p.id
+      WHERE p.business_id = $1 AND p.is_active AND f.product_id IS NULL ORDER BY p.name`,
+    [actor.businessId],
+  );
+  const missing: string[] = [];
+  const wanted = new Map<string, string>();
+  for (const product of products) {
+    const file = libraryPhotoFor(product.name);
+    if (file) wanted.set(product.id, file);
+    else missing.push(product.name);
+  }
+  // Cada foto se lee una sola vez (varias botellas comparten foto), todas a la vez.
+  const files = [...new Set(wanted.values())];
+  const loaded = new Map(await Promise.all(files.map(async (f) => [f, await loadLibraryPhoto(f, origin)] as const)));
+  if (files.length && files.every((f) => !loaded.get(f))) throw new AppError('INVALID', 'No pudimos leer las fotos de la biblioteca. Intenta otra vez en un momento.');
   return transaction(async (db) => {
-    const products = (
-      await db.query<{ id: string; name: string }>(
-        `SELECT p.id, p.name FROM menu_products p LEFT JOIN product_photos f ON f.product_id = p.id
-          WHERE p.business_id = $1 AND p.is_active AND f.product_id IS NULL ORDER BY p.name`,
-        [actor.businessId],
-      )
-    ).rows;
-    const missing: string[] = [];
     let placed = 0;
-    for (const product of products) {
-      const file = libraryPhotoFor(product.name);
-      if (!file) {
-        missing.push(product.name);
-        continue;
-      }
-      const bytes = await readFile(path.join(process.cwd(), 'lib', 'biblioteca', `${file}.webp`));
-      const mime = imageMime(bytes);
-      if (!mime || bytes.length > PRODUCT_PHOTO_MAX_BYTES) continue;
-      await db.query(`INSERT INTO product_photos (product_id, business_id, mime, image) VALUES ($1, $2, $3, $4) ON CONFLICT (product_id) DO NOTHING`, [
-        product.id,
-        actor.businessId,
-        mime,
-        bytes,
-      ]);
-      placed++;
+    for (const [productId, file] of wanted) {
+      const bytes = loaded.get(file);
+      const mime = bytes ? imageMime(bytes) : null;
+      if (!bytes || !mime || bytes.length > PRODUCT_PHOTO_MAX_BYTES) continue;
+      const res = await db.query(
+        `INSERT INTO product_photos (product_id, business_id, mime, image) VALUES ($1, $2, $3, $4) ON CONFLICT (product_id) DO NOTHING`,
+        [productId, actor.businessId, mime, Buffer.from(bytes)],
+      );
+      placed += res.rowCount ?? 0;
     }
     if (placed)
       await audit(db, actor, {

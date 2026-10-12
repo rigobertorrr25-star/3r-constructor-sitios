@@ -30,4 +30,5 @@ export const en: Record<string, string> = {
   'Listo: {n} productos quedaron con foto.': 'Done: {n} products now have a photo.',
   'Sin foto en la biblioteca: {names}.': 'No photo in the library for: {names}.',
   'Puso {n} fotos de la biblioteca de 3R en la carta': 'Added {n} photos from the 3R library to the menu',
+  'No pudimos leer las fotos de la biblioteca. Intenta otra vez en un momento.': 'We couldn’t read the library photos. Try again in a moment.',
 };
