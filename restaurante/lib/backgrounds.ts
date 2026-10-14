@@ -36,6 +36,21 @@ export async function removeBackground(actor: Actor) {
   });
 }
 
+/** El dueño escoge si la foto de fondo también va de piso en el plano de mesas (Mesas y Plano). */
+export async function setFloorBackground(actor: Actor, on: boolean) {
+  requirePermission(actor, 'locations.manage');
+  await transaction(async (db) => {
+    const res = await db.query(`UPDATE business_backgrounds SET on_floor = $2 WHERE business_id = $1`, [actor.businessId, on]);
+    if (!res.rowCount) throw new AppError('INVALID', 'Primero sube la foto de fondo.');
+    await audit(db, actor, {
+      action: 'business.background',
+      entity: 'business',
+      entityId: actor.businessId,
+      summary: on ? 'Puso el fondo del restaurante en el plano de mesas' : 'Volvió al piso de madera en el plano de mesas',
+    });
+  });
+}
+
 /** La foto de un restaurante activo, para mostrarla (null si no tiene). */
 export async function getBackground(slug: string): Promise<{ mime: string; image: Buffer; updatedAt: Date } | null> {
   const rows = await query<{ mime: string; image: Buffer; updatedAt: Date }>(

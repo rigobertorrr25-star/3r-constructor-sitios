@@ -4,6 +4,7 @@ import { listFixtures } from '@/lib/floor';
 import { FloorEditor } from '@/components/floor-editor';
 import { PageTitle } from '@/components/ui';
 import { getT } from '@/lib/i18n/server';
+import { backgroundUrl } from '@/lib/background-url';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,7 @@ export default async function FloorPage() {
       <FloorEditor
         tables={tables.map(({ session: _s, ...t }) => ({ ...t, session: null }))}
         fixtures={fixtures}
+        floorPhoto={staff.floorBackground ? backgroundUrl(staff.businessSlug, staff.background) : null}
       />
     </div>
   );

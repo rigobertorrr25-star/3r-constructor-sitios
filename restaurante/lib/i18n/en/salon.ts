@@ -188,6 +188,11 @@ export const en: Record<string, string> = {
   'Quitar del plano': 'Remove from floor plan',
   'Editar': 'Edit',
   'Editar número, puestos y forma': 'Edit number, seats and shape',
+  'Segundo piso': 'Second floor',
+  'Nombre del piso o zona': 'Floor or area name',
+  'Crear': 'Create',
+  '+ Agregar piso o zona': '+ Add floor or area',
+  '{zone} no tiene mesas todavía. Agrégalas abajo, en «Agregar varias mesas».': '{zone} has no tables yet. Add them below, in “Add several tables”.',
   'Su historial se conserva. Si vuelves a crear una mesa con el mismo número, se recupera.':
     'Its history is kept. If you create a table with the same number again, it comes back.',
   'Agregar mesa': 'Add table',

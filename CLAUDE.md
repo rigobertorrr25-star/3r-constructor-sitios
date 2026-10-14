@@ -79,7 +79,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   electrónica (Alegra, Siigo…) para el envío a la DIAN (módulo 10: todo lo demás listo). El esquema de la base se aplica solo cuando cambia (tabla `schema_meta`). Ingreso (5 oct 2026): en la portada se
   escoge el restaurante de una lista (los activos) y se toca el nombre de la persona y se pone su PIN (el código de empleado queda interno; no puede haber dos nombres
   activos iguales); `/n/{negocio}` sigue sirviendo. Cada restaurante puede tener su foto de fondo (Sedes → Fondo del restaurante;
-  se ve en el ingreso y detrás de la app; en el ingreso la tarjeta es transparente para que se vea la foto, pedido de Rigoberto 12 oct 2026). Fotos de cada producto (Carta → Editar, 6 oct 2026): salen en la carta QR y en
+  se ve en el ingreso y detrás de la app; en el ingreso la tarjeta es transparente para que se vea la foto, pedido de Rigoberto 12 oct 2026; Sedes → «Usar esta foto en el plano de mesas» la pone de piso en Mesas y Plano en vez de la madera, columna `on_floor`, 14 oct 2026). Fotos de cada producto (Carta → Editar, 6 oct 2026): salen en la carta QR y en
   la pantalla de pedido del mesero. **Español e inglés** (6 oct 2026, botón ES | EN en todas las pantallas; detalle en
   `restaurante/README.md`): Rigoberto primero dijo que no y después pidió de nuevo el sistema en inglés (6 oct 2026);
   todo texto nuevo va con `t()` y su inglés en `restaurante/lib/i18n/en/`; lo impreso sigue en español. **Impresión de comandas** (6 oct 2026, pedido de Rigoberto: los restaurantes
@@ -88,7 +88,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   (`restaurante/public/impresion/agente-3r.mjs` + `iniciar-windows.bat`, necesita Node.js) los pide con el código de la sede
   y los manda por la red (puerto 9100). Detalle en `restaurante/README.md`.
   **Plano** (12 oct 2026, con fotos de referencia de Rigoberto): visto desde arriba, piso cálido, mesas de madera con sillas
-  tapizadas y aro de color por estado (en las redondas, la mitad de las sillas a cada lado, juntas: no en cruz); el dueño pone las barras en Plano → «Agregar barra» (tabla `floor_fixtures`, solo dibujo). «Agregar varias mesas» (12 oct 2026) crea hasta 60 mesas
+  tapizadas y aro de color por estado (en las redondas, la mitad de las sillas a cada lado, juntas: no en cruz); el dueño pone las barras en Plano → «Agregar barra» (tabla `floor_fixtures`, solo dibujo). Pisos o zonas (14 oct 2026): en Plano, «+ Agregar piso o zona» (p. ej. «Segundo piso») crea la pestaña y las mesas que se agreguen ahí quedan en ese piso; en Mesas cada piso es una pestaña. «Agregar varias mesas» (12 oct 2026) crea hasta 60 mesas
   numeradas seguidas y acomodadas en filas; al tocar una mesa sale abajo un cuadro pequeño con «Quitar» y «Editar número, puestos y forma» plegado, para no tapar el plano (14 oct 2026). «Seleccionar varias» marca mesas con un toque y las quita juntas; «Quitar todas las mesas» (con casilla de confirmación) deja el plano vacío; las abiertas nunca se quitan. **Importar carta** (Carta → «Importar carta», 12 oct 2026): se pega
   la carta en texto (categoría en su línea, cada producto con su precio al final) y se cargan categorías y productos; no repite
   y actualiza precios. **Biblioteca de fotos de 3R** (12 oct 2026): 76 fotos de bebidas creadas con IA

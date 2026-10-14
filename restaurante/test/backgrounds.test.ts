@@ -47,6 +47,7 @@ describe('fondo del restaurante', { skip: url ? false : 'sin TEST_DATABASE_URL' 
 
   it('solo el dueño lo cambia; se ve en la lista de ingreso y en la sesión', async () => {
     assert.equal(owner.background, null);
+    assert.equal(owner.floorBackground, false);
     await assert.rejects(bg.saveBackground(waiter, JPG), { code: 'FORBIDDEN' });
     await assert.rejects(bg.saveBackground(owner, new TextEncoder().encode('no soy foto')), { code: 'INVALID' });
     await assert.rejects(bg.saveBackground(owner, new Uint8Array(bg.BACKGROUND_MAX_BYTES + 1).fill(0xff)), { code: 'INVALID' });
@@ -63,10 +64,20 @@ describe('fondo del restaurante', { skip: url ? false : 'sin TEST_DATABASE_URL' 
     assert.ok(v2 && v2 >= listed!.background!, 'al cambiarla cambia la versión (y la dirección)');
     assert.equal((await bg.getBackground(slug))?.mime, 'image/png');
 
+    // También de piso en el plano de mesas: solo el dueño, y solo si ya hay foto.
+    await assert.rejects(bg.setFloorBackground(waiter, true), { code: 'FORBIDDEN' });
+    await bg.setFloorBackground(owner, true);
+    const again = await store.getStaffSession(owner.id, owner.locationId, (await db.query<{ e: number }>('SELECT session_epoch AS e FROM staff WHERE id = $1', [owner.id]))[0].e);
+    assert.equal(again?.floorBackground, true);
+    await bg.saveBackground(owner, JPG);
+    const kept = await store.getStaffSession(owner.id, owner.locationId, (await db.query<{ e: number }>('SELECT session_epoch AS e FROM staff WHERE id = $1', [owner.id]))[0].e);
+    assert.equal(kept?.floorBackground, true, 'cambiar la foto no apaga el plano');
+
     await bg.removeBackground(owner);
+    await assert.rejects(bg.setFloorBackground(owner, true), { code: 'INVALID' });
     assert.equal(await bg.getBackground(slug), null);
     assert.equal(await bg.backgroundVersion(owner.businessId), null);
     const audit = await db.query<{ summary: string }>(`SELECT summary FROM audit_events WHERE business_id = $1 AND action = 'business.background' ORDER BY created_at`, [owner.businessId]);
-    assert.equal(audit.length, 3);
+    assert.equal(audit.length, 5);
   });
 });

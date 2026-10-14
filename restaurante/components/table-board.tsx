@@ -48,6 +48,20 @@ const STATUS_STYLE: Record<BoardTable['status'], string> = {
 };
 
 /** El piso del local visto desde arriba: foto de cemento pulido cálido, con luz tenue de bar de noche. */
+/** El piso del plano: la foto de fondo del restaurante si el dueño la escogió (Sedes), o el piso de madera de 3R. */
+export function floorStyle(photo?: string | null): React.CSSProperties {
+  if (!photo) return FLOOR_STYLE;
+  return {
+    aspectRatio: '1000 / 640',
+    backgroundColor: '#14110e',
+    // Un poco oscurecida para que las mesas y sus números se sigan viendo.
+    backgroundImage: `linear-gradient(rgba(8,6,4,0.35), rgba(8,6,4,0.35)), url("${photo}")`,
+    backgroundSize: '100% 100%, cover',
+    backgroundPosition: 'center',
+    boxShadow: 'inset 0 0 0 6px rgba(255,255,255,0.06), inset 0 0 90px rgba(0,0,0,0.6)',
+  };
+}
+
 export const FLOOR_STYLE: React.CSSProperties = {
   aspectRatio: '1000 / 640',
   backgroundColor: '#211b15',
@@ -331,6 +345,7 @@ export function TableBoard({
   canClose,
   waitersCollect = false,
   timeZone,
+  floorPhoto = null,
 }: {
   tables: BoardTable[];
   fixtures?: BoardFixture[];
@@ -339,6 +354,8 @@ export function TableBoard({
   canClose: boolean;
   waitersCollect?: boolean;
   timeZone: string;
+  /** Foto de fondo del restaurante para el piso del plano (null = piso de madera). */
+  floorPhoto?: string | null;
 }) {
   const now = useNow();
   const t = useT();
@@ -359,7 +376,7 @@ export function TableBoard({
         </div>
         {/* El plano visto desde arriba, como el local de noche: barras, mesas de madera y sus sillas. En el celular se desliza de lado. */}
         <div className="overflow-x-auto rounded-[24px] border border-white/[0.08]">
-          <div className="relative min-w-[760px]" style={FLOOR_STYLE}>
+          <div className="relative min-w-[760px]" style={floorStyle(floorPhoto)}>
             {fixtures
               .filter((f) => f.zone === currentZone)
               .map((f) => (

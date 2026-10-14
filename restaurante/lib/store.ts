@@ -516,6 +516,8 @@ export type StaffSession = Actor & {
   locationName: string;
   /** Versión del fondo propio del restaurante (null = sin fondo). */
   background: number | null;
+  /** La foto de fondo también va de piso en el plano de mesas. */
+  floorBackground: boolean;
   locationCount: number;
   /** Bar sin cajero: cada mesero cobra sus mesas y entrega su propio cierre. */
   waitersCollect: boolean;
@@ -532,7 +534,8 @@ export async function getStaffSession(staffId: string, locationId: string, epoch
               s.location_id AS "homeLocation", b.name AS "businessName", b.slug AS "businessSlug", b.timezone, l.name AS "locationName",
               (SELECT count(*)::int FROM locations x WHERE x.business_id = b.id AND x.is_active) AS "locationCount",
               b.waiters_collect AS "waitersCollect", b.bar_only AS "barOnly",
-              (SELECT (extract(epoch FROM g.updated_at) * 1000)::bigint::float8 FROM business_backgrounds g WHERE g.business_id = b.id) AS background
+              (SELECT (extract(epoch FROM g.updated_at) * 1000)::bigint::float8 FROM business_backgrounds g WHERE g.business_id = b.id) AS background,
+              COALESCE((SELECT g.on_floor FROM business_backgrounds g WHERE g.business_id = b.id), FALSE) AS "floorBackground"
          FROM staff s
          JOIN businesses b ON b.id = s.business_id AND b.is_active
          JOIN locations l ON l.id = $2 AND l.business_id = s.business_id AND l.is_active

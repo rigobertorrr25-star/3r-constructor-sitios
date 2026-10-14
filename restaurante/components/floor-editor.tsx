@@ -5,7 +5,7 @@ import { createFixtureAction, createTableAction, createTablesAction, removeFixtu
 import { orOffline } from '@/lib/offline';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
-import { BarShape, FLOOR_STYLE, TableShape, ZoneTabs, type BoardFixture, type BoardTable } from './table-board';
+import { BarShape, TableShape, floorStyle, ZoneTabs, type BoardFixture, type BoardTable } from './table-board';
 import { Alert, CheckField, Field, Select, card, primaryButton, quietButton } from './ui';
 import { useT, useTr } from './i18n';
 
@@ -32,13 +32,16 @@ const SHAPE_LABEL = { square: 'Cuadrada', round: 'Redonda', long: 'Larga' } as c
 
 const SIDE_LABEL = { bottom: 'Abajo', top: 'Arriba', left: 'A la izquierda', right: 'A la derecha' } as const;
 
-export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; fixtures?: BoardFixture[] }) {
+export function FloorEditor({ tables, fixtures = [], floorPhoto = null }: { tables: BoardTable[]; fixtures?: BoardFixture[]; floorPhoto?: string | null }) {
   const t = useT();
   const trx = useTr();
+  // Pisos o zonas nuevos (por ejemplo «Segundo piso»): existen aquí mientras no tengan mesas; con la primera mesa quedan guardados.
+  const [extraZones, setExtraZones] = useState<string[]>([]);
+  const [addingZone, setAddingZone] = useState(false);
   const zones = useMemo(() => {
-    const list = [...new Set([...tables.map((t) => t.zone), ...fixtures.map((f) => f.zone)])];
+    const list = [...new Set([...tables.map((t) => t.zone), ...fixtures.map((f) => f.zone), ...extraZones])];
     return list.length ? list : ['Salón'];
-  }, [tables, fixtures]);
+  }, [tables, fixtures, extraZones]);
   // Mesas y barras se arrastran igual; cada una guarda su caja (x, y, ancho, alto).
   const items = useMemo(() => [...tables, ...fixtures].map((i) => ({ id: i.id, x: i.x, y: i.y, w: i.w, h: i.h })), [tables, fixtures]);
   const [zone, setZone] = useState(zones[0]);
@@ -132,7 +135,42 @@ export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; f
     <div className="grid gap-6">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <ZoneTabs zones={zones} zone={currentZone} onChange={setZone} />
+          <div className="flex flex-wrap items-center gap-2">
+            <ZoneTabs zones={zones} zone={currentZone} onChange={setZone} />
+            {addingZone ? (
+              <form
+                className="flex items-center gap-1.5"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const name = String(new FormData(e.currentTarget).get('zoneName') ?? '').trim().slice(0, 40);
+                  if (!name) return;
+                  setExtraZones((list) => (list.includes(name) ? list : [...list, name]));
+                  setZone(name);
+                  setAddingZone(false);
+                  setSelectedId(null);
+                }}
+              >
+                <input
+                  name="zoneName"
+                  autoFocus
+                  maxLength={40}
+                  placeholder={t('Segundo piso')}
+                  aria-label={t('Nombre del piso o zona')}
+                  className="h-9 w-40 rounded-full border border-white/[0.12] bg-white/[0.04] px-3.5 text-[14px] text-foreground placeholder:text-muted-foreground"
+                />
+                <button type="submit" className="h-9 rounded-full bg-primary px-3.5 text-[13.5px] font-semibold text-primary-foreground">
+                  {t('Crear')}
+                </button>
+                <button type="button" aria-label={t('Cerrar')} onClick={() => setAddingZone(false)} className="grid size-9 place-items-center rounded-full border border-white/[0.12] text-muted-foreground">
+                  ×
+                </button>
+              </form>
+            ) : (
+              <button type="button" onClick={() => setAddingZone(true)} className="rounded-full border border-dashed border-white/[0.2] px-3.5 py-1.5 text-[13.5px] text-muted-foreground hover:text-foreground">
+                {t('+ Agregar piso o zona')}
+              </button>
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -258,9 +296,14 @@ export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; f
           onPointerCancel={onPointerUp}
           onPointerDown={() => setSelectedId(null)}
           className="relative w-full touch-none select-none overflow-hidden rounded-[24px] border border-white/[0.08]"
-          style={FLOOR_STYLE}
+          style={floorStyle(floorPhoto)}
         >
           <div className="pointer-events-none absolute inset-0 [background-image:radial-gradient(#ffffff10_1px,transparent_1px)] [background-size:4%_6.25%]" />
+          {!tables.some((x) => x.zone === currentZone) && !fixtures.some((f) => f.zone === currentZone) ? (
+            <p className="pointer-events-none absolute inset-0 grid place-items-center px-6 text-center text-[14.5px] text-foreground/80">
+              {t('{zone} no tiene mesas todavía. Agrégalas abajo, en «Agregar varias mesas».', { zone: currentZone })}
+            </p>
+          ) : null}
           {fixtures
             .filter((f) => f.zone === currentZone)
             .map((f) => {
@@ -323,7 +366,7 @@ export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; f
         <section className={card}>
           <h2 className="font-display text-[18px] font-bold">{t('Agregar mesa')}</h2>
           <div onInput={(e) => (e.target as HTMLInputElement).name === 'zone' && (newZone.current = (e.target as HTMLInputElement).value.trim())}>
-          <ActionForm action={createTableAction} className="mt-4 space-y-3" resetOnOk onOk={() => newZone.current && setZone(newZone.current)}>
+          <ActionForm key={currentZone} action={createTableAction} className="mt-4 space-y-3" resetOnOk onOk={() => newZone.current && setZone(newZone.current)}>
             {(state) => (
               <>
                 <TableFields defaults={{ zone: state?.values?.zone ?? currentZone, number: state?.values?.number ?? '', capacity: Number(state?.values?.capacity) || 4, shape: (state?.values?.shape as BoardTable['shape']) ?? 'square' }} />
