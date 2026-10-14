@@ -82,6 +82,10 @@ propio código y el dueño ve todo en su panel. Código en `apps/api/src/loyalty
   WhatsApp y descarga para Excel), actividad con el mesero de cada movimiento, y maneja los meseros y sus códigos. Su
   sesión se firma aparte (`JWT_ACCESS_SECRET` + sufijo): no sirve en el resto de la API.
 - Las páginas de los negocios llaman a la API desde su propio dominio: agrega cada uno a `LOYALTY_ORIGINS` (CORS).
+- **Primer programa sin el panel del equipo:** con `LOYALTY_BOOTSTRAP_SLUG`, `LOYALTY_BOOTSTRAP_NAME`,
+  `LOYALTY_BOOTSTRAP_OWNER_KEY` y `LOYALTY_BOOTSTRAP_REWARDS` (`4: 20 % de descuento | 7: Café gratis | 10: Cóctel gratis`;
+  opcional `LOYALTY_BOOTSTRAP_COOLDOWN_HOURS`, por defecto 3), la API crea ese programa al arrancar si no existe. Nunca
+  cambia uno que ya existe; después de creado, borra las variables.
 
 Endpoints: `GET /loyalty/:slug`, `POST /loyalty/:slug/customers`, `POST …/customers/recover`, `GET …/card`,
 `POST …/card/stamp`, `POST …/card/redeem`; panel en `…/owner/*`; alta en `/admin/loyalty`.
@@ -162,7 +166,7 @@ CORS Policy, agrega:
 
 ## Estado
 
-Hecho (todo con pruebas: 135 de API, 23 del editor y recorridos completos en un Chrome real):
+Hecho (todo con pruebas: 139 de API, 23 del editor y recorridos completos en un Chrome real):
 
 - **Base:** monorepo, esquema (paquetes, pedidos, portafolio, sitios, páginas, versiones, publicaciones…), migraciones y seed.
 - **Cuentas:** registro/login/refresh con rotación, sesión en cookies `httpOnly`, roles USER/ADMIN, auditoría,
