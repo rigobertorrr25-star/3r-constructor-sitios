@@ -204,6 +204,13 @@ const es = {
   errTimes: 'Revisa las horas.',
   errExitBeforeEntry: 'La salida debe ser después de la entrada.',
   errShiftTooLong: 'Una jornada no puede pasar de 24 horas.',
+  errFutureRecord: 'La jornada no puede terminar en el futuro.',
+  errRecordOverlap: 'Ese empleado ya tiene una jornada en esas horas. Corrígela en la lista en vez de agregar otra.',
+  addRecord: '+ Agregar jornada a mano',
+  addRecordIntro: 'Para quien vino y no marcó. Queda en el reporte y en el Excel como “corregido a mano”.',
+  addRecordEmployee: 'Empleado',
+  addRecordSave: 'Agregar jornada',
+  recordAdded: 'Jornada agregada.',
 
   // Jefes
   managers: 'Jefes',
@@ -407,6 +414,13 @@ const en: Record<MessageKey, string> = {
   errTimes: 'Check the times.',
   errExitBeforeEntry: 'The clock-out must be after the clock-in.',
   errShiftTooLong: 'A workday cannot be longer than 24 hours.',
+  errFutureRecord: 'The workday cannot end in the future.',
+  errRecordOverlap: 'That employee already has a workday at those times. Edit it in the list instead of adding another one.',
+  addRecord: '+ Add a workday manually',
+  addRecordIntro: 'For someone who came in but did not clock in. It shows in the report and the Excel file as “edited manually”.',
+  addRecordEmployee: 'Employee',
+  addRecordSave: 'Add workday',
+  recordAdded: 'Workday added.',
 
   managers: 'Managers',
   managersIntro:

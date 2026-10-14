@@ -12,6 +12,7 @@ import {
   AppError,
   createBusiness,
   createManager,
+  createRecord,
   deleteManager,
   findManagerByPassword,
   createEmployee,
@@ -167,6 +168,23 @@ export async function updateRecordAction(_prev: FormState, formData: FormData): 
   if (exitText && !clockOut) return fail(await say('errCheckClockOut'), formData);
   try {
     await updateRecord(businessId, text(formData, 'recordId'), new Date(clockIn), clockOut ? new Date(clockOut) : null);
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+  revalidatePath(`/panel/${businessId}`);
+  return { ok: Date.now() };
+}
+
+/** Jornada de alguien que vino y no marcó: empleado, entrada y salida (hora de Colombia). */
+export async function addRecordAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const businessId = text(formData, 'businessId');
+  const clockIn = fromLocalInput(text(formData, 'clockIn'));
+  if (!clockIn) return fail(await say('errCheckClockIn'), formData);
+  const clockOut = fromLocalInput(text(formData, 'clockOut'));
+  if (!clockOut) return fail(await say('errCheckClockOut'), formData);
+  try {
+    await createRecord(businessId, text(formData, 'employeeId'), new Date(clockIn), new Date(clockOut));
   } catch (error) {
     return fail(await messageOf(error), formData);
   }
