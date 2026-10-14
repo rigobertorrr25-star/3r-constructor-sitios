@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { DeleteManagerButton, EmployeeForm, KioskLink, ManagerForm, RecordEditor, ResetPinButton, ShiftsForm } from '@/components/panel-forms';
+import { AddRecordForm, DeleteManagerButton, EmployeeForm, KioskLink, ManagerForm, RecordEditor, ResetPinButton, ShiftsForm } from '@/components/panel-forms';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { card } from '@/components/ui';
 import { canView, requireViewer } from '@/lib/auth';
@@ -130,6 +130,10 @@ export default async function AttendanceBusinessPage({
             </button>
             <p className="w-full text-[12.5px] text-muted-foreground">{t(lang, 'rangeHint')}</p>
           </form>
+
+          {isAdmin && business.employees.length ? (
+            <AddRecordForm businessId={business.id} employees={[...active, ...inactive]} lang={lang} />
+          ) : null}
 
           {records.length === 0 ? (
             <p className="mt-5 text-[15px] text-muted-foreground">{t(lang, 'noRecords')}</p>

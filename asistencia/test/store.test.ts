@@ -172,6 +172,25 @@ describe('asistencia con base de datos', { skip: url ? false : 'sin TEST_DATABAS
     assert.equal(await store.findManagerByPassword('boss-password-1'), null);
   });
 
+  it('jornada agregada a mano: validada, sin cruces y con rastro', async () => {
+    const verena = await store.createEmployee(businessId, { name: 'Verena' });
+    const at = (v: string) => new Date(`${v}:00-05:00`);
+    await assert.rejects(store.createRecord(businessId, verena, at('2026-10-10T15:00'), at('2026-10-10T08:00')), { code: 'INVALID' });
+    await assert.rejects(store.createRecord(businessId, verena, at('2026-10-10T08:00'), at('2026-10-11T09:00')), { code: 'INVALID' }, 'más de 24 h');
+    await assert.rejects(store.createRecord(businessId, verena, at('2099-01-01T08:00'), at('2099-01-01T15:00')), { code: 'INVALID' }, 'futuro');
+    await assert.rejects(store.createRecord(businessId, 'no-es-un-id', at('2026-10-10T08:00'), at('2026-10-10T15:00')), { code: 'NOT_FOUND' });
+
+    const id = await store.createRecord(businessId, verena, at('2026-10-10T08:00'), at('2026-10-10T15:00'));
+    const [row] = await store.listRecords(businessId, '2026-10-10', '2026-10-10');
+    assert.equal(row.id, id);
+    assert.equal(row.employee.name, 'Verena');
+    assert.ok(row.editedAt, 'queda como corregido a mano');
+    await assert.rejects(store.createRecord(businessId, verena, at('2026-10-10T14:00'), at('2026-10-10T18:00')), { code: 'INVALID' }, 'se cruza');
+    assert.equal((await db.query("SELECT 1 FROM record_changes WHERE record_id = $1 AND action = 'added'", [id])).length, 1);
+    const other = await store.createBusiness(`Prueba ${stamp} Otro manual`);
+    await assert.rejects(store.createRecord(other, verena, at('2026-10-09T08:00'), at('2026-10-09T15:00')), { code: 'NOT_FOUND' }, 'otro negocio no');
+  });
+
   it('un empleado desactivado o un enlace de tablet cambiado ya no sirven', async () => {
     await store.updateEmployee(businessId, anaId, { name: 'Ana Gómez', isActive: false });
     await assert.rejects(store.punch(slug, code(), anaId, '4321'), { code: 'EMPLOYEE' });

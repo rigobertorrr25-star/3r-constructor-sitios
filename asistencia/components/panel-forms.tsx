@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import {
+  addRecordAction,
   createBusinessAction,
   createManagerAction,
   deleteManagerAction,
@@ -224,5 +225,48 @@ export function DeleteManagerButton({ businessId, manager, lang }: { businessId:
         {t(lang, 'deleteManager')}
       </button>
     </form>
+  );
+}
+
+/** Agregar una jornada a mano: para quien vino y no marcó. */
+export function AddRecordForm({ businessId, employees, lang }: { businessId: string; employees: AttendanceEmployee[]; lang: Lang }) {
+  const [state, action] = useActionState(addRecordAction, undefined);
+  const v = state?.values;
+  return (
+    <details className="mt-4 rounded-2xl border border-white/[0.08] p-4" open={Boolean(state?.error)}>
+      <summary className="cursor-pointer text-[14px] font-medium text-primary">{t(lang, 'addRecord')}</summary>
+      <form key={`add-${state?.ok ?? 0}-${state?.error ?? ''}`} action={action} className="mt-4 space-y-3">
+        <p className="text-[13px] text-muted-foreground">{t(lang, 'addRecordIntro')}</p>
+        <input type="hidden" name="businessId" value={businessId} />
+        <div className="space-y-1.5">
+          <label htmlFor="add-employee" className="text-sm font-medium text-foreground">
+            {t(lang, 'addRecordEmployee')}
+          </label>
+          <select
+            id="add-employee"
+            name="employeeId"
+            required
+            defaultValue={v?.employeeId ?? ''}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[15px] text-foreground focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+          >
+            <option value="" disabled className="bg-[#0a131a]">
+              —
+            </option>
+            {employees.map((employee) => (
+              <option key={employee.id} value={employee.id} className="bg-[#0a131a]">
+                {employee.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label={t(lang, 'clockIn')} name="clockIn" type="datetime-local" required defaultValue={v?.clockIn ?? ''} />
+          <Field label={t(lang, 'clockOut')} name="clockOut" type="datetime-local" required defaultValue={v?.clockOut ?? ''} />
+        </div>
+        {state?.error ? <Alert>{state.error}</Alert> : null}
+        {state?.ok ? <Alert tone="ok">{t(lang, 'recordAdded')}</Alert> : null}
+        <SubmitButton pendingText={t(lang, 'saving')}>{t(lang, 'addRecordSave')}</SubmitButton>
+      </form>
+    </details>
   );
 }
