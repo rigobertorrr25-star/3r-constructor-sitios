@@ -7,6 +7,7 @@ import { AuditModule } from './audit/audit.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { EmailModule } from './email/email.module.js';
 import { HealthController } from './health/health.controller.js';
+import { LoyaltyModule } from './loyalty/loyalty.module.js';
 import { MediaModule } from './media/media.module.js';
 import { OrdersModule } from './orders/orders.module.js';
 import { PackagesModule } from './packages/packages.module.js';
@@ -39,6 +40,7 @@ import { UsersModule } from './users/users.module.js';
     PortfolioModule,
     PublishingModule,
     MediaModule,
+    LoyaltyModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

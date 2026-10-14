@@ -162,6 +162,18 @@ export type PortfolioItem = {
   isActive?: boolean;
 };
 
+export type LoyaltyProgram = {
+  id: string;
+  slug: string;
+  name: string;
+  goal: number;
+  cooldownMinutes: number;
+  rewards: { at: number; label: string }[];
+  isActive: boolean;
+  createdAt: string;
+  _count: { customers: number; staff: number };
+};
+
 export type PublicationStatus = {
   published: boolean;
   url: string | null;

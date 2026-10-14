@@ -530,3 +530,97 @@ model SupportTicket {
   @@index([status], map: "idx_support_tickets_status")
   @@map("support_tickets")
 }
+
+// ───────────────────────── FIDELIZACIÓN (tarjeta de sellos) ─────────────────────────
+// Cada negocio cliente tiene su programa: el cliente final junta sellos en su celular, el mesero los
+// pone con su código y el dueño ve todo en su panel. Lo administra el equipo de 3R.
+
+model LoyaltyProgram {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // Identificador en la dirección de la API (/loyalty/azul-caribe/…).
+  slug            String   @unique @db.VarChar(60)
+  name            String   @db.VarChar(120)
+  // Sellos que completan una tarjeta.
+  goal            Int      @default(10)
+  // Espera mínima entre dos sellos del mismo cliente.
+  cooldownMinutes Int      @default(180) @map("cooldown_minutes")
+  // Premios: [{ "at": 4, "label": "20 % de descuento" }, …] ordenados por "at"; el último va en "goal".
+  rewards         Json
+  // Hash (argon2) de la clave con la que el dueño entra a su panel.
+  ownerKeyHash    String   @map("owner_key_hash")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  staff     LoyaltyStaff[]
+  customers LoyaltyCustomer[]
+  events    LoyaltyEvent[]
+
+  @@map("loyalty_programs")
+}
+
+// Meseros: cada uno pone sellos y canjea premios con su propio código.
+model LoyaltyStaff {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  programId String   @map("program_id") @db.Uuid
+  name      String   @db.VarChar(60)
+  // Hash (argon2) del código de 4 a 8 dígitos.
+  pinHash   String   @map("pin_hash")
+  // Dar de baja no borra: su nombre sigue en el historial.
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  program LoyaltyProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  events  LoyaltyEvent[]
+
+  @@index([programId])
+  @@map("loyalty_staff")
+}
+
+// Cliente final del negocio. Su celular lo identifica dentro del programa.
+model LoyaltyCustomer {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  programId   String    @map("program_id") @db.Uuid
+  name        String    @db.VarChar(80)
+  // Solo dígitos, con indicativo (573001234567).
+  phone       String    @db.VarChar(20)
+  // Cuándo aceptó el tratamiento de sus datos (Ley 1581 de 2012).
+  consentAt   DateTime  @map("consent_at") @db.Timestamptz(6)
+  // SHA-256 del token que guarda su celular; recuperar la tarjeta en otro celular lo cambia.
+  tokenHash   String    @unique @map("token_hash") @db.VarChar(64)
+  // Tarjeta en curso (1, 2, 3…). Sube con el primer sello después de canjear el último premio.
+  cardNumber  Int       @default(1) @map("card_number")
+  // Intentos seguidos con un código equivocado y bloqueo temporal.
+  failedPins  Int       @default(0) @map("failed_pins")
+  lockedUntil DateTime? @map("locked_until") @db.Timestamptz(6)
+  lastVisitAt DateTime? @map("last_visit_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  program LoyaltyProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  events  LoyaltyEvent[]
+
+  @@unique([programId, phone])
+  @@map("loyalty_customers")
+}
+
+// Historial: cada sello, canje y recuperación de tarjeta, con el mesero que lo hizo.
+model LoyaltyEvent {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  programId  String   @map("program_id") @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
+  staffId    String?  @map("staff_id") @db.Uuid
+  // stamp | redeem | recover
+  kind       String   @db.VarChar(20)
+  cardNumber Int      @map("card_number")
+  // En un canje: el sello del premio (4, 7, 10…).
+  rewardAt   Int?     @map("reward_at")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  program  LoyaltyProgram  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  customer LoyaltyCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  staff    LoyaltyStaff?   @relation(fields: [staffId], references: [id], onDelete: SetNull)
+
+  @@index([programId, createdAt])
+  @@index([customerId, cardNumber])
+  @@map("loyalty_events")
+}

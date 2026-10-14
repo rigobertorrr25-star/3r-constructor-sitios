@@ -67,6 +67,25 @@ Variables (`.env.example`): `SITES_ROOT_HOST`, `SITES_URL_TEMPLATE`, `PUBLISH_DI
 **Para producción** hace falta un dominio propio con DNS comodín (`*.tudominio.com`) apuntando al servidor web, y
 `SITES_ROOT_HOST` / `SITES_URL_TEMPLATE` con ese dominio. Los dominios propios del cliente (`www.sunegocio.com`) quedan pendientes.
 
+## Tarjeta de sellos (fidelización)
+
+Programa de puntos para los negocios clientes: el cliente final junta sellos en su celular, el mesero los pone con su
+propio código y el dueño ve todo en su panel. Código en `apps/api/src/loyalty`, pruebas en `apps/api/test/loyalty.e2e.test.mjs`.
+
+- **Equipo 3R** (`/admin/fidelizacion`): crea el programa de cada negocio (identificador, sellos por tarjeta, horas entre
+  sellos, premios y clave del dueño).
+- **Tarjeta del cliente** (página estática del negocio, p. ej. `azulcaribelounge.com/sellos/`): se registra una vez con
+  nombre, celular y autorización de datos (Ley 1581); su celular guarda un token. Sellos y canjes los valida el servidor con
+  el código del mesero: 5 códigos equivocados bloquean esa tarjeta 10 minutos, y además hay límite de intentos por IP. Si
+  cambia de celular, el mesero se la pasa al nuevo con su código y el celular viejo deja de verla.
+- **Panel del dueño** (p. ej. `azulcaribelounge.com/sellos/panel/`): entra con su clave y ve resumen, clientes (con
+  WhatsApp y descarga para Excel), actividad con el mesero de cada movimiento, y maneja los meseros y sus códigos. Su
+  sesión se firma aparte (`JWT_ACCESS_SECRET` + sufijo): no sirve en el resto de la API.
+- Las páginas de los negocios llaman a la API desde su propio dominio: agrega cada uno a `LOYALTY_ORIGINS` (CORS).
+
+Endpoints: `GET /loyalty/:slug`, `POST /loyalty/:slug/customers`, `POST …/customers/recover`, `GET …/card`,
+`POST …/card/stamp`, `POST …/card/redeem`; panel en `…/owner/*`; alta en `/admin/loyalty`.
+
 ## Puesta en marcha (desarrollo)
 
 Requiere Node 20+ y npm.
@@ -143,7 +162,7 @@ CORS Policy, agrega:
 
 ## Estado
 
-Hecho (todo con pruebas: 98 de API, 23 del editor y recorridos completos en un Chrome real):
+Hecho (todo con pruebas: 135 de API, 23 del editor y recorridos completos en un Chrome real):
 
 - **Base:** monorepo, esquema (paquetes, pedidos, portafolio, sitios, páginas, versiones, publicaciones…), migraciones y seed.
 - **Cuentas:** registro/login/refresh con rotación, sesión en cookies `httpOnly`, roles USER/ADMIN, auditoría,
@@ -159,6 +178,7 @@ Hecho (todo con pruebas: 98 de API, 23 del editor y recorridos completos en un C
   destino final (R2 o, en desarrollo, la misma API) con un enlace firmado de un solo uso, sin pasar por el
   servidor de Next.
 - **Publicación:** HTML estático saneado en la dirección propia de cada cliente, con menú, sitemap y robots.
+- **Tarjeta de sellos:** programa por negocio, tarjeta del cliente con códigos de meseros y panel del dueño (ver arriba).
 
 Pendiente: edición de texto directamente en el lienzo, componentes galería/formulario, dominios propios del
 cliente con SSL, Stripe y webhooks, Redis/BullMQ (la publicación y los correos hoy son inmediatos y no usan cola).
