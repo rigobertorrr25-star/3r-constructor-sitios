@@ -36,6 +36,8 @@ export async function generateMetadata(): Promise<Metadata> {
 const sectionTitle = 'font-display text-[22px] font-semibold text-foreground';
 const th = 'px-3 py-2 text-left text-[12px] font-semibold uppercase tracking-wide text-muted-foreground';
 const td = 'px-3 py-2.5 text-[14px] text-foreground';
+const dateInput =
+  'rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[14px] text-foreground [color-scheme:dark] focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
 
 export default async function AttendanceBusinessPage({
   params,
@@ -56,7 +58,9 @@ export default async function AttendanceBusinessPage({
 
   const thisWeek = weekOf(new Date());
   const from = isDay(query.desde) ? query.desde : thisWeek.from;
-  const to = isDay(query.hasta) && query.hasta >= from ? query.hasta : addDays(from, 6);
+  // Hasta 62 días (lo que permite el reporte); un rango más largo se recorta.
+  const asked = isDay(query.hasta) && query.hasta >= from ? query.hasta : addDays(from, 6);
+  const to = asked > addDays(from, 61) ? addDays(from, 61) : asked;
   const records = await listRecords(business.id, from, to);
   const now = Date.now();
   const totals = totalsByEmployee(records, business.shifts, now);
@@ -104,12 +108,28 @@ export default async function AttendanceBusinessPage({
               </Link>
               <a
                 href={`/panel/${id}/excel?from=${from}&to=${to}&lang=${lang}`}
+                download
                 className="rounded-full bg-primary px-4 py-2 font-medium text-primary-foreground transition hover:shadow-[var(--shadow-glow)]"
               >
                 {t(lang, 'downloadExcel')}
               </a>
             </div>
           </div>
+
+          <form method="get" className="mt-5 flex flex-wrap items-end gap-3 rounded-2xl bg-white/[0.03] p-4">
+            <label className="space-y-1.5">
+              <span className="block text-[13px] font-medium text-foreground">{t(lang, 'rangeFrom')}</span>
+              <input type="date" name="desde" defaultValue={from} required className={dateInput} />
+            </label>
+            <label className="space-y-1.5">
+              <span className="block text-[13px] font-medium text-foreground">{t(lang, 'rangeTo')}</span>
+              <input type="date" name="hasta" defaultValue={to} min={from} required className={dateInput} />
+            </label>
+            <button type="submit" className="rounded-full border border-white/[0.12] px-5 py-2.5 text-[14px] transition hover:bg-white/[0.06]">
+              {t(lang, 'showRange')}
+            </button>
+            <p className="w-full text-[12.5px] text-muted-foreground">{t(lang, 'rangeHint')}</p>
+          </form>
 
           {records.length === 0 ? (
             <p className="mt-5 text-[15px] text-muted-foreground">{t(lang, 'noRecords')}</p>
