@@ -186,6 +186,8 @@ export const en: Record<string, string> = {
   'Guardar mesa': 'Save table',
   'Quitando…': 'Removing…',
   'Quitar del plano': 'Remove from floor plan',
+  'Editar': 'Edit',
+  'Editar número, puestos y forma': 'Edit number, seats and shape',
   'Su historial se conserva. Si vuelves a crear una mesa con el mismo número, se recupera.':
     'Its history is kept. If you create a table with the same number again, it comes back.',
   'Agregar mesa': 'Add table',

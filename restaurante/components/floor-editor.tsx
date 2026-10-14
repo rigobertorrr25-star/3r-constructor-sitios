@@ -16,6 +16,18 @@ const snap = (n: number) => Math.round(n / SNAP) * SNAP;
 
 type Box = { x: number; y: number; w: number; h: number };
 
+/** Cuadro flotante del plano: más pequeño que una tarjeta para no tapar las mesas. */
+const panel = 'rounded-[22px] border border-white/[0.1] bg-[#070c12] p-3.5';
+const smallButton = 'rounded-full border border-white/[0.12] px-3 py-1.5 text-[12.5px] text-foreground transition hover:bg-white/[0.06] disabled:opacity-40';
+
+function CloseButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button type="button" aria-label={label} onClick={onClick} className="grid size-8 shrink-0 place-items-center rounded-full border border-white/[0.12] text-[16px] text-muted-foreground hover:text-foreground">
+      ×
+    </button>
+  );
+}
+
 const SHAPE_LABEL = { square: 'Cuadrada', round: 'Redonda', long: 'Larga' } as const;
 
 const SIDE_LABEL = { bottom: 'Abajo', top: 'Arriba', left: 'A la izquierda', right: 'A la derecha' } as const;
@@ -140,110 +152,102 @@ export function FloorEditor({ tables, fixtures = [] }: { tables: BoardTable[]; f
           </div>
         </div>
         {error ? <Alert>{trx(error)}</Alert> : null}
-        {/* Lo que se toca se edita en un cuadro que flota abajo a la derecha: siempre a la vista y sin mover el plano. */}
-        <div className="fixed bottom-4 right-4 z-30 max-h-[70vh] w-[min(420px,calc(100vw-2rem))] overflow-y-auto rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.7)] empty:hidden">
+        {/* Lo que se toca se edita en un cuadro pequeño que flota abajo a la derecha: no tapa el plano.
+            Los datos de la mesa van plegados en «Editar»; a la vista solo quedan el nombre, quitar y cerrar. */}
+        <div className="fixed bottom-3 right-3 z-30 max-h-[50vh] w-[min(320px,calc(100vw-1.5rem))] overflow-y-auto rounded-[22px] shadow-[0_16px_40px_rgba(0,0,0,0.6)] empty:hidden">
         {picking ? (
-          <section className={card}>
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-display text-[18px] font-bold">{t('{n} mesas seleccionadas', { n: picked.length })}</h2>
-              <button
-                type="button"
-                aria-label={t('Cerrar')}
+          <section className={panel}>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-display text-[15px] font-bold">{t('{n} mesas seleccionadas', { n: picked.length })}</h2>
+              <CloseButton
+                label={t('Cerrar')}
                 onClick={() => {
                   setPicking(false);
                   setPicked([]);
                 }}
-                className="grid size-9 place-items-center rounded-full border border-white/[0.12] text-[18px] text-muted-foreground hover:text-foreground"
-              >
-                ×
-              </button>
+              />
             </div>
-            <p className="mt-1 text-[13px] text-muted-foreground">{t('Toca las mesas que quieres quitar; si tocas una marcada, se desmarca.')}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button type="button" className={quietButton} onClick={() => setPicked(tables.filter((x) => x.zone === currentZone).map((x) => x.id))}>
+            <p className="mt-1 text-[12px] text-muted-foreground">{t('Toca las mesas que quieres quitar; si tocas una marcada, se desmarca.')}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <button type="button" className={smallButton} onClick={() => setPicked(tables.filter((x) => x.zone === currentZone).map((x) => x.id))}>
                 {t('Marcar todas las de esta zona')}
               </button>
-              <button type="button" className={quietButton} disabled={!picked.length} onClick={() => setPicked([])}>
+              <button type="button" className={smallButton} disabled={!picked.length} onClick={() => setPicked([])}>
                 {t('Desmarcar todas')}
               </button>
             </div>
-            <ActionForm
-              action={removeTablesAction}
-              onOk={() => setPicked([])}
-              className="mt-4 border-t border-white/[0.06] pt-4"
-            >
+            <ActionForm action={removeTablesAction} onOk={() => setPicked([])} className="mt-3">
               {() => (
                 <>
                   {picked.map((id) => (
                     <input key={id} type="hidden" name="tableId" value={id} />
                   ))}
-                  <SubmitButton tone="danger" disabled={!picked.length} pendingText={t('Quitando…')}>
+                  <SubmitButton tone="danger" className="w-full" disabled={!picked.length} pendingText={t('Quitando…')}>
                     {t('Quitar {n} mesas', { n: picked.length })}
                   </SubmitButton>
-                  <p className="mt-2 text-[12.5px] text-muted-foreground">{t('Las mesas abiertas no se quitan. El historial se conserva.')}</p>
+                  <p className="mt-1.5 text-[11.5px] text-muted-foreground">{t('Las mesas abiertas no se quitan. El historial se conserva.')}</p>
                 </>
               )}
             </ActionForm>
           </section>
         ) : null}
         {selectedBar ? (
-          <section className={card}>
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-display text-[18px] font-bold">{selectedBar.label}</h2>
-              <button type="button" aria-label={t('Cerrar')} onClick={() => setSelectedId(null)} className="grid size-9 place-items-center rounded-full border border-white/[0.12] text-[18px] text-muted-foreground hover:text-foreground">
-                ×
-              </button>
-            </div>
-            <ActionForm key={selectedBar.id} action={updateFixtureAction} className="mt-4 space-y-3">
+          <section className={panel}>
+            {/* El error (por ejemplo, «la mesa está abierta») baja a su propia línea. */}
+            <ActionForm key={selectedBar.id} action={removeFixtureAction} onOk={() => setSelectedId(null)} className="flex flex-wrap items-center gap-1.5 [&>[role=alert]]:basis-full" showOk={false}>
               {() => (
                 <>
+                  <h2 className="mr-auto font-display text-[15px] font-bold">{selectedBar.label}</h2>
                   <input type="hidden" name="fixtureId" value={selectedBar.id} />
-                  <BarFields defaults={selectedBar} />
-                  <SubmitButton pendingText={t('Guardando…')}>{t('Guardar barra')}</SubmitButton>
-                </>
-              )}
-            </ActionForm>
-            <ActionForm action={removeFixtureAction} onOk={() => setSelectedId(null)} className="mt-4 border-t border-white/[0.06] pt-4">
-              {() => (
-                <>
-                  <input type="hidden" name="fixtureId" value={selectedBar.id} />
-                  <SubmitButton tone="danger" pendingText={t('Quitando…')}>
-                    {t('Quitar del plano')}
+                  <SubmitButton tone="danger" className="!min-h-0 !px-3 !py-1.5 !text-[13px]" pendingText={t('Quitando…')}>
+                    {t('Quitar')}
                   </SubmitButton>
+                  <CloseButton label={t('Cerrar')} onClick={() => setSelectedId(null)} />
                 </>
               )}
             </ActionForm>
+            <details className="group mt-2">
+              <summary className="cursor-pointer text-[13px] text-primary">{t('Editar')}</summary>
+              <ActionForm key={selectedBar.id} action={updateFixtureAction} className="mt-3 space-y-3">
+                {() => (
+                  <>
+                    <input type="hidden" name="fixtureId" value={selectedBar.id} />
+                    <BarFields defaults={selectedBar} />
+                    <SubmitButton pendingText={t('Guardando…')}>{t('Guardar barra')}</SubmitButton>
+                  </>
+                )}
+              </ActionForm>
+            </details>
           </section>
         ) : null}
         {selected ? (
-          <section className={card}>
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-display text-[18px] font-bold">{t('Mesa {n}', { n: selected.number })}</h2>
-              <button type="button" aria-label={t('Cerrar')} onClick={() => setSelectedId(null)} className="grid size-9 place-items-center rounded-full border border-white/[0.12] text-[18px] text-muted-foreground hover:text-foreground">
-                ×
-              </button>
-            </div>
-            <ActionForm action={updateTableAction} className="mt-4 space-y-3">
+          <section className={panel}>
+            {/* El error (por ejemplo, «la mesa está abierta») baja a su propia línea. */}
+            <ActionForm key={selected.id} action={removeTableAction} onOk={() => setSelectedId(null)} className="flex flex-wrap items-center gap-1.5 [&>[role=alert]]:basis-full" showOk={false}>
               {() => (
                 <>
+                  <h2 className="mr-auto font-display text-[15px] font-bold">{t('Mesa {n}', { n: selected.number })}</h2>
                   <input type="hidden" name="tableId" value={selected.id} />
-                  <TableFields defaults={selected} />
-                  <CheckField name="isBlocked" label={t('Bloqueada')} hint={t('No se puede abrir (dañada, reservada para un evento…).')} defaultChecked={selected.isBlocked} />
-                  <SubmitButton pendingText={t('Guardando…')}>{t('Guardar mesa')}</SubmitButton>
-                </>
-              )}
-            </ActionForm>
-            <ActionForm action={removeTableAction} onOk={() => setSelectedId(null)} className="mt-4 border-t border-white/[0.06] pt-4">
-              {() => (
-                <>
-                  <input type="hidden" name="tableId" value={selected.id} />
-                  <SubmitButton tone="danger" pendingText={t('Quitando…')}>
-                    {t('Quitar del plano')}
+                  <SubmitButton tone="danger" className="!min-h-0 !px-3 !py-1.5 !text-[13px]" pendingText={t('Quitando…')}>
+                    {t('Quitar')}
                   </SubmitButton>
-                  <p className="mt-2 text-[12.5px] text-muted-foreground">{t('Su historial se conserva. Si vuelves a crear una mesa con el mismo número, se recupera.')}</p>
+                  <CloseButton label={t('Cerrar')} onClick={() => setSelectedId(null)} />
                 </>
               )}
             </ActionForm>
+            <details key={selected.id} className="group mt-2">
+              <summary className="cursor-pointer text-[13px] text-primary">{t('Editar número, puestos y forma')}</summary>
+              <ActionForm action={updateTableAction} className="mt-3 space-y-3">
+                {() => (
+                  <>
+                    <input type="hidden" name="tableId" value={selected.id} />
+                    <TableFields defaults={selected} />
+                    <CheckField name="isBlocked" label={t('Bloqueada')} hint={t('No se puede abrir (dañada, reservada para un evento…).')} defaultChecked={selected.isBlocked} />
+                    <SubmitButton pendingText={t('Guardando…')}>{t('Guardar mesa')}</SubmitButton>
+                  </>
+                )}
+              </ActionForm>
+            </details>
           </section>
         ) : null}
         </div>
