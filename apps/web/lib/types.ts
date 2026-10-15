@@ -72,6 +72,8 @@ export type Package = {
   deliveryDays: number | null;
   isFeatured: boolean;
   sortOrder: number;
+  /** Lo que cuesta el dominio propio por año; el primer año se suma al pago del pedido (igual para todos los paquetes). */
+  domainAddonCents?: number;
   isActive?: boolean;
   _count?: { orders: number };
 };
@@ -109,6 +111,8 @@ export type OrderSummary = {
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   priceCents: number;
+  /** Parte del total que corresponde al dominio propio; null si no lo pidió. */
+  domainPriceCents?: number | null;
   monthlyPriceCents: number | null;
   currency: string;
   amountPaidCents: number;
@@ -135,6 +139,8 @@ export type OrderDetail = OrderSummary & {
   deliveredAt: string | null;
   events: OrderEvent[];
   formSubmissions: FormSubmission[];
+  /** Si el cliente puede pagar en línea con Wompi. */
+  onlinePayment?: boolean;
 };
 
 export type AdminOrderRow = OrderSummary & {
@@ -177,6 +183,11 @@ export type LoyaltyProgram = {
 export type PublicationStatus = {
   published: boolean;
   url: string | null;
+  /** Dominio propio del cliente (tunegocio.com), si se le asignó. */
+  customDomain?: string | null;
+  customUrl?: string | null;
+  /** Hasta cuándo está pagado el dominio propio (ISO); se renueva cada año. */
+  customDomainExpiresAt?: string | null;
   publishedAt: string | null;
   hasUnpublishedChanges: boolean;
 };

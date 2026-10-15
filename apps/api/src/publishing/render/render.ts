@@ -118,13 +118,18 @@ video{display:inline-block;max-width:100%}
 .field input:focus,.field textarea:focus{outline:2px solid #5b6cff;outline-offset:1px}
 .field textarea{resize:vertical}
 .form-submit{align-self:flex-start;padding:12px 24px;border:0;border-radius:999px;background:#5b6cff;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+.consent{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.45;color:#4b5563}
+.consent input{margin-top:3px;flex-shrink:0}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}`;
 
 class Renderer {
   readonly sheet = new Sheet();
   private seenHeading = false;
 
-  constructor(private readonly formAction: string) {}
+  constructor(
+    private readonly formAction: string,
+    private readonly siteName: string,
+  ) {}
 
   section(raw: unknown): string {
     const node = (raw ?? {}) as Bag;
@@ -267,6 +272,7 @@ class Renderer {
 <label class="field"><span>Correo</span><input type="email" name="email" required maxlength="255"></label>
 <label class="field"><span>Teléfono / WhatsApp (opcional)</span><input type="tel" name="phone" maxlength="50"></label>
 <label class="field"><span>Mensaje</span><textarea name="message" required maxlength="4000" rows="4"></textarea></label>
+<label class="consent"><input type="checkbox" name="consent" value="1" required><span>Autorizo a ${escapeHtml(this.siteName)} a usar estos datos solo para responder mi mensaje (Ley 1581 de 2012).</span></label>
 <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
 <button class="form-submit" type="submit">Enviar mensaje</button>
 </form></div>`;
@@ -294,7 +300,7 @@ function nav(context: RenderContext): string {
 
 /** Página HTML completa. Devuelve siempre un documento válido, aunque el contenido esté vacío o dañado. */
 export function renderPage(page: RenderPage, context: RenderContext): string {
-  const renderer = new Renderer(context.formAction);
+  const renderer = new Renderer(context.formAction, context.siteName);
   const doc = (page.doc ?? {}) as Bag;
   const sections = Array.isArray(doc.sections) ? doc.sections : [];
   const body = sections.map((section) => renderer.section(section)).join('');

@@ -60,11 +60,13 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
   const email = text(formData, 'email');
   const password = String(formData.get('password') ?? '');
   const firstName = text(formData, 'firstName');
+  const acceptPrivacy = formData.get('acceptPrivacy') === 'on';
   const next = safeNext(optional(formData, 'next'));
+  if (!acceptPrivacy) return fail('Para crear la cuenta debes aceptar la política de privacidad.', formData);
 
   const created = await rawApi<ApiError>('/auth/register', {
     method: 'POST',
-    body: { email, password, ...(firstName ? { firstName } : {}) },
+    body: { email, password, acceptPrivacy, ...(firstName ? { firstName } : {}) },
   });
   if (created.status === 409) return fail('Ya existe una cuenta con ese email.', formData);
   if (!created.ok) return fail(errorText(created.data, 'No pudimos crear la cuenta.'), formData);
@@ -126,7 +128,12 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
 
   const res = await authedApi<{ id: string } & ApiError>('/orders', {
     method: 'POST',
-    body: { packageSlug: text(formData, 'packageSlug'), maintenance: checked(formData, 'maintenance'), brief },
+    body: {
+      packageSlug: text(formData, 'packageSlug'),
+      maintenance: checked(formData, 'maintenance'),
+      customDomain: text(formData, 'address') === 'own',
+      brief,
+    },
   });
   if (!res.ok) return fail(errorText(res.data, 'No pudimos crear tu pedido. Inténtalo de nuevo.'), formData, res.data?.code);
   redirect(`/dashboard/pedidos/${res.data.id}?nuevo=1`);
@@ -141,6 +148,14 @@ export async function sendMessageAction(_prev: FormState, formData: FormData): P
   if (!res.ok) return fail(errorText(res.data, 'No se pudo enviar el mensaje.'), formData);
   revalidatePath(`/dashboard/pedidos/${orderId}`);
   return { ok: Date.now() };
+}
+
+/** Abre el pago en línea (Wompi) por lo que falta del pedido. */
+export async function payOrderAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const orderId = text(formData, 'orderId');
+  const res = await authedApi<{ url: string } & ApiError>(`/orders/${encodeURIComponent(orderId)}/payments/wompi`, { method: 'POST' });
+  if (!res.ok) return fail(errorText(res.data, 'No pudimos abrir el pago. Inténtalo de nuevo en un momento.'), formData);
+  redirect(res.data.url);
 }
 
 export async function cancelOrderAction(formData: FormData) {
@@ -326,6 +341,39 @@ export async function unpublishSiteAction(formData: FormData) {
   const siteId = text(formData, 'siteId');
   await authedApi(`/sites/${encodeURIComponent(siteId)}/unpublish`, { method: 'POST' });
   revalidatePath('/admin/pedidos/[id]', 'page');
+}
+
+/** Asigna o quita (vacío) el dominio propio del cliente a su sitio. */
+export async function setCustomDomainAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const siteId = text(formData, 'siteId');
+  const res = await authedApi<ApiError>(`/sites/${encodeURIComponent(siteId)}/domain`, {
+    method: 'PUT',
+    body: { domain: text(formData, 'domain') },
+  });
+  if (!res.ok) return fail(errorText(res.data, 'No se pudo guardar el dominio.'), formData);
+  revalidatePath('/admin/pedidos/[id]', 'page');
+  return { ok: Date.now() };
+}
+
+/** Cambia la fecha de vencimiento del dominio propio (la que diga el registrador). */
+export async function setDomainExpiryAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const siteId = text(formData, 'siteId');
+  const res = await authedApi<ApiError>(`/sites/${encodeURIComponent(siteId)}/domain/expiry`, {
+    method: 'PUT',
+    body: { expiresOn: text(formData, 'expiresOn') },
+  });
+  if (!res.ok) return fail(errorText(res.data, 'No se pudo guardar la fecha.'), formData);
+  revalidatePath('/admin/pedidos/[id]', 'page');
+  return { ok: Date.now() };
+}
+
+/** El cliente pagó la renovación del dominio: un año más. */
+export async function renewDomainAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const siteId = text(formData, 'siteId');
+  const res = await authedApi<ApiError>(`/sites/${encodeURIComponent(siteId)}/domain/renew`, { method: 'POST' });
+  if (!res.ok) return fail(errorText(res.data, 'No se pudo renovar el dominio.'), formData);
+  revalidatePath('/admin/pedidos/[id]', 'page');
+  return { ok: Date.now() };
 }
 
 /** Usa la dirección publicada como el enlace que recibe el cliente al entregar. */

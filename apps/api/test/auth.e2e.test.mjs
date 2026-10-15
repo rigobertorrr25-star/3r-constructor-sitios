@@ -49,23 +49,33 @@ describe('auth', () => {
   let tokens;
 
   it('registra un usuario sin exponer el hash', async () => {
-    const res = await call('POST', '/auth/register', { body: { email, password, firstName: 'Ana' } });
+    const res = await call('POST', '/auth/register', { body: { email, password, firstName: 'Ana', acceptPrivacy: true } });
     assert.equal(res.status, 201);
     assert.equal(res.body.email, email);
     assert.deepEqual(res.body.roles, ['USER']);
     assert.ok(!res.raw.includes('passwordHash') && !res.raw.includes('argon2'));
   });
 
+  it('guarda cuándo aceptó la política de privacidad, y sin aceptarla no crea la cuenta', async () => {
+    const saved = await prisma.user.findUnique({ where: { email }, select: { privacyAcceptedAt: true } });
+    assert.ok(saved?.privacyAcceptedAt instanceof Date);
+
+    const other = `sinprivacidad.${stamp}@example.com`;
+    assert.equal((await call('POST', '/auth/register', { body: { email: other, password } })).status, 400);
+    assert.equal((await call('POST', '/auth/register', { body: { email: other, password, acceptPrivacy: false } })).status, 400);
+    assert.equal(await prisma.user.count({ where: { email: other } }), 0);
+  });
+
   it('rechaza email duplicado (409, sin importar mayúsculas)', async () => {
-    const res = await call('POST', '/auth/register', { body: { email: email.toUpperCase(), password } });
+    const res = await call('POST', '/auth/register', { body: { email: email.toUpperCase(), password, acceptPrivacy: true } });
     assert.equal(res.status, 409);
   });
 
   it('valida el DTO (400)', async () => {
     const other = `x.${stamp}@example.com`;
-    assert.equal((await call('POST', '/auth/register', { body: { email: 'malo', password } })).status, 400);
-    assert.equal((await call('POST', '/auth/register', { body: { email: other, password: '123' } })).status, 400);
-    assert.equal((await call('POST', '/auth/register', { body: { email: other, password, admin: true } })).status, 400);
+    assert.equal((await call('POST', '/auth/register', { body: { email: 'malo', password, acceptPrivacy: true } })).status, 400);
+    assert.equal((await call('POST', '/auth/register', { body: { email: other, password: '123', acceptPrivacy: true } })).status, 400);
+    assert.equal((await call('POST', '/auth/register', { body: { email: other, password, admin: true, acceptPrivacy: true } })).status, 400);
   });
 
   it('login con clave incorrecta o email inexistente da 401', async () => {
@@ -94,7 +104,7 @@ describe('auth', () => {
 
   it('/auth/me da 401 (no 200 con "null") si la cuenta se borró con el token todavía vivo', async () => {
     const ghostEmail = `test.${stamp}.ghost@example.com`;
-    await call('POST', '/auth/register', { body: { email: ghostEmail, password } });
+    await call('POST', '/auth/register', { body: { email: ghostEmail, password, acceptPrivacy: true } });
     const ghostLogin = await call('POST', '/auth/login', { body: { email: ghostEmail, password } });
     await prisma.user.delete({ where: { email: ghostEmail } });
     const res = await call('GET', '/auth/me', { token: ghostLogin.body.accessToken });

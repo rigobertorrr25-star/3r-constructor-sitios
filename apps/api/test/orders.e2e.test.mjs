@@ -42,7 +42,7 @@ const tokenFromEmail = (to, subjectContains) => {
 };
 
 const signup = async (email) => {
-  await call('POST', '/auth/register', { body: { email, password, firstName: 'Test' } });
+  await call('POST', '/auth/register', { body: { email, password, firstName: 'Test', acceptPrivacy: true } });
   // Pedir una página exige el correo verificado: se verifica con el enlace que "llegó" (modo prueba).
   const token = tokenFromEmail(email, 'confirma tu correo');
   if (!token) throw new Error(`no se encontró el correo de verificación para ${email}`);

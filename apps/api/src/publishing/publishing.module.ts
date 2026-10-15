@@ -1,16 +1,19 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AnalyticsModule } from '../analytics/analytics.module.js';
 import { AuthModule } from '../auth/auth.module.js';
-import { PublicSitesController, PublishingController } from './publishing.controller.js';
+import { DomainRenewalsService } from './domain-renewals.service.js';
+import { DomainRenewalsController, PublicDomainsController, PublicSitesController, PublishingController } from './publishing.controller.js';
 import { PublishingService } from './publishing.service.js';
 import { R2PublishStorage } from './r2-storage.js';
 import { LocalPublishStorage, PUBLISH_STORAGE } from './storage.js';
 
 @Module({
-  imports: [AuthModule],
-  controllers: [PublishingController, PublicSitesController],
+  imports: [AuthModule, AnalyticsModule],
+  controllers: [PublishingController, PublicSitesController, PublicDomainsController, DomainRenewalsController],
   providers: [
     PublishingService,
+    DomainRenewalsService,
     {
       provide: PUBLISH_STORAGE,
       inject: [ConfigService],

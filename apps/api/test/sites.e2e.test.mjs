@@ -35,7 +35,7 @@ const call = async (method, path, { body, token } = {}) => {
 };
 
 const signup = async (email) => {
-  await call('POST', '/auth/register', { body: { email, password } });
+  await call('POST', '/auth/register', { body: { email, password, acceptPrivacy: true } });
   return (await call('POST', '/auth/login', { body: { email, password } })).body.accessToken;
 };
 

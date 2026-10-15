@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState } from 'react';
 import { loginAction, registerAction } from '@/app/actions';
 import { Field } from './field';
@@ -24,6 +25,18 @@ export function AuthForm({ mode, next }: { mode: 'login' | 'register'; next?: st
         maxLength={128}
         hint={isLogin ? undefined : 'Mínimo 8 caracteres.'}
       />
+      {!isLogin && (
+        <label className="flex items-start gap-3 text-sm leading-relaxed text-muted-foreground">
+          <input type="checkbox" name="acceptPrivacy" required defaultChecked={state?.values?.acceptPrivacy === 'on'} className="mt-1 size-4 shrink-0 accent-primary" />
+          <span>
+            Autorizo a 3R a tratar mis datos según la{' '}
+            <Link href="/privacidad" target="_blank" className="text-primary hover:underline">
+              política de privacidad
+            </Link>
+            .
+          </span>
+        </label>
+      )}
       {state?.error ? (
         <p role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-[#ffb4b5]">
           {state.error}

@@ -1,24 +1,30 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuditService } from '../audit/audit.service.js';
 import { slugify, uniqueSlug } from '../common/slug.js';
 import { validateEditorDocument } from '../editor/editor-document.js';
 import { EmailService } from '../email/email.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { plusOneYear } from './domain-renewals.service.js';
 import type { ContactFormDto } from './dto/contact-form.dto.js';
 import { renderNotFound, renderPage, renderRobots, renderSitemap } from './render/render.js';
 import { PUBLISH_STORAGE, type PublishStorage } from './storage.js';
+import { AutomationsService } from '../automations/automations.service.js';
 
 // Direcciones que no se pueden dar a un cliente: se confundirían con servicios propios.
 const RESERVED_LABELS = new Set(['www', 'app', 'api', 'admin', 'mail', 'ftp', 'smtp', 'cdn', 'static', 'assets', 'dashboard', 'login', 'blog', 'ayuda', 'soporte', 'support', 'status']);
 
 const KEEP_PUBLICATIONS = 5;
+// Un dominio como "tunegocio.com" o "menu.tunegocio.com.co": etiquetas válidas y una terminación de letras.
+const DOMAIN_RE = /^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 const PAGE_KEY = /^[a-z0-9-]{1,150}$/;
 
 export interface PublishedFile {
   status: number;
   contentType: string;
   body: string;
+  /** Solo en las páginas (HTML) servidas: para contar la visita. */
+  page?: { siteId: string; path: string };
 }
 
 interface Manifest {
@@ -38,6 +44,7 @@ export class PublishingService {
     private readonly email: EmailService,
     @Inject(PUBLISH_STORAGE) private readonly storage: PublishStorage,
     config: ConfigService,
+    private readonly automations: AutomationsService,
   ) {
     this.rootHost = (config.get<string>('SITES_ROOT_HOST') ?? 'localhost').toLowerCase();
     this.urlTemplate = config.get<string>('SITES_URL_TEMPLATE') ?? 'http://{label}.localhost:3000';
@@ -52,11 +59,95 @@ export class PublishingService {
     return domain.slice(0, -(this.rootHost.length + 1));
   }
 
-  // ───────── publicar ─────────
+  /** "https://www.TuNegocio.com/menu" → "tunegocio.com". Devuelve null si no parece un dominio. */
+  normalizeDomain(input: string): string | null {
+    let host = input.trim().toLowerCase().replace(/^[a-z]+:\/\//, '');
+    host = host.split(/[/?#]/)[0].split(':')[0].replace(/\.$/, '');
+    if (host.startsWith('www.')) host = host.slice(4);
+    return DOMAIN_RE.test(host) ? host : null;
+  }
 
-  async publish(userId: string, siteId: string, ip?: string) {
+  // ───────── dominio propio del cliente ─────────
+
+  /** Asigna (o quita, con texto vacío) el dominio propio del sitio. Un sitio tiene como máximo uno. */
+  async setCustomDomain(userId: string, siteId: string, input: string, ip?: string) {
+    const site = await this.prisma.site.findFirst({ where: { id: siteId, userId }, select: { id: true } });
+    if (!site) throw new NotFoundException('Sitio no encontrado');
+
+    if (input.trim() === '') {
+      await this.prisma.domain.deleteMany({ where: { siteId, type: 'custom' } });
+    } else {
+      const domain = this.normalizeDomain(input);
+      if (!domain) throw new BadRequestException('Escribe un dominio válido, por ejemplo tunegocio.com');
+      if (domain === this.rootHost || domain.endsWith(`.${this.rootHost}`)) {
+        throw new BadRequestException(`Ese es un dominio de 3R. Escribe el dominio propio del cliente, por ejemplo tunegocio.com`);
+      }
+      const taken = await this.prisma.domain.findUnique({ where: { domain }, select: { siteId: true } });
+      if (taken && taken.siteId !== siteId) throw new ConflictException('Ese dominio ya está asignado a otro sitio');
+      await this.prisma.$transaction([
+        this.prisma.domain.deleteMany({ where: { siteId, type: 'custom', domain: { not: domain } } }),
+        this.prisma.domain.upsert({
+          where: { domain },
+          update: {},
+          // Se paga por año: el primero va con el pedido. Si el registrador dice otra fecha, se cambia en /admin.
+          create: { siteId, domain, type: 'custom', verificationStatus: 'pending', sslStatus: 'pending', expiresAt: plusOneYear(new Date()) },
+        }),
+      ]);
+    }
+    await this.audit.log({ action: 'SITE_DOMAIN_SET', userId, entityType: 'site', entityId: siteId, metadata: { domain: input.trim() }, ipAddress: ip });
+    return this.status(userId, siteId);
+  }
+
+  /** Cambia hasta cuándo está pagado el dominio propio. Vuelve a permitir el aviso de renovación. */
+  async setDomainExpiry(userId: string, siteId: string, expiresOn: string, ip?: string) {
+    // Mediodía en Colombia: así la fecha no cambia de día al mostrarla.
+    const expiresAt = new Date(`${expiresOn}T12:00:00-05:00`);
+    if (Number.isNaN(expiresAt.getTime()) || expiresAt.toISOString().slice(0, 10) !== expiresOn) {
+      throw new BadRequestException('Esa fecha no existe');
+    }
+    await this.updateCustomDomain(userId, siteId, () => expiresAt);
+    await this.audit.log({ action: 'SITE_DOMAIN_EXPIRY_SET', userId, entityType: 'site', entityId: siteId, metadata: { expiresOn }, ipAddress: ip });
+    return this.status(userId, siteId);
+  }
+
+  /** El cliente pagó la renovación: un año más desde el vencimiento (o desde hoy, si ya venció). */
+  async renewDomain(userId: string, siteId: string, ip?: string) {
+    const now = new Date();
+    await this.updateCustomDomain(userId, siteId, (current) => plusOneYear(current && current > now ? current : now));
+    await this.audit.log({ action: 'SITE_DOMAIN_RENEWED', userId, entityType: 'site', entityId: siteId, ipAddress: ip });
+    return this.status(userId, siteId);
+  }
+
+  private async updateCustomDomain(userId: string, siteId: string, nextExpiry: (current: Date | null) => Date) {
     const site = await this.prisma.site.findFirst({
       where: { id: siteId, userId },
+      select: { domains: { where: { type: 'custom' }, select: { id: true, expiresAt: true } } },
+    });
+    if (!site) throw new NotFoundException('Sitio no encontrado');
+    const custom = site.domains[0];
+    if (!custom) throw new BadRequestException('Este sitio no tiene dominio propio');
+    await this.prisma.domain.update({ where: { id: custom.id }, data: { expiresAt: nextExpiry(custom.expiresAt), renewalNoticeSentAt: null } });
+  }
+
+  /** Qué sitio corresponde a un dominio propio. La web lo usa para servir el sitio en esa dirección. */
+  async resolveHost(rawHost: string): Promise<{ label: string } | null> {
+    const host = this.normalizeDomain(rawHost);
+    if (!host) return null;
+    const custom = await this.prisma.domain.findUnique({
+      where: { domain: host },
+      select: { type: true, site: { select: { status: true, domains: { where: { type: 'subdomain' }, select: { domain: true } } } } },
+    });
+    const sub = custom?.type === 'custom' ? custom.site.domains[0]?.domain : undefined;
+    if (!sub || custom?.site.status !== 'published') return null;
+    return { label: this.labelOf(sub) };
+  }
+
+  // ───────── publicar ─────────
+
+  /** `ownerCheck: false` solo desde la empresa vinculada (Constructor web), que ya revisó los permisos. */
+  async publish(userId: string, siteId: string, ip?: string, ownerCheck = true) {
+    const site = await this.prisma.site.findFirst({
+      where: { id: siteId, ...(ownerCheck ? { userId } : {}) },
       include: { pages: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] }, domains: { where: { type: 'subdomain' } } },
     });
     if (!site) throw new NotFoundException('Sitio no encontrado');
@@ -173,10 +264,10 @@ export class PublishingService {
 
   // ───────── estado ─────────
 
-  async status(userId: string, siteId: string) {
+  async status(userId: string, siteId: string, ownerCheck = true) {
     const site = await this.prisma.site.findFirst({
-      where: { id: siteId, userId },
-      select: { status: true, domains: { where: { type: 'subdomain' }, select: { domain: true } }, pages: { select: { updatedAt: true } } },
+      where: { id: siteId, ...(ownerCheck ? { userId } : {}) },
+      select: { status: true, domains: { select: { domain: true, type: true, expiresAt: true } }, pages: { select: { updatedAt: true } } },
     });
     if (!site) throw new NotFoundException('Sitio no encontrado');
 
@@ -185,12 +276,17 @@ export class PublishingService {
       orderBy: { publishedAt: 'desc' },
       select: { id: true, publishedAt: true },
     });
-    const domain = site.domains[0]?.domain;
+    const domain = site.domains.find((d) => d.type === 'subdomain')?.domain;
+    const custom = site.domains.find((d) => d.type === 'custom');
+    const customDomain = custom?.domain ?? null;
     const published = site.status === 'published' && !!last;
     const newestEdit = site.pages.reduce((max, p) => (p.updatedAt > max ? p.updatedAt : max), new Date(0));
     return {
       published,
       url: domain ? this.urlFor(this.labelOf(domain)) : null,
+      customDomain,
+      customUrl: customDomain ? `https://${customDomain}` : null,
+      customDomainExpiresAt: custom?.expiresAt?.toISOString() ?? null,
       publishedAt: last?.publishedAt?.toISOString() ?? null,
       hasUnpublishedChanges: published && !!last?.publishedAt && newestEdit > last.publishedAt,
     };
@@ -233,7 +329,9 @@ export class PublishingService {
     if (!entry) return missing(domain.site.name);
 
     const body = await this.storage.get(dir, entry.file);
-    return body === null ? missing(domain.site.name) : { status: 200, contentType: 'text/html; charset=utf-8', body };
+    return body === null
+      ? missing(domain.site.name)
+      : { status: 200, contentType: 'text/html; charset=utf-8', body, page: { siteId: domain.site.id, path: entry.path } };
   }
 
   // ───────── formulario de contacto ─────────
@@ -272,6 +370,15 @@ export class PublishingService {
     }
     // Aviso automático al visitante: no es una IA respondiendo, solo confirma que el mensaje llegó.
     await this.email.sendSiteContactAutoReply(dto.email, { siteName: domain.site.name, name: dto.name }, to ?? undefined);
+    // Si la página es de una empresa de la plataforma, puede disparar sus automatizaciones.
+    const company = await this.prisma.company.findUnique({ where: { siteId: domain.site.id }, select: { id: true } });
+    if (company) {
+      void this.automations.emit(company.id, 'site_contact', {
+        vars: { cliente: dto.name, correo: dto.email, celular: dto.phone ?? '', mensaje: dto.message },
+        summary: `${dto.name} escribió por la página: «${dto.message.slice(0, 160)}»`,
+        contact: { name: dto.name, email: dto.email, phone: dto.phone },
+      });
+    }
     return { ok: true };
   }
 }

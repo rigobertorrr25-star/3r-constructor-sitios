@@ -19,6 +19,9 @@ import type { AccessTokenPayload, RequestMeta } from './auth.types.js';
 import type { LoginDto } from './dto/login.dto.js';
 import type { RegisterDto } from './dto/register.dto.js';
 
+/** Fecha de la política de privacidad vigente (la que muestra /privacidad en la web). */
+export const PRIVACY_POLICY_VERSION = '2026-09-26';
+
 const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
 const newToken = () => randomBytes(32).toString('base64url');
 
@@ -53,6 +56,8 @@ export class AuthService {
       entityType: 'user',
       entityId: user.id,
       ipAddress: meta.ip,
+      // Qué versión de la política aceptó (la fecha de la política en /privacidad).
+      metadata: { privacyPolicyVersion: PRIVACY_POLICY_VERSION },
     });
 
     const verifyToken = await this.issueToken(user.id, 'email_verification', this.verifyTokenTtlMs);

@@ -64,7 +64,7 @@ describe('publicación', () => {
     await app.listen(0, '127.0.0.1');
     base = `http://127.0.0.1:${app.getHttpServer().address().port}/api/v1`;
     prisma = app.get(PrismaService);
-    for (const email of Object.values(emails)) await call('POST', '/auth/register', { body: { email, password } });
+    for (const email of Object.values(emails)) await call('POST', '/auth/register', { body: { email, password, acceptPrivacy: true } });
     // El dueño es del equipo (sin límite de sitios), como quien construye páginas de clientes.
     const user = await prisma.user.findUnique({ where: { email: emails.owner } });
     await prisma.userRole.create({ data: { userId: user.id, role: 'ADMIN' } });

@@ -33,7 +33,7 @@ describe('subir medios (imágenes/video)', () => {
     await app.listen(0, '127.0.0.1');
     base = `http://127.0.0.1:${app.getHttpServer().address().port}/api/v1`;
     prisma = app.get(PrismaService);
-    for (const email of Object.values(emails)) await call('POST', '/auth/register', { body: { email, password } });
+    for (const email of Object.values(emails)) await call('POST', '/auth/register', { body: { email, password, acceptPrivacy: true } });
     const admin = await prisma.user.findUnique({ where: { email: emails.admin } });
     await prisma.userRole.create({ data: { userId: admin.id, role: 'ADMIN' } });
     for (const [k, email] of Object.entries(emails)) tokens[k] = (await call('POST', '/auth/login', { body: { email, password } })).body.accessToken;

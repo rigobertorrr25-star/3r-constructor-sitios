@@ -4,10 +4,16 @@ import type { ReactNode } from 'react';
 import {
   ArrowRightIcon,
   ChatIcon,
+  ClockIcon,
   DevicesIcon,
   GlobeIcon,
   HistoryIcon,
+  InstagramIcon,
+  PhoneIcon,
   PointerIcon,
+  QrIcon,
+  SearchIcon,
+  SheetIcon,
   ShoppingBagIcon,
   TemplateIcon,
   UtensilsIcon,
@@ -16,8 +22,10 @@ import { Logo } from '@/components/logo';
 import { MascotGreeter } from '@/components/mascot-greeter';
 import { Reveal } from '@/components/reveal';
 import { SpotlightCard } from '@/components/spotlight-card';
+import { whatsappLink } from '@/components/whatsapp-button';
 import { currentUserOrNull, rawApi } from '@/lib/api';
-import { formatMoney } from '@/lib/orders';
+import { ATTENDANCE_PRICE, ATTENDANCE_SETUP, ATTENDANCE_SETUP_WITH_PAGE } from '@/lib/services';
+import { PackageGrid } from '@/components/package-grid';
 import type { CurrentUser, Package, PortfolioItem } from '@/lib/types';
 
 const steps = [
@@ -30,6 +38,31 @@ const industries: { hue: number; icon: ReactNode; title: string; text: string }[
   { hue: 25, icon: <UtensilsIcon />, title: 'Restaurantes y cafés', text: 'Tu menú, fotos de tus platos, ubicación y un botón directo a WhatsApp para pedidos y reservas.' },
   { hue: 150, icon: <ShoppingBagIcon />, title: 'Tiendas y negocios locales', text: 'Muestra tu catálogo con fotos y precios, y deja que te escriban por WhatsApp para comprar.' },
   { hue: 275, icon: <ChatIcon />, title: 'Servicios y profesionales', text: 'Cuenta qué haces, muestra tu trabajo y facilita que te agenden una cita o te escriban.' },
+];
+
+// Lo que le pasa hoy a un negocio sin página, y cómo lo resuelve tener una.
+const problems: { hue: number; icon: ReactNode; title: string; text: string; fix: string }[] = [
+  {
+    hue: 25,
+    icon: <SearchIcon />,
+    title: 'Te buscan y no apareces',
+    text: 'Antes de salir de casa la gente busca en Google y en Maps. Si no te encuentra, llega donde la competencia.',
+    fix: 'apareces cuando te buscan',
+  },
+  {
+    hue: 330,
+    icon: <PhoneIcon />,
+    title: 'Tu Instagram no alcanza',
+    text: 'Las redes sirven para mostrar, pero ahí nadie encuentra rápido tus precios, tu horario o cómo llegar.',
+    fix: 'todo lo importante en un solo enlace',
+  },
+  {
+    hue: 275,
+    icon: <ChatIcon />,
+    title: 'Respondes lo mismo todo el día',
+    text: '¿Cuánto vale? ¿Dónde quedan? ¿Hacen domicilios? Cada pregunta repetida es tiempo que no le dedicas a tu negocio.',
+    fix: 'te escriben listos para comprar',
+  },
 ];
 
 const includes: { hue: number; icon: ReactNode; title: string; text: string }[] = [
@@ -47,6 +80,15 @@ const faqs = [
   { q: '¿Puedo pedir cambios?', a: 'Sí. Desde tu pedido nos escribes lo que quieras ajustar y lo vemos contigo.' },
   { q: '¿Necesito tener un dominio?', a: 'No. Si todavía no tienes uno, te ayudamos a elegirlo y conectarlo.' },
 ];
+
+const attendanceFeatures: { hue: number; icon: ReactNode; text: string }[] = [
+  { hue: 275, icon: <QrIcon />, text: 'Una tablet en la entrada muestra un QR que cambia cada 30 segundos: solo se puede marcar estando en el local.' },
+  { hue: 150, icon: <PhoneIcon />, text: 'Cada empleado marca con su celular y su propio PIN. Nada que instalar.' },
+  { hue: 25, icon: <ClockIcon />, text: 'Ves quién llegó tarde, quién salió antes y las horas trabajadas de cada uno.' },
+  { hue: 200, icon: <SheetIcon />, text: 'Descargas la semana en Excel y le das acceso de solo lectura a los dueños o socios.' },
+];
+
+const INSTAGRAM_URL = 'https://www.instagram.com/3r.paginas_/';
 
 const pill =
   'inline-flex items-center justify-center gap-2 rounded-full px-[25.5px] py-[12.75px] text-[14.875px] transition duration-300 ease-[var(--ease-emphasized)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]';
@@ -91,6 +133,7 @@ export default async function HomePage() {
     url: 'https://3rpaginas.com',
     telephone: '+573107907194',
     areaServed: 'CO',
+    sameAs: [INSTAGRAM_URL],
     ...(prices.length > 0 ? { priceRange: `${Math.min(...prices)}-${Math.max(...prices)} COP` } : {}),
   };
 
@@ -114,9 +157,12 @@ export default async function HomePage() {
             <a href="#paquetes" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground md:block">
               Paquetes
             </a>
-            <a href="#preguntas" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground md:block">
+            <a href="#preguntas" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground lg:block">
               Preguntas
             </a>
+            <Link href="/software" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground md:block">
+              Para empresas
+            </Link>
             {user ? (
               <Link
                 href={isStaff ? '/admin' : '/dashboard'}
@@ -132,22 +178,36 @@ export default async function HomePage() {
                 Iniciar sesión
               </Link>
             )}
+            <a
+              href="#paquetes"
+              className="shine inline-flex items-center gap-1.5 rounded-full bg-primary px-[17px] py-[8.5px] text-[14.875px] font-medium text-primary-foreground transition hover:shadow-[var(--shadow-glow)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+            >
+              Ver paquetes
+              <span className="hidden sm:inline-flex">
+                <ArrowRightIcon />
+              </span>
+            </a>
           </nav>
         </div>
       </header>
 
       <main>
         <section className="relative overflow-hidden">
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+          {/* Los brillos se desvanecen hacia abajo: sin eso, el corte de la sección se veía como un bloque de otro color. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+            style={{ maskImage: 'linear-gradient(to bottom, black 35%, transparent 90%)', WebkitMaskImage: 'linear-gradient(to bottom, black 35%, transparent 90%)' }}
+          >
             <span className="orb orb-a absolute -top-20 right-[-6%] size-[380px] bg-primary/25 sm:size-[460px]" />
             <span className="orb orb-b absolute bottom-[-14%] left-[-8%] size-[340px] bg-secondary/15 sm:size-[420px]" />
           </div>
 
-          <div className="relative mx-auto grid max-w-[1224px] grid-cols-1 items-center gap-10 px-4 pb-16 pt-12 sm:px-[34px] sm:pt-[68px] md:pb-20 lg:grid-cols-[1fr_460px] lg:gap-6">
+          <div className="relative mx-auto grid max-w-[1224px] grid-cols-1 items-center gap-6 px-4 pb-16 pt-8 sm:gap-10 sm:px-[34px] sm:pt-[68px] md:pb-20 lg:grid-cols-[1fr_460px] lg:gap-6">
             <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
               <p className="rise text-[12.75px] uppercase tracking-[0.3em] text-muted-foreground">Páginas web para negocios</p>
               <h1
-                className="rise mt-6 font-display font-bold tracking-[-0.025em] text-foreground"
+                className="rise mt-4 font-display font-bold tracking-[-0.025em] text-foreground sm:mt-6"
                 style={{ fontSize: 'clamp(2.5rem, 6vw, 3.984rem)', lineHeight: 1.25, animationDelay: '80ms' }}
               >
                 Tu página web <span className="text-spectrum">profesional</span>,
@@ -157,7 +217,7 @@ export default async function HomePage() {
               <p className="rise mt-6 max-w-[560px] text-[17px] leading-[1.55] text-muted-foreground sm:text-[19px]" style={{ animationDelay: '160ms' }}>
                 Tú nos cuentas de tu negocio. Nosotros diseñamos, construimos y publicamos tu página. Sin complicarte con nada técnico.
               </p>
-              <div className="rise mt-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start" style={{ animationDelay: '240ms' }}>
+              <div className="rise mt-8 flex flex-wrap items-center justify-center gap-3 sm:mt-10 lg:justify-start" style={{ animationDelay: '240ms' }}>
                 <a href="#paquetes" className={`${pill} shine bg-primary font-medium text-primary-foreground hover:shadow-[var(--shadow-glow)]`}>
                   Ver paquetes
                   <ArrowRightIcon />
@@ -168,8 +228,9 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="rise relative mx-auto w-full max-w-[340px] sm:max-w-[400px] lg:max-w-none" style={{ animationDelay: '120ms' }}>
-              <div aria-hidden="true" className="orb orb-a absolute inset-0 -z-10 opacity-70 mix-blend-screen" style={{ background: 'radial-gradient(closest-side, var(--primary), transparent 70%)' }} />
+            {/* mix-blend-screen: el fondo negro del video no pinta, así el león se funde con los brillos de la página.
+                Va en este contenedor (no en el video) porque la animación de entrada lo aísla del fondo. */}
+            <div className="rise relative mx-auto w-full max-w-[290px] mix-blend-screen sm:max-w-[400px] lg:max-w-none" style={{ animationDelay: '120ms' }}>
               <video
                 aria-label="Mascota de 3R: un león con sudadera negra y lentes de sol, saludando"
                 autoPlay
@@ -177,13 +238,49 @@ export default async function HomePage() {
                 muted
                 playsInline
                 poster="/hero-lion.png"
-                className="w-full"
+                // El video es vertical con mucho negro arriba y abajo: el recorte cuadrado deja al león
+                // completo y centrado, sin empujarlo fuera de la primera pantalla del celular.
+                className="aspect-square w-full object-cover"
                 style={{ maskImage: 'radial-gradient(closest-side, black 72%, transparent 100%)', WebkitMaskImage: 'radial-gradient(closest-side, black 72%, transparent 100%)' }}
               >
                 <source src="/hero-lion.mp4" type="video/mp4" />
               </video>
             </div>
           </div>
+        </section>
+
+        <section aria-labelledby="h-problema" className="mx-auto max-w-[1224px] px-4 pb-24 sm:px-[34px]">
+          <Reveal>
+            <p className="text-center text-[13px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">Lo que pasa hoy</p>
+            <h2 id="h-problema" className="mx-auto mt-4 max-w-[720px] text-center font-display text-[32px] font-bold leading-[1.2] tracking-tight text-foreground sm:text-[40px]">
+              Si no te encuentran en internet, <span className="text-spectrum">le compran a otro</span>.
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-center text-[16px] text-muted-foreground">
+              Tu negocio puede ser el mejor de la zona. Si no se ve en internet, para muchos clientes no existe.
+            </p>
+          </Reveal>
+          <ul className="mt-10 grid grid-cols-1 gap-[17px] lg:grid-cols-3">
+            {problems.map((item, i) => (
+              <Reveal as="li" key={item.title} delayMs={i * 100}>
+                <SpotlightCard className={`${card} group flex h-full flex-col p-[26px] transition duration-300 hover:-translate-y-1 hover:border-white/[0.18]`}>
+                  <span
+                    className="flex size-[43px] items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110"
+                    style={{ backgroundColor: `oklch(0.3 0.12 ${item.hue} / 0.5)`, color: `oklch(0.92 0.08 ${item.hue})` }}
+                  >
+                    {item.icon}
+                  </span>
+                  <h3 className="mt-5 font-display text-[21px] font-semibold text-foreground">{item.title}</h3>
+                  <p className="mt-2 flex-1 text-[15px] leading-[1.5] text-muted-foreground">{item.text}</p>
+                  <p className="mt-5 flex items-center gap-2 border-t border-white/[0.06] pt-4 text-[14px] font-medium text-foreground">
+                    <span className="text-primary">
+                      <ArrowRightIcon />
+                    </span>
+                    Con tu página, {item.fix}
+                  </p>
+                </SpotlightCard>
+              </Reveal>
+            ))}
+          </ul>
         </section>
 
         <section id="como-funciona" aria-labelledby="h-como" className="mx-auto max-w-[1224px] scroll-mt-8 px-4 pb-24 sm:px-[34px]">
@@ -290,59 +387,7 @@ export default async function HomePage() {
             </p>
           </Reveal>
 
-          {packages === null ? (
-            <p className="mt-10 rounded-[32px] border border-dashed border-white/[0.12] px-6 py-12 text-center text-muted-foreground">
-              No pudimos cargar los paquetes en este momento. Inténtalo de nuevo en unos minutos.
-            </p>
-          ) : packages.length === 0 ? (
-            <p className="mt-10 rounded-[32px] border border-dashed border-white/[0.12] px-6 py-12 text-center text-muted-foreground">
-              Pronto publicaremos nuestros paquetes.
-            </p>
-          ) : (
-            <ul className="mt-10 grid grid-cols-1 gap-[17px] lg:grid-cols-3">
-              {packages.map((pkg, i) => (
-                <Reveal as="li" key={pkg.id} delayMs={i * 110} className="h-full">
-                  <SpotlightCard
-                    className={`relative flex h-full flex-col rounded-[32px] border bg-card p-[26px] shadow-[var(--shadow-glass)] transition duration-300 ease-[var(--ease-emphasized)] hover:-translate-y-1 ${
-                      pkg.isFeatured ? 'pulse-glow border-primary/60' : 'border-white/[0.08] hover:border-white/[0.18]'
-                    }`}
-                  >
-                    {pkg.isFeatured ? (
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3.5 py-1 text-[12px] font-semibold text-primary-foreground">
-                        Más elegido
-                      </span>
-                    ) : null}
-                    <h3 className="font-display text-[22px] font-semibold text-foreground">{pkg.name}</h3>
-                    {pkg.tagline ? <p className="mt-1 text-[14.5px] text-muted-foreground">{pkg.tagline}</p> : null}
-                    <p className="mt-6 font-display text-[38px] font-bold leading-none tracking-tight text-foreground sm:text-[42px]">
-                      {formatMoney(pkg.priceCents, pkg.currency)}
-                    </p>
-                    <p className="mt-1.5 text-[13.5px] text-muted-foreground">pago único</p>
-                    {pkg.monthlyPriceCents !== null ? (
-                      <p className="mt-3 rounded-2xl bg-white/[0.04] px-3.5 py-2.5 text-[13.5px] text-muted-foreground">
-                        + <span className="text-foreground">{formatMoney(pkg.monthlyPriceCents, pkg.currency)}/mes</span> hosting y mantenimiento (opcional)
-                      </p>
-                    ) : null}
-                    <ul className="mt-6 flex-1 space-y-2.5">
-                      {pkg.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2.5 text-[14.5px] leading-snug text-foreground/90">
-                          <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                    <Link
-                      href={`/pedir/${pkg.slug}`}
-                      className={`${pill} shine mt-8 ${pkg.isFeatured ? 'bg-primary font-medium text-primary-foreground hover:shadow-[var(--shadow-glow)]' : 'border border-white/[0.12] hover:bg-white/[0.06]'}`}
-                    >
-                      Pedir este paquete
-                      <ArrowRightIcon />
-                    </Link>
-                  </SpotlightCard>
-                </Reveal>
-              ))}
-            </ul>
-          )}
+          <PackageGrid packages={packages} />
         </section>
 
         <section aria-labelledby="h-incluye" className="mx-auto max-w-[1224px] px-4 pb-24 sm:px-[34px]">
@@ -367,6 +412,82 @@ export default async function HomePage() {
               </Reveal>
             ))}
           </ul>
+        </section>
+
+        <section id="asistencia" aria-labelledby="h-asistencia" className="mx-auto max-w-[1224px] scroll-mt-8 px-4 pb-24 sm:px-[34px]">
+          <Reveal>
+            <div className={`${card} grid gap-8 p-[26px] sm:p-10 lg:grid-cols-[1.4fr_1fr] lg:items-center`}>
+              <div>
+                <span className="rounded-full bg-primary/15 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.2em] text-primary">
+                  Nuevo para restaurantes
+                </span>
+                <h2 id="h-asistencia" className="mt-5 font-display text-[30px] font-bold leading-[1.15] tracking-tight text-foreground sm:text-[38px]">
+                  Control de asistencia con QR
+                </h2>
+                <p className="mt-3 max-w-xl text-[16px] text-muted-foreground">
+                  Sabe a qué hora llega y sale cada empleado, sin reloj de huella ni planillas en papel.
+                </p>
+                <ul className="mt-7 grid gap-4 sm:grid-cols-2">
+                  {attendanceFeatures.map((item) => (
+                    <li key={item.text} className="flex items-start gap-3">
+                      <span
+                        className="flex size-9 shrink-0 items-center justify-center rounded-full"
+                        style={{ backgroundColor: `oklch(0.3 0.12 ${item.hue} / 0.5)`, color: `oklch(0.92 0.08 ${item.hue})` }}
+                      >
+                        {item.icon}
+                      </span>
+                      <span className="text-[14.5px] leading-snug text-foreground/90">{item.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-6 text-center">
+                <p className="font-display text-[44px] font-bold leading-none tracking-tight text-foreground">{ATTENDANCE_PRICE}</p>
+                <p className="mt-2 text-[14px] text-muted-foreground">al mes</p>
+                <div className="mt-5 space-y-1.5 border-t border-white/[0.08] pt-5 text-[14px]">
+                  <p className="text-muted-foreground">
+                    Instalación: <span className="text-foreground">{ATTENDANCE_SETUP}</span>
+                  </p>
+                  <p className="rounded-2xl bg-primary/10 px-3.5 py-2.5 text-primary">
+                    Solo {ATTENDANCE_SETUP_WITH_PAGE} si compras tu página con nosotros
+                  </p>
+                </div>
+                <a
+                  href={whatsappLink('Hola, me interesa el control de asistencia con QR para mi negocio')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${pill} shine mt-6 w-full bg-primary font-medium text-primary-foreground hover:shadow-[var(--shadow-glow)]`}
+                >
+                  Lo quiero para mi negocio
+                  <ArrowRightIcon />
+                </a>
+                <p className="mt-3 text-[13px] text-muted-foreground">Te escribimos por WhatsApp y lo dejamos funcionando.</p>
+              </div>
+            </div>
+          </Reveal>
+        </section>
+
+        <section aria-labelledby="h-software" className="mx-auto max-w-[1224px] px-4 pb-24 sm:px-[34px]">
+          <Reveal>
+            <Link
+              href="/software"
+              className={`${card} group flex flex-col gap-6 p-[26px] transition duration-300 hover:border-white/[0.18] sm:p-10 lg:flex-row lg:items-center lg:justify-between`}
+            >
+              <div>
+                <span className="rounded-full bg-secondary/15 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.2em] text-secondary">Para empresas</span>
+                <h2 id="h-software" className="mt-5 font-display text-[28px] font-bold leading-[1.15] tracking-tight text-foreground sm:text-[34px]">
+                  ¿Tu empresa ya creció? Todo en un solo lugar
+                </h2>
+                <p className="mt-3 max-w-2xl text-[16px] text-muted-foreground">
+                  Clientes, empleados, documentos, cotizaciones, tienda en línea, WhatsApp e inteligencia artificial. Activas solo los módulos que usas.
+                </p>
+              </div>
+              <span className={`${pill} shrink-0 border border-white/[0.08] bg-white/[0.014] group-hover:bg-white/[0.06]`}>
+                Conocer el software
+                <ArrowRightIcon />
+              </span>
+            </Link>
+          </Reveal>
         </section>
 
         <section id="preguntas" aria-labelledby="h-faq" className="mx-auto max-w-[760px] scroll-mt-8 px-4 pb-24 sm:px-[34px]">
@@ -418,8 +539,22 @@ export default async function HomePage() {
       </main>
 
       <footer className="mx-auto w-full max-w-[1224px] px-4 sm:px-[34px]">
-        <div className="border-t border-white/[0.06] py-8 text-center text-sm text-muted-foreground">
-          © 2026 3R — Páginas web para negocios
+        <div className="flex flex-col items-center gap-4 border-t border-white/[0.06] py-8 text-center text-sm text-muted-foreground">
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] px-4 py-2 text-foreground transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+          >
+            <InstagramIcon size={18} />
+            @3r.paginas_
+          </a>
+          <p>
+            © 2026 3R — Páginas web para negocios ·{' '}
+            <Link href="/privacidad" className="transition hover:text-foreground">
+              Política de privacidad
+            </Link>
+          </p>
         </div>
       </footer>
       <MascotGreeter />

@@ -37,5 +37,8 @@ export const CLIENT_CANCELLABLE: readonly OrderStatus[] = ['new', 'awaiting_paym
 /** Pedidos sin terminar que un mismo cliente puede tener a la vez (evita abusos). */
 export const MAX_OPEN_ORDERS_PER_USER = 5;
 
+/** Dominio propio (tunegocio.com) para cualquier paquete: $50.000 COP al año, en centavos. El pedido cobra el primer año. */
+export const DOMAIN_ADDON_CENTS = 5_000_000;
+
 /** El mismo formato que usa la web (lib/orders.ts): 3R-0001. */
 export const orderCode = (orderNumber: number) => `3R-${String(orderNumber).padStart(4, '0')}`;

@@ -18,7 +18,7 @@ export function Field({ label, hint, id, ...input }: FieldProps) {
   );
 }
 
-type TextAreaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string; hint?: string };
+type TextAreaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string; hint?: string; ref?: React.Ref<HTMLTextAreaElement> };
 
 export function TextAreaField({ label, hint, id, ...input }: TextAreaProps) {
   const inputId = id ?? input.name;

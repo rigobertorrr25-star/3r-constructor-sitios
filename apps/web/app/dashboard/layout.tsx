@@ -14,13 +14,16 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   return (
     <div className="min-h-screen" style={{ backgroundImage: 'var(--gradient-hero)' }}>
       <header className="mx-auto flex w-full max-w-[1224px] items-center justify-between px-4 py-5 sm:px-[34px]">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-4 sm:gap-8">
           <Link href="/" aria-label="3R — Inicio" className="text-foreground">
             <Logo size={36} />
           </Link>
-          <nav aria-label="Principal" className="hidden items-center gap-6 sm:flex">
-            <Link href="/dashboard" className="text-[14.875px] text-foreground">
+          <nav aria-label="Principal" className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:gap-6">
+            <Link href="/dashboard" className="text-[14.875px] text-foreground/90 transition hover:text-foreground">
               Mis pedidos
+            </Link>
+            <Link href="/empresa" className="text-[14.875px] text-foreground/90 transition hover:text-foreground">
+              Mi empresa
             </Link>
             {isStaff ? (
               <Link href="/admin" className="text-[14.875px] text-primary hover:underline">

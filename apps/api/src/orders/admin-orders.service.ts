@@ -14,6 +14,7 @@ const listSelect = {
   paymentStatus: true,
   priceCents: true,
   monthlyPriceCents: true,
+  domainPriceCents: true,
   currency: true,
   amountPaidCents: true,
   siteId: true,

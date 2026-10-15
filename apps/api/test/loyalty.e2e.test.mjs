@@ -50,7 +50,7 @@ describe('tarjeta de sellos', () => {
     base = `http://127.0.0.1:${app.getHttpServer().address().port}/api/v1`;
     prisma = app.get(PrismaService);
 
-    await call('POST', '/auth/register', { body: { email: adminEmail, password } });
+    await call('POST', '/auth/register', { body: { email: adminEmail, password, firstName: 'Prueba', acceptPrivacy: true } });
     const user = await prisma.user.findUnique({ where: { email: adminEmail } });
     await prisma.userRole.create({ data: { userId: user.id, role: 'ADMIN' } });
     adminToken = (await call('POST', '/auth/login', { body: { email: adminEmail, password } })).body.accessToken;

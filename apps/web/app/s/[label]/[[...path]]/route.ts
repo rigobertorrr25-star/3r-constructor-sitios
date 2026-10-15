@@ -7,18 +7,37 @@ import { API_URL } from '@/lib/api';
 const PASS = ['content-type', 'content-security-policy', 'x-content-type-options', 'referrer-policy', 'x-frame-options', 'cache-control'];
 
 const unavailable = () =>
-  new Response('<!doctype html><meta charset="utf-8"><title>No disponible</title><p style="font-family:system-ui;text-align:center;margin-top:20vh">Este sitio no está disponible en este momento.</p>', {
-    status: 502,
-    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
-  });
+  new Response(
+    '<!doctype html><meta charset="utf-8"><title>No disponible</title><p style="font-family:system-ui;text-align:center;margin-top:20vh">Este sitio no está disponible en este momento.</p>',
+    {
+      status: 502,
+      headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
+    },
+  );
 
-export async function GET(_request: NextRequest, context: { params: Promise<{ label: string; path?: string[] }> }) {
+/** Datos del visitante para la analítica de la página (sin cookies; la API no guarda la IP). Van firmados con CRON_SECRET. */
+function visitHeaders(request: NextRequest): Record<string, string> {
+  const h = request.headers;
+  const out: Record<string, string> = {
+    'x-3r-ua': h.get('user-agent') ?? '',
+    'x-3r-referer': h.get('referer') ?? '',
+    'x-3r-ip': (h.get('x-forwarded-for') ?? '').split(',')[0].trim() || (h.get('x-real-ip') ?? ''),
+    'x-3r-query': request.nextUrl.search,
+    'x-3r-host': (h.get('host') ?? '').split(':')[0],
+  };
+  const purpose = h.get('purpose') ?? h.get('sec-purpose');
+  if (purpose) out.purpose = purpose;
+  if (process.env.CRON_SECRET) out['x-3r-visit'] = process.env.CRON_SECRET;
+  return out;
+}
+
+export async function GET(request: NextRequest, context: { params: Promise<{ label: string; path?: string[] }> }) {
   const { label, path = [] } = await context.params;
   const target = `${API_URL}/public/sites/${encodeURIComponent(label)}${path.map((part) => `/${encodeURIComponent(part)}`).join('')}`;
 
   let upstream: Response;
   try {
-    upstream = await fetch(target, { cache: 'no-store' });
+    upstream = await fetch(target, { cache: 'no-store', headers: visitHeaders(request) });
   } catch {
     return unavailable();
   }

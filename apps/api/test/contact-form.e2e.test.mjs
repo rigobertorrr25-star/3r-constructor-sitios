@@ -54,7 +54,7 @@ describe('formulario de contacto', () => {
     base = `http://127.0.0.1:${app.getHttpServer().address().port}/api/v1`;
     prisma = app.get(PrismaService);
 
-    await call('POST', '/auth/register', { body: { email, password } });
+    await call('POST', '/auth/register', { body: { email, password, acceptPrivacy: true } });
     const user = await prisma.user.findUnique({ where: { email } });
     await prisma.userRole.create({ data: { userId: user.id, role: 'ADMIN' } });
     token = (await call('POST', '/auth/login', { body: { email, password } })).body.accessToken;
