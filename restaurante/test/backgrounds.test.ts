@@ -47,6 +47,7 @@ describe('fondo del restaurante', { skip: url ? false : 'sin TEST_DATABASE_URL' 
 
   it('solo el dueño lo cambia; se ve en la lista de ingreso y en la sesión', async () => {
     assert.equal(owner.background, null);
+    assert.equal(owner.floorBackground, false);
     await assert.rejects(bg.saveBackground(waiter, JPG), { code: 'FORBIDDEN' });
     await assert.rejects(bg.saveBackground(owner, new TextEncoder().encode('no soy foto')), { code: 'INVALID' });
     await assert.rejects(bg.saveBackground(owner, new Uint8Array(bg.BACKGROUND_MAX_BYTES + 1).fill(0xff)), { code: 'INVALID' });
@@ -63,10 +64,21 @@ describe('fondo del restaurante', { skip: url ? false : 'sin TEST_DATABASE_URL' 
     assert.ok(v2 && v2 >= listed!.background!, 'al cambiarla cambia la versión (y la dirección)');
     assert.equal((await bg.getBackground(slug))?.mime, 'image/png');
 
+    // La foto va sola de piso en el plano de mesas; el dueño puede volver a la madera, y cambiar la foto no lo cambia.
+    const epoch = async () => (await db.query<{ e: number }>('SELECT session_epoch AS e FROM staff WHERE id = $1', [owner.id]))[0].e;
+    const session = async () => store.getStaffSession(owner.id, owner.locationId, await epoch());
+    assert.equal((await session())?.floorBackground, true, 'con foto, el plano la usa de una vez');
+    await assert.rejects(bg.setFloorBackground(waiter, false), { code: 'FORBIDDEN' });
+    await bg.setFloorBackground(owner, false);
+    assert.equal((await session())?.floorBackground, false);
+    await bg.saveBackground(owner, JPG);
+    assert.equal((await session())?.floorBackground, false, 'cambiar la foto no cambia lo que escogió el dueño');
+
     await bg.removeBackground(owner);
+    await assert.rejects(bg.setFloorBackground(owner, true), { code: 'INVALID' });
     assert.equal(await bg.getBackground(slug), null);
     assert.equal(await bg.backgroundVersion(owner.businessId), null);
     const audit = await db.query<{ summary: string }>(`SELECT summary FROM audit_events WHERE business_id = $1 AND action = 'business.background' ORDER BY created_at`, [owner.businessId]);
-    assert.equal(audit.length, 3);
+    assert.equal(audit.length, 5);
   });
 });

@@ -1,7 +1,9 @@
 'use client';
 
 import { startTransition, useActionState, useState } from 'react';
-import { removeBackgroundAction, saveBackgroundAction } from '@/app/actions';
+import { removeBackgroundAction, saveBackgroundAction, setFloorBackgroundAction } from '@/app/actions';
+import { ActionForm } from './form-state';
+import { SubmitButton } from './submit-button';
 import { Alert, dangerButton, primaryButton, quietButton } from './ui';
 import { useT } from './i18n';
 
@@ -20,7 +22,7 @@ export async function shrink(file: File, maxSide = MAX_SIDE): Promise<Blob> {
 }
 
 /** El dueño escoge la foto de fondo de su restaurante, la ve antes de guardarla y puede quitarla. */
-export function BackgroundForm({ current }: { current: string | null }) {
+export function BackgroundForm({ current, onFloor = false }: { current: string | null; onFloor?: boolean }) {
   const [saveState, save, saving] = useActionState(saveBackgroundAction, undefined);
   const [removeState, remove, removing] = useActionState(removeBackgroundAction, undefined);
   const [picked, setPicked] = useState<{ blob: Blob; url: string } | null>(null);
@@ -91,6 +93,21 @@ export function BackgroundForm({ current }: { current: string | null }) {
       {readError ? <Alert>{readError}</Alert> : null}
       {state?.error ? <Alert>{state.error}</Alert> : null}
       {state?.ok && state.message ? <Alert tone="ok">{state.message}</Alert> : null}
+      {current && !picked ? (
+        <ActionForm action={setFloorBackgroundAction} className="space-y-3 border-t border-white/[0.06] pt-4">
+          {() => (
+            <>
+              <p className="text-[14px] text-muted-foreground">
+                {onFloor ? t('El plano de mesas usa esta foto de fondo.') : t('El plano de mesas usa el piso de madera de 3R.')}
+              </p>
+              <input type="hidden" name="on" value={onFloor ? '0' : '1'} />
+              <SubmitButton tone="quiet" pendingText={t('Guardando…')}>
+                {onFloor ? t('Volver al piso de madera') : t('Usar esta foto en el plano de mesas')}
+              </SubmitButton>
+            </>
+          )}
+        </ActionForm>
+      ) : null}
     </div>
   );
 }

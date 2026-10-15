@@ -530,6 +530,9 @@ CREATE TABLE IF NOT EXISTS business_backgrounds (
   image BYTEA NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- La misma foto va también de piso en el plano de mesas (Mesas y Plano); el dueño puede volver al piso de madera de 3R.
+ALTER TABLE business_backgrounds ADD COLUMN IF NOT EXISTS on_floor BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE business_backgrounds ALTER COLUMN on_floor SET DEFAULT TRUE;
 
 -- Carta en inglés (opcional): si el restaurante escribe el nombre en inglés, la carta QR y quien use el sistema en
 -- inglés lo ven así. Las comandas impresas siguen con el nombre en español.

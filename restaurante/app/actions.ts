@@ -31,7 +31,7 @@ import { registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } 
 import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
-import { removeBackground, saveBackground } from '@/lib/backgrounds';
+import { removeBackground, saveBackground, setFloorBackground } from '@/lib/backgrounds';
 import { removeProductPhoto, saveProductPhoto } from '@/lib/product-photos';
 import { createAgentCode, enqueueClosing, printBill, printTest, removePrinter, reprint, savePrinter } from '@/lib/printing';
 import {
@@ -919,6 +919,12 @@ export async function saveBackgroundAction(_prev: FormState, formData: FormData)
 export async function removeBackgroundAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff('locations.manage');
   return run(formData, () => removeBackground(staff), ['/', '/app', '/app/sedes'], 'Listo. Se quitó el fondo.');
+}
+
+export async function setFloorBackgroundAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('locations.manage');
+  const on = text(formData, 'on') === '1';
+  return run(formData, () => setFloorBackground(staff, on), ['/app', '/app/plano', '/app/sedes'], on ? 'Listo. El plano de mesas ya lleva tu fondo.' : 'Listo. El plano de mesas vuelve al piso de madera.');
 }
 
 // ───────── fotos de los productos ─────────

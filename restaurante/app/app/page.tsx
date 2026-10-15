@@ -9,6 +9,7 @@ import { AutoRefresh } from '@/components/auto-refresh';
 import { TableBoard, type BoardTable } from '@/components/table-board';
 import { Empty, PageTitle } from '@/components/ui';
 import Link from 'next/link';
+import { backgroundUrl } from '@/lib/background-url';
 import { getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
@@ -65,6 +66,7 @@ export default async function TablesPage() {
           canClose={can(staff.role, 'tables.close')}
           waitersCollect={staff.waitersCollect}
           timeZone={staff.timezone}
+          floorPhoto={staff.floorBackground ? backgroundUrl(staff.businessSlug, staff.background) : null}
         />
       )}
     </div>
