@@ -79,7 +79,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   electrónica (Alegra, Siigo…) para el envío a la DIAN (módulo 10: todo lo demás listo). El esquema de la base se aplica solo cuando cambia (tabla `schema_meta`). Ingreso (5 oct 2026): en la portada se
   escoge el restaurante de una lista (los activos) y se toca el nombre de la persona y se pone su PIN (el código de empleado queda interno; no puede haber dos nombres
   activos iguales); `/n/{negocio}` sigue sirviendo. Cada restaurante puede tener su foto de fondo (Sedes → Fondo del restaurante;
-  se ve en el ingreso y detrás de la app; en el ingreso la tarjeta es transparente para que se vea la foto, pedido de Rigoberto 12 oct 2026; Sedes → «Usar esta foto en el plano de mesas» la pone de piso en Mesas y Plano en vez de la madera, columna `on_floor`, 14 oct 2026). Fotos de cada producto (Carta → Editar, 6 oct 2026): salen en la carta QR y en
+  se ve en el ingreso y detrás de la app; en el ingreso la tarjeta es transparente para que se vea la foto, pedido de Rigoberto 12 oct 2026; la foto va sola de piso en el mapa de Mesas y en Plano de cada restaurante (pedido de Rigoberto 15 oct 2026; columna `on_floor`, por defecto sí); en Sedes el dueño puede «Volver al piso de madera»). Fotos de cada producto (Carta → Editar, 6 oct 2026): salen en la carta QR y en
   la pantalla de pedido del mesero. **Español e inglés** (6 oct 2026, botón ES | EN en todas las pantallas; detalle en
   `restaurante/README.md`): Rigoberto primero dijo que no y después pidió de nuevo el sistema en inglés (6 oct 2026);
   todo texto nuevo va con `t()` y su inglés en `restaurante/lib/i18n/en/`; lo impreso sigue en español. **Impresión de comandas** (6 oct 2026, pedido de Rigoberto: los restaurantes

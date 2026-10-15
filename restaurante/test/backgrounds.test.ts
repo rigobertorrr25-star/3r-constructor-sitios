@@ -64,14 +64,15 @@ describe('fondo del restaurante', { skip: url ? false : 'sin TEST_DATABASE_URL' 
     assert.ok(v2 && v2 >= listed!.background!, 'al cambiarla cambia la versión (y la dirección)');
     assert.equal((await bg.getBackground(slug))?.mime, 'image/png');
 
-    // También de piso en el plano de mesas: solo el dueño, y solo si ya hay foto.
-    await assert.rejects(bg.setFloorBackground(waiter, true), { code: 'FORBIDDEN' });
-    await bg.setFloorBackground(owner, true);
-    const again = await store.getStaffSession(owner.id, owner.locationId, (await db.query<{ e: number }>('SELECT session_epoch AS e FROM staff WHERE id = $1', [owner.id]))[0].e);
-    assert.equal(again?.floorBackground, true);
+    // La foto va sola de piso en el plano de mesas; el dueño puede volver a la madera, y cambiar la foto no lo cambia.
+    const epoch = async () => (await db.query<{ e: number }>('SELECT session_epoch AS e FROM staff WHERE id = $1', [owner.id]))[0].e;
+    const session = async () => store.getStaffSession(owner.id, owner.locationId, await epoch());
+    assert.equal((await session())?.floorBackground, true, 'con foto, el plano la usa de una vez');
+    await assert.rejects(bg.setFloorBackground(waiter, false), { code: 'FORBIDDEN' });
+    await bg.setFloorBackground(owner, false);
+    assert.equal((await session())?.floorBackground, false);
     await bg.saveBackground(owner, JPG);
-    const kept = await store.getStaffSession(owner.id, owner.locationId, (await db.query<{ e: number }>('SELECT session_epoch AS e FROM staff WHERE id = $1', [owner.id]))[0].e);
-    assert.equal(kept?.floorBackground, true, 'cambiar la foto no apaga el plano');
+    assert.equal((await session())?.floorBackground, false, 'cambiar la foto no cambia lo que escogió el dueño');
 
     await bg.removeBackground(owner);
     await assert.rejects(bg.setFloorBackground(owner, true), { code: 'INVALID' });

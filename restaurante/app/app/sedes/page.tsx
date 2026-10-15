@@ -32,7 +32,7 @@ export default async function LocationsPage() {
       <section className={card}>
         <h2 className="font-display text-[18px] font-bold">{t('Fondo del restaurante')}</h2>
         <p className="mt-1 text-[14.5px] text-muted-foreground">
-          {t('Una foto de tu local o de tu marca. Se ve en la pantalla de ingreso cuando escogen tu restaurante y, más oscura, detrás de la app. Mejor una foto horizontal y sin letras.')}
+          {t('Una foto de tu local o de tu marca. Se ve en la pantalla de ingreso cuando escogen tu restaurante, de piso en el mapa de mesas y, más oscura, detrás de la app. Mejor una foto horizontal y sin letras.')}
         </p>
         <div className="mt-4">
           <BackgroundForm current={backgroundUrl(staff.businessSlug, staff.background)} onFloor={staff.floorBackground} />

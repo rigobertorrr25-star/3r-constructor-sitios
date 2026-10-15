@@ -166,8 +166,8 @@ export const en: Record<string, string> = {
   'Cada sede tiene su propio plano de mesas. Para trabajar en otra sede, sal y vuelve a entrar eligiéndola.':
     'Each location has its own floor plan. To work at another location, sign out and sign back in choosing it.',
   'Fondo del restaurante': 'Restaurant background',
-  'Una foto de tu local o de tu marca. Se ve en la pantalla de ingreso cuando escogen tu restaurante y, más oscura, detrás de la app. Mejor una foto horizontal y sin letras.':
-    'A photo of your place or your brand. It shows on the sign-in screen when your restaurant is picked and, darker, behind the app. A landscape photo without text works best.',
+  'Una foto de tu local o de tu marca. Se ve en la pantalla de ingreso cuando escogen tu restaurante, de piso en el mapa de mesas y, más oscura, detrás de la app. Mejor una foto horizontal y sin letras.':
+    'A photo of your place or your brand. It shows on the sign-in screen when your restaurant is picked, as the floor of the table map and, darker, behind the app. A landscape photo without text works best.',
   'Nueva sede': 'New location',
   'Dirección (opcional)': 'Address (optional)',
   'Crear sede': 'Create location',
