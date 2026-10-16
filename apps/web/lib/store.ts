@@ -1,5 +1,7 @@
 // Tienda online: tipos y textos visibles.
 
+import { formatMoney } from './orders';
+
 export type OrderStatus = 'new' | 'confirmed' | 'preparing' | 'ready' | 'on_way' | 'delivered' | 'cancelled';
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   new: 'Nuevo',
@@ -147,7 +149,8 @@ export type Quote = { lines: OrderLine[]; subtotal: number; discount: number; sh
 export type PublicOrder = Omit<Order, 'id' | 'staffNote' | 'slug'> & { store: PublicStore };
 
 /** 45000 → "$ 45.000". */
-export const cop = (pesos: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(pesos);
+/** Pesos enteros → "$48.000" (mismo formato que el resto de 3R). */
+export const cop = (pesos: number) => formatMoney(Math.round(pesos) * 100, 'COP');
 
 /** Celular colombiano para wa.me: 3001234567 → 573001234567. */
 export const waNumber = (raw: string | null | undefined) => {

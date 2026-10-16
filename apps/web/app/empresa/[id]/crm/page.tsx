@@ -68,67 +68,75 @@ export default async function CrmPage({ params, searchParams }: { params: Promis
           {q ? 'Nadie coincide con esa búsqueda.' : 'Todavía no hay clientes. Agrega el primero con «Nuevo cliente».'}
         </p>
       ) : (
-        <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-          <ol className="grid min-w-[1100px] grid-cols-6 gap-3">
-            {CRM_STAGES.map((stage) => {
-              const items = contacts.filter((c) => c.stage === stage);
-              const total = summary.stages.find((s) => s.stage === stage);
-              return (
-                <li key={stage} className="flex flex-col rounded-[22px] border border-white/[0.06] bg-white/[0.02] p-3">
-                  <div className="flex items-center justify-between px-1 pb-3">
-                    <h2 className="flex items-center gap-2 text-[13.5px] font-semibold text-foreground">
-                      <span className="size-2 rounded-full" style={{ backgroundColor: `oklch(0.75 0.15 ${STAGE_HUE[stage]})` }} aria-hidden="true" />
-                      {STAGE_LABEL[stage]}
-                    </h2>
-                    <span className="text-[12.5px] text-muted-foreground">{items.length}</span>
-                  </div>
-                  {total && total.valueCents > 0 ? (
-                    <p className="-mt-2 px-1 pb-3 text-[12.5px] text-muted-foreground">{formatMoney(total.valueCents, 'COP')}</p>
-                  ) : null}
-                  <ul className="space-y-2">
-                    {items.map((c) => (
-                      <li key={c.id} className="rounded-2xl border border-white/[0.08] bg-card p-3">
-                        <Link href={`/empresa/${id}/crm/${c.id}`} className="block focus-visible:outline-2 focus-visible:outline-[var(--ring)]">
-                          <p className="text-[14px] font-medium leading-snug text-foreground">{c.name}</p>
-                          {c.organization ? <p className="text-[12.5px] text-muted-foreground">{c.organization}</p> : null}
-                          {c.valueCents ? <p className="mt-1.5 text-[13px] text-foreground">{formatMoney(c.valueCents, 'COP')}</p> : null}
-                          <p className="mt-1 text-[12px] text-muted-foreground">
-                            {c.ownerMemberId ? (owners.get(c.ownerMemberId) ?? 'Sin responsable') : 'Sin responsable'}
-                            {c.lastContactAt ? ` · ${shortDate.format(new Date(c.lastContactAt))}` : ''}
-                          </p>
-                        </Link>
-                        <form action={moveContactAction} className="mt-2">
-                          <input type="hidden" name="companyId" value={id} />
-                          <input type="hidden" name="contactId" value={c.id} />
+        <div>
+          {/* Las 6 etapas no caben a lo ancho: se avisa que hay más a la derecha. */}
+          <p className="mb-2 text-right text-[12.5px] text-muted-foreground">Desliza a los lados para ver todas las etapas →</p>
+          <div className="-mx-4 overflow-x-auto px-4 pb-2 [mask-image:linear-gradient(to_right,#000_calc(100%-40px),transparent)] sm:mx-0 sm:px-0">
+            <ol className="grid min-w-[1100px] grid-cols-6 gap-3 pr-10">
+              {CRM_STAGES.map((stage) => {
+                const items = contacts.filter((c) => c.stage === stage);
+                const total = summary.stages.find((s) => s.stage === stage);
+                return (
+                  <li key={stage} className="flex flex-col rounded-[22px] border border-white/[0.06] bg-white/[0.02] p-3">
+                    <div className="flex items-center justify-between px-1 pb-3">
+                      <h2 className="flex items-center gap-2 text-[13.5px] font-semibold text-foreground">
+                        <span
+                          className="size-2 rounded-full"
+                          style={{ backgroundColor: `oklch(0.75 0.15 ${STAGE_HUE[stage]})` }}
+                          aria-hidden="true"
+                        />
+                        {STAGE_LABEL[stage]}
+                      </h2>
+                      <span className="text-[12.5px] text-muted-foreground">{items.length}</span>
+                    </div>
+                    {total && total.valueCents > 0 ? (
+                      <p className="-mt-2 px-1 pb-3 text-[12.5px] text-muted-foreground">{formatMoney(total.valueCents, 'COP')}</p>
+                    ) : null}
+                    <ul className="space-y-2">
+                      {items.map((c) => (
+                        <li key={c.id} className="rounded-2xl border border-white/[0.08] bg-card p-3">
+                          <Link href={`/empresa/${id}/crm/${c.id}`} className="block focus-visible:outline-2 focus-visible:outline-[var(--ring)]">
+                            <p className="text-[14px] font-medium leading-snug text-foreground">{c.name}</p>
+                            {c.organization ? <p className="text-[12.5px] text-muted-foreground">{c.organization}</p> : null}
+                            {c.valueCents ? <p className="mt-1.5 text-[13px] text-foreground">{formatMoney(c.valueCents, 'COP')}</p> : null}
+                            <p className="mt-1 text-[12px] text-muted-foreground">
+                              {c.ownerMemberId ? (owners.get(c.ownerMemberId) ?? 'Sin responsable') : 'Sin responsable'}
+                              {c.lastContactAt ? ` · ${shortDate.format(new Date(c.lastContactAt))}` : ''}
+                            </p>
+                          </Link>
+                          <form action={moveContactAction} className="mt-2">
+                            <input type="hidden" name="companyId" value={id} />
+                            <input type="hidden" name="contactId" value={c.id} />
 
-                          <div className="flex flex-col gap-1.5">
-                            <select
-                              name="stage"
-                              aria-label={`Mover a ${c.name} a otra etapa`}
-                              defaultValue={c.stage}
-                              className="w-full rounded-full border border-white/[0.1] bg-transparent px-2.5 py-1 text-[12px] text-muted-foreground"
-                            >
-                              {CRM_STAGES.map((s) => (
-                                <option key={s} value={s} className="bg-[#0a131a]">
-                                  {STAGE_LABEL[s]}
-                                </option>
-                              ))}
-                            </select>
-                            <button
-                              type="submit"
-                              className="shrink-0 rounded-full border border-white/[0.1] px-2.5 py-1 text-[12px] hover:bg-white/[0.06]"
-                            >
-                              Mover
-                            </button>
-                          </div>
-                        </form>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              );
-            })}
-          </ol>
+                            <div className="flex flex-col gap-1.5">
+                              <select
+                                name="stage"
+                                aria-label={`Mover a ${c.name} a otra etapa`}
+                                defaultValue={c.stage}
+                                className="w-full rounded-full border border-white/[0.1] bg-transparent px-2.5 py-1 text-[12px] text-muted-foreground"
+                              >
+                                {CRM_STAGES.map((s) => (
+                                  <option key={s} value={s} className="bg-[#0a131a]">
+                                    {STAGE_LABEL[s]}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                type="submit"
+                                className="shrink-0 rounded-full border border-white/[0.1] px-2.5 py-1 text-[12px] hover:bg-white/[0.06]"
+                              >
+                                Mover
+                              </button>
+                            </div>
+                          </form>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
         </div>
       )}
     </div>

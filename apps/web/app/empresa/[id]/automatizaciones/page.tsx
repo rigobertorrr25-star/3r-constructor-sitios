@@ -5,13 +5,14 @@ import { ModuleOff } from '@/components/module-off';
 import { authedApi } from '@/lib/api';
 import { atLeast } from '@/lib/companies';
 import { ACTION_SHORT, RECIPES, type AutomationList } from '@/lib/automations';
+import { cop } from '@/lib/store';
 import { loadCompany } from '../company';
 
 export const metadata: Metadata = { title: 'Automatizaciones — 3R' };
 
 const card = 'rounded-[28px] border border-white/[0.08] bg-card p-6 shadow-[var(--shadow-glass)]';
 const when = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'America/Bogota' });
-const money = (n: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
+const money = cop;
 
 export default async function AutomationsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
