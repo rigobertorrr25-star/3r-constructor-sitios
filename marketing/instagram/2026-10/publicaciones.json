@@ -1,0 +1,65 @@
+{
+ "cuenta": "@3r.paginas_",
+ "base_url": "https://raw.githubusercontent.com/rigobertorrr25-star/3r-constructor-sitios/claude/wonderful-turing-7baisf/marketing/instagram/2026-10/",
+ "publicaciones": [
+  {
+   "id": "r1",
+   "fecha": "2026-10-17",
+   "hora_bogota": "19:00",
+   "tipo": "reel",
+   "archivos": [
+    "r1-azul-idiomas.mp4"
+   ],
+   "portada_ms": 1500,
+   "texto": "Un turista abre el menú de Azul Caribe y lo lee en inglés, francés o portugués, con fotos y precios en pesos. Todo desde un solo QR en la mesa.\n\nAsí quedan los menús que hacemos en 3R para restaurantes de Cartagena.\n\nComenta PRECIOS y te mando cuánto cuesta el de tu restaurante."
+  },
+  {
+   "id": "r2",
+   "fecha": "2026-10-20",
+   "hora_bogota": "19:00",
+   "tipo": "reel",
+   "archivos": [
+    "r2-burgers.mp4"
+   ],
+   "portada_ms": 5000,
+   "texto": "Esta página ya está hecha: la hamburguesa se arma mientras bajas, sale el combo, el menú y el botón para pedir por WhatsApp.\n\nLe ponemos el nombre de tu hamburguesería, tu logo, tus precios y tu zona de domicilios. $790.000, pago único.\n\nComenta BURGER y te mando el link para que la abras en tu celular."
+  },
+  {
+   "id": "r3",
+   "fecha": "2026-10-22",
+   "hora_bogota": "19:00",
+   "tipo": "reel",
+   "archivos": [
+    "r3-sellos.mp4"
+   ],
+   "portada_ms": 12000,
+   "texto": "Así juntan sellos los clientes de Azul Caribe: se registran con el celular, el mesero pone su código y al cuarto sello tienen descuento. Sin tarjetas de papel y sin bajar ninguna app.\n\nSi quieres que tus clientes vuelvan, comenta SELLOS y te cuento cómo quedaría en tu negocio."
+  },
+  {
+   "id": "c4",
+   "fecha": "2026-10-24",
+   "hora_bogota": "19:00",
+   "tipo": "carrusel",
+   "archivos": [
+    "c4-1.jpg",
+    "c4-2.jpg",
+    "c4-3.jpg",
+    "c4-4.jpg",
+    "c4-5.jpg",
+    "c4-6.jpg"
+   ],
+   "texto": "No te muestro diseños. Te muestro páginas que ya están funcionando: el menú de Azul Caribe en cuatro idiomas, los pedidos de Fidelio que llegan por WhatsApp, la tarjeta de sellos y 3R Burgers.\n\n¿Cuál le falta a tu negocio? Comenta PRECIOS y te digo cuánto cuesta cada una."
+  },
+  {
+   "id": "r5",
+   "fecha": "2026-10-27",
+   "hora_bogota": "19:00",
+   "tipo": "reel",
+   "archivos": [
+    "r5-fidelio.mp4"
+   ],
+   "portada_ms": 15500,
+   "texto": "Así pide un cliente en la página de Fidelio: escoge el bowl y la pasta, revisa el carrito y el pedido le llega al restaurante por WhatsApp, ya escrito y con el total.\n\nSin apps de domicilio y sin pagar comisión por cada pedido.\n\nComenta PRECIOS y te cuento cuánto cuesta una así para tu negocio."
+  }
+ ]
+}
