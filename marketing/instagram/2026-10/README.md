@@ -12,6 +12,6 @@ momento por Composio. La publicación automática a una hora fija quedó bloquea
 
 - Restaurant Control (r8, r12) y asistencia (r10) se grabaron con negocios de prueba («Bar La Ola (demo)», «Café La Bahía
   (demo)»), con el sistema de verdad; el texto lo dice.
-- r9 (manual de marca de Azul Caribe): pedirle permiso a Azul Caribe antes de publicar.
+- r9 (manual de marca de Azul Caribe): Azul Caribe dio permiso (16 oct 2026).
 - El llamado «Comenta PRECIOS» (y «SELLOS») coincide con las automatizaciones de Chatplace, que están en pausa hasta que
   Rigoberto las prenda.
