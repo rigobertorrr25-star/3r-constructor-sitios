@@ -53,7 +53,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   listas para estrenar» (`#lista`, `READY_MADE` en `lib/services.ts`, $790.000 con la marca del comprador) y no en
   «Trabajos» aunque esté en el portafolio. Tarjeta de sellos: el servidor (`apps/api/src/loyalty`, `/admin/fidelizacion`)
   venía de la rama `claude/wonderful-ptolemy-wr2mkk` y entró a main el 16 oct 2026; lo usa `azulcaribemenudigital` (`/sellos`).
-  Esa rama dejó a Render publicando desde ella: Render debe volver a publicar desde `main`.
+  Render ya publica desde `main` (comprobado por Rigoberto el 16 oct 2026) y tiene `LOYALTY_ORIGINS=https://azulcaribelounge.com`.
 - Portada: aviso del control de asistencia (sección `#asistencia`, antes de las preguntas): $90.000/mes, instalación
   $300.000 o $150.000 si también compra su página. El botón va a WhatsApp, nunca a la app de asistencia (precios en
   `ATTENDANCE_*` de `apps/web/app/page.tsx`).
