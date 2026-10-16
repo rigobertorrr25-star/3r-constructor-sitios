@@ -24,7 +24,7 @@ export default async function WaConversationPage({ params }: { params: Promise<{
   ]);
   if (!res.ok || !overview.ok) notFound();
   const c = res.data;
-  const { members, templates } = overview.data;
+  const { members, templates, bot } = overview.data;
   const who = (memberId: string | null) => members.find((m) => m.id === memberId)?.name;
 
   return (
@@ -48,6 +48,11 @@ export default async function WaConversationPage({ params }: { params: Promise<{
                 </>
               ) : null}
             </p>
+            {bot.enabled ? (
+              <p className="mt-1 text-[13px] text-muted-foreground">
+                {c.botPaused ? 'El asistente no responde aquí: la atiende tu equipo.' : 'El asistente con IA está respondiendo esta conversación.'}
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <form action={updateWaConversationAction} className="flex items-center gap-2" key={c.assignedMemberId ?? 'nadie'}>
@@ -72,6 +77,16 @@ export default async function WaConversationPage({ params }: { params: Promise<{
                 Asignar
               </button>
             </form>
+            {bot.enabled ? (
+              <form action={updateWaConversationAction}>
+                <input type="hidden" name="companyId" value={id} />
+                <input type="hidden" name="conversationId" value={c.id} />
+                <input type="hidden" name="botPaused" value={c.botPaused ? 'false' : 'true'} />
+                <button type="submit" className="rounded-full border border-white/[0.12] px-4 py-2 text-[13px] text-foreground hover:bg-white/[0.06]">
+                  {c.botPaused ? 'Devolver al asistente' : 'Pausar el asistente'}
+                </button>
+              </form>
+            ) : null}
             <form action={updateWaConversationAction}>
               <input type="hidden" name="companyId" value={id} />
               <input type="hidden" name="conversationId" value={c.id} />
@@ -92,7 +107,7 @@ export default async function WaConversationPage({ params }: { params: Promise<{
                 <p className="whitespace-pre-line text-[15px] leading-relaxed">{m.body}</p>
                 <p className="mt-1 text-right text-[11.5px] text-muted-foreground">
                   {m.type === 'template' ? 'Plantilla · ' : ''}
-                  {m.direction === 'out' && who(m.sentById) ? `${who(m.sentById)} · ` : ''}
+                  {m.bot ? 'Asistente con IA · ' : m.direction === 'out' && who(m.sentById) ? `${who(m.sentById)} · ` : ''}
                   {time.format(new Date(m.createdAt))}
                   {m.direction === 'out' ? ` · ${STATUS_MARK[m.status]}` : ''}
                 </p>

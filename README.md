@@ -67,6 +67,29 @@ Variables (`.env.example`): `SITES_ROOT_HOST`, `SITES_URL_TEMPLATE`, `PUBLISH_DI
 **Para producción** hace falta un dominio propio con DNS comodín (`*.tudominio.com`) apuntando al servidor web, y
 `SITES_ROOT_HOST` / `SITES_URL_TEMPLATE` con ese dominio. Los dominios propios del cliente (`www.sunegocio.com`) quedan pendientes.
 
+## Tarjeta de sellos (fidelización)
+
+Programa de puntos para los negocios clientes: el cliente final junta sellos en su celular, el mesero los pone con su
+propio código y el dueño ve todo en su panel. Código en `apps/api/src/loyalty`, pruebas en `apps/api/test/loyalty.e2e.test.mjs`.
+
+- **Equipo 3R** (`/admin/fidelizacion`): crea el programa de cada negocio (identificador, sellos por tarjeta, horas entre
+  sellos, premios y clave del dueño).
+- **Tarjeta del cliente** (página estática del negocio, p. ej. `azulcaribelounge.com/sellos/`): se registra una vez con
+  nombre, celular y autorización de datos (Ley 1581); su celular guarda un token. Sellos y canjes los valida el servidor con
+  el código del mesero: 5 códigos equivocados bloquean esa tarjeta 10 minutos, y además hay límite de intentos por IP. Si
+  cambia de celular, el mesero se la pasa al nuevo con su código y el celular viejo deja de verla.
+- **Panel del dueño** (p. ej. `azulcaribelounge.com/sellos/panel/`): entra con su clave y ve resumen, clientes (con
+  WhatsApp y descarga para Excel), actividad con el mesero de cada movimiento, y maneja los meseros y sus códigos. Su
+  sesión se firma aparte (`JWT_ACCESS_SECRET` + sufijo): no sirve en el resto de la API.
+- Las páginas de los negocios llaman a la API desde su propio dominio: agrega cada uno a `LOYALTY_ORIGINS` (CORS).
+- **Primer programa sin el panel del equipo:** con `LOYALTY_BOOTSTRAP_SLUG`, `LOYALTY_BOOTSTRAP_NAME`,
+  `LOYALTY_BOOTSTRAP_OWNER_KEY` y `LOYALTY_BOOTSTRAP_REWARDS` (`4: 20 % de descuento | 7: Café gratis | 10: Cóctel gratis`;
+  opcional `LOYALTY_BOOTSTRAP_COOLDOWN_HOURS`, por defecto 3), la API crea ese programa al arrancar si no existe. Nunca
+  cambia uno que ya existe; después de creado, borra las variables.
+
+Endpoints: `GET /loyalty/:slug`, `POST /loyalty/:slug/customers`, `POST …/customers/recover`, `GET …/card`,
+`POST …/card/stamp`, `POST …/card/redeem`; panel en `…/owner/*`; alta en `/admin/loyalty`.
+
 ## Puesta en marcha (desarrollo)
 
 Requiere Node 20+ y npm.
@@ -143,7 +166,7 @@ CORS Policy, agrega:
 
 ## Estado
 
-Hecho (todo con pruebas: 98 de API, 23 del editor y recorridos completos en un Chrome real):
+Hecho (todo con pruebas: 139 de API, 23 del editor y recorridos completos en un Chrome real):
 
 - **Base:** monorepo, esquema (paquetes, pedidos, portafolio, sitios, páginas, versiones, publicaciones…), migraciones y seed.
 - **Cuentas:** registro/login/refresh con rotación, sesión en cookies `httpOnly`, roles USER/ADMIN, auditoría,
@@ -159,6 +182,7 @@ Hecho (todo con pruebas: 98 de API, 23 del editor y recorridos completos en un C
   destino final (R2 o, en desarrollo, la misma API) con un enlace firmado de un solo uso, sin pasar por el
   servidor de Next.
 - **Publicación:** HTML estático saneado en la dirección propia de cada cliente, con menú, sitemap y robots.
+- **Tarjeta de sellos:** programa por negocio, tarjeta del cliente con códigos de meseros y panel del dueño (ver arriba).
 - **Privacidad (Ley 1581):** política en `/privacidad`; el registro exige aceptarla y guarda la fecha
   (`users.privacy_accepted_at`, y la versión en la auditoría). El formulario de contacto de los sitios publicados
   pide la autorización del visitante.
@@ -542,7 +566,14 @@ misma llave que el asistente (`ANTHROPIC_API_KEY`, `AI_MODEL`). No inventa preci
 - **24 horas**: WhatsApp solo deja mandar texto libre hasta 24 horas después del último mensaje del cliente; después,
   y para escribirle primero, solo plantillas aprobadas. Las plantillas se crean y aprueban en Meta y un administrador
   de la empresa las trae con «Traer plantillas de Meta».
-- En desarrollo y pruebas no se habla con Meta (cliente falso); en producción, siempre Meta.
+- **Asistente con IA (chatbot)**: en la bandeja, un administrador de la empresa escribe lo que debe saber del negocio
+  (`whatsapp_accounts.bot_info`: horarios, dirección, precios, domicilios) y lo prende. Responde solo los mensajes de
+  texto con esa información y con los artículos **públicos** del centro de conocimiento, en el idioma del cliente. Si
+  le piden una persona, un pedido, una reserva o un pago, tiene una queja o no sabe, contesta `[HUMANO]…`: avisa que
+  pasa la conversación, se pausa en ella (`whatsapp_conversations.bot_paused`) y avisa en la campanita. Cuando una
+  persona del equipo responde, también se pausa; «Devolver al asistente» lo vuelve a prender en esa conversación. Sus
+  mensajes quedan con `bot = true`. Topes: 300 respuestas al día por empresa y 30 por conversación. Usa la misma llave
+  `ANTHROPIC_API_KEY` que el asistente interno; sin llave en producción no se puede prender.
 
 ### Suscripciones (cobro de la plataforma)
 

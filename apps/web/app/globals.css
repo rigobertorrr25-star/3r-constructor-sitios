@@ -51,6 +51,15 @@
 
 html {
   color-scheme: dark;
+  /* Barra de desplazamiento, casillas y cursor de escritura con los colores de 3R, no los del navegador. */
+  scrollbar-color: #ffffff26 transparent;
+  accent-color: var(--primary);
+  caret-color: var(--primary);
+}
+
+::selection {
+  background: #8a9bff59;
+  color: var(--foreground);
 }
 
 body {

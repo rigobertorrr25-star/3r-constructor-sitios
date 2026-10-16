@@ -1,9 +1,9 @@
 // Los paquetes con su precio y el botón para pedir. Lo usan la portada y la cuenta del cliente, así los dos
 // muestran siempre lo mismo.
-import Link from 'next/link';
 import { ArrowRightIcon } from '@/components/icons';
 import { Reveal } from '@/components/reveal';
 import { SpotlightCard } from '@/components/spotlight-card';
+import { whatsappLink } from '@/components/whatsapp-button';
 import { formatMoney } from '@/lib/orders';
 import type { Package } from '@/lib/types';
 
@@ -55,13 +55,16 @@ export function PackageGrid({ packages }: { packages: Package[] | null }) {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href={`/pedir/${pkg.slug}`}
+                {/* Por ahora todo se pide por WhatsApp (sin cuenta): el mensaje ya dice qué paquete es. */}
+                <a
+                  href={whatsappLink(`Hola, quiero el paquete ${pkg.name} (${formatMoney(pkg.priceCents, pkg.currency)}). Mi negocio es: `)}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={`${pill} shine mt-8 ${pkg.isFeatured ? 'bg-primary font-medium text-primary-foreground hover:shadow-[var(--shadow-glow)]' : 'border border-white/[0.12] hover:bg-white/[0.06]'}`}
                 >
-                  Pedir este paquete
+                  Pedir por WhatsApp
                   <ArrowRightIcon />
-                </Link>
+                </a>
               </SpotlightCard>
             </Reveal>
           ))}

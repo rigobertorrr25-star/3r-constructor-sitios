@@ -44,8 +44,21 @@ export async function updateWaConversationAction(formData: FormData) {
   const body: Record<string, unknown> = {};
   if (formData.has('status')) body.status = String(formData.get('status'));
   if (formData.has('assignedMemberId')) body.assignedMemberId = String(formData.get('assignedMemberId')) || null;
+  if (formData.has('botPaused')) body.botPaused = formData.get('botPaused') === 'true';
   await authedApi(`${path(companyId)}/conversations/${encodeURIComponent(conversationId)}`, { method: 'PATCH', body });
   revalidatePath(page(companyId), 'layout');
+}
+
+/** Prender o apagar el asistente con IA y guardar lo que debe saber del negocio. */
+export async function saveWaBotAction(_prev: WaResult, formData: FormData): Promise<WaResult> {
+  const companyId = String(formData.get('companyId') ?? '');
+  const res = await authedApi<ApiError>(`${path(companyId)}/bot`, {
+    method: 'PUT',
+    body: { enabled: formData.get('enabled') === 'on', info: String(formData.get('info') ?? '') },
+  });
+  if (!res.ok) return { ok: false, error: errorText(res.data, 'No se pudo guardar el asistente.') };
+  revalidatePath(page(companyId), 'layout');
+  return { ok: true };
 }
 
 export async function syncWaTemplatesAction(formData: FormData) {

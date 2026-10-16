@@ -11,6 +11,7 @@ const nav = [
   { href: '/admin/paquetes', label: 'Paquetes' },
   { href: '/admin/portafolio', label: 'Portafolio' },
   { href: '/admin/sitios', label: 'Sitios' },
+  { href: '/admin/fidelizacion', label: 'Fidelización' },
   { href: '/admin/empresas', label: 'Empresas' },
   { href: '/admin/modulos', label: 'Precios' },
 ];

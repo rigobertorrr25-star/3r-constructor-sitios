@@ -21,6 +21,9 @@ services:
         value: "30"
       - key: WEB_ORIGIN
         sync: false
+      # Páginas de negocios con tarjeta de sellos, separadas por comas (ej. https://azulcaribelounge.com).
+      - key: LOYALTY_ORIGINS
+        sync: false
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM

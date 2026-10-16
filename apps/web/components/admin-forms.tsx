@@ -4,6 +4,7 @@ import { useActionState } from 'react';
 import {
   createOrderSiteAction,
   publishSiteAction,
+  saveLoyaltyAction,
   renewDomainAction,
   savePackageAction,
   savePortfolioAction,
@@ -14,7 +15,7 @@ import {
   updateOrderAction,
 } from '@/app/actions';
 import { STATUS_LABEL, fromCents } from '@/lib/orders';
-import type { AdminOrderDetail, OrderStatus, Package, PortfolioItem, PublicationStatus, Template } from '@/lib/types';
+import type { AdminOrderDetail, LoyaltyProgram, OrderStatus, Package, PortfolioItem, PublicationStatus, Template } from '@/lib/types';
 import { CheckField, Field, SelectField, TextAreaField } from './field';
 import { Alert } from './shop';
 import { SubmitButton } from './submit-button';
@@ -306,6 +307,76 @@ export function PortfolioForm({ item }: { item?: PortfolioItem }) {
       {state?.ok ? <Alert tone="ok">Guardado.</Alert> : null}
       <div className="sm:w-[220px]">
         <SubmitButton pendingText="Guardando…">{isNew ? 'Agregar ejemplo' : 'Guardar cambios'}</SubmitButton>
+      </div>
+    </form>
+  );
+}
+
+const rewardsText = (program?: LoyaltyProgram) =>
+  program ? program.rewards.map((r) => `${r.at}: ${r.label}`).join('\n') : '4: 20 % de descuento\n7: Café gratis\n10: Cóctel gratis';
+
+/** Programa de la tarjeta de sellos de un negocio. La clave del dueño solo se escribe; nunca se muestra. */
+export function LoyaltyProgramForm({ program }: { program?: LoyaltyProgram }) {
+  const [state, action] = useActionState(saveLoyaltyAction, undefined);
+  const v = state?.values;
+  const isNew = !program;
+  return (
+    <form action={action} className="space-y-5">
+      {program ? <input type="hidden" name="programId" value={program.id} /> : null}
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Nombre del negocio" name="name" required minLength={2} maxLength={120} defaultValue={v?.name ?? program?.name} placeholder="Azul Caribe Lounge" />
+        {isNew ? (
+          <Field
+            label="Identificador"
+            name="slug"
+            required
+            maxLength={60}
+            pattern="[a-z0-9]+(-[a-z0-9]+)*"
+            defaultValue={v?.slug}
+            placeholder="azul-caribe"
+            hint="Minúsculas y guiones. Va en la página de la tarjeta y no se puede cambiar después."
+          />
+        ) : (
+          <Field label="Identificador" name="slugShown" defaultValue={program.slug} disabled hint="No se puede cambiar." />
+        )}
+      </div>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Sellos para completar la tarjeta" name="goal" type="number" required min={2} max={50} defaultValue={v?.goal ?? program?.goal ?? 10} />
+        <Field
+          label="Horas mínimas entre sellos"
+          name="cooldownHours"
+          type="number"
+          required
+          min={0}
+          max={168}
+          step="0.5"
+          defaultValue={v?.cooldownHours ?? (program ? program.cooldownMinutes / 60 : 3)}
+          hint="0 = sin espera (solo para pruebas)."
+        />
+      </div>
+      <TextAreaField
+        label="Premios, uno por línea"
+        name="rewards"
+        required
+        rows={4}
+        defaultValue={v?.rewards ?? rewardsText(program)}
+        hint="Sello: premio. El último premio va en el último sello."
+      />
+      <Field
+        label={isNew ? 'Clave del dueño' : 'Clave nueva del dueño (opcional)'}
+        name="ownerKey"
+        type="password"
+        autoComplete="new-password"
+        required={isNew}
+        minLength={8}
+        maxLength={200}
+        hint={isNew ? 'Con esta clave el dueño entra a su panel. Mínimo 8 caracteres.' : 'Déjala vacía para no cambiarla.'}
+      />
+      {program ? <CheckField name="isActive" label="Programa activo" defaultChecked={v ? v.isActive === 'on' : program.isActive} /> : null}
+      {state?.error ? <Alert>{state.error}</Alert> : null}
+      {state?.ok ? <Alert tone="ok">Guardado.</Alert> : null}
+      <div className="sm:w-[220px]">
+        <SubmitButton pendingText="Guardando…">{isNew ? 'Crear programa' : 'Guardar cambios'}</SubmitButton>
       </div>
     </form>
   );

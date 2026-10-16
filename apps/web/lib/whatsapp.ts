@@ -8,6 +8,8 @@ export type WaMessage = {
   status: 'received' | 'sent' | 'delivered' | 'read' | 'failed';
   error: string | null;
   sentById: string | null;
+  /** Lo escribió el asistente con IA. */
+  bot: boolean;
   createdAt: string;
 };
 export type WaConversation = {
@@ -20,15 +22,19 @@ export type WaConversation = {
   unread: number;
   assignedMemberId: string | null;
   status: 'open' | 'closed';
+  /** El asistente no responde aquí: la tomó una persona o él la pasó al equipo. */
+  botPaused: boolean;
   canReply: boolean;
 };
 export type WaTemplate = { id: string; name: string; language: string; body: string; params: number };
 export type WaOverview = {
   connected: boolean;
   account: { displayPhone: string; status: string } | null;
+  /** available: hay IA activada en el servidor. */
+  bot: { available: boolean; enabled: boolean; info: string };
   canManage: boolean;
   meId: string;
-  conversations: (WaConversation & { last: { body: string; direction: 'in' | 'out' } | null })[];
+  conversations: (WaConversation & { last: { body: string; direction: 'in' | 'out'; bot: boolean } | null })[];
   templates: WaTemplate[];
   members: { id: string; name: string }[];
 };

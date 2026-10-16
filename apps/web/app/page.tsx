@@ -8,12 +8,17 @@ import {
   DevicesIcon,
   GlobeIcon,
   HistoryIcon,
+  ImageIcon,
   InstagramIcon,
+  MegaphoneIcon,
   PhoneIcon,
   PointerIcon,
   QrIcon,
   SearchIcon,
   SheetIcon,
+  PlayIcon,
+  SparkIcon,
+  StarIcon,
   ShoppingBagIcon,
   TemplateIcon,
   UtensilsIcon,
@@ -24,15 +29,30 @@ import { Reveal } from '@/components/reveal';
 import { SpotlightCard } from '@/components/spotlight-card';
 import { whatsappLink } from '@/components/whatsapp-button';
 import { currentUserOrNull, rawApi } from '@/lib/api';
-import { ATTENDANCE_PRICE, ATTENDANCE_SETUP, ATTENDANCE_SETUP_WITH_PAGE } from '@/lib/services';
+import { ATTENDANCE_PRICE, ATTENDANCE_SETUP, ATTENDANCE_SETUP_WITH_PAGE, READY_MADE, SERVICES, type ServiceKey } from '@/lib/services';
 import { PackageGrid } from '@/components/package-grid';
 import type { CurrentUser, Package, PortfolioItem } from '@/lib/types';
 
 const steps = [
-  { n: '1', title: 'Elige tu paquete', text: 'Compara lo que incluye cada uno y escoge el que va con tu negocio.' },
-  { n: '2', title: 'Cuéntanos de tu negocio', text: 'Llenas un formulario corto: a qué te dedicas, qué quieres mostrar y cómo te gustaría verte.' },
-  { n: '3', title: 'Recibe tu página', text: 'Nosotros la diseñamos y la construimos. Sigues el avance desde tu cuenta y pides cambios cuando quieras.' },
+  { n: '1', title: 'Elige lo que necesitas', text: 'Un paquete de página, un menú con QR, tu tienda o el contenido de tus redes. Si no sabes cuál, te ayudamos.' },
+  { n: '2', title: 'Escríbenos por WhatsApp', text: 'Nos cuentas de tu negocio y te respondemos qué incluye, cuánto tarda y el precio final, sin compromiso.' },
+  { n: '3', title: 'Recibe tu proyecto', text: 'Lo diseñamos y lo construimos. Te mandamos avances por WhatsApp y ajustamos hasta que te guste.' },
 ];
+
+// Ícono y tono de cada servicio (los textos y precios están en lib/services.ts).
+const serviceLook: Record<ServiceKey, { hue: number; icon: ReactNode }> = {
+  chatbot: { hue: 150, icon: <ChatIcon /> },
+  loyalty: { hue: 88, icon: <SparkIcon /> },
+  menu: { hue: 25, icon: <QrIcon /> },
+  restaurant: { hue: 200, icon: <UtensilsIcon /> },
+  store: { hue: 120, icon: <ShoppingBagIcon /> },
+  social: { hue: 330, icon: <MegaphoneIcon /> },
+  design: { hue: 275, icon: <ImageIcon /> },
+  video: { hue: 0, icon: <PlayIcon /> },
+  brand: { hue: 50, icon: <TemplateIcon /> },
+  google: { hue: 240, icon: <StarIcon /> },
+  domain: { hue: 175, icon: <GlobeIcon /> },
+};
 
 const industries: { hue: number; icon: ReactNode; title: string; text: string }[] = [
   { hue: 25, icon: <UtensilsIcon />, title: 'Restaurantes y cafés', text: 'Tu menú, fotos de tus platos, ubicación y un botón directo a WhatsApp para pedidos y reservas.' },
@@ -70,14 +90,16 @@ const includes: { hue: number; icon: ReactNode; title: string; text: string }[] 
   { hue: 275, icon: <DevicesIcon />, title: 'Celular y computadora', text: 'Tu página se ve bien en cualquier pantalla, desde el primer día.' },
   { hue: 88, icon: <GlobeIcon />, title: 'Dominio y hosting', text: 'Te ayudamos a conectar tu dominio. Hosting y mantenimiento son opcionales.' },
   { hue: 200, icon: <PointerIcon />, title: 'Tú no tocas nada técnico', text: 'Nosotros nos encargamos de todo. Tú solo revisas y apruebas.' },
-  { hue: 25, icon: <HistoryIcon />, title: 'Seguimiento de tu pedido', text: 'Ves en qué etapa va tu página y hablas con nosotros desde tu cuenta.' },
+  { hue: 25, icon: <HistoryIcon />, title: 'Hablas directo con nosotros', text: 'Todo por WhatsApp: te mandamos avances y nos pides cambios ahí mismo.' },
 ];
 
 const faqs = [
   { q: '¿Cuánto tarda mi página?', a: 'Depende del paquete: cada uno muestra sus días de entrega. Empezamos a trabajar cuando se confirma el pago.' },
-  { q: '¿Cómo pago?', a: 'Al enviar tu pedido te explicamos cómo pagar. No pagas en el momento de pedir.' },
+  { q: '¿Cómo pago?', a: 'Cuando acordamos por WhatsApp lo que necesitas, te pasamos los datos para pagar por transferencia o en línea. Empezamos cuando se confirma el pago.' },
   { q: '¿Qué es la mensualidad?', a: 'Es opcional: mantiene tu página en línea y cubre soporte y pequeños cambios. Puedes decidirlo al pedir o después.' },
-  { q: '¿Puedo pedir cambios?', a: 'Sí. Desde tu pedido nos escribes lo que quieras ajustar y lo vemos contigo.' },
+  { q: '¿Puedo pedir cambios?', a: 'Sí. Nos escribes por WhatsApp lo que quieras ajustar y lo vemos contigo.' },
+  { q: '¿Puedo pedir varias cosas juntas?', a: 'Sí. Por ejemplo tu página, el menú con QR y el contenido de tus redes. Te armamos una sola cotización con todo.' },
+  { q: '¿El menú con QR reemplaza la carta física?', a: 'No del todo: la Superintendencia de Industria y Comercio pide que el cliente también pueda ver los precios en una carta física. El menú digital la complementa y debe tener los mismos precios.' },
   { q: '¿Necesito tener un dominio?', a: 'No. Si todavía no tienes uno, te ayudamos a elegirlo y conectarlo.' },
 ];
 
@@ -121,7 +143,9 @@ async function loadPackages(): Promise<Package[] | null> {
 }
 
 export default async function HomePage() {
-  const [packages, portfolio, user] = await Promise.all([loadPackages(), loadPortfolio(), currentUserOrNull<CurrentUser>()]);
+  const [packages, allWork, user] = await Promise.all([loadPackages(), loadPortfolio(), currentUserOrNull<CurrentUser>()]);
+  // Las páginas de muestra que se venden hechas no van en «Trabajos»: no son de un cliente.
+  const portfolio = allWork.filter((w) => !READY_MADE.some((r) => w.url.replace(/\/$/, '') === r.url.replace(/\/$/, '')));
   const isStaff = user?.roles.includes('ADMIN') || user?.roles.includes('SUPER_ADMIN');
 
   const prices = (packages ?? []).map((p) => p.priceCents / 100);
@@ -129,7 +153,7 @@ export default async function HomePage() {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
     name: '3R',
-    description: 'Diseño y construcción de páginas web a medida para negocios pequeños en Colombia.',
+    description: 'Páginas web a medida, menús digitales con QR, chatbot de WhatsApp con IA, tarjeta de sellos, tiendas en línea, contenido para redes y una plataforma para empresas, para negocios en Colombia.',
     url: 'https://3rpaginas.com',
     telephone: '+573107907194',
     areaServed: 'CO',
@@ -146,41 +170,47 @@ export default async function HomePage() {
             <Logo size={38} />
           </Link>
           <nav aria-label="Principal" className="flex items-center gap-1 sm:gap-2">
-            <a href="#como-funciona" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground md:block">
+            <a href="#como-funciona" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground lg:block">
               Cómo funciona
             </a>
             {portfolio.length > 0 ? (
-              <a href="#trabajos" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground md:block">
+              <a href="#trabajos" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground lg:block">
                 Trabajos
               </a>
             ) : null}
             <a href="#paquetes" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground md:block">
               Paquetes
             </a>
-            <a href="#preguntas" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground lg:block">
-              Preguntas
+            <a href="#servicios" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground md:block">
+              Servicios
             </a>
-            <Link href="/software" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground md:block">
+            <Link href="/software" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground lg:block">
               Para empresas
             </Link>
+            <a href="#preguntas" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground xl:block">
+              Preguntas
+            </a>
+            {/* Sin «Iniciar sesión» por ahora: todo se pide por WhatsApp. El panel sigue en /login para el equipo. */}
             {user ? (
               <Link
                 href={isStaff ? '/admin' : '/dashboard'}
-                className="rounded-full border border-white/[0.08] bg-white/[0.014] px-[17px] py-[8.5px] text-[14.875px] transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+                className="whitespace-nowrap rounded-full border border-white/[0.08] bg-white/[0.014] px-[17px] py-[8.5px] text-[14.875px] transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
               >
                 {isStaff ? 'Administración' : 'Mi cuenta'}
               </Link>
             ) : (
-              <Link
-                href="/login"
-                className="rounded-full border border-white/[0.08] bg-white/[0.014] px-[17px] py-[8.5px] text-[14.875px] transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+              <a
+                href={whatsappLink('Hola, quiero información sobre los servicios de 3R')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="whitespace-nowrap rounded-full border border-white/[0.08] bg-white/[0.014] px-[17px] py-[8.5px] text-[14.875px] transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
               >
-                Iniciar sesión
-              </Link>
+                WhatsApp
+              </a>
             )}
             <a
               href="#paquetes"
-              className="shine inline-flex items-center gap-1.5 rounded-full bg-primary px-[17px] py-[8.5px] text-[14.875px] font-medium text-primary-foreground transition hover:shadow-[var(--shadow-glow)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+              className="shine inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-[17px] py-[8.5px] text-[14.875px] font-medium text-primary-foreground transition hover:shadow-[var(--shadow-glow)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
             >
               Ver paquetes
               <span className="hidden sm:inline-flex">
@@ -215,15 +245,20 @@ export default async function HomePage() {
                 hecha por nosotros
               </h1>
               <p className="rise mt-6 max-w-[560px] text-[17px] leading-[1.55] text-muted-foreground sm:text-[19px]" style={{ animationDelay: '160ms' }}>
-                Tú nos cuentas de tu negocio. Nosotros diseñamos, construimos y publicamos tu página. Sin complicarte con nada técnico.
+                Tú nos cuentas de tu negocio. Nosotros diseñamos, construimos y publicamos tu página, tu menú con QR o tu tienda. Sin complicarte con nada técnico.
               </p>
               <div className="rise mt-8 flex flex-wrap items-center justify-center gap-3 sm:mt-10 lg:justify-start" style={{ animationDelay: '240ms' }}>
                 <a href="#paquetes" className={`${pill} shine bg-primary font-medium text-primary-foreground hover:shadow-[var(--shadow-glow)]`}>
                   Ver paquetes
                   <ArrowRightIcon />
                 </a>
-                <a href="#como-funciona" className={`${pill} border border-white/[0.08] bg-white/[0.014] hover:bg-white/[0.06]`}>
-                  Cómo funciona
+                <a
+                  href={whatsappLink('Hola, quiero una página web para mi negocio')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${pill} border border-white/[0.08] bg-white/[0.014] hover:bg-white/[0.06]`}
+                >
+                  Escríbenos por WhatsApp
                 </a>
               </div>
             </div>
@@ -340,9 +375,12 @@ export default async function HomePage() {
               <h2 id="h-trabajos" className="text-center font-display text-[32px] font-bold tracking-tight text-foreground sm:text-[40px]">
                 Algunos de nuestros trabajos
               </h2>
-              <p className="mx-auto mt-3 max-w-xl text-center text-[16px] text-muted-foreground">Páginas reales de negocios reales. Haz clic para verlas en línea.</p>
+              <p className="mx-auto mt-3 max-w-xl text-center text-[16px] text-muted-foreground">Páginas que hicimos para negocios de Cartagena. Haz clic para verlas en línea.</p>
             </Reveal>
-            <ul className="mt-10 grid grid-cols-1 gap-[17px] sm:grid-cols-2 lg:grid-cols-3">
+            {/* Con 2 o 4 trabajos, dos columnas: en tres quedaría una tarjeta sola en la última fila. */}
+            <ul
+              className={`mx-auto mt-10 grid grid-cols-1 gap-[17px] sm:grid-cols-2 ${portfolio.length === 2 || portfolio.length === 4 ? 'max-w-[900px]' : 'lg:grid-cols-3'}`}
+            >
               {portfolio.map((item, i) => (
                 <Reveal as="li" key={item.id} delayMs={i * 90}>
                   <SpotlightCard
@@ -357,8 +395,21 @@ export default async function HomePage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={item.thumbnailUrl} alt={`Captura de ${item.title}`} loading="lazy" className="size-full object-cover object-top transition duration-500 group-hover:scale-[1.03]" />
                       ) : (
-                        <div className="flex size-full items-center justify-center bg-[radial-gradient(ellipse_at_top_right,#8a9bff40,transparent_60%),radial-gradient(ellipse_at_bottom_left,#ff86db2b,transparent_60%)] px-6 text-center font-display text-[20px] font-semibold text-foreground/90">
-                          {hostOf(item.url)}
+                        // Sin captura todavía: una ventana de navegador con el nombre del negocio, no la dirección suelta.
+                        <div className="flex size-full flex-col bg-[radial-gradient(ellipse_at_top_right,#8a9bff40,transparent_60%),radial-gradient(ellipse_at_bottom_left,#ff86db2b,transparent_60%)] p-4">
+                          <div className="flex items-center gap-2 rounded-full bg-black/30 px-3 py-1.5" aria-hidden="true">
+                            <span className="flex gap-1">
+                              <span className="size-1.5 rounded-full bg-white/25" />
+                              <span className="size-1.5 rounded-full bg-white/25" />
+                              <span className="size-1.5 rounded-full bg-white/25" />
+                            </span>
+                            <span className="truncate text-[12px] text-muted-foreground">{hostOf(item.url)}</span>
+                          </div>
+                          <div className="flex flex-1 items-center justify-center px-4 text-center">
+                            <span className="font-display text-[26px] font-bold leading-tight tracking-tight text-foreground/90 transition duration-500 group-hover:scale-[1.03]">
+                              {item.title}
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -376,6 +427,65 @@ export default async function HomePage() {
             </ul>
           </section>
         ) : null}
+
+        <section id="lista" aria-labelledby="h-lista" className="mx-auto max-w-[1224px] scroll-mt-24 px-4 pb-24 sm:px-[34px]">
+          <Reveal>
+            <h2 id="h-lista" className="text-center font-display text-[32px] font-bold tracking-tight text-foreground sm:text-[40px]">
+              Páginas listas para estrenar
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-center text-[16px] text-muted-foreground">
+              Ya están hechas y probadas: escoges una, le ponemos tu marca y tu menú, y sale en vivo mucho antes que una desde cero.
+            </p>
+          </Reveal>
+          <ul className="mt-10 space-y-[17px]">
+            {READY_MADE.map((r) => (
+              <Reveal as="li" key={r.url}>
+                <div className={`${card} grid overflow-hidden lg:grid-cols-[1.1fr_1fr]`}>
+                  <a href={r.url} target="_blank" rel="noopener noreferrer" className="group relative block aspect-[16/10] overflow-hidden bg-black lg:aspect-auto">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={r.image}
+                      alt={`Página de muestra ${r.title}`}
+                      loading="lazy"
+                      className="size-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                    />
+                    <span className="absolute bottom-4 left-4 rounded-full bg-black/60 px-4 py-2 text-[14px] text-foreground backdrop-blur">
+                      Ver la página en vivo <span aria-hidden="true">↗</span>
+                    </span>
+                  </a>
+                  <div className="flex flex-col p-[26px] sm:p-[34px]">
+                    <p className="text-[12px] uppercase tracking-[0.18em] text-muted-foreground">{r.kind}</p>
+                    <h3 className="mt-2 font-display text-[28px] font-bold tracking-tight text-foreground">{r.title}</h3>
+                    <p className="mt-2 text-[15.5px] leading-[1.55] text-muted-foreground">{r.pitch}</p>
+                    <ul className="mt-5 space-y-2.5">
+                      {r.includes.map((line) => (
+                        <li key={line} className="flex gap-2.5 text-[14.5px] leading-snug text-foreground/90">
+                          <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+                          {line}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-auto pt-6">
+                      <p className="flex items-baseline gap-2">
+                        <span className="font-display text-[30px] font-bold leading-none tracking-tight text-foreground">{r.price}</span>
+                        <span className="text-[14px] text-muted-foreground">pago único, con tu marca</span>
+                      </p>
+                      <p className="mt-2 text-[13.5px] text-muted-foreground">Es una página de muestra: el nombre 3R Burgers se cambia por el de tu negocio.</p>
+                      <a
+                        href={whatsappLink(r.whatsapp)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-[14.875px] font-medium text-primary-foreground transition hover:shadow-[var(--shadow-glow)] sm:w-auto"
+                      >
+                        La quiero para mi negocio <ArrowRightIcon />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </ul>
+        </section>
 
         <section id="paquetes" aria-labelledby="h-paquetes" className="mx-auto max-w-[1224px] scroll-mt-8 px-4 pb-24 sm:px-[34px]">
           <Reveal>
@@ -408,6 +518,64 @@ export default async function HomePage() {
                   </span>
                   <h3 className="mt-5 font-display text-[20px] font-semibold leading-[1.5] text-foreground">{item.title}</h3>
                   <p className="mt-1 text-[15px] leading-[1.45] text-muted-foreground">{item.text}</p>
+                </SpotlightCard>
+              </Reveal>
+            ))}
+          </ul>
+        </section>
+
+        <section id="servicios" aria-labelledby="h-servicios" className="mx-auto max-w-[1224px] scroll-mt-24 px-4 pb-24 sm:px-[34px]">
+          <Reveal>
+            <h2 id="h-servicios" className="text-center font-display text-[32px] font-bold tracking-tight text-foreground sm:text-[40px]">
+              Más de lo que hacemos
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-center text-[16px] text-muted-foreground">
+              Además de tu página: para atender por WhatsApp, para que tus clientes vuelvan, para manejar tu restaurante y para vender por redes.
+              Pídelos solos o junto con tu paquete; los precios son en pesos y ya dicen qué incluye cada uno.
+            </p>
+          </Reveal>
+          {/* 11 servicios: los 2 primeros en mitades y los otros 9 en tercios, sin una tarjeta sola al final. */}
+          <ul className="mt-10 grid grid-cols-1 gap-[17px] md:grid-cols-2 lg:grid-cols-6">
+            {SERVICES.map((svc, i) => (
+              <Reveal as="li" key={svc.key} delayMs={(i % 3) * 90} className={`${i < 2 ? 'lg:col-span-3' : 'lg:col-span-2'} ${i === SERVICES.length - 1 ? 'md:col-span-2' : ''}`}>
+                <SpotlightCard className={`${card} group flex h-full flex-col p-[26px] transition duration-300 hover:-translate-y-1 hover:border-white/[0.18]`}>
+                  <span
+                    className="flex size-[43px] items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110"
+                    style={{ backgroundColor: `oklch(0.3 0.12 ${serviceLook[svc.key].hue} / 0.5)`, color: `oklch(0.92 0.08 ${serviceLook[svc.key].hue})` }}
+                  >
+                    {serviceLook[svc.key].icon}
+                  </span>
+                  <h3 className="mt-5 font-display text-[21px] font-semibold text-foreground">{svc.title}</h3>
+                  <p className="mt-2 text-[15px] leading-[1.5] text-muted-foreground">{svc.pitch}</p>
+                  <ul className="mt-5 flex-1 space-y-2.5">
+                    {svc.includes.map((line) => (
+                      <li key={line} className="flex items-start gap-2.5 text-[14.5px] leading-snug text-foreground/90">
+                        <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-6 border-t border-white/[0.06] pt-5">
+                    <p className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="font-display text-[30px] font-bold leading-none tracking-tight text-foreground">{svc.price}</span>
+                      <span className="text-[14px] text-muted-foreground">{svc.priceNote}</span>
+                    </p>
+                    {svc.extra ? <p className="mt-2 text-[13.5px] leading-snug text-muted-foreground">{svc.extra}</p> : null}
+                    <a
+                      href={whatsappLink(svc.whatsapp)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${pill} shine mt-5 w-full border border-white/[0.12] hover:bg-white/[0.06]`}
+                    >
+                      Pedir por WhatsApp
+                      <ArrowRightIcon />
+                    </a>
+                    {svc.more ? (
+                      <Link href={svc.more.href} className="mt-3 block text-center text-[14px] text-primary hover:underline">
+                        {svc.more.label} →
+                      </Link>
+                    ) : null}
+                  </div>
                 </SpotlightCard>
               </Reveal>
             ))}
@@ -519,11 +687,21 @@ export default async function HomePage() {
           </div>
           <Reveal className="relative mx-auto max-w-[816px] text-center">
             <h2 className="font-display text-[32px] font-bold tracking-tight text-foreground sm:text-[40px]">¿Listo para tener tu página?</h2>
-            <p className="mx-auto mt-3 max-w-lg text-[16px] text-muted-foreground">Elige un paquete y cuéntanos de tu negocio. Nosotros nos encargamos del resto.</p>
-            <a href="#paquetes" className={`${pill} shine mt-8 bg-primary font-medium text-primary-foreground hover:shadow-[var(--shadow-glow)]`}>
-              Ver paquetes
-              <ArrowRightIcon />
-            </a>
+            <p className="mx-auto mt-3 max-w-lg text-[16px] text-muted-foreground">Escríbenos por WhatsApp y cuéntanos de tu negocio. Nosotros nos encargamos del resto.</p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <a
+                href={whatsappLink('Hola, quiero una página web para mi negocio')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${pill} shine bg-primary font-medium text-primary-foreground hover:shadow-[var(--shadow-glow)]`}
+              >
+                Escríbenos por WhatsApp
+                <ArrowRightIcon />
+              </a>
+              <a href="#paquetes" className={`${pill} border border-white/[0.08] bg-white/[0.014] hover:bg-white/[0.06]`}>
+                Ver paquetes
+              </a>
+            </div>
             <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[13.5px] text-muted-foreground">
               {['Sin compromiso al escribirnos', 'Hecha a tu medida', 'En línea cuando esté lista'].map((text) => (
                 <li key={text} className="flex items-center gap-1.5">
@@ -539,7 +717,8 @@ export default async function HomePage() {
       </main>
 
       <footer className="mx-auto w-full max-w-[1224px] px-4 sm:px-[34px]">
-        <div className="flex flex-col items-center gap-4 border-t border-white/[0.06] py-8 text-center text-sm text-muted-foreground">
+        {/* En celular, espacio abajo para que la mascota flotante no tape el pie. */}
+        <div className="flex flex-col items-center gap-4 border-t border-white/[0.06] pt-8 pb-24 text-center text-sm text-muted-foreground sm:pb-8">
           <a
             href={INSTAGRAM_URL}
             target="_blank"

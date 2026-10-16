@@ -268,3 +268,32 @@ export const ShieldIcon = (p: IconProps) => (
     <path d="m9 12 2 2 4-4" />
   </Icon>
 );
+
+export const ImageIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="3" />
+    <circle cx="9" cy="9" r="1.5" />
+    <path d="m21 15-4.5-4.5L6 21" />
+  </Icon>
+);
+
+export const MegaphoneIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1Z" />
+    <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+    <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+  </Icon>
+);
+
+export const PlayIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="3" />
+    <path d="m10 9 5 3-5 3V9Z" />
+  </Icon>
+);
+
+export const StarIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9L12 3.5Z" />
+  </Icon>
+);
