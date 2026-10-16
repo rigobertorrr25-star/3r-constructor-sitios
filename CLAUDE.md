@@ -25,6 +25,15 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   CHATBOT/SELLOS → mensaje privado con precios y enlace, una vez al día por persona); Rigoberto las prende. Datos de la cuenta
   (16 oct): 3.961 seguidores, mediana 57 vistas por reel, mejor reel 3R Burgers (495). Siguiente: enero 2027. Rigoberto
   programa en Meta Business Suite.
+  **Contenido grabado de verdad** (16 oct 2026, pedido de Rigoberto: «que no se vea IA»): `marketing/instagram/2026-10/`
+  (4 reels 1080x1920 grabados de las páginas reales —Azul Caribe en 4 idiomas, 3R Burgers, tarjeta de sellos, pedido en
+  Fidelio— y un carrusel de capturas reales; `publicaciones.json` con fecha, hora y texto, sin numerales ni signo de
+  porcentaje). Se hicieron con Playwright (screencast del celular) + ffmpeg, textos estilo Instagram. Instagram está
+  conectado por Composio (IG user 17841455473211605): se probó crear un contenedor sin publicar y quedó FINISHED (subir
+  el archivo con upload_local_file y pasar video_file/s3key; la URL raw de GitHub llega como octet-stream). Publicar solo a
+  una hora quedó bloqueado por el sistema de seguridad (rutinas sin conectores; recordatorios negados): Rigoberto programa
+  en Meta Business Suite o pide publicar en el momento. El reel del chatbot no se grabó: aquí no hay IA real ni WhatsApp
+  conectado y no se finge.
 - Instagram de 3R: https://www.instagram.com/3r.paginas_/ (en el pie de la portada y en los datos para Google).
 - Precios de los paquetes: ya confirmados por Rigoberto en `/admin/paquetes`.
 - Dominio propio del cliente: $50.000 al año (`DOMAIN_ADDON_CENTS`); el pedido cobra el primer año. La renovación
