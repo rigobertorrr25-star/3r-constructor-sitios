@@ -21,8 +21,8 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   **Plan de ventas 17 oct – 15 nov 2026** (reemplaza el segundo paquete en esas fechas; hecho con datos de Chatplace):
   https://claude.ai/artifact/KF4eeSwkMd63iUBhe4j1su (13 publicaciones mar/jue/sáb 7 p. m., historias diarias, comparación con
   la competencia, bio nueva). Chatplace está conectado al Instagram (bot «3Rpaginas»); su saldo de IA está en 0, así que no
-  analiza competencia ni genera contenido. Ahí quedaron 3 automatizaciones de comentario/mensaje **en pausa** (PRECIOS, BURGER,
-  CHATBOT/SELLOS → mensaje privado con precios y enlace, una vez al día por persona); Rigoberto las prende. Datos de la cuenta
+  analiza competencia ni genera contenido. Ahí hay 3 automatizaciones de comentario/mensaje, **prendidas el 16 oct 2026** (PRECIOS, BURGER,
+  CHATBOT/SELLOS → mensaje privado con precios y enlace, una vez al día por persona). Datos de la cuenta
   (16 oct): 3.961 seguidores, mediana 57 vistas por reel, mejor reel 3R Burgers (495). Siguiente: enero 2027. Rigoberto
   programa en Meta Business Suite.
   **Contenido grabado de verdad** (16 oct 2026, pedido de Rigoberto: «que no se vea IA»): `marketing/instagram/2026-10/`
@@ -35,7 +35,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   en Meta Business Suite o pide publicar en el momento. El reel del chatbot no se grabó: aquí no hay IA real ni WhatsApp
   conectado y no se finge. La primera edición (cajitas de texto, lenta, sin música) **no le gustó a Rigoberto**; la segunda
   (misma carpeta) es estilo TikTok: cortes al ritmo de 124 BPM, celular inclinado sobre fondo desenfocado, zooms, textos Sora
-  800 en mayúsculas con borde y rebote, música original por código. Después (16 oct) se sumaron 8 piezas más en el mismo estilo, del 29 oct al 14 nov (r6 Caprichos, r7 carta de Azul en Halloween, r8 y r12 Restaurant Control con «Bar La Ola (demo)», r9 manual de marca de Azul —pedir permiso a Azul antes—, r10 asistencia con «Café La Bahía (demo)», r11 reseñas en Google, c13 carrusel de precios): 13 piezas en total en `publicaciones.json`. Herramientas en el scratchpad de la sesión (tk/editor.html,
+  800 en mayúsculas con borde y rebote, música original por código. **A Rigoberto le gustó este estilo (16 oct 2026): usarlo en el contenido que sigue (enero 2027).** Después (16 oct) se sumaron 8 piezas más en el mismo estilo, del 29 oct al 14 nov (r6 Caprichos, r7 carta de Azul en Halloween, r8 y r12 Restaurant Control con «Bar La Ola (demo)», r9 manual de marca de Azul —pedir permiso a Azul antes—, r10 asistencia con «Café La Bahía (demo)», r11 reseñas en Google, c13 carrusel de precios): 13 piezas en total en `publicaciones.json`. Herramientas en el scratchpad de la sesión (tk/editor.html,
   render.mjs, beat.py); si se pierden, rehacerlas así.
 - Instagram de 3R: https://www.instagram.com/3r.paginas_/ (en el pie de la portada y en los datos para Google).
 - Precios de los paquetes: ya confirmados por Rigoberto en `/admin/paquetes`.
