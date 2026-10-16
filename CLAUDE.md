@@ -33,7 +33,10 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   el archivo con upload_local_file y pasar video_file/s3key; la URL raw de GitHub llega como octet-stream). Publicar solo a
   una hora quedó bloqueado por el sistema de seguridad (rutinas sin conectores; recordatorios negados): Rigoberto programa
   en Meta Business Suite o pide publicar en el momento. El reel del chatbot no se grabó: aquí no hay IA real ni WhatsApp
-  conectado y no se finge.
+  conectado y no se finge. La primera edición (cajitas de texto, lenta, sin música) **no le gustó a Rigoberto**; la segunda
+  (misma carpeta) es estilo TikTok: cortes al ritmo de 124 BPM, celular inclinado sobre fondo desenfocado, zooms, textos Sora
+  800 en mayúsculas con borde y rebote, música original por código. Herramientas en el scratchpad de la sesión (tk/editor.html,
+  render.mjs, beat.py); si se pierden, rehacerlas así.
 - Instagram de 3R: https://www.instagram.com/3r.paginas_/ (en el pie de la portada y en los datos para Google).
 - Precios de los paquetes: ya confirmados por Rigoberto en `/admin/paquetes`.
 - Dominio propio del cliente: $50.000 al año (`DOMAIN_ADDON_CENTS`); el pedido cobra el primer año. La renovación
