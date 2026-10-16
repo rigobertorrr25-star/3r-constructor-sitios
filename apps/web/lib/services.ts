@@ -10,9 +10,9 @@ export const ATTENDANCE_SETUP_WITH_PAGE = '$150.000';
  * Precios en un solo lugar para cambiarlos fácil. Se fijaron el 16 oct 2026 mirando el mercado colombiano:
  * menús QR en apps desde $20.000–$80.000/mes; manejo de redes freelance $600.000–$2.500.000/mes; post suelto
  * desde ~$40.000 y flyer $200.000–$450.000; tienda virtual básica $1.500.000–$2.500.000; CRM en dólares, ~$50.000–$100.000 por
- * usuario al mes. 3R se ubica en la parte baja-media del rango: cliente pequeño, trato directo.
+ * usuario al mes; tarjetas de sellos en apps (en dólares) ~$66.000–$140.000/mes. 3R se ubica en la parte baja-media del rango: cliente pequeño, trato directo.
  */
-export type ServiceKey = 'menu' | 'store' | 'social' | 'design' | 'domain';
+export type ServiceKey = 'menu' | 'loyalty' | 'restaurant' | 'store' | 'social' | 'design' | 'domain';
 export type Service = {
   key: ServiceKey;
   title: string;
@@ -24,6 +24,8 @@ export type Service = {
   priceNote: string;
   extra?: string;
   whatsapp: string;
+  /** Página con más detalle, si la hay. */
+  more?: { href: string; label: string };
 };
 
 export const SERVICES: Service[] = [
@@ -41,6 +43,37 @@ export const SERVICES: Service[] = [
     priceNote: 'pago único',
     extra: 'Cambios de platos y precios cuando quieras: $40.000 al mes (opcional).',
     whatsapp: 'Hola, quiero un menú digital con QR para mi negocio',
+  },
+  {
+    key: 'loyalty',
+    title: 'Tarjeta de sellos con QR',
+    pitch: 'Para que el cliente vuelva: cada visita suma un sello en su celular y al completar gana su premio.',
+    includes: [
+      'El cliente se registra con su celular, sin bajar ninguna aplicación',
+      'Escanea el QR del local y el mesero le pone el sello con su código',
+      'Premios que tú escoges (por ejemplo: 4 sellos 10 % de descuento, 7 un café, 10 un cóctel)',
+      'Panel del dueño: clientes, sellos puestos, quién los puso y premios canjeados',
+    ],
+    price: '$69.000',
+    priceNote: 'al mes',
+    extra: 'Instalación con el QR para la tablet del local: $150.000.',
+    whatsapp: 'Hola, quiero la tarjeta de sellos con QR para que mis clientes vuelvan',
+  },
+  {
+    key: 'restaurant',
+    title: 'Restaurant Control',
+    pitch: 'El sistema para manejar tu restaurante o bar: mesas, pedidos, cocina, caja e inventario.',
+    includes: [
+      'Plano de mesas: el mesero toma el pedido desde el celular',
+      'Comandas impresas o en pantalla para cocina y barra',
+      'Caja, cierre de turno y cuenta de cada mesero',
+      'Inventario que se descuenta solo con cada venta y avisa qué se está acabando',
+    ],
+    price: '$119.000',
+    priceNote: 'desde, al mes por sede',
+    extra: 'Instalación: $350.000, o $200.000 si también haces tu página con nosotros.',
+    whatsapp: 'Hola, quiero Restaurant Control para mi restaurante',
+    more: { href: '/software#restaurantes', label: 'Ver planes' },
   },
   {
     key: 'store',
@@ -94,60 +127,5 @@ export const SERVICES: Service[] = [
     price: '$50.000',
     priceNote: 'al año',
     whatsapp: 'Hola, quiero un dominio propio para mi negocio',
-  },
-];
-
-/*
- * La plataforma para empresas (los módulos de /empresa). Precio por empresa, no por usuario: un CRM o un
- * sistema de personal en el mercado cobra por cada persona y casi siempre en dólares.
- */
-export type PlatformPlan = { key: string; title: string; pitch: string; modules: string[]; price: string; featured?: boolean; whatsapp: string };
-
-export const PLATFORM_SETUP = '$300.000';
-
-export const PLATFORM_PLANS: PlatformPlan[] = [
-  {
-    key: 'clientes',
-    title: 'Clientes y ventas',
-    pitch: 'Para no perder a nadie que te pidió precio y vender más a los que ya te compraron.',
-    modules: [
-      'CRM: cada cliente con su historial y en qué va (nuevo, cotización, ganado)',
-      'Cotizaciones con enlace: tu cliente acepta o pide cambios desde el celular',
-      'Correos de promoción a tus clientes, solo a quien aceptó recibirlos',
-      'Encuestas de satisfacción y preguntas frecuentes para tus clientes',
-      'Avisos cuando algo necesita tu atención',
-    ],
-    price: '$190.000',
-    whatsapp: 'Hola, me interesa el plan Clientes y ventas de la plataforma para mi empresa',
-  },
-  {
-    key: 'equipo',
-    title: 'Tu equipo',
-    pitch: 'Todo lo de tus empleados en un solo lugar, sin hojas de Excel ni papeles perdidos.',
-    modules: [
-      'Ficha de cada empleado: cargo, contrato, contacto de emergencia',
-      'Permisos y vacaciones: el empleado pide, el jefe aprueba',
-      'Documentos privados y certificados laborales en PDF con un clic',
-      'Comunicados, calendario y cumpleaños del equipo',
-      'Capacitaciones con evaluación y certificado',
-      'Inventario y equipos entregados a cada persona',
-    ],
-    price: '$190.000',
-    whatsapp: 'Hola, me interesa el plan Tu equipo de la plataforma para mi empresa',
-  },
-  {
-    key: 'completo',
-    title: 'Empresa completa',
-    pitch: 'Los dos planes juntos, más tu tienda, tu página y la ayuda de la inteligencia artificial.',
-    modules: [
-      'Todo lo de Clientes y ventas y Tu equipo',
-      'Tienda en línea y página web que tú mismo actualizas',
-      'Visitas de tu página y revisión para salir en Google',
-      'Automatizaciones: si entra un pedido grande, te avisa y crea la tarea',
-      'Asistente con IA que responde con tus manuales, y textos para tus redes',
-    ],
-    price: '$390.000',
-    featured: true,
-    whatsapp: 'Hola, me interesa el plan Empresa completa de la plataforma',
   },
 ];

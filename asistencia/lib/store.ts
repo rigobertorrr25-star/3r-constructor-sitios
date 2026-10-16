@@ -386,6 +386,41 @@ export async function updateRecord(businessId: string, recordId: string, clockIn
   });
 }
 
+/**
+ * Jornada agregada a mano por el administrador: alguien vino y no marcó. Queda como "corregida a mano" y con
+ * rastro en record_changes. No puede ser en el futuro ni cruzarse con otra jornada del mismo empleado.
+ */
+export async function createRecord(businessId: string, employeeId: string, clockIn: Date, clockOut: Date, now = new Date()) {
+  if (!isUuid(businessId) || !isUuid(employeeId)) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
+  if (Number.isNaN(clockIn.getTime()) || Number.isNaN(clockOut.getTime())) throw new AppError('INVALID', 'errTimes');
+  if (clockOut <= clockIn) throw new AppError('INVALID', 'errExitBeforeEntry');
+  if (clockOut.getTime() - clockIn.getTime() > MAX_SHIFT_MS) throw new AppError('INVALID', 'errShiftTooLong');
+  if (clockOut > now) throw new AppError('INVALID', 'errFutureRecord');
+  return transaction(async (client) => {
+    // Bloquea al empleado: así una marcación al mismo tiempo no se cruza con esta.
+    const employee = (
+      await client.query<{ id: string }>('SELECT id FROM employees WHERE id = $1 AND business_id = $2 FOR UPDATE', [employeeId, businessId])
+    ).rows[0];
+    if (!employee) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
+    const overlap = await client.query(
+      `SELECT 1 FROM records
+        WHERE employee_id = $1 AND clock_in < $3 AND COALESCE(clock_out, clock_in + interval '16 hours') > $2
+        LIMIT 1`,
+      [employeeId, clockIn, clockOut],
+    );
+    if (overlap.rowCount) throw new AppError('INVALID', 'errRecordOverlap');
+    const { rows } = await client.query<{ id: string }>(
+      'INSERT INTO records (business_id, employee_id, clock_in, clock_out, edited_at) VALUES ($1, $2, $3, $4, now()) RETURNING id',
+      [businessId, employeeId, clockIn, clockOut],
+    );
+    await client.query("INSERT INTO record_changes (record_id, action, before) VALUES ($1, 'added', $2)", [
+      rows[0].id,
+      { employeeId, clockIn: clockIn.toISOString(), clockOut: clockOut.toISOString() },
+    ]);
+    return rows[0].id;
+  });
+}
+
 export async function deleteRecord(businessId: string, recordId: string) {
   await transaction(async (client) => {
     const before = await lockRecord(client, businessId, recordId);

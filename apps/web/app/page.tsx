@@ -3,7 +3,6 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import {
   ArrowRightIcon,
-  BriefcaseIcon,
   ChatIcon,
   ClockIcon,
   DevicesIcon,
@@ -17,9 +16,9 @@ import {
   QrIcon,
   SearchIcon,
   SheetIcon,
+  SparkIcon,
   ShoppingBagIcon,
   TemplateIcon,
-  UsersIcon,
   UtensilsIcon,
 } from '@/components/icons';
 import { Logo } from '@/components/logo';
@@ -28,7 +27,7 @@ import { Reveal } from '@/components/reveal';
 import { SpotlightCard } from '@/components/spotlight-card';
 import { whatsappLink } from '@/components/whatsapp-button';
 import { currentUserOrNull, rawApi } from '@/lib/api';
-import { ATTENDANCE_PRICE, ATTENDANCE_SETUP, ATTENDANCE_SETUP_WITH_PAGE, PLATFORM_PLANS, PLATFORM_SETUP, SERVICES, type ServiceKey } from '@/lib/services';
+import { ATTENDANCE_PRICE, ATTENDANCE_SETUP, ATTENDANCE_SETUP_WITH_PAGE, SERVICES, type ServiceKey } from '@/lib/services';
 import { PackageGrid } from '@/components/package-grid';
 import type { CurrentUser, Package, PortfolioItem } from '@/lib/types';
 
@@ -41,12 +40,13 @@ const steps = [
 // Ícono y tono de cada servicio (los textos y precios están en lib/services.ts).
 const serviceLook: Record<ServiceKey, { hue: number; icon: ReactNode }> = {
   menu: { hue: 25, icon: <QrIcon /> },
-  store: { hue: 150, icon: <ShoppingBagIcon /> },
+  loyalty: { hue: 88, icon: <SparkIcon /> },
+  restaurant: { hue: 200, icon: <UtensilsIcon /> },
+  store: { hue: 120, icon: <ShoppingBagIcon /> },
   social: { hue: 330, icon: <MegaphoneIcon /> },
   design: { hue: 275, icon: <ImageIcon /> },
-  domain: { hue: 88, icon: <GlobeIcon /> },
+  domain: { hue: 150, icon: <GlobeIcon /> },
 };
-const planLook: Record<string, ReactNode> = { clientes: <ChatIcon />, equipo: <UsersIcon />, completo: <BriefcaseIcon /> };
 
 const industries: { hue: number; icon: ReactNode; title: string; text: string }[] = [
   { hue: 25, icon: <UtensilsIcon />, title: 'Restaurantes y cafés', text: 'Tu menú, fotos de tus platos, ubicación y un botón directo a WhatsApp para pedidos y reservas.' },
@@ -176,9 +176,9 @@ export default async function HomePage() {
             <a href="#servicios" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground md:block">
               Servicios
             </a>
-            <a href="#empresas" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground xl:block">
+            <Link href="/software" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground lg:block">
               Para empresas
-            </a>
+            </Link>
             <a href="#preguntas" className="hidden rounded-full px-4 py-2 text-[14.875px] text-muted-foreground transition hover:text-foreground xl:block">
               Preguntas
             </a>
@@ -463,10 +463,11 @@ export default async function HomePage() {
               Más de lo que hacemos
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-center text-[16px] text-muted-foreground">
-              Además de tu página. Pídelos solos o junto con tu paquete; los precios son en pesos y ya te dicen qué incluye cada uno.
+              Además de tu página: para que tus clientes vuelvan, para manejar tu restaurante y para vender por redes. Pídelos solos o junto con tu
+              paquete; los precios son en pesos y ya dicen qué incluye cada uno.
             </p>
           </Reveal>
-          {/* 5 servicios: los 3 primeros en tercios y los 2 últimos en mitades, sin una tarjeta sola al final. */}
+          {/* 7 servicios: los 3 de restaurantes en tercios y los otros 4 en mitades, sin una tarjeta sola al final. */}
           <ul className="mt-10 grid grid-cols-1 gap-[17px] md:grid-cols-2 lg:grid-cols-6">
             {SERVICES.map((svc, i) => (
               <Reveal as="li" key={svc.key} delayMs={(i % 3) * 90} className={i < 3 ? 'lg:col-span-2' : 'lg:col-span-3'}>
@@ -502,68 +503,16 @@ export default async function HomePage() {
                       Pedir por WhatsApp
                       <ArrowRightIcon />
                     </a>
+                    {svc.more ? (
+                      <Link href={svc.more.href} className="mt-3 block text-center text-[14px] text-primary hover:underline">
+                        {svc.more.label} →
+                      </Link>
+                    ) : null}
                   </div>
                 </SpotlightCard>
               </Reveal>
             ))}
           </ul>
-        </section>
-
-        <section id="empresas" aria-labelledby="h-empresas" className="mx-auto max-w-[1224px] scroll-mt-24 px-4 pb-24 sm:px-[34px]">
-          <Reveal>
-            <h2 id="h-empresas" className="mx-auto max-w-[760px] text-center font-display text-[32px] font-bold leading-[1.2] tracking-tight text-foreground sm:text-[40px]">
-              Tu empresa en orden, <span className="text-spectrum">en una sola plataforma</span>
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-center text-[16px] text-muted-foreground">
-              Clientes, cotizaciones, empleados, permisos, inventario y tu tienda, en español y en pesos. Pagas por empresa, no por cada
-              persona que lo usa, y nosotros lo dejamos configurado con tus datos.
-            </p>
-          </Reveal>
-          <ul className="mt-10 grid grid-cols-1 gap-[17px] lg:grid-cols-3">
-            {PLATFORM_PLANS.map((plan, i) => (
-              <Reveal as="li" key={plan.key} delayMs={i * 110} className="h-full">
-                <SpotlightCard
-                  className={`relative flex h-full flex-col rounded-[32px] border bg-card p-[26px] shadow-[var(--shadow-glass)] transition duration-300 hover:-translate-y-1 ${
-                    plan.featured ? 'pulse-glow border-primary/60' : 'border-white/[0.08] hover:border-white/[0.18]'
-                  }`}
-                >
-                  {plan.featured ? (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3.5 py-1 text-[12px] font-semibold text-primary-foreground">
-                      Todo incluido
-                    </span>
-                  ) : null}
-                  <span className="flex size-[43px] items-center justify-center rounded-full bg-primary/15 text-primary">{planLook[plan.key]}</span>
-                  <h3 className="mt-5 font-display text-[22px] font-semibold text-foreground">{plan.title}</h3>
-                  <p className="mt-1.5 text-[14.5px] leading-snug text-muted-foreground">{plan.pitch}</p>
-                  <p className="mt-6 flex items-baseline gap-2">
-                    <span className="font-display text-[38px] font-bold leading-none tracking-tight text-foreground">{plan.price}</span>
-                    <span className="text-[14px] text-muted-foreground">al mes</span>
-                  </p>
-                  <ul className="mt-6 flex-1 space-y-2.5">
-                    {plan.modules.map((line) => (
-                      <li key={line} className="flex items-start gap-2.5 text-[14.5px] leading-snug text-foreground/90">
-                        <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
-                        {line}
-                      </li>
-                    ))}
-                  </ul>
-                  <a
-                    href={whatsappLink(plan.whatsapp)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`${pill} shine mt-8 ${plan.featured ? 'bg-primary font-medium text-primary-foreground hover:shadow-[var(--shadow-glow)]' : 'border border-white/[0.12] hover:bg-white/[0.06]'}`}
-                  >
-                    Quiero una demostración
-                    <ArrowRightIcon />
-                  </a>
-                </SpotlightCard>
-              </Reveal>
-            ))}
-          </ul>
-          <p className="mx-auto mt-6 max-w-2xl text-center text-[14px] text-muted-foreground">
-            Instalación y carga de tus datos: <span className="text-foreground">{PLATFORM_SETUP}</span>, una sola vez. Te mostramos la plataforma por
-            videollamada antes de que decidas.
-          </p>
         </section>
 
         <section id="asistencia" aria-labelledby="h-asistencia" className="mx-auto max-w-[1224px] scroll-mt-8 px-4 pb-24 sm:px-[34px]">
@@ -616,6 +565,29 @@ export default async function HomePage() {
                 <p className="mt-3 text-[13px] text-muted-foreground">Te escribimos por WhatsApp y lo dejamos funcionando.</p>
               </div>
             </div>
+          </Reveal>
+        </section>
+
+        <section aria-labelledby="h-software" className="mx-auto max-w-[1224px] px-4 pb-24 sm:px-[34px]">
+          <Reveal>
+            <Link
+              href="/software"
+              className={`${card} group flex flex-col gap-6 p-[26px] transition duration-300 hover:border-white/[0.18] sm:p-10 lg:flex-row lg:items-center lg:justify-between`}
+            >
+              <div>
+                <span className="rounded-full bg-secondary/15 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.2em] text-secondary">Para empresas</span>
+                <h2 id="h-software" className="mt-5 font-display text-[28px] font-bold leading-[1.15] tracking-tight text-foreground sm:text-[34px]">
+                  ¿Tu empresa ya creció? Todo en un solo lugar
+                </h2>
+                <p className="mt-3 max-w-2xl text-[16px] text-muted-foreground">
+                  Clientes, empleados, documentos, cotizaciones, tienda en línea, WhatsApp e inteligencia artificial. Activas solo los módulos que usas.
+                </p>
+              </div>
+              <span className={`${pill} shrink-0 border border-white/[0.08] bg-white/[0.014] group-hover:bg-white/[0.06]`}>
+                Conocer el software
+                <ArrowRightIcon />
+              </span>
+            </Link>
           </Reveal>
         </section>
 
