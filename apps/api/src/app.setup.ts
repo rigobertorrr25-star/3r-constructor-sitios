@@ -21,8 +21,14 @@ export function configureApp(app: NestExpressApplication) {
   // (@nestjs/throttler) bloquearía a todos juntos o a nadie.
   app.set('trust proxy', 1);
   app.use(helmet());
+  // LOYALTY_ORIGINS: las páginas de los negocios que usan la tarjeta de sellos (separadas por comas).
+  // Esas páginas viven en su propio dominio y llaman a /loyalty/... con un token, sin cookies.
+  const loyaltyOrigins = (process.env.LOYALTY_ORIGINS ?? '')
+    .split(',')
+    .map((o) => o.trim().replace(/\/$/, ''))
+    .filter(Boolean);
   app.enableCors({
-    origin: process.env.WEB_ORIGIN ?? 'http://localhost:3000',
+    origin: [process.env.WEB_ORIGIN ?? 'http://localhost:3000', ...loyaltyOrigins],
     credentials: true,
   });
   // Los documentos del editor pueden superar los 100 KB por defecto (tope real: 1 MB validado en el servicio).

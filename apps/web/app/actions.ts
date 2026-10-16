@@ -282,6 +282,46 @@ export async function savePortfolioAction(_prev: FormState, formData: FormData):
   return { ok: Date.now() };
 }
 
+/**
+ * Premios escritos uno por línea, "4: 20 % de descuento". Devuelve null si alguna línea no tiene
+ * esa forma; el orden y que el último caiga en el último sello los revisa la API.
+ */
+function parseRewards(raw: string) {
+  const lines = raw.split('\n').map((l) => l.trim()).filter(Boolean);
+  const rewards = lines.map((line) => {
+    const m = /^(\d{1,2})\s*[:=-]\s*(.+)$/.exec(line);
+    return m ? { at: Number(m[1]), label: m[2].trim() } : null;
+  });
+  return rewards.length && rewards.every(Boolean) ? (rewards as { at: number; label: string }[]) : null;
+}
+
+export async function saveLoyaltyAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const programId = optional(formData, 'programId');
+  const rewards = parseRewards(text(formData, 'rewards'));
+  if (!rewards) return fail('Escribe un premio por línea, así: 4: 20 % de descuento', formData);
+  const ownerKey = text(formData, 'ownerKey');
+  const body: Record<string, unknown> = {
+    name: text(formData, 'name'),
+    goal: Number(text(formData, 'goal')),
+    cooldownMinutes: Math.round(Number(text(formData, 'cooldownHours').replace(',', '.')) * 60),
+    rewards,
+  };
+  if (programId) {
+    body.isActive = checked(formData, 'isActive');
+    if (ownerKey) body.ownerKey = ownerKey;
+  } else {
+    body.slug = text(formData, 'slug');
+    body.ownerKey = ownerKey;
+  }
+  const res = await authedApi<ApiError>(programId ? `/admin/loyalty/${encodeURIComponent(programId)}` : '/admin/loyalty', {
+    method: programId ? 'PATCH' : 'POST',
+    body,
+  });
+  if (!res.ok) return fail(errorText(res.data, 'No se pudo guardar el programa.'), formData);
+  revalidatePath('/admin/fidelizacion');
+  return { ok: Date.now() };
+}
+
 export async function deletePortfolioAction(formData: FormData) {
   const itemId = text(formData, 'itemId');
   await authedApi(`/admin/portfolio/${encodeURIComponent(itemId)}`, { method: 'DELETE' });
