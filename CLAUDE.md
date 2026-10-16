@@ -39,6 +39,13 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   el panel). Cada empleado crea su propio PIN la primera vez que escanea. En español e inglés (botón ES | EN; los jefes de
   Rigoberto son de EE. UU.): todo texto nuevo va en los dos idiomas en `asistencia/lib/i18n.ts`. Los jefes de
   cada negocio tienen acceso de solo lectura (sección "Jefes" del panel; entran con su clave en `/entrar`). Empleados cargados y tablet con QR listos (29 sep 2026).
+- Portada (16 oct 2026): **sin «Iniciar sesión» por pedido de Rigoberto**: todo se pide por WhatsApp (los paquetes, los
+  servicios y el llamado final abren WhatsApp con el mensaje armado). /login y /registro siguen existiendo (el equipo entra
+  a /admin por /login) pero no se enlazan ni van en el sitemap. Secciones nuevas «Más de lo que hacemos» (menú QR
+  $350.000, tienda $1.200.000 + $90.000/mes, contenido redes $590.000/$990.000 al mes, flyers desde $40.000, dominio) y
+  «Para empresas» (plataforma: planes de $190.000, $190.000 y $390.000 al mes, instalación $300.000). Precios fijados
+  mirando el mercado colombiano; todos en `apps/web/lib/services.ts`. Ojo: los precios de /admin/modulos (cobro de la
+  plataforma) son aparte y siguen pendientes. El chatbot de WhatsApp con IA no se ofrece: no está construido.
 - Portada: aviso del control de asistencia (sección `#asistencia`, antes de las preguntas): $90.000/mes, instalación
   $300.000 o $150.000 si también compra su página. El botón va a WhatsApp, nunca a la app de asistencia (precios en
   `ATTENDANCE_*` de `apps/web/app/page.tsx`).
