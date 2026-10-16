@@ -1831,6 +1831,9 @@ model WhatsappAccount {
   tokenEnc      String   @map("token_enc") @db.Text
   // active | paused
   status        String   @default("active") @db.VarChar(10)
+  // Asistente con IA que responde solo con la información del negocio (la escribe la empresa).
+  botEnabled    Boolean  @default(false) @map("bot_enabled")
+  botInfo       String   @default("") @map("bot_info") @db.Text
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -1853,6 +1856,8 @@ model WhatsappConversation {
   assignedMemberId String?   @map("assigned_member_id") @db.Uuid
   // open | closed
   status           String    @default("open") @db.VarChar(10)
+  // El asistente no responde en esta conversación (la tomó una persona o él la pasó al equipo).
+  botPaused        Boolean   @default(false) @map("bot_paused")
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   company  Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -1877,6 +1882,8 @@ model WhatsappMessage {
   status         String   @db.VarChar(10)
   error          String?  @db.VarChar(300)
   sentById       String?  @map("sent_by_id") @db.Uuid
+  // Lo escribió el asistente con IA.
+  bot            Boolean  @default(false)
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   conversation WhatsappConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)

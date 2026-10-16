@@ -171,7 +171,7 @@ const portfolio = [
     title: '3R Burgers',
     url: 'https://rigobertorrr25-star.github.io/3r-burgers/',
     category: 'Restaurante',
-    description: 'Menú digital para una hamburguesería en Cartagena.',
+    description: 'Página de muestra para hamburgueserías, a la venta (se muestra en «Páginas listas para estrenar»).',
     sortOrder: 1,
   },
   {

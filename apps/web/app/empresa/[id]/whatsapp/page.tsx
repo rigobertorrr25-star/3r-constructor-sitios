@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { syncWaTemplatesAction } from '@/app/empresa/whatsapp-actions';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { ModuleOff } from '@/components/module-off';
-import { WaStartForm } from '@/components/whatsapp-forms';
+import { WaBotForm, WaStartForm } from '@/components/whatsapp-forms';
 import { authedApi } from '@/lib/api';
 import { atLeast } from '@/lib/companies';
 import { prettyPhone, type WaOverview } from '@/lib/whatsapp';
@@ -108,7 +108,7 @@ export default async function WhatsappPage({
                     </span>
                     <span className="flex items-center justify-between gap-2">
                       <span className="truncate text-[13.5px] text-muted-foreground">
-                        {c.last ? `${c.last.direction === 'out' ? 'Tú: ' : ''}${c.last.body}` : prettyPhone(c.waId)}
+                        {c.last ? `${c.last.direction === 'out' ? (c.last.bot ? 'Asistente: ' : 'Tú: ') : ''}${c.last.body}` : prettyPhone(c.waId)}
                       </span>
                       {c.unread ? (
                         <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-[#25d366] px-1.5 text-[11.5px] font-bold text-black">
@@ -124,6 +124,30 @@ export default async function WhatsappPage({
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      <section className={card} aria-labelledby="h-bot">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 id="h-bot" className="font-display text-[18px] font-semibold text-foreground">
+            Asistente con IA
+          </h2>
+          <span
+            className={`rounded-full px-3 py-1 text-[12.5px] ${data.bot.enabled ? 'bg-[#25d366]/15 text-[#8ff0b6]' : 'bg-white/[0.06] text-muted-foreground'}`}
+          >
+            {data.bot.enabled ? 'Respondiendo' : 'Apagado'}
+          </span>
+        </div>
+        <p className="mt-1 mb-4 max-w-[65ch] text-[14px] text-muted-foreground">
+          Responde al momento, de día y de noche, las preguntas de siempre: horarios, dirección, precios, domicilios. Si le piden una persona, un
+          pedido, una reserva o algo que no sabe, le avisa a tu equipo.
+        </p>
+        {!data.bot.available ? (
+          <p className="text-[14px] text-muted-foreground">La inteligencia artificial todavía no está activada. Escríbele al equipo de 3R.</p>
+        ) : data.canManage ? (
+          <WaBotForm companyId={id} enabled={data.bot.enabled} info={data.bot.info} />
+        ) : (
+          <p className="text-[14px] text-muted-foreground">Un administrador de la empresa lo prende y escribe lo que debe saber.</p>
         )}
       </section>
 

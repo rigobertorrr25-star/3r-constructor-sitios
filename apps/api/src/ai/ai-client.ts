@@ -54,6 +54,14 @@ export class FakeAiClient implements AiClient {
       const text = [1, 2, 3].map((n) => `Opción ${n}: ${t}`).join('\n---\n');
       return { text, inputTokens: Math.ceil(last.length / 4), outputTokens: Math.ceil(text.length / 4) };
     }
+    // El asistente de WhatsApp: pasa a una persona si se lo piden; si no, contesta con lo primero que sabe del negocio.
+    const business = /<negocio>\n([\s\S]*?)\n<\/negocio>/.exec(request.system);
+    if (business) {
+      const text = /persona|humano|asesor|queja/i.test(last)
+        ? '[HUMANO] Ya le aviso a alguien del equipo para que te responda por aquí.'
+        : `¡Hola! ${business[1].trim().split('\n')[0].slice(0, 160)}`;
+      return { text, inputTokens: Math.ceil(request.system.length / 4), outputTokens: Math.ceil(text.length / 4) };
+    }
     const source = /<fuente n="(\d+)"[^>]*>\n?([\s\S]*?)<\/fuente>/.exec(last);
     const text = source
       ? `Según los documentos: ${source[2].trim().slice(0, 200)} [${source[1]}]`

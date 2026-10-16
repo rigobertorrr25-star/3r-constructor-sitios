@@ -2,9 +2,16 @@
 
 import { useActionState, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { connectWhatsappAction, sendWaTemplateAction, sendWaTextAction, startWaAction, type WaResult } from '@/app/empresa/whatsapp-actions';
+import {
+  connectWhatsappAction,
+  saveWaBotAction,
+  sendWaTemplateAction,
+  sendWaTextAction,
+  startWaAction,
+  type WaResult,
+} from '@/app/empresa/whatsapp-actions';
 import { fillTemplate, type WaAdmin, type WaTemplate } from '@/lib/whatsapp';
-import { Field, SelectField, inputClass } from './field';
+import { Field, SelectField, TextAreaField, inputClass } from './field';
 import { Alert } from './shop';
 import { SubmitButton } from './submit-button';
 
@@ -226,6 +233,45 @@ export function WhatsappConnectForm({ companyId, data }: { companyId: string; da
       {state && !state.ok ? <Alert>{state.error}</Alert> : null}
       {state?.ok ? <Alert tone="ok">WhatsApp conectado.</Alert> : null}
       <SubmitButton pendingText="Guardando…">{a ? 'Guardar cambios' : 'Conectar WhatsApp'}</SubmitButton>
+    </form>
+  );
+}
+
+const BOT_EXAMPLE = `Horario: lunes a sábado de 8 am a 6 pm; domingos de 9 am a 2 pm.
+Dirección: Calle 5 # 3-20, Bocagrande, Cartagena.
+Domicilios: en Bocagrande sin costo; otros barrios $6.000.
+Medios de pago: efectivo, Nequi y datáfono.
+Productos y precios: …`;
+
+/** El dueño escribe lo que el asistente debe saber y lo prende o lo apaga. */
+export function WaBotForm({ companyId, enabled, info }: { companyId: string; enabled: boolean; info: string }) {
+  const [state, action] = useActionState(saveWaBotAction, undefined);
+  return (
+    <form action={action} className="space-y-4">
+      <input type="hidden" name="companyId" value={companyId} />
+      <TextAreaField
+        label="Lo que el asistente debe saber del negocio"
+        name="info"
+        rows={8}
+        maxLength={8000}
+        defaultValue={info}
+        placeholder={BOT_EXAMPLE}
+        hint="Horarios, dirección, domicilios, medios de pago, productos y precios. Solo responde con esto y con las preguntas frecuentes públicas del centro de conocimiento: lo que no esté aquí, se lo pasa a tu equipo."
+      />
+      <label className="flex items-start gap-3 text-[14.5px] text-foreground">
+        <input type="checkbox" name="enabled" defaultChecked={enabled} className="mt-1 size-4" />
+        <span>
+          Que el asistente responda solo
+          <span className="block text-[13px] text-muted-foreground">
+            Cuando alguien del equipo responde una conversación, el asistente se calla en esa conversación.
+          </span>
+        </span>
+      </label>
+      {state && !state.ok ? <Alert>{state.error}</Alert> : null}
+      {state?.ok ? <Alert tone="ok">Listo, guardado.</Alert> : null}
+      <div className="max-w-[240px]">
+        <SubmitButton pendingText="Guardando…">Guardar</SubmitButton>
+      </div>
     </form>
   );
 }

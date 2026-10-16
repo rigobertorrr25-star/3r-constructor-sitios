@@ -16,7 +16,9 @@ import {
   QrIcon,
   SearchIcon,
   SheetIcon,
+  PlayIcon,
   SparkIcon,
+  StarIcon,
   ShoppingBagIcon,
   TemplateIcon,
   UtensilsIcon,
@@ -27,7 +29,7 @@ import { Reveal } from '@/components/reveal';
 import { SpotlightCard } from '@/components/spotlight-card';
 import { whatsappLink } from '@/components/whatsapp-button';
 import { currentUserOrNull, rawApi } from '@/lib/api';
-import { ATTENDANCE_PRICE, ATTENDANCE_SETUP, ATTENDANCE_SETUP_WITH_PAGE, SERVICES, type ServiceKey } from '@/lib/services';
+import { ATTENDANCE_PRICE, ATTENDANCE_SETUP, ATTENDANCE_SETUP_WITH_PAGE, READY_MADE, SERVICES, type ServiceKey } from '@/lib/services';
 import { PackageGrid } from '@/components/package-grid';
 import type { CurrentUser, Package, PortfolioItem } from '@/lib/types';
 
@@ -39,13 +41,17 @@ const steps = [
 
 // Ícono y tono de cada servicio (los textos y precios están en lib/services.ts).
 const serviceLook: Record<ServiceKey, { hue: number; icon: ReactNode }> = {
-  menu: { hue: 25, icon: <QrIcon /> },
+  chatbot: { hue: 150, icon: <ChatIcon /> },
   loyalty: { hue: 88, icon: <SparkIcon /> },
+  menu: { hue: 25, icon: <QrIcon /> },
   restaurant: { hue: 200, icon: <UtensilsIcon /> },
   store: { hue: 120, icon: <ShoppingBagIcon /> },
   social: { hue: 330, icon: <MegaphoneIcon /> },
   design: { hue: 275, icon: <ImageIcon /> },
-  domain: { hue: 150, icon: <GlobeIcon /> },
+  video: { hue: 0, icon: <PlayIcon /> },
+  brand: { hue: 50, icon: <TemplateIcon /> },
+  google: { hue: 240, icon: <StarIcon /> },
+  domain: { hue: 175, icon: <GlobeIcon /> },
 };
 
 const industries: { hue: number; icon: ReactNode; title: string; text: string }[] = [
@@ -137,7 +143,9 @@ async function loadPackages(): Promise<Package[] | null> {
 }
 
 export default async function HomePage() {
-  const [packages, portfolio, user] = await Promise.all([loadPackages(), loadPortfolio(), currentUserOrNull<CurrentUser>()]);
+  const [packages, allWork, user] = await Promise.all([loadPackages(), loadPortfolio(), currentUserOrNull<CurrentUser>()]);
+  // Las páginas de muestra que se venden hechas no van en «Trabajos»: no son de un cliente.
+  const portfolio = allWork.filter((w) => !READY_MADE.some((r) => w.url.replace(/\/$/, '') === r.url.replace(/\/$/, '')));
   const isStaff = user?.roles.includes('ADMIN') || user?.roles.includes('SUPER_ADMIN');
 
   const prices = (packages ?? []).map((p) => p.priceCents / 100);
@@ -145,7 +153,7 @@ export default async function HomePage() {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
     name: '3R',
-    description: 'Páginas web a medida, menús digitales con QR, tiendas en línea, contenido para redes y una plataforma para empresas, para negocios en Colombia.',
+    description: 'Páginas web a medida, menús digitales con QR, chatbot de WhatsApp con IA, tarjeta de sellos, tiendas en línea, contenido para redes y una plataforma para empresas, para negocios en Colombia.',
     url: 'https://3rpaginas.com',
     telephone: '+573107907194',
     areaServed: 'CO',
@@ -367,7 +375,7 @@ export default async function HomePage() {
               <h2 id="h-trabajos" className="text-center font-display text-[32px] font-bold tracking-tight text-foreground sm:text-[40px]">
                 Algunos de nuestros trabajos
               </h2>
-              <p className="mx-auto mt-3 max-w-xl text-center text-[16px] text-muted-foreground">Páginas reales de negocios reales. Haz clic para verlas en línea.</p>
+              <p className="mx-auto mt-3 max-w-xl text-center text-[16px] text-muted-foreground">Páginas que hicimos para negocios de Cartagena. Haz clic para verlas en línea.</p>
             </Reveal>
             {/* Con 2 o 4 trabajos, dos columnas: en tres quedaría una tarjeta sola en la última fila. */}
             <ul
@@ -420,6 +428,65 @@ export default async function HomePage() {
           </section>
         ) : null}
 
+        <section id="lista" aria-labelledby="h-lista" className="mx-auto max-w-[1224px] scroll-mt-24 px-4 pb-24 sm:px-[34px]">
+          <Reveal>
+            <h2 id="h-lista" className="text-center font-display text-[32px] font-bold tracking-tight text-foreground sm:text-[40px]">
+              Páginas listas para estrenar
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-center text-[16px] text-muted-foreground">
+              Ya están hechas y probadas: escoges una, le ponemos tu marca y tu menú, y sale en vivo mucho antes que una desde cero.
+            </p>
+          </Reveal>
+          <ul className="mt-10 space-y-[17px]">
+            {READY_MADE.map((r) => (
+              <Reveal as="li" key={r.url}>
+                <div className={`${card} grid overflow-hidden lg:grid-cols-[1.1fr_1fr]`}>
+                  <a href={r.url} target="_blank" rel="noopener noreferrer" className="group relative block aspect-[16/10] overflow-hidden bg-black lg:aspect-auto">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={r.image}
+                      alt={`Página de muestra ${r.title}`}
+                      loading="lazy"
+                      className="size-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                    />
+                    <span className="absolute bottom-4 left-4 rounded-full bg-black/60 px-4 py-2 text-[14px] text-foreground backdrop-blur">
+                      Ver la página en vivo <span aria-hidden="true">↗</span>
+                    </span>
+                  </a>
+                  <div className="flex flex-col p-[26px] sm:p-[34px]">
+                    <p className="text-[12px] uppercase tracking-[0.18em] text-muted-foreground">{r.kind}</p>
+                    <h3 className="mt-2 font-display text-[28px] font-bold tracking-tight text-foreground">{r.title}</h3>
+                    <p className="mt-2 text-[15.5px] leading-[1.55] text-muted-foreground">{r.pitch}</p>
+                    <ul className="mt-5 space-y-2.5">
+                      {r.includes.map((line) => (
+                        <li key={line} className="flex gap-2.5 text-[14.5px] leading-snug text-foreground/90">
+                          <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+                          {line}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-auto pt-6">
+                      <p className="flex items-baseline gap-2">
+                        <span className="font-display text-[30px] font-bold leading-none tracking-tight text-foreground">{r.price}</span>
+                        <span className="text-[14px] text-muted-foreground">pago único, con tu marca</span>
+                      </p>
+                      <p className="mt-2 text-[13.5px] text-muted-foreground">Es una página de muestra: el nombre 3R Burgers se cambia por el de tu negocio.</p>
+                      <a
+                        href={whatsappLink(r.whatsapp)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-[14.875px] font-medium text-primary-foreground transition hover:shadow-[var(--shadow-glow)] sm:w-auto"
+                      >
+                        La quiero para mi negocio <ArrowRightIcon />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </ul>
+        </section>
+
         <section id="paquetes" aria-labelledby="h-paquetes" className="mx-auto max-w-[1224px] scroll-mt-8 px-4 pb-24 sm:px-[34px]">
           <Reveal>
             <h2 id="h-paquetes" className="text-center font-display text-[32px] font-bold tracking-tight text-foreground sm:text-[40px]">
@@ -463,14 +530,14 @@ export default async function HomePage() {
               Más de lo que hacemos
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-center text-[16px] text-muted-foreground">
-              Además de tu página: para que tus clientes vuelvan, para manejar tu restaurante y para vender por redes. Pídelos solos o junto con tu
-              paquete; los precios son en pesos y ya dicen qué incluye cada uno.
+              Además de tu página: para atender por WhatsApp, para que tus clientes vuelvan, para manejar tu restaurante y para vender por redes.
+              Pídelos solos o junto con tu paquete; los precios son en pesos y ya dicen qué incluye cada uno.
             </p>
           </Reveal>
-          {/* 7 servicios: los 3 de restaurantes en tercios y los otros 4 en mitades, sin una tarjeta sola al final. */}
+          {/* 11 servicios: los 2 primeros en mitades y los otros 9 en tercios, sin una tarjeta sola al final. */}
           <ul className="mt-10 grid grid-cols-1 gap-[17px] md:grid-cols-2 lg:grid-cols-6">
             {SERVICES.map((svc, i) => (
-              <Reveal as="li" key={svc.key} delayMs={(i % 3) * 90} className={i < 3 ? 'lg:col-span-2' : 'lg:col-span-3'}>
+              <Reveal as="li" key={svc.key} delayMs={(i % 3) * 90} className={`${i < 2 ? 'lg:col-span-3' : 'lg:col-span-2'} ${i === SERVICES.length - 1 ? 'md:col-span-2' : ''}`}>
                 <SpotlightCard className={`${card} group flex h-full flex-col p-[26px] transition duration-300 hover:-translate-y-1 hover:border-white/[0.18]`}>
                   <span
                     className="flex size-[43px] items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110"

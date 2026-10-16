@@ -221,6 +221,53 @@ describe('whatsapp empresarial', () => {
     assert.equal((await prisma.whatsappConversation.findUnique({ where: { id: s.body.conversationId } })).status, 'open');
   });
 
+  it('el asistente con IA responde solo y pasa la conversación al equipo', async () => {
+    const info = 'Abrimos de lunes a sábado de 8 am a 6 pm. Domicilios en Bocagrande sin costo.';
+    assert.equal((await as('sup')('PUT', `${w()}/bot`, { enabled: true, info })).status, 403);
+    assert.equal((await as('owner')('PUT', `${w()}/bot`, { enabled: true })).status, 400, 'sin información no se prende');
+    const on = await as('owner')('PUT', `${w()}/bot`, { enabled: true, info });
+    assert.equal(on.status, 200);
+    assert.deepEqual(on.body, { available: true, enabled: true, info });
+    assert.deepEqual((await as('sup')('GET', w())).body.bot, { available: true, enabled: true, info });
+
+    const botCount = (id) => prisma.whatsappMessage.count({ where: { conversationId: id, bot: true } });
+    const waitBot = async (id, n) => {
+      for (let i = 0; i < 50 && (await botCount(id)) < n; i++) await new Promise((r) => setTimeout(r, 100));
+      return botCount(id);
+    };
+    await hook(inbound('573004445566', 'wamid.bot.1', '¿A qué hora abren?', 'Marta'));
+    const c = await prisma.whatsappConversation.findFirst({ where: { companyId: company.id, waId: '573004445566' } });
+    assert.equal(await waitBot(c.id, 1), 1);
+    assert.deepEqual(FakeWhatsappClient.sent.at(-1), { to: '573004445566', type: 'text', body: `¡Hola! ${info}` });
+
+    // Pide una persona: el asistente avisa, se calla y le llega la alerta al equipo.
+    await hook(inbound('573004445566', 'wamid.bot.2', 'Quiero hablar con una persona', 'Marta'));
+    assert.equal(await waitBot(c.id, 2), 2);
+    assert.equal(FakeWhatsappClient.sent.at(-1).body, 'Ya le aviso a alguien del equipo para que te responda por aquí.');
+    assert.equal((await prisma.whatsappConversation.findUnique({ where: { id: c.id } })).botPaused, true);
+    assert.ok(await prisma.notification.findFirst({ where: { companyId: company.id, title: { contains: 'necesita que alguien le responda' } } }));
+    await hook(inbound('573004445566', 'wamid.bot.3', '¿Hola?', 'Marta'));
+    await new Promise((r) => setTimeout(r, 400));
+    assert.equal(await botCount(c.id), 2, 'en pausa no responde');
+
+    // Se la devuelven al asistente; si después responde una persona, el asistente se calla otra vez.
+    const back = await as('sup')('PATCH', `${w()}/conversations/${c.id}`, { botPaused: false });
+    assert.equal(back.body.botPaused, false);
+    await hook(inbound('573004445566', 'wamid.bot.4', '¿Hacen domicilios?', 'Marta'));
+    assert.equal(await waitBot(c.id, 3), 3);
+    await as('sup')('POST', `${w()}/conversations/${c.id}/messages`, { body: 'Hola Marta, soy Laura.' });
+    assert.equal((await prisma.whatsappConversation.findUnique({ where: { id: c.id } })).botPaused, true);
+    const detail = await as('sup')('GET', `${w()}/conversations/${c.id}`);
+    assert.equal(detail.body.messages.filter((m) => m.bot).length, 3);
+
+    // Apagado, no responde.
+    await as('owner')('PUT', `${w()}/bot`, { enabled: false });
+    await hook(inbound('573007778899', 'wamid.bot.5', 'Hola', 'Nuevo'));
+    await new Promise((r) => setTimeout(r, 400));
+    const n = await prisma.whatsappConversation.findFirst({ where: { companyId: company.id, waId: '573007778899' } });
+    assert.equal(await botCount(n.id), 0);
+  });
+
   it('sin el módulo no entra nadie', async () => {
     await as('staff')('PUT', `/admin/companies/${company.id}/modules`, { keys: ['crm'] });
     assert.equal((await as('owner')('GET', w())).status, 403);

@@ -25,7 +25,7 @@ import { JwtAuthGuard } from '../auth/jwt.guard.js';
 import { Roles } from '../auth/roles.decorator.js';
 import { RolesGuard } from '../auth/roles.guard.js';
 import { Role } from '../common/roles.js';
-import { ConnectWhatsappDto, SendTemplateDto, SendTextDto, StartConversationDto, UpdateConversationDto } from './dto/whatsapp.dto.js';
+import { ConnectWhatsappDto, SendTemplateDto, SendTextDto, StartConversationDto, UpdateBotDto, UpdateConversationDto } from './dto/whatsapp.dto.js';
 import { WhatsappService } from './whatsapp.service.js';
 
 /** Bandeja de WhatsApp de la empresa. */
@@ -37,6 +37,11 @@ export class WhatsappController {
   @Get()
   overview(@CurrentUser() user: AuthUser, @Param('companyId', ParseUUIDPipe) companyId: string, @Query('filter') filter?: string) {
     return this.whatsapp.overview(user.id, companyId, filter);
+  }
+
+  @Put('bot')
+  bot(@CurrentUser() user: AuthUser, @Param('companyId', ParseUUIDPipe) companyId: string, @Body() dto: UpdateBotDto) {
+    return this.whatsapp.updateBot(user.id, companyId, dto);
   }
 
   @Post('templates/sync')

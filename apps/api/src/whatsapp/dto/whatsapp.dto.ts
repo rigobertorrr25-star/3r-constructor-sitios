@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsIn, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength, ValidateIf } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength, ValidateIf } from 'class-validator';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
@@ -29,4 +29,10 @@ export class StartConversationDto extends SendTemplateDto {
 export class UpdateConversationDto {
   @IsOptional() @IsIn(['open', 'closed']) status?: string;
   @IsOptional() @ValidateIf((_, v) => v !== null) @IsUUID() assignedMemberId?: string | null;
+  @IsOptional() @IsBoolean() botPaused?: boolean;
+}
+
+export class UpdateBotDto {
+  @IsOptional() @IsBoolean() enabled?: boolean;
+  @IsOptional() @IsString() @MaxLength(8000) info?: string;
 }

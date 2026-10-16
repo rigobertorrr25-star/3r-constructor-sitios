@@ -566,7 +566,14 @@ misma llave que el asistente (`ANTHROPIC_API_KEY`, `AI_MODEL`). No inventa preci
 - **24 horas**: WhatsApp solo deja mandar texto libre hasta 24 horas después del último mensaje del cliente; después,
   y para escribirle primero, solo plantillas aprobadas. Las plantillas se crean y aprueban en Meta y un administrador
   de la empresa las trae con «Traer plantillas de Meta».
-- En desarrollo y pruebas no se habla con Meta (cliente falso); en producción, siempre Meta.
+- **Asistente con IA (chatbot)**: en la bandeja, un administrador de la empresa escribe lo que debe saber del negocio
+  (`whatsapp_accounts.bot_info`: horarios, dirección, precios, domicilios) y lo prende. Responde solo los mensajes de
+  texto con esa información y con los artículos **públicos** del centro de conocimiento, en el idioma del cliente. Si
+  le piden una persona, un pedido, una reserva o un pago, tiene una queja o no sabe, contesta `[HUMANO]…`: avisa que
+  pasa la conversación, se pausa en ella (`whatsapp_conversations.bot_paused`) y avisa en la campanita. Cuando una
+  persona del equipo responde, también se pausa; «Devolver al asistente» lo vuelve a prender en esa conversación. Sus
+  mensajes quedan con `bot = true`. Topes: 300 respuestas al día por empresa y 30 por conversación. Usa la misma llave
+  `ANTHROPIC_API_KEY` que el asistente interno; sin llave en producción no se puede prender.
 
 ### Suscripciones (cobro de la plataforma)
 

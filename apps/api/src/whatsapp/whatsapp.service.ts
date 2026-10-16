@@ -1,15 +1,18 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AI_CLIENT, type AiClient } from '../ai/ai-client.js';
 import { AlertsService } from '../alerts/alerts.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { atLeast } from '../companies/companies.constants.js';
 import { CompaniesService } from '../companies/companies.service.js';
+import { chunks, fold, score, terms } from '../assistant/text.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import type { ConnectWhatsappDto, StartConversationDto, UpdateConversationDto } from './dto/whatsapp.dto.js';
+import type { ConnectWhatsappDto, StartConversationDto, UpdateBotDto, UpdateConversationDto } from './dto/whatsapp.dto.js';
 import { decrypt, encrypt } from './token-crypto.js';
 import { WHATSAPP_CLIENT, type WaAccount, type WhatsappClient } from './whatsapp-client.js';
-import { WHATSAPP_MODULE, WINDOW_MS } from './whatsapp.constants.js';
+import { botMessages, botSystem } from './whatsapp-bot.js';
+import { BOT_COMPANY_DAILY_CAP, BOT_CONVERSATION_DAILY_CAP, BOT_HANDOFF, WHATSAPP_MODULE, WINDOW_MS } from './whatsapp.constants.js';
 
 /** "300 123 4567" → "573001234567" (si son 10 dígitos que empiezan por 3, es un celular de Colombia). */
 export function normalizePhone(input: string) {
@@ -29,8 +32,20 @@ const conversationSelect = {
   unread: true,
   assignedMemberId: true,
   status: true,
+  botPaused: true,
 } as const;
-const messageSelect = { id: true, direction: true, type: true, body: true, status: true, error: true, sentById: true, createdAt: true } as const;
+const messageSelect = {
+  id: true,
+  direction: true,
+  type: true,
+  body: true,
+  status: true,
+  error: true,
+  sentById: true,
+  bot: true,
+  createdAt: true,
+} as const;
+const DAY = 24 * 60 * 60 * 1000;
 
 type InboundValue = {
   metadata?: { phone_number_id?: string };
@@ -89,6 +104,7 @@ export class WhatsappService {
     private readonly audit: AuditService,
     private readonly config: ConfigService,
     @Inject(WHATSAPP_CLIENT) private readonly client: WhatsappClient,
+    @Inject(AI_CLIENT) private readonly ai: AiClient | null,
   ) {}
 
   /** La bandeja la ven supervisores en adelante; conectar y traer plantillas, administradores. */
@@ -155,7 +171,7 @@ export class WhatsappService {
   async overview(userId: string, companyId: string, filter?: string) {
     const me = await this.access(userId, companyId);
     const [account, conversations, templates, members] = await Promise.all([
-      this.prisma.whatsappAccount.findUnique({ where: { companyId }, select: { displayPhone: true, status: true } }),
+      this.prisma.whatsappAccount.findUnique({ where: { companyId }, select: { displayPhone: true, status: true, botEnabled: true, botInfo: true } }),
       this.prisma.whatsappConversation.findMany({
         where: {
           companyId,
@@ -163,7 +179,7 @@ export class WhatsappService {
         },
         orderBy: { lastMessageAt: 'desc' },
         take: 100,
-        select: { ...conversationSelect, messages: { orderBy: { createdAt: 'desc' }, take: 1, select: { body: true, direction: true } } },
+        select: { ...conversationSelect, messages: { orderBy: { createdAt: 'desc' }, take: 1, select: { body: true, direction: true, bot: true } } },
       }),
       this.prisma.whatsappTemplate.findMany({
         where: { companyId, status: 'APPROVED' },
@@ -177,7 +193,8 @@ export class WhatsappService {
     ]);
     return {
       connected: !!account,
-      account,
+      account: account && { displayPhone: account.displayPhone, status: account.status },
+      bot: { available: !!this.ai, enabled: !!account?.botEnabled, info: account?.botInfo ?? '' },
       canManage: atLeast(me.role, 'admin'),
       meId: me.id,
       conversations: conversations.map(({ messages, ...c }) => ({ ...c, last: messages[0] ?? null, canReply: this.inWindow(c.lastInboundAt) })),
@@ -221,14 +238,22 @@ export class WhatsappService {
     return { ...c, unread: 0, canReply: this.inWindow(c.lastInboundAt), messages: messages.reverse() };
   }
 
-  private async record(conversationId: string, data: { type: string; body: string; sentById: string }, send: () => Promise<string>) {
+  /** Manda y guarda un mensaje. Si lo manda una persona, el asistente deja de responder en esa conversación. */
+  private async record(
+    conversationId: string,
+    data: { type: string; body: string; sentById: string | null; bot?: boolean },
+    send: () => Promise<string>,
+  ) {
     try {
       const waMessageId = await send();
       const m = await this.prisma.whatsappMessage.create({
         data: { conversationId, direction: 'out', status: 'sent', waMessageId, ...data },
         select: messageSelect,
       });
-      await this.prisma.whatsappConversation.update({ where: { id: conversationId }, data: { lastMessageAt: new Date() } });
+      await this.prisma.whatsappConversation.update({
+        where: { id: conversationId },
+        data: { lastMessageAt: new Date(), ...(data.bot ? {} : { botPaused: true }) },
+      });
       return m;
     } catch (error) {
       this.logger.warn(`WhatsApp no salió: ${(error as Error).message}`);
@@ -305,9 +330,27 @@ export class WhatsappService {
       data: {
         ...(dto.status ? { status: dto.status } : {}),
         ...(dto.assignedMemberId !== undefined ? { assignedMemberId: dto.assignedMemberId } : {}),
+        ...(dto.botPaused !== undefined ? { botPaused: dto.botPaused } : {}),
       },
       select: conversationSelect,
     });
+  }
+
+  /** Prender o apagar el asistente con IA y escribir lo que debe saber del negocio. */
+  async updateBot(userId: string, companyId: string, dto: UpdateBotDto) {
+    await this.access(userId, companyId, 'admin');
+    const info = dto.info?.trim();
+    const current = await this.prisma.whatsappAccount.findUnique({ where: { companyId }, select: { botInfo: true } });
+    if (!current) throw new ConflictException('La empresa todavía no tiene WhatsApp conectado. Escríbele al equipo de 3R.');
+    if (dto.enabled && !this.ai) throw new ServiceUnavailableException('El asistente con IA todavía no está activado. Escríbele al equipo de 3R.');
+    if (dto.enabled && (info ?? current.botInfo).length < 40)
+      throw new BadRequestException('Antes de prenderlo, escribe lo que el asistente debe saber del negocio (horarios, dirección, precios…).');
+    const a = await this.prisma.whatsappAccount.update({
+      where: { companyId },
+      data: { ...(dto.enabled !== undefined ? { botEnabled: dto.enabled } : {}), ...(info !== undefined ? { botInfo: info } : {}) },
+      select: { botEnabled: true, botInfo: true },
+    });
+    return { available: !!this.ai, enabled: a.botEnabled, info: a.botInfo };
   }
 
   /** Trae de Meta las plantillas de la cuenta (las crea y aprueba Meta, en el administrador de WhatsApp). */
@@ -387,7 +430,8 @@ export class WhatsappService {
       if (!waId) continue;
       if (await this.prisma.whatsappMessage.findUnique({ where: { waMessageId: m.id }, select: { id: true } })) continue;
       const profile = value.contacts?.find((c) => c.wa_id === m.from)?.profile?.name?.slice(0, 150);
-      const at = m.timestamp ? new Date(Number(m.timestamp) * 1000) : new Date();
+      // Nunca en el futuro (un reloj adelantado desordenaría la conversación).
+      const at = new Date(Math.min(m.timestamp ? Number(m.timestamp) * 1000 : Date.now(), Date.now()));
       const existing = await this.prisma.whatsappConversation.findUnique({
         where: { companyId_waId: { companyId, waId } },
         select: { id: true, contactId: true, assignedMemberId: true },
@@ -415,6 +459,89 @@ export class WhatsappService {
         href: `/empresa/${companyId}/whatsapp/${conversation.id}`,
         // Un aviso por conversación por hora, aunque escriba muchos mensajes seguidos.
         dedupeKey: `wa:${conversation.id}:${Math.floor(Date.now() / 3_600_000)}`,
+      });
+      // Sin esperar: Meta pide que el aviso se conteste rápido.
+      if (['text', 'button', 'interactive'].includes(m.type))
+        void this.botReply(companyId, conversation.id).catch((e) => this.logger.error(`El asistente de WhatsApp falló: ${(e as Error).message}`));
+    }
+  }
+
+  /** Lo que más se parece a la conversación en las preguntas frecuentes públicas del centro de conocimiento. */
+  private async publicArticles(companyId: string, text: string) {
+    const words = terms(text);
+    if (!words.length) return [];
+    const articles = await this.prisma.knowledgeArticle.findMany({
+      where: { companyId, status: 'published', audience: 'public' },
+      take: 300,
+      select: { title: true, body: true },
+    });
+    const all = articles.flatMap((a) => chunks(a.body).map((t) => ({ title: a.title, text: t, score: score(words, a.title, fold(t)) })));
+    const picked: { title: string; text: string }[] = [];
+    let size = 0;
+    for (const c of all.filter((x) => x.score > 0).sort((a, b) => b.score - a.score)) {
+      if (picked.length >= 5 || size + c.text.length > 8_000) break;
+      picked.push(c);
+      size += c.text.length;
+    }
+    return picked;
+  }
+
+  /** El asistente con IA contesta el último mensaje del cliente, si está prendido y la conversación no la tiene una persona. */
+  private async botReply(companyId: string, conversationId: string) {
+    if (!this.ai) return;
+    const account = await this.prisma.whatsappAccount.findUnique({
+      where: { companyId },
+      select: { botEnabled: true, botInfo: true, status: true, company: { select: { name: true } } },
+    });
+    if (!account?.botEnabled || account.status !== 'active') return;
+    const c = await this.prisma.whatsappConversation.findUnique({ where: { id: conversationId }, select: { waId: true, botPaused: true } });
+    if (!c || c.botPaused) return;
+    const since = new Date(Date.now() - DAY);
+    const [company, mine] = await Promise.all([
+      this.prisma.whatsappMessage.count({ where: { bot: true, createdAt: { gt: since }, conversation: { companyId } } }),
+      this.prisma.whatsappMessage.count({ where: { bot: true, createdAt: { gt: since }, conversationId } }),
+    ]);
+    if (company >= BOT_COMPANY_DAILY_CAP || mine >= BOT_CONVERSATION_DAILY_CAP) return;
+
+    // Meta manda la hora en segundos: para saber si llegó algo nuevo se cuentan los mensajes del cliente, no se ordenan.
+    const inbound = () => this.prisma.whatsappMessage.count({ where: { conversationId, direction: 'in' } });
+    const before = await inbound();
+    const recent = await this.prisma.whatsappMessage.findMany({
+      where: { conversationId, status: { not: 'failed' } },
+      orderBy: [{ createdAt: 'desc' }, { direction: 'asc' }],
+      take: 12,
+      select: { direction: true, body: true },
+    });
+    const messages = botMessages(recent.reverse());
+    if (!messages.length) return;
+    const clientText = recent
+      .filter((m) => m.direction === 'in')
+      .map((m) => m.body)
+      .join(' ');
+    const system = botSystem(account.company.name, account.botInfo, await this.publicArticles(companyId, clientText));
+    const reply = await this.ai.complete({ system, messages, maxTokens: 400 });
+
+    // Si mientras pensaba llegó otro mensaje del cliente, esa respuesta la da el aviso nuevo.
+    const now = await this.prisma.whatsappConversation.findUnique({ where: { id: conversationId }, select: { botPaused: true } });
+    if ((await inbound()) !== before || now?.botPaused) return;
+
+    const handoff = reply.text.startsWith(BOT_HANDOFF);
+    const body = (reply.text.replace(BOT_HANDOFF, '').trim() || 'Ya le aviso a alguien del equipo para que te responda por aquí.').slice(0, 4000);
+    const wa = await this.account(companyId);
+    await this.record(conversationId, { type: 'text', body, sentById: null, bot: true }, () => this.client.sendText(wa, c.waId, body));
+    if (handoff) {
+      const conv = await this.prisma.whatsappConversation.update({
+        where: { id: conversationId },
+        data: { botPaused: true },
+        select: { name: true, assignedMemberId: true },
+      });
+      const to = conv.assignedMemberId ? [conv.assignedMemberId] : await this.alerts.membersAbove(companyId, 'supervisor');
+      await this.alerts.notify(companyId, to, {
+        kind: 'whatsapp',
+        title: `${conv.name} necesita que alguien le responda`,
+        body: 'El asistente de WhatsApp le pasó la conversación al equipo.',
+        href: `/empresa/${companyId}/whatsapp/${conversationId}`,
+        dedupeKey: `wa-bot:${conversationId}:${Math.floor(Date.now() / 3_600_000)}`,
       });
     }
   }
