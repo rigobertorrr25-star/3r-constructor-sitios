@@ -339,7 +339,10 @@ export default async function HomePage() {
               </h2>
               <p className="mx-auto mt-3 max-w-xl text-center text-[16px] text-muted-foreground">Páginas reales de negocios reales. Haz clic para verlas en línea.</p>
             </Reveal>
-            <ul className="mt-10 grid grid-cols-1 gap-[17px] sm:grid-cols-2 lg:grid-cols-3">
+            {/* Con 2 o 4 trabajos, dos columnas: en tres quedaría una tarjeta sola en la última fila. */}
+            <ul
+              className={`mx-auto mt-10 grid grid-cols-1 gap-[17px] sm:grid-cols-2 ${portfolio.length === 2 || portfolio.length === 4 ? 'max-w-[900px]' : 'lg:grid-cols-3'}`}
+            >
               {portfolio.map((item, i) => (
                 <Reveal as="li" key={item.id} delayMs={i * 90}>
                   <SpotlightCard
@@ -354,8 +357,21 @@ export default async function HomePage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={item.thumbnailUrl} alt={`Captura de ${item.title}`} loading="lazy" className="size-full object-cover object-top transition duration-500 group-hover:scale-[1.03]" />
                       ) : (
-                        <div className="flex size-full items-center justify-center bg-[radial-gradient(ellipse_at_top_right,#8a9bff40,transparent_60%),radial-gradient(ellipse_at_bottom_left,#ff86db2b,transparent_60%)] px-6 text-center font-display text-[20px] font-semibold text-foreground/90">
-                          {hostOf(item.url)}
+                        // Sin captura todavía: una ventana de navegador con el nombre del negocio, no la dirección suelta.
+                        <div className="flex size-full flex-col bg-[radial-gradient(ellipse_at_top_right,#8a9bff40,transparent_60%),radial-gradient(ellipse_at_bottom_left,#ff86db2b,transparent_60%)] p-4">
+                          <div className="flex items-center gap-2 rounded-full bg-black/30 px-3 py-1.5" aria-hidden="true">
+                            <span className="flex gap-1">
+                              <span className="size-1.5 rounded-full bg-white/25" />
+                              <span className="size-1.5 rounded-full bg-white/25" />
+                              <span className="size-1.5 rounded-full bg-white/25" />
+                            </span>
+                            <span className="truncate text-[12px] text-muted-foreground">{hostOf(item.url)}</span>
+                          </div>
+                          <div className="flex flex-1 items-center justify-center px-4 text-center">
+                            <span className="font-display text-[26px] font-bold leading-tight tracking-tight text-foreground/90 transition duration-500 group-hover:scale-[1.03]">
+                              {item.title}
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -513,7 +529,8 @@ export default async function HomePage() {
       </main>
 
       <footer className="mx-auto w-full max-w-[1224px] px-4 sm:px-[34px]">
-        <div className="flex flex-col items-center gap-4 border-t border-white/[0.06] py-8 text-center text-sm text-muted-foreground">
+        {/* En celular, espacio abajo para que la mascota flotante no tape el pie. */}
+        <div className="flex flex-col items-center gap-4 border-t border-white/[0.06] pt-8 pb-24 text-center text-sm text-muted-foreground sm:pb-8">
           <a
             href={INSTAGRAM_URL}
             target="_blank"

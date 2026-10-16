@@ -46,14 +46,18 @@ export function AuthShell({
         <span className="orb orb-a absolute -top-24 right-[-8%] size-[420px] bg-primary/20 sm:size-[520px]" />
         <span className="orb orb-b absolute bottom-[-16%] left-[-10%] size-[380px] bg-secondary/15 sm:size-[460px]" />
       </div>
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[1180px] flex-col items-center justify-center gap-10 px-4 py-12 lg:flex-row lg:items-stretch lg:gap-16">
-        <div className="flex w-full max-w-[520px] flex-col justify-center py-6 lg:py-12">
-          <Link href="/" aria-label="3R — Inicio" className="mb-8 text-foreground">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[1180px] flex-col items-center justify-center gap-10 px-4 py-10 lg:flex-row lg:items-stretch lg:gap-16 lg:py-12">
+        {/* En celular el formulario va primero (a eso vino la persona) y el argumento de venta queda debajo. */}
+        <Link href="/" aria-label="3R — Inicio" className="-mb-4 self-start text-foreground lg:hidden">
+          <Logo size={40} />
+        </Link>
+        <div className="order-2 flex w-full max-w-[520px] flex-col justify-center lg:order-1 lg:py-12">
+          <Link href="/" aria-label="3R — Inicio" className="mb-8 hidden text-foreground lg:block">
             <Logo size={40} />
           </Link>
           {side}
         </div>
-        <div className="flex w-full max-w-[420px] flex-col justify-center">
+        <div className="order-1 flex w-full max-w-[420px] flex-col justify-center lg:order-2">
           {card}
           <p className="mt-6 text-center text-sm text-muted-foreground">{footer}</p>
         </div>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { formatMoney } from '@/lib/orders';
 import { DevicesIcon, GlobeIcon, HistoryIcon, PointerIcon, TemplateIcon } from '@/components/icons';
 
 const POINTS = [
@@ -9,8 +10,11 @@ const POINTS = [
   { icon: <HistoryIcon />, text: 'Sigues el avance de tu pedido en tiempo real' },
 ];
 
-/** Lo que ve alguien a punto de crear cuenta: por qué le conviene, no solo el formulario. */
-export function RegisterPitch() {
+/**
+ * Lo que ve alguien a punto de crear cuenta: por qué le conviene, no solo el formulario.
+ * `from` es el precio del paquete más barato publicado (si no se pudo leer, no se muestra ningún precio).
+ */
+export function RegisterPitch({ from }: { from?: { cents: number; currency: string } | null }) {
   return (
     <div>
       <p className="text-[12.75px] uppercase tracking-[0.3em] text-muted-foreground">Antes de entrar</p>
@@ -31,10 +35,12 @@ export function RegisterPitch() {
           </li>
         ))}
       </ul>
-      <div className="mt-8 flex flex-wrap items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-5 py-4">
-        <p className="font-display text-[22px] font-bold text-foreground">Desde $350.000</p>
-        <p className="text-[13.5px] text-muted-foreground">pago único, sin mensualidad obligatoria</p>
-      </div>
+      {from ? (
+        <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-5 py-4">
+          <p className="font-display text-[22px] font-bold text-foreground">Desde {formatMoney(from.cents, from.currency)}</p>
+          <p className="text-[13.5px] text-muted-foreground">pago único, sin mensualidad obligatoria</p>
+        </div>
+      ) : null}
       <Link href="/#trabajos" className="mt-5 inline-block text-[14px] text-primary hover:underline">
         Mira páginas reales que ya entregamos ↗
       </Link>

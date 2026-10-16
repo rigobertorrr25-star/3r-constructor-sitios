@@ -71,11 +71,16 @@ export const orderCode = (orderNumber: number) => `3R-${String(orderNumber).padS
 const MONEY_LOCALE: Record<string, string> = { USD: 'es-US', COP: 'es-CO' };
 
 export function formatMoney(cents: number, currency = 'USD') {
-  return new Intl.NumberFormat(MONEY_LOCALE[currency] ?? 'es', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
-  }).format(cents / 100);
+  return (
+    new Intl.NumberFormat(MONEY_LOCALE[currency] ?? 'es', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
+    })
+      .format(cents / 100)
+      // "$ 350.000" → "$350.000": igual que los precios escritos a mano en el resto de la página.
+      .replace(/\$\s/, '$')
+  );
 }
 
 /** "199" o "199.50" (lo que escribe una persona) → centavos. */
