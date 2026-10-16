@@ -156,5 +156,167 @@
    ],
    "texto": "Lo que cuesta cada cosa, sin rodeos y sin letra pequeña.\n\nMenú con QR, tarjeta de sellos, control de asistencia, control del restaurante, tienda en línea, página lista con tu marca y perfil de Google con reseñas. Todo hecho en Cartagena y con soporte por WhatsApp.\n\n¿Cuál necesitas primero? Comenta PRECIOS y te mando el detalle."
   }
+ ],
+ "historias": [
+  {
+   "id": "h01",
+   "fecha": "2026-10-18",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h01.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h02",
+   "fecha": "2026-10-19",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h02.mp4"
+   ],
+   "palabra_clave": "BURGER"
+  },
+  {
+   "id": "h03",
+   "fecha": "2026-10-21",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h03.mp4"
+   ],
+   "palabra_clave": "SELLOS"
+  },
+  {
+   "id": "h04",
+   "fecha": "2026-10-23",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h04.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h05",
+   "fecha": "2026-10-25",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h05.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h06",
+   "fecha": "2026-10-26",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h06.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h07",
+   "fecha": "2026-10-28",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h07.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h08",
+   "fecha": "2026-10-30",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h08.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h09",
+   "fecha": "2026-11-01",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h09.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h10",
+   "fecha": "2026-11-02",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h10.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h11",
+   "fecha": "2026-11-04",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h11.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h12",
+   "fecha": "2026-11-06",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h12.mp4"
+   ],
+   "palabra_clave": "BURGER"
+  },
+  {
+   "id": "h13",
+   "fecha": "2026-11-08",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h13.mp4"
+   ],
+   "palabra_clave": "SELLOS"
+  },
+  {
+   "id": "h14",
+   "fecha": "2026-11-09",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h14.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h15",
+   "fecha": "2026-11-11",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h15.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h16",
+   "fecha": "2026-11-13",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h16.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  }
  ]
 }
