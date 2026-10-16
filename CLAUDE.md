@@ -18,8 +18,13 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   https://claude.ai/artifact/LS8mhicvdzLWUUdHDGAMvp. El post del 14 nov (pago en línea) ya puede salir (Wompi en
   producción). Tercer paquete (16 nov – 31 dic: 20 publicaciones con 4 reels de asistencia QR, cuenta
   del cliente y Azul Caribe en 3 pantallas, 17 historias) en https://claude.ai/artifact/Kef33AtRmyGxDg6XH14CUy.
-  Siguiente: enero 2027. No hay conexión para publicar directo: Rigoberto programa en Meta
-  Business Suite.
+  **Plan de ventas 17 oct – 15 nov 2026** (reemplaza el segundo paquete en esas fechas; hecho con datos de Chatplace):
+  https://claude.ai/artifact/KF4eeSwkMd63iUBhe4j1su (13 publicaciones mar/jue/sáb 7 p. m., historias diarias, comparación con
+  la competencia, bio nueva). Chatplace está conectado al Instagram (bot «3Rpaginas»); su saldo de IA está en 0, así que no
+  analiza competencia ni genera contenido. Ahí quedaron 3 automatizaciones de comentario/mensaje **en pausa** (PRECIOS, BURGER,
+  CHATBOT/SELLOS → mensaje privado con precios y enlace, una vez al día por persona); Rigoberto las prende. Datos de la cuenta
+  (16 oct): 3.961 seguidores, mediana 57 vistas por reel, mejor reel 3R Burgers (495). Siguiente: enero 2027. Rigoberto
+  programa en Meta Business Suite.
 - Instagram de 3R: https://www.instagram.com/3r.paginas_/ (en el pie de la portada y en los datos para Google).
 - Precios de los paquetes: ya confirmados por Rigoberto en `/admin/paquetes`.
 - Dominio propio del cliente: $50.000 al año (`DOMAIN_ADDON_CENTS`); el pedido cobra el primer año. La renovación
