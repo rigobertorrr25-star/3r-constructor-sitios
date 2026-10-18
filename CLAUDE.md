@@ -118,7 +118,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   (estilo de referencia que mandó el cliente: HNST Studio, lienzo cálido, acento óxido, Raleway + Poppins; ese sistema manda
   sobre la lista de prohibidos). Pedido con carrito por WhatsApp 573043804481. 11 productos con precio de su lista; tallas S/M/L
   y «Única» en accesorios puestas por criterio (confirmar). Vista previa: https://claude.ai/artifact/V3MKk9xT8aLB4RJahF7G4y.
-  Falta: Instagram del cliente, fotos del catálogo de Drive («ZENOVAAAA CAT.docx», 71 MB: no se pudo bajar desde la sesión)
+  Instagram: https://www.instagram.com/zenovaoficial_/ (contacto y pie). Falta: fotos del catálogo de Drive («ZENOVAAAA CAT.docx», 71 MB: no se pudo bajar desde la sesión)
   y dónde se publica.
 
 ## Este proyecto
