@@ -179,6 +179,16 @@
    "palabra_clave": "BURGER"
   },
   {
+   "id": "h17",
+   "fecha": "2026-10-20",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h17.mp4"
+   ],
+   "palabra_clave": "BURGER"
+  },
+  {
    "id": "h03",
    "fecha": "2026-10-21",
    "hora_bogota": "12:30",
@@ -189,12 +199,32 @@
    "palabra_clave": "SELLOS"
   },
   {
+   "id": "h18",
+   "fecha": "2026-10-22",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h18.mp4"
+   ],
+   "palabra_clave": "SELLOS"
+  },
+  {
    "id": "h04",
    "fecha": "2026-10-23",
    "hora_bogota": "12:30",
    "tipo": "historia",
    "archivos": [
     "historias/h04.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h19",
+   "fecha": "2026-10-24",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h19.mp4"
    ],
    "palabra_clave": "PRECIOS"
   },
@@ -219,6 +249,16 @@
    "palabra_clave": "PRECIOS"
   },
   {
+   "id": "h20",
+   "fecha": "2026-10-27",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h20.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
    "id": "h07",
    "fecha": "2026-10-28",
    "hora_bogota": "12:30",
@@ -229,12 +269,32 @@
    "palabra_clave": "PRECIOS"
   },
   {
+   "id": "h21",
+   "fecha": "2026-10-29",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h21.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
    "id": "h08",
    "fecha": "2026-10-30",
    "hora_bogota": "12:30",
    "tipo": "historia",
    "archivos": [
     "historias/h08.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h22",
+   "fecha": "2026-10-31",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h22.mp4"
    ],
    "palabra_clave": "PRECIOS"
   },
@@ -259,12 +319,32 @@
    "palabra_clave": "PRECIOS"
   },
   {
+   "id": "h23",
+   "fecha": "2026-11-03",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h23.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
    "id": "h11",
    "fecha": "2026-11-04",
    "hora_bogota": "12:30",
    "tipo": "historia",
    "archivos": [
     "historias/h11.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h24",
+   "fecha": "2026-11-05",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h24.mp4"
    ],
    "palabra_clave": "PRECIOS"
   },
@@ -277,6 +357,16 @@
     "historias/h12.mp4"
    ],
    "palabra_clave": "BURGER"
+  },
+  {
+   "id": "h25",
+   "fecha": "2026-11-07",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h25.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
   },
   {
    "id": "h13",
@@ -299,6 +389,16 @@
    "palabra_clave": "PRECIOS"
   },
   {
+   "id": "h26",
+   "fecha": "2026-11-10",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h26.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
    "id": "h15",
    "fecha": "2026-11-11",
    "hora_bogota": "12:30",
@@ -309,12 +409,32 @@
    "palabra_clave": "PRECIOS"
   },
   {
+   "id": "h27",
+   "fecha": "2026-11-12",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h27.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
    "id": "h16",
    "fecha": "2026-11-13",
    "hora_bogota": "12:30",
    "tipo": "historia",
    "archivos": [
     "historias/h16.mp4"
+   ],
+   "palabra_clave": "PRECIOS"
+  },
+  {
+   "id": "h28",
+   "fecha": "2026-11-14",
+   "hora_bogota": "12:30",
+   "tipo": "historia",
+   "archivos": [
+    "historias/h28.mp4"
    ],
    "palabra_clave": "PRECIOS"
   }
