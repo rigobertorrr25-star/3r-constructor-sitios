@@ -215,7 +215,7 @@ nav.links a:hover { color: var(--ink); }
 }
 figure { margin: 0; }
 
-/* Colección */
+/* Colección: fotos de catálogo en cuadrícula, esquinas rectas, sin sombras */
 .collection { padding-block: 114px 75px; }
 .collection-head {
   display: flex;
@@ -240,66 +240,81 @@ figure { margin: 0; }
 .filter:hover { border-color: var(--ink); }
 .filter[aria-pressed="true"] { border-color: var(--rust); color: var(--rust); }
 
-.list { border-top: 1px solid var(--ink); }
-.item {
+.grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
-  gap: 23px;
-  align-items: center;
-  padding-block: 23px;
-  border-bottom: 1px solid var(--frost);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 45px 23px;
 }
-.item h3 {
+@media (max-width: 960px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .grid { grid-template-columns: minmax(0, 1fr); gap: 42px; } }
+.card { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.photo {
+  position: relative;
+  border: 0;
+  padding: 0;
+  background: var(--sand);
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  cursor: pointer;
+}
+.photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; transition: opacity .25s; }
+.photo .more {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  background: var(--linen);
+  color: var(--ink);
+  padding: 4px 10px;
+  font-size: 11px;
+}
+.card-top { display: flex; justify-content: space-between; align-items: baseline; gap: 15px; }
+.card h3 {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 18px;
+  font-size: 17px;
   letter-spacing: 0.063em;
   text-transform: uppercase;
-}
-.badge {
-  display: inline-block;
-  background: var(--sand);
-  color: var(--ink);
-  padding: 2px 10px;
-  margin-top: 6px;
-  font-size: 11px;
 }
 .price {
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: 17px;
+  font-size: 16px;
   letter-spacing: 0.05em;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  text-align: right;
-  min-width: 110px;
 }
+.color-name { color: var(--stone-text); font-size: 14px; margin-top: -6px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatch {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--ash);
+  border-radius: 0;
+  padding: 0;
+  outline-offset: 2px;
+}
+.swatch[aria-pressed="true"] { outline: 2px solid var(--ink); }
+.choose { display: flex; gap: 10px; align-items: stretch; }
 .sizes { display: flex; gap: 5px; }
 .size {
-  min-width: 38px;
-  height: 38px;
+  min-width: 42px;
+  height: 42px;
   border: 1px solid var(--ash);
   background: transparent;
   border-radius: 0;
   font-weight: 600;
   font-size: 12px;
   letter-spacing: 0.05em;
-  padding: 0 8px;
+  padding: 0 10px;
 }
 .size:hover { border-color: var(--ink); }
 .size[aria-pressed="true"] { background: var(--ink); color: var(--linen); border-color: var(--ink); }
-.add { padding: 11px 23px; }
+.add { padding: 11px 18px; flex: 1; }
 .add.done { background: var(--rust); border-color: var(--rust); }
-@media (max-width: 760px) {
-  .item {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 15px;
-  }
-  .item .sizes { grid-column: 1 / -1; order: 3; }
-  .item .add { grid-column: 1 / -1; order: 4; width: 100%; }
-}
-.note { margin: 23px 0 0; color: var(--stone-text); font-size: 14px; }
+.note { margin: 45px 0 0; color: var(--stone-text); font-size: 14px; }
 
 /* Banda de foto */
 .band img {
@@ -508,10 +523,10 @@ footer.foot a:hover { color: var(--ink); }
     <div class="wrap">
       <div>
         <p class="label kicker">Ropa deportiva para mujer</p>
-        <h1 class="display">Muévete<br>en negro</h1>
+        <h1 class="display">Hecha para<br>moverte</h1>
       </div>
       <div>
-        <p>Tops, leggings, buzos y conjuntos que sirven para entrenar y para el resto del día. Escoge tus prendas, elige la talla y envíanos el pedido por WhatsApp.</p>
+        <p>Tops, leggings, buzos, shorts y conjuntos en muchos colores, en tallas S y M. Escoge color y talla, y envíanos el pedido por WhatsApp.</p>
         <div class="actions">
           <a class="btn" href="#coleccion">Ver la colección</a>
           <a class="btn btn-ghost" id="wa-hero" href="https://wa.me/573043804481" target="_blank" rel="noopener">Escríbenos</a>
@@ -527,7 +542,7 @@ footer.foot a:hover { color: var(--ink); }
         <p>ZENOVA es ropa ajustada y cómoda, pensada para moverte sin pensar en lo que llevas puesto. Combina las prendas entre sí o llévalas en conjunto.</p>
         <ul>
           <li>Partes de arriba: tops, buzos y chaquetas</li>
-          <li>Partes de abajo: leggings, shorts y pantalones</li>
+          <li>Partes de abajo: leggings, shorts y pantalón bota ancha</li>
           <li>Conjuntos completos listos para usar</li>
           <li>Accesorios: medias, mangas y bolso</li>
         </ul>
@@ -543,12 +558,12 @@ footer.foot a:hover { color: var(--ink); }
       <div class="collection-head">
         <div>
           <h2 class="display" id="col-title">Colección</h2>
-          <p>Precios en pesos colombianos.</p>
+          <p>Toca la foto para ver otra. Precios en pesos colombianos.</p>
         </div>
         <div class="filters" role="group" aria-label="Filtrar por tipo" id="filters"></div>
       </div>
-      <div class="list" id="list"></div>
-      <p class="note">Te confirmamos por WhatsApp la talla, el color y la disponibilidad antes de enviar.</p>
+      <div class="grid" id="list"></div>
+      <p class="note">Las prendas vienen en talla S y M; las medias son talla única. Te confirmamos por WhatsApp la disponibilidad del color antes de enviar.</p>
     </div>
   </section>
 
@@ -562,7 +577,7 @@ footer.foot a:hover { color: var(--ink); }
       <div class="steps">
         <div class="step">
           <h3 class="heading-sm">Escoge</h3>
-          <p>Elige la talla de cada prenda y tócale «Agregar». Puedes sumar varias.</p>
+          <p>Elige el color y la talla de cada prenda y toca «Agregar». Puedes sumar varias.</p>
         </div>
         <div class="step">
           <h3 class="heading-sm">Envía</h3>
@@ -618,35 +633,53 @@ footer.foot a:hover { color: var(--ink); }
 <script>
 (function () {
   var WHATSAPP = '573043804481';
-  var CLOTHES = ['S', 'M', 'L'];
-  var ONE = ['Única'];
+  var SM = ['S', 'M'];
+  var IMG = 'img/catalogo/';
+  var HEX = {
+    rosado: '#f4b8cb', negro: '#111111', vino: '#7a1426', amarillo: '#f5dc86', azul: '#a8cdf1',
+    rojo: '#c8161e', beige: '#b49a84', blanco: '#ffffff', crema: '#f2e9c6', menta: '#a5dcc5',
+    coral: '#f07a70', 'azul rey': '#2448d6', naranja: '#ff6a1a', aqua: '#5fdcd2', lila: '#b9a2e6'
+  };
 
-  // Precios de la lista que envió el cliente (octubre 2026).
+  // Precios de la lista del cliente y tallas y colores del catálogo (octubre 2026).
+  // photos: [nombre del color, archivo del color en img/catalogo, número de fotos]
   var PRODUCTS = [
-    { id: 'conjunto-blue', name: 'Conjunto Blue', type: 'Conjuntos', price: 155000, sizes: CLOTHES },
-    { id: 'conjunto-aura', name: 'Conjunto Aura', type: 'Conjuntos', price: 56000, sizes: CLOTHES },
-    { id: 'top-ema', name: 'Top Ema', type: 'Arriba', price: 45700, sizes: CLOTHES },
-    { id: 'buzo-laila', name: 'Buzo Laila', type: 'Arriba', price: 67400, sizes: CLOTHES },
-    { id: 'buzo-ballerina', name: 'Buzo Ballerina', type: 'Arriba', price: 45200, sizes: CLOTHES },
-    { id: 'leggings-kim', name: 'Leggings Kim', type: 'Abajo', price: 62200, sizes: CLOTHES },
-    { id: 'short-val', name: 'Short corto Val', type: 'Abajo', price: 55300, sizes: CLOTHES },
-    { id: 'pantalon-claire', name: 'Pantalón Claire', type: 'Abajo', price: 85300, sizes: CLOTHES },
-    { id: 'mangas-kai', name: 'Mangas Kai', type: 'Accesorios', price: 23500, sizes: ONE },
-    { id: 'medias', name: 'Medias', type: 'Accesorios', price: 11000, sizes: ONE },
-    { id: 'bolso-stove', name: 'Bolso Stove', type: 'Accesorios', price: 65000, sizes: ONE }
+    { id: 'conjunto-aura', name: 'Conjunto Aura', type: 'Conjuntos', price: 56000, sizes: SM,
+      colors: [['naranja', 'naranja', 2], ['aqua', 'aqua', 1], ['lila', 'lila', 1]] },
+    { id: 'top-emma', name: 'Top Emma', type: 'Arriba', price: 45700, sizes: SM,
+      colors: [['rosado', 'rosado', 2], ['negro', 'negro', 2], ['vino', 'vino', 2], ['amarillo', 'amarillo', 2], ['azul', 'azul', 2]] },
+    { id: 'leggings-kim', name: 'Leggings Kim', type: 'Abajo', price: 62200, sizes: SM,
+      colors: [['rojo', 'rojo', 2], ['beige', 'beige', 2], ['negro', 'negro', 2], ['rosado', 'rosado', 2]] },
+    { id: 'buzo-laila', name: 'Buzo Laila', type: 'Arriba', price: 67400, sizes: SM,
+      colors: [['negro', 'negro', 1], ['rojo', 'rojo', 1], ['rosado', 'rosado', 1], ['amarillo', 'amarillo', 1]] },
+    { id: 'short-val', name: 'Short corto Val', type: 'Abajo', price: 55300, sizes: SM,
+      colors: [['rosado', 'rosado', 2], ['menta', 'menta', 2], ['coral', 'coral', 2], ['azul rey', 'azul', 2], ['amarillo', 'amarillo', 2], ['negro', 'negro', 1]] },
+    { id: 'pantalon-claire', name: 'Pantalón Claire', type: 'Abajo', price: 85300, sizes: SM,
+      colors: [['negro', 'negro', 2], ['rosado', 'rosado', 2], ['crema', 'crema', 2]] },
+    { id: 'buzo-ballerina', name: 'Buzo Ballerina', type: 'Arriba', price: 45200, sizes: SM,
+      colors: [['rosado', 'rosado', 3], ['blanco', 'blanco', 2], ['negro', 'negro', 2]] },
+    { id: 'mangas-kai', name: 'Mangas Kai', type: 'Accesorios', price: 23500, sizes: SM,
+      colors: [['amarillo', 'colores', 2], ['gris', 'colores', 2], ['blanco', 'colores', 2], ['rosado', 'colores', 2]] },
+    { id: 'bolso-stove', name: 'Bolso Stove', type: 'Accesorios', price: 65000, sizes: [],
+      colors: [['rosado', 'rosado', 1], ['negro', 'negro', 1]] },
+    { id: 'medias-nova', name: 'Medias Nova', type: 'Accesorios', price: 11000, sizes: ['Única'],
+      colors: [['blanco', 'blanco', 1], ['negro', 'negro', 1]] }
   ];
+  HEX.gris = '#9b9b9b';
   var TYPES = ['Todo', 'Conjuntos', 'Arriba', 'Abajo', 'Accesorios'];
-  var TYPE_LABEL = { Conjuntos: 'Conjunto', Arriba: 'Parte de arriba', Abajo: 'Parte de abajo', Accesorios: 'Accesorio' };
 
   var money = function (n) { return '$' + n.toLocaleString('es-CO'); };
   var $ = function (id) { return document.getElementById(id); };
+  function cap(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+  function sizeText(s) { return s === 'Única' ? 'talla única' : s ? 'talla ' + s : ''; }
+  function photo(p, c, n) { return IMG + p.id + '-' + c[1] + '-' + n + '.jpg'; }
 
   var filter = 'Todo';
-  var chosen = {};
+  var state = {};
   var cart = [];
-  try { cart = JSON.parse(localStorage.getItem('zenova-pedido') || '[]') || []; } catch (e) { cart = []; }
+  try { cart = JSON.parse(localStorage.getItem('zenova-pedido-2') || '[]') || []; } catch (e) { cart = []; }
   cart = cart.filter(function (l) { return PRODUCTS.some(function (p) { return p.id === l.id; }); });
-  function save() { try { localStorage.setItem('zenova-pedido', JSON.stringify(cart)); } catch (e) {} }
+  function save() { try { localStorage.setItem('zenova-pedido-2', JSON.stringify(cart)); } catch (e) {} }
 
   function el(tag, attrs, text) {
     var n = document.createElement(tag);
@@ -668,46 +701,90 @@ footer.foot a:hover { color: var(--ink); }
   function renderList() {
     var list = $('list');
     list.textContent = '';
-    PRODUCTS.filter(function (p) { return filter === 'Todo' || p.type === filter; }).forEach(function (p) {
-      if (!chosen[p.id]) chosen[p.id] = p.sizes.length === 1 ? p.sizes[0] : null;
-      var row = el('article', { class: 'item' });
-      var info = el('div');
-      info.appendChild(el('h3', {}, p.name));
-      info.appendChild(el('span', { class: 'badge label' }, TYPE_LABEL[p.type]));
-      var sizes = el('div', { class: 'sizes', role: 'group', 'aria-label': 'Talla de ' + p.name });
-      p.sizes.forEach(function (s) {
-        var b = el('button', { type: 'button', class: 'size', 'aria-pressed': String(chosen[p.id] === s) }, s);
-        b.addEventListener('click', function () {
-          chosen[p.id] = s;
-          sizes.querySelectorAll('.size').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-        });
-        sizes.appendChild(b);
+    PRODUCTS.filter(function (p) { return filter === 'Todo' || p.type === filter; }).forEach(function (p, idx) {
+      var st = state[p.id] || (state[p.id] = { color: 0, n: 1, size: p.sizes.length === 1 ? p.sizes[0] : null });
+      var card = el('article', { class: 'card' });
+
+      var ph = el('button', { type: 'button', class: 'photo' });
+      var img = el('img', { alt: '', loading: idx < 3 ? 'eager' : 'lazy', width: '800', height: '1066' });
+      var more = el('span', { class: 'more label' });
+      ph.appendChild(img);
+      ph.appendChild(more);
+
+      var top = el('div', { class: 'card-top' });
+      top.appendChild(el('h3', {}, p.name));
+      top.appendChild(el('div', { class: 'price' }, money(p.price)));
+      var colorName = el('div', { class: 'color-name' });
+
+      function paint() {
+        var c = p.colors[st.color];
+        img.src = photo(p, c, st.n);
+        img.alt = p.name + ' color ' + c[0];
+        more.textContent = st.n + ' / ' + c[2];
+        more.hidden = c[2] < 2;
+        ph.setAttribute('aria-label', c[2] > 1 ? 'Ver otra foto de ' + p.name : p.name + ' color ' + c[0]);
+        colorName.textContent = 'Color: ' + c[0];
+      }
+      ph.addEventListener('click', function () {
+        var c = p.colors[st.color];
+        st.n = st.n >= c[2] ? 1 : st.n + 1;
+        paint();
       });
-      var price = el('div', { class: 'price' }, money(p.price));
+
+      var sw = el('div', { class: 'swatches', role: 'group', 'aria-label': 'Color de ' + p.name });
+      p.colors.forEach(function (c, i) {
+        var b = el('button', { type: 'button', class: 'swatch', title: cap(c[0]), 'aria-label': cap(c[0]), 'aria-pressed': String(i === st.color) });
+        b.style.background = HEX[c[0]] || '#cccccc';
+        b.addEventListener('click', function () {
+          st.color = i; st.n = 1; paint();
+          sw.querySelectorAll('.swatch').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        });
+        sw.appendChild(b);
+      });
+
+      var choose = el('div', { class: 'choose' });
+      var sizes = null;
+      if (p.sizes.length) {
+        sizes = el('div', { class: 'sizes', role: 'group', 'aria-label': 'Talla de ' + p.name });
+        p.sizes.forEach(function (s) {
+          var b = el('button', { type: 'button', class: 'size', 'aria-pressed': String(st.size === s) }, s);
+          b.addEventListener('click', function () {
+            st.size = s;
+            sizes.querySelectorAll('.size').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+          });
+          sizes.appendChild(b);
+        });
+        choose.appendChild(sizes);
+      }
       var add = el('button', { type: 'button', class: 'btn add' }, 'Agregar');
       add.addEventListener('click', function () {
-        if (!chosen[p.id]) { toast('Elige una talla para ' + p.name); sizes.querySelector('.size').focus(); return; }
-        addToCart(p, chosen[p.id]);
+        if (p.sizes.length && !st.size) { toast('Elige la talla de ' + p.name); sizes.querySelector('.size').focus(); return; }
+        addToCart(p, p.colors[st.color][0], st.size || '');
         add.textContent = 'Agregado';
         add.classList.add('done');
         setTimeout(function () { add.textContent = 'Agregar'; add.classList.remove('done'); }, 1400);
       });
-      row.appendChild(info);
-      row.appendChild(price);
-      row.appendChild(sizes);
-      row.appendChild(add);
-      list.appendChild(row);
+      choose.appendChild(add);
+
+      card.appendChild(ph);
+      card.appendChild(top);
+      card.appendChild(colorName);
+      card.appendChild(sw);
+      card.appendChild(choose);
+      paint();
+      list.appendChild(card);
     });
   }
 
   function find(id) { return PRODUCTS.filter(function (p) { return p.id === id; })[0]; }
+  function detail(l) { return [cap(l.color), sizeText(l.size)].filter(Boolean).join(', '); }
 
-  function addToCart(p, size) {
-    var line = cart.filter(function (l) { return l.id === p.id && l.size === size; })[0];
-    if (line) line.qty += 1; else cart.push({ id: p.id, size: size, qty: 1 });
+  function addToCart(p, color, size) {
+    var line = cart.filter(function (l) { return l.id === p.id && l.size === size && l.color === color; })[0];
+    if (line) line.qty += 1; else cart.push({ id: p.id, color: color, size: size, qty: 1 });
     save();
     renderCart();
-    toast(p.name + (size === 'Única' ? '' : ' talla ' + size) + ' quedó en tu pedido');
+    toast(p.name + ' ' + color + (size ? ' ' + sizeText(size) : '') + ' quedó en tu pedido');
   }
 
   function renderCart() {
@@ -724,7 +801,7 @@ footer.foot a:hover { color: var(--ink); }
       var row = el('div', { class: 'line' });
       var left = el('div');
       left.appendChild(el('strong', {}, p.name));
-      left.appendChild(el('div', { class: 'meta' }, (l.size === 'Única' ? 'Talla única' : 'Talla ' + l.size) + ' · ' + money(p.price)));
+      left.appendChild(el('div', { class: 'meta' }, detail(l) + ' · ' + money(p.price)));
       row.appendChild(left);
       row.appendChild(el('div', { class: 'amount' }, money(sub)));
       var qty = el('div', { class: 'qty' });
@@ -745,11 +822,10 @@ footer.foot a:hover { color: var(--ink); }
     var msg = 'Hola ZENOVA, quiero hacer este pedido:\n';
     cart.forEach(function (l) {
       var p = find(l.id);
-      msg += '\n• ' + l.qty + ' x ' + p.name + (l.size === 'Única' ? '' : ' (talla ' + l.size + ')') + ': ' + money(p.price * l.qty);
+      msg += '\n• ' + l.qty + ' x ' + p.name + ' (' + detail(l) + '): ' + money(p.price * l.qty);
     });
     msg += '\n\nTotal: ' + money(total) + '\n\nMi nombre:\nCiudad y dirección:';
-    var send = $('send');
-    send.href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(cart.length ? msg : 'Hola ZENOVA, quiero información de sus prendas.');
+    $('send').href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(cart.length ? msg : 'Hola ZENOVA, quiero información de sus prendas.');
   }
 
   var lastFocus = null;
