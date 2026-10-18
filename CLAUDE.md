@@ -116,7 +116,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 - 3R Burgers: página de muestra a la venta, sin dueño (16 oct 2026). Rigoberto pidió ayuda para conseguir comprador.
 - **ZENOVA** (18 oct 2026): cliente nuevo, tienda de ropa deportiva para mujer. Página estática en `clientes/zenova/`
   (estilo de referencia que mandó el cliente: HNST Studio, lienzo cálido, acento óxido, Raleway + Poppins; ese sistema manda
-  sobre la lista de prohibidos). Pedido con carrito por WhatsApp 573043804481. 11 productos con precio de su lista; tallas S/M/L
+  sobre la lista de prohibidos). Pedido con carrito por WhatsApp 573043804481. 10 productos con precio de su lista; tallas
   según el catálogo (S y M; medias talla única; bolso sin talla); colores y fotos por prenda en `img/catalogo`. Conjunto Blue
   no está en el catálogo: quedó fuera. Vista previa: https://claude.ai/artifact/V3MKk9xT8aLB4RJahF7G4y.
   Instagram: https://www.instagram.com/zenovaoficial_/ (contacto y pie). Publicación: Rigoberto pidió una dirección gratis que empiece por «zenova» (proyecto de Vercel aparte, Root Directory
