@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ZENOVA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="ZENOVA: ropa deportiva para mujer. Tops, leggings, buzos, conjuntos y accesorios. Haz tu pedido por WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Raleway:wght@400;600;700&display=swap">
+<style>
+/* Diseño: estilo de referencia que envió el cliente (HNST Studio): lienzo cálido, un solo acento óxido,
+   fotos a todo lo ancho sin texto encima, títulos con letras muy separadas, esquinas rectas, sin sombras. */
+:root {
+  color-scheme: light;
+  --rust: #892500;
+  --blush: #ea9195;
+  --linen: #ffffff;
+  --silk: #f9f6f2;
+  --sand: #eee5d9;
+  --ink: #0e0e0e;
+  --stone: #868686;
+  --stone-text: #6b6b6b;
+  --ash: #b7b7b7;
+  --frost: #d7d7d7;
+  --font-ui: 'Raleway', 'Montserrat', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Poppins', 'Montserrat', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --max: 1200px;
+  --gutter-l: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--silk);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--rust); outline-offset: 3px; }
+
+.wrap {
+  max-width: var(--max);
+  margin-inline: auto;
+  padding-left: var(--gutter-l);
+  padding-right: var(--gutter-r);
+}
+.label {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.192em;
+  text-transform: uppercase;
+}
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(34px, 7vw, 62px);
+  line-height: 1.15;
+  letter-spacing: 0.154em;
+  text-transform: uppercase;
+  margin: 0;
+  text-wrap: balance;
+}
+.heading-sm {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.25;
+  letter-spacing: 0.091em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* Botones */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--linen);
+  border-radius: 0;
+  padding: 15px 42px;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.192em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background .2s, color .2s, border-color .2s;
+}
+.btn:hover { background: var(--rust); border-color: var(--rust); }
+.btn-ghost { background: transparent; color: var(--ink); }
+.btn-ghost:hover { background: var(--ink); color: var(--linen); border-color: var(--ink); }
+
+/* Encabezado */
+header.top {
+  border-bottom: 1px solid var(--stone);
+  background: var(--silk);
+}
+header.top .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding-block: 14px;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--rust);
+}
+.brand svg { width: 26px; height: 26px; flex: none; }
+.brand span {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.154em;
+}
+nav.links { display: flex; align-items: center; gap: 28px; }
+nav.links a {
+  text-decoration: none;
+  color: var(--stone-text);
+  transition: color .2s;
+}
+nav.links a:hover { color: var(--ink); }
+.cart-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--ink);
+  color: var(--linen);
+  border: 0;
+  border-radius: 0;
+  padding: 10px 16px;
+}
+.cart-btn .count {
+  min-width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--linen);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  padding: 0 5px;
+}
+@media (max-width: 720px) {
+  nav.links .nav-text { display: none; }
+}
+
+/* Portada */
+.hero-img {
+  width: 100%;
+  height: clamp(320px, 72vh, 760px);
+  object-fit: cover;
+  object-position: 50% 18%;
+}
+.intro .wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: end;
+  padding-block: 75px;
+}
+.intro p { margin: 0; max-width: 46ch; font-size: 16px; }
+.intro .actions { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 23px; }
+.intro .kicker { color: var(--rust); margin: 0 0 15px; }
+@media (max-width: 820px) {
+  .intro .wrap { grid-template-columns: minmax(0, 1fr); gap: 23px; padding-block: 45px; }
+}
+
+/* Historia: texto a la izquierda, foto a la derecha */
+.story { border-top: 1px solid var(--frost); }
+.story .wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 75px;
+  align-items: center;
+  padding-block: 114px;
+}
+.story h2 { margin-bottom: 23px; }
+.story p { margin: 0 0 15px; max-width: 48ch; }
+.story ul {
+  list-style: none;
+  margin: 23px 0 0;
+  padding: 0 0 0 15px;
+  border-left: 1px solid var(--stone);
+  display: grid;
+  gap: 9px;
+}
+.story li { display: flex; gap: 9px; align-items: baseline; }
+.story li::before {
+  content: "";
+  width: 5px; height: 5px;
+  background: var(--rust);
+  flex: none;
+  transform: translateY(-2px);
+}
+.story img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+@media (max-width: 820px) {
+  .story .wrap { grid-template-columns: minmax(0, 1fr); gap: 40px; padding-block: 75px; }
+  .story figure { order: -1; }
+}
+figure { margin: 0; }
+
+/* Colección: fotos de catálogo en cuadrícula, esquinas rectas, sin sombras */
+.collection { padding-block: 114px 75px; }
+.collection-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: end;
+  gap: 23px;
+  margin-bottom: 42px;
+}
+.collection-head p { margin: 9px 0 0; color: var(--stone-text); }
+.filters { display: flex; flex-wrap: wrap; gap: 10px; }
+.filter {
+  border: 1px solid var(--stone);
+  background: var(--linen);
+  border-radius: 10px;
+  padding: 5px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink);
+  transition: border-color .2s, color .2s;
+}
+.filter:hover { border-color: var(--ink); }
+.filter[aria-pressed="true"] { border-color: var(--rust); color: var(--rust); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 45px 23px;
+}
+@media (max-width: 960px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .grid { grid-template-columns: minmax(0, 1fr); gap: 42px; } }
+.card { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.photo {
+  position: relative;
+  border: 0;
+  padding: 0;
+  background: var(--sand);
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  cursor: pointer;
+}
+.photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; transition: opacity .25s; }
+.photo .more {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  background: var(--linen);
+  color: var(--ink);
+  padding: 4px 10px;
+  font-size: 11px;
+}
+.card-top { display: flex; justify-content: space-between; align-items: baseline; gap: 15px; }
+.card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: 0.063em;
+  text-transform: uppercase;
+}
+.price {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.color-name { color: var(--stone-text); font-size: 14px; margin-top: -6px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatch {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--ash);
+  border-radius: 0;
+  padding: 0;
+  outline-offset: 2px;
+}
+.swatch[aria-pressed="true"] { outline: 2px solid var(--ink); }
+.choose { display: flex; gap: 10px; align-items: stretch; }
+.sizes { display: flex; gap: 5px; }
+.size {
+  min-width: 42px;
+  height: 42px;
+  border: 1px solid var(--ash);
+  background: transparent;
+  border-radius: 0;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  padding: 0 10px;
+}
+.size:hover { border-color: var(--ink); }
+.size[aria-pressed="true"] { background: var(--ink); color: var(--linen); border-color: var(--ink); }
+.add { padding: 11px 18px; flex: 1; }
+.add.done { background: var(--rust); border-color: var(--rust); }
+.note { margin: 45px 0 0; color: var(--stone-text); font-size: 14px; }
+
+/* Banda de foto */
+.band img {
+  width: 100%;
+  height: clamp(220px, 34vh, 380px);
+  object-fit: cover;
+  object-position: 50% 45%;
+}
+
+/* Cómo pedir */
+.how .wrap { padding-block: 114px; }
+.how h2 { margin-bottom: 45px; }
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+}
+.step { background: var(--sand); padding: 42px; }
+.step h3 { margin-bottom: 12px; }
+.step p { margin: 0; }
+@media (max-width: 820px) {
+  .steps { grid-template-columns: minmax(0, 1fr); }
+  .step { padding: 30px; }
+}
+
+/* Contacto */
+.contact {
+  background: var(--ink);
+  color: var(--linen);
+}
+.contact .wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 45px;
+  align-items: center;
+  padding-block: 114px;
+}
+.contact p { margin: 15px 0 0; color: var(--ash); max-width: 44ch; }
+.contact .phone {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(24px, 4vw, 34px);
+  letter-spacing: 0.091em;
+  color: var(--linen);
+  user-select: all;
+}
+.contact .btn { background: var(--linen); color: var(--ink); border-color: var(--linen); margin-top: 23px; }
+.contact .btn:hover { background: var(--rust); color: var(--linen); border-color: var(--rust); }
+.contact .ig {
+  display: block;
+  margin-top: 20px;
+  color: var(--ash);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.192em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.contact .ig:hover { color: var(--linen); }
+.foot-links { display: flex; flex-wrap: wrap; gap: 23px; }
+@media (max-width: 820px) {
+  .contact .wrap { grid-template-columns: minmax(0, 1fr); padding-block: 75px; }
+}
+
+footer.foot { border-top: 1px solid var(--stone); }
+footer.foot .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 15px;
+  padding-block: 40px;
+  color: var(--stone-text);
+  font-size: 14px;
+}
+footer.foot a { text-decoration: none; }
+footer.foot a:hover { color: var(--ink); }
+
+/* Carrito */
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 14, 14, .45);
+  z-index: 40;
+}
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(440px, 100%);
+  background: var(--silk);
+  border-left: 1px solid var(--stone);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  transform: translateX(100%);
+  transition: transform .3s ease;
+  visibility: hidden;
+}
+.drawer.open { transform: none; visibility: visible; }
+.drawer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 23px;
+  border-bottom: 1px solid var(--stone);
+}
+.close {
+  border: 0;
+  background: transparent;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  line-height: 1;
+}
+.drawer-body { flex: 1; overflow-y: auto; padding: 10px 23px; }
+.line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 15px;
+  padding-block: 15px;
+  border-bottom: 1px solid var(--frost);
+}
+.line strong {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.line .meta { color: var(--stone-text); font-size: 13px; }
+.line .amount { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+.qty { display: inline-flex; align-items: center; border: 1px solid var(--ash); justify-self: start; }
+.qty button { width: 32px; height: 32px; border: 0; background: transparent; font-size: 16px; }
+.qty span { min-width: 26px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+.remove {
+  border: 0;
+  background: transparent;
+  color: var(--stone-text);
+  font-size: 13px;
+  text-decoration: underline;
+  padding: 0;
+  justify-self: end;
+}
+.empty { padding: 40px 0; color: var(--stone-text); }
+.drawer-foot { padding: 20px 23px 23px; border-top: 1px solid var(--stone); display: grid; gap: 15px; }
+.total { display: flex; justify-content: space-between; align-items: baseline; }
+.total b {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+}
+.drawer-foot .btn { width: 100%; }
+.drawer-foot small { color: var(--stone-text); font-size: 13px; line-height: 1.5; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(23px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 20px);
+  background: var(--ink);
+  color: var(--linen);
+  padding: 12px 20px;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s, transform .25s;
+  z-index: 60;
+  max-width: calc(100% - 32px);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#inicio" aria-label="ZENOVA, inicio">
+      <svg viewBox="0 0 26 26" aria-hidden="true"><path fill="currentColor" d="M3 3h20v4.2L9.6 19H23v4H3v-4.2L16.4 7H3z"/></svg>
+      <span>ZENOVA</span>
+    </a>
+    <nav class="links" aria-label="Secciones">
+      <a class="label nav-text" href="#coleccion">Colección</a>
+      <a class="label nav-text" href="#como-pedir">Cómo pedir</a>
+      <a class="label nav-text" href="#contacto">Contacto</a>
+      <button class="cart-btn label" id="open-cart" type="button" aria-haspopup="dialog">
+        Pedido <span class="count" id="cart-count">0</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main id="inicio">
+  <img class="hero-img" src="img/portada.jpg" alt="Mujer estirando en postura de yoga con top y leggings negros ZENOVA" width="1536" height="1024">
+
+  <section class="intro">
+    <div class="wrap">
+      <div>
+        <p class="label kicker">Ropa deportiva para mujer</p>
+        <h1 class="display">Hecha para<br>moverte</h1>
+      </div>
+      <div>
+        <p>Tops, leggings, buzos, shorts y conjuntos en muchos colores, en tallas S y M. Escoge color y talla, y envíanos el pedido por WhatsApp.</p>
+        <div class="actions">
+          <a class="btn" href="#coleccion">Ver la colección</a>
+          <a class="btn btn-ghost" id="wa-hero" href="https://wa.me/573043804481" target="_blank" rel="noopener">Escríbenos</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="story" aria-labelledby="story-title">
+    <div class="wrap">
+      <div>
+        <h2 class="display" id="story-title" style="font-size: clamp(28px, 4.4vw, 44px)">Del gimnasio<br>a la calle</h2>
+        <p>ZENOVA es ropa ajustada y cómoda, pensada para moverte sin pensar en lo que llevas puesto. Combina las prendas entre sí o llévalas en conjunto.</p>
+        <ul>
+          <li>Partes de arriba: tops, buzos y chaquetas</li>
+          <li>Partes de abajo: leggings, shorts y pantalón bota ancha</li>
+          <li>Conjuntos completos listos para usar</li>
+          <li>Accesorios: medias, mangas y bolso</li>
+        </ul>
+      </div>
+      <figure>
+        <img src="img/chaqueta.jpg" alt="Modelo con chaqueta y leggings negros ZENOVA y tenis blancos" width="1122" height="1402" loading="lazy">
+      </figure>
+    </div>
+  </section>
+
+  <section class="collection" id="coleccion" aria-labelledby="col-title">
+    <div class="wrap">
+      <div class="collection-head">
+        <div>
+          <h2 class="display" id="col-title">Colección</h2>
+          <p>Toca la foto para ver otra. Precios en pesos colombianos.</p>
+        </div>
+        <div class="filters" role="group" aria-label="Filtrar por tipo" id="filters"></div>
+      </div>
+      <div class="grid" id="list"></div>
+      <p class="note">Las prendas vienen en talla S y M; las medias son talla única. Te confirmamos por WhatsApp la disponibilidad del color antes de enviar.</p>
+    </div>
+  </section>
+
+  <figure class="band">
+    <img src="img/accesorios.jpg" alt="Tapete de yoga, termo, bolso y moños negros" width="1024" height="1280" loading="lazy">
+  </figure>
+
+  <section class="how" id="como-pedir" aria-labelledby="how-title">
+    <div class="wrap">
+      <h2 class="display" id="how-title" style="font-size: clamp(28px, 4.4vw, 44px)">Cómo pedir</h2>
+      <div class="steps">
+        <div class="step">
+          <h3 class="heading-sm">Escoge</h3>
+          <p>Elige el color y la talla de cada prenda y toca «Agregar». Puedes sumar varias.</p>
+        </div>
+        <div class="step">
+          <h3 class="heading-sm">Envía</h3>
+          <p>Abre tu pedido y toca «Pedir por WhatsApp». El mensaje sale listo con las prendas y el total.</p>
+        </div>
+        <div class="step">
+          <h3 class="heading-sm">Recibe</h3>
+          <p>Te confirmamos disponibilidad, forma de pago y envío, y despachamos tu pedido.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact" id="contacto" aria-labelledby="contact-title">
+    <div class="wrap">
+      <div>
+        <h2 class="display" id="contact-title" style="font-size: clamp(28px, 4.4vw, 44px)">Hablemos</h2>
+        <p>¿Dudas con la talla o quieres ver una prenda en otro color? Escríbenos y te respondemos por WhatsApp.</p>
+      </div>
+      <div>
+        <div class="label" style="color: var(--ash)">WhatsApp</div>
+        <div class="phone">304 380 4481</div>
+        <a class="btn" href="https://wa.me/573043804481?text=Hola%20ZENOVA%2C%20quiero%20informaci%C3%B3n%20de%20sus%20prendas." target="_blank" rel="noopener">Abrir WhatsApp</a>
+        <a class="ig" href="https://www.instagram.com/zenovaoficial_/" target="_blank" rel="noopener">Instagram @zenovaoficial_</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>© <span id="year">2026</span> ZENOVA · Ropa deportiva</span>
+    <span class="foot-links"><a href="https://www.instagram.com/zenovaoficial_/" target="_blank" rel="noopener">Instagram @zenovaoficial_</a><span>WhatsApp 304 380 4481</span></span>
+  </div>
+</footer>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+  <div class="drawer-head">
+    <h2 class="heading-sm" id="drawer-title">Tu pedido</h2>
+    <button class="close" id="close-cart" type="button" aria-label="Cerrar pedido">×</button>
+  </div>
+  <div class="drawer-body" id="lines"></div>
+  <div class="drawer-foot">
+    <div class="total"><span class="label">Total</span><b id="total">$0</b></div>
+    <a class="btn" id="send" href="https://wa.me/573043804481" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+    <small>El envío se cotiza aparte según tu ciudad. Si el botón no abre WhatsApp, escríbenos al 304 380 4481.</small>
+  </div>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  var WHATSAPP = '573043804481';
+  var SM = ['S', 'M'];
+  var IMG = 'img/catalogo/';
+  var HEX = {
+    rosado: '#f4b8cb', negro: '#111111', vino: '#7a1426', amarillo: '#f5dc86', azul: '#a8cdf1',
+    rojo: '#c8161e', beige: '#b49a84', blanco: '#ffffff', crema: '#f2e9c6', menta: '#a5dcc5',
+    coral: '#f07a70', 'azul rey': '#2448d6', naranja: '#ff6a1a', aqua: '#5fdcd2', lila: '#b9a2e6'
+  };
+
+  // Precios de la lista del cliente y tallas y colores del catálogo (octubre 2026).
+  // photos: [nombre del color, archivo del color en img/catalogo, número de fotos]
+  var PRODUCTS = [
+    { id: 'conjunto-aura', name: 'Conjunto Aura', type: 'Conjuntos', price: 56000, sizes: SM,
+      colors: [['naranja', 'naranja', 2], ['aqua', 'aqua', 1], ['lila', 'lila', 1]] },
+    { id: 'top-emma', name: 'Top Emma', type: 'Arriba', price: 45700, sizes: SM,
+      colors: [['rosado', 'rosado', 2], ['negro', 'negro', 2], ['vino', 'vino', 2], ['amarillo', 'amarillo', 2], ['azul', 'azul', 2]] },
+    { id: 'leggings-kim', name: 'Leggings Kim', type: 'Abajo', price: 62200, sizes: SM,
+      colors: [['rojo', 'rojo', 2], ['beige', 'beige', 2], ['negro', 'negro', 2], ['rosado', 'rosado', 2]] },
+    { id: 'buzo-laila', name: 'Buzo Laila', type: 'Arriba', price: 67400, sizes: SM,
+      colors: [['negro', 'negro', 1], ['rojo', 'rojo', 1], ['rosado', 'rosado', 1], ['amarillo', 'amarillo', 1]] },
+    { id: 'short-val', name: 'Short corto Val', type: 'Abajo', price: 55300, sizes: SM,
+      colors: [['rosado', 'rosado', 2], ['menta', 'menta', 2], ['coral', 'coral', 2], ['azul rey', 'azul', 2], ['amarillo', 'amarillo', 2], ['negro', 'negro', 1]] },
+    { id: 'pantalon-claire', name: 'Pantalón Claire', type: 'Abajo', price: 85300, sizes: SM,
+      colors: [['negro', 'negro', 2], ['rosado', 'rosado', 2], ['crema', 'crema', 2]] },
+    { id: 'buzo-ballerina', name: 'Buzo Ballerina', type: 'Arriba', price: 45200, sizes: SM,
+      colors: [['rosado', 'rosado', 3], ['blanco', 'blanco', 2], ['negro', 'negro', 2]] },
+    { id: 'mangas-kai', name: 'Mangas Kai', type: 'Accesorios', price: 23500, sizes: SM,
+      colors: [['amarillo', 'colores', 2], ['gris', 'colores', 2], ['blanco', 'colores', 2], ['rosado', 'colores', 2]] },
+    { id: 'bolso-stove', name: 'Bolso Stove', type: 'Accesorios', price: 65000, sizes: [],
+      colors: [['rosado', 'rosado', 1], ['negro', 'negro', 1]] },
+    { id: 'medias-nova', name: 'Medias Nova', type: 'Accesorios', price: 11000, sizes: ['Única'],
+      colors: [['blanco', 'blanco', 1], ['negro', 'negro', 1]] }
+  ];
+  HEX.gris = '#9b9b9b';
+  var TYPES = ['Todo', 'Conjuntos', 'Arriba', 'Abajo', 'Accesorios'];
+
+  var money = function (n) { return '$' + n.toLocaleString('es-CO'); };
+  var $ = function (id) { return document.getElementById(id); };
+  function cap(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+  function sizeText(s) { return s === 'Única' ? 'talla única' : s ? 'talla ' + s : ''; }
+  function photo(p, c, n) { return IMG + p.id + '-' + c[1] + '-' + n + '.jpg'; }
+
+  var filter = 'Todo';
+  var state = {};
+  var cart = [];
+  try { cart = JSON.parse(localStorage.getItem('zenova-pedido-2') || '[]') || []; } catch (e) { cart = []; }
+  cart = cart.filter(function (l) { return PRODUCTS.some(function (p) { return p.id === l.id; }); });
+  function save() { try { localStorage.setItem('zenova-pedido-2', JSON.stringify(cart)); } catch (e) {} }
+
+  function el(tag, attrs, text) {
+    var n = document.createElement(tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function renderFilters() {
+    var box = $('filters');
+    box.textContent = '';
+    TYPES.forEach(function (t) {
+      var b = el('button', { type: 'button', class: 'filter', 'aria-pressed': String(t === filter) }, t);
+      b.addEventListener('click', function () { filter = t; renderFilters(); renderList(); });
+      box.appendChild(b);
+    });
+  }
+
+  function renderList() {
+    var list = $('list');
+    list.textContent = '';
+    PRODUCTS.filter(function (p) { return filter === 'Todo' || p.type === filter; }).forEach(function (p, idx) {
+      var st = state[p.id] || (state[p.id] = { color: 0, n: 1, size: p.sizes.length === 1 ? p.sizes[0] : null });
+      var card = el('article', { class: 'card' });
+
+      var ph = el('button', { type: 'button', class: 'photo' });
+      var img = el('img', { alt: '', loading: idx < 3 ? 'eager' : 'lazy', width: '800', height: '1066' });
+      var more = el('span', { class: 'more label' });
+      ph.appendChild(img);
+      ph.appendChild(more);
+
+      var top = el('div', { class: 'card-top' });
+      top.appendChild(el('h3', {}, p.name));
+      top.appendChild(el('div', { class: 'price' }, money(p.price)));
+      var colorName = el('div', { class: 'color-name' });
+
+      function paint() {
+        var c = p.colors[st.color];
+        img.src = photo(p, c, st.n);
+        img.alt = p.name + ' color ' + c[0];
+        more.textContent = st.n + ' / ' + c[2];
+        more.hidden = c[2] < 2;
+        ph.setAttribute('aria-label', c[2] > 1 ? 'Ver otra foto de ' + p.name : p.name + ' color ' + c[0]);
+        colorName.textContent = 'Color: ' + c[0];
+      }
+      ph.addEventListener('click', function () {
+        var c = p.colors[st.color];
+        st.n = st.n >= c[2] ? 1 : st.n + 1;
+        paint();
+      });
+
+      var sw = el('div', { class: 'swatches', role: 'group', 'aria-label': 'Color de ' + p.name });
+      p.colors.forEach(function (c, i) {
+        var b = el('button', { type: 'button', class: 'swatch', title: cap(c[0]), 'aria-label': cap(c[0]), 'aria-pressed': String(i === st.color) });
+        b.style.background = HEX[c[0]] || '#cccccc';
+        b.addEventListener('click', function () {
+          st.color = i; st.n = 1; paint();
+          sw.querySelectorAll('.swatch').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        });
+        sw.appendChild(b);
+      });
+
+      var choose = el('div', { class: 'choose' });
+      var sizes = null;
+      if (p.sizes.length) {
+        sizes = el('div', { class: 'sizes', role: 'group', 'aria-label': 'Talla de ' + p.name });
+        p.sizes.forEach(function (s) {
+          var b = el('button', { type: 'button', class: 'size', 'aria-pressed': String(st.size === s) }, s);
+          b.addEventListener('click', function () {
+            st.size = s;
+            sizes.querySelectorAll('.size').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+          });
+          sizes.appendChild(b);
+        });
+        choose.appendChild(sizes);
+      }
+      var add = el('button', { type: 'button', class: 'btn add' }, 'Agregar');
+      add.addEventListener('click', function () {
+        if (p.sizes.length && !st.size) { toast('Elige la talla de ' + p.name); sizes.querySelector('.size').focus(); return; }
+        addToCart(p, p.colors[st.color][0], st.size || '');
+        add.textContent = 'Agregado';
+        add.classList.add('done');
+        setTimeout(function () { add.textContent = 'Agregar'; add.classList.remove('done'); }, 1400);
+      });
+      choose.appendChild(add);
+
+      card.appendChild(ph);
+      card.appendChild(top);
+      card.appendChild(colorName);
+      card.appendChild(sw);
+      card.appendChild(choose);
+      paint();
+      list.appendChild(card);
+    });
+  }
+
+  function find(id) { return PRODUCTS.filter(function (p) { return p.id === id; })[0]; }
+  function detail(l) { return [cap(l.color), sizeText(l.size)].filter(Boolean).join(', '); }
+
+  function addToCart(p, color, size) {
+    var line = cart.filter(function (l) { return l.id === p.id && l.size === size && l.color === color; })[0];
+    if (line) line.qty += 1; else cart.push({ id: p.id, color: color, size: size, qty: 1 });
+    save();
+    renderCart();
+    toast(p.name + ' ' + color + (size ? ' ' + sizeText(size) : '') + ' quedó en tu pedido');
+  }
+
+  function renderCart() {
+    var lines = $('lines');
+    lines.textContent = '';
+    var total = 0, count = 0;
+    if (!cart.length) {
+      lines.appendChild(el('p', { class: 'empty' }, 'Tu pedido está vacío. Agrega prendas desde la colección.'));
+    }
+    cart.forEach(function (l, i) {
+      var p = find(l.id);
+      var sub = p.price * l.qty;
+      total += sub; count += l.qty;
+      var row = el('div', { class: 'line' });
+      var left = el('div');
+      left.appendChild(el('strong', {}, p.name));
+      left.appendChild(el('div', { class: 'meta' }, detail(l) + ' · ' + money(p.price)));
+      row.appendChild(left);
+      row.appendChild(el('div', { class: 'amount' }, money(sub)));
+      var qty = el('div', { class: 'qty' });
+      var minus = el('button', { type: 'button', 'aria-label': 'Quitar uno' }, '−');
+      var plus = el('button', { type: 'button', 'aria-label': 'Agregar uno' }, '+');
+      minus.addEventListener('click', function () { l.qty -= 1; if (l.qty < 1) cart.splice(i, 1); save(); renderCart(); });
+      plus.addEventListener('click', function () { l.qty += 1; save(); renderCart(); });
+      qty.appendChild(minus); qty.appendChild(el('span', {}, String(l.qty))); qty.appendChild(plus);
+      row.appendChild(qty);
+      var rm = el('button', { type: 'button', class: 'remove' }, 'Quitar');
+      rm.addEventListener('click', function () { cart.splice(i, 1); save(); renderCart(); });
+      row.appendChild(rm);
+      lines.appendChild(row);
+    });
+    $('total').textContent = money(total);
+    $('cart-count').textContent = String(count);
+
+    var msg = 'Hola ZENOVA, quiero hacer este pedido:\n';
+    cart.forEach(function (l) {
+      var p = find(l.id);
+      msg += '\n• ' + l.qty + ' x ' + p.name + ' (' + detail(l) + '): ' + money(p.price * l.qty);
+    });
+    msg += '\n\nTotal: ' + money(total) + '\n\nMi nombre:\nCiudad y dirección:';
+    $('send').href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(cart.length ? msg : 'Hola ZENOVA, quiero información de sus prendas.');
+  }
+
+  var lastFocus = null;
+  function openCart() {
+    lastFocus = document.activeElement;
+    $('scrim').hidden = false;
+    $('drawer').classList.add('open');
+    $('close-cart').focus();
+  }
+  function closeCart() {
+    $('scrim').hidden = true;
+    $('drawer').classList.remove('open');
+    if (lastFocus) lastFocus.focus();
+  }
+  $('open-cart').addEventListener('click', openCart);
+  $('close-cart').addEventListener('click', closeCart);
+  $('scrim').addEventListener('click', closeCart);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('drawer').classList.contains('open')) closeCart(); });
+
+  var toastTimer;
+  function toast(text) {
+    var t = $('toast');
+    t.textContent = text;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+
+  $('year').textContent = String(new Date().getFullYear());
+  renderFilters();
+  renderList();
+  renderCart();
+})();
+</script>
+</body>
+</html>
