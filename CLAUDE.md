@@ -121,9 +121,8 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   según el catálogo (S y M; medias talla única; bolso sin talla); colores y fotos por prenda en `img/catalogo`. Conjunto Blue
   no está en el catálogo: quedó fuera. Vista previa: https://claude.ai/artifact/V3MKk9xT8aLB4RJahF7G4y.
   Instagram: https://www.instagram.com/zenovaoficial_/ (contacto y pie). Publicación: Rigoberto pidió una dirección gratis que empiece por «zenova» (proyecto de Vercel aparte, Root Directory
-  `clientes/zenova`, nombre en minúsculas); publicada el 19 oct 2026 en el proyecto `zenovaoficial` de Vercel (equipo `3-r3`). Rigoberto pasó
-  https://zenovaoficial-git-main-3-r3.vercel.app (es la dirección de la rama, no la fija); la fija debería ser
-  https://zenovaoficial.vercel.app (Settings → Domains): comprobar y usar esa.
+  `clientes/zenova`, nombre en minúsculas); publicada el 19 oct 2026 en el proyecto `zenovaoficial` de Vercel (equipo `3-r3`). Dirección fija
+  (confirmada por Rigoberto): **https://zenovaoficial.vercel.app**. No usar la de la rama (`zenovaoficial-git-main-3-r3`).
 
 ## Este proyecto
 
