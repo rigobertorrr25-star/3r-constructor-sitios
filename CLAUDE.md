@@ -118,7 +118,9 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   (estructura del estilo que mandó el cliente, HNST Studio, con Raleway + Poppins; desde el 19 oct 2026 **solo negro y
   blanco** por pedido del cliente; los cuadritos de color de cada prenda sí llevan su color). Textos de la marca puestos por
   Rigoberto el 19 oct 2026 («Hecho para moverte. Diseñado para ti.», «Tu cuerpo, tu ritmo, tu momento.»). Pedido con carrito por WhatsApp 573043804481. 10 productos con precio de su lista; tallas
-  según el catálogo (S y M; medias talla única; bolso sin talla); colores y fotos por prenda en `img/catalogo`. Conjunto Blue
+  según el catálogo (S y M; medias talla única; bolso sin talla); colores y fotos por prenda en `img/catalogo`; **al tocar un color cambia la foto de la prenda a ese color** (pedido de
+  Rigoberto 20 oct 2026: se mantiene en cualquier rediseño). Rediseño pedido el 20 oct 2026 «igual a alexandrabrand.co»:
+  esa dirección no abre desde la sesión; se esperan capturas de Rigoberto. Conjunto Blue
   no está en el catálogo: quedó fuera. Vista previa: https://claude.ai/artifact/V3MKk9xT8aLB4RJahF7G4y.
   Instagram: https://www.instagram.com/zenovaoficial_/ (contacto y pie). Publicación: Rigoberto pidió una dirección gratis que empiece por «zenova» (proyecto de Vercel aparte, Root Directory
   `clientes/zenova`, nombre en minúsculas); publicada el 19 oct 2026 en el proyecto `zenovaoficial` de Vercel (equipo `3-r3`). Dirección fija
