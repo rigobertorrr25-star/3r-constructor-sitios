@@ -134,6 +134,21 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   sus mesas y entrega su cierre, el administrador lo verifica en «Meseros»; y «solo bar». No usa impresoras (12 oct 2026): el bartender ve los pedidos en la pantalla «Barra». Cobro (12 oct 2026): el mesero toca «Cobrar cuenta» (en el mapa o en el pedido), elige efectivo, datáfono o transferencia y cierra; «Precuenta» muestra la cuenta en el teléfono; no hay «Pedir la cuenta». Propina: Sedes → Forma de trabajo → «Propina sugerida (%)»; en 0 no se ofrece al cobrar ni sale en la precuenta (Rigoberto pidió quitarla en DELIRIUM: la pone en 0 él en vivo). Una mesa que abrió el dueño o el administrador la cobra el mesero y entra a su cierre. Rigoberto ya armó su plano en vivo. Hay que crearlo en el sistema en
   vivo desde `/admin` (lo hace Rigoberto, que es el dueño; el administrador se llama Agusto, así, sin «u»).
 - 3R Burgers: página de muestra a la venta, sin dueño (16 oct 2026). Rigoberto pidió ayuda para conseguir comprador.
+- **ZENOVA** (18 oct 2026): cliente nuevo, tienda de ropa deportiva para mujer. Página estática en `clientes/zenova/`
+  (estructura del estilo que mandó el cliente, HNST Studio, con Raleway + Poppins; desde el 19 oct 2026 **solo negro y
+  blanco** por pedido del cliente; los cuadritos de color de cada prenda sí llevan su color). Textos de la marca puestos por
+  Rigoberto el 19 oct 2026 («Hecho para moverte. Diseñado para ti.», «Tu cuerpo, tu ritmo, tu momento.»). Pedido con carrito por WhatsApp 573043804481. 10 productos con precio de su lista; tallas
+  según el catálogo (S y M; medias talla única; bolso sin talla); colores y fotos por prenda en `img/catalogo`; **al tocar un color cambia la foto de la prenda a ese color** (pedido de
+  Rigoberto 20 oct 2026: se mantiene en cualquier rediseño). Rediseño del 20 oct 2026 «igual a alexandrabrand.co»
+  (hecho con una grabación del celular de Rigoberto; la dirección no abre desde la sesión): menú hamburguesa + bolsa,
+  portada, «Nueva temporada» (carrusel con el nombre sobre la foto), «Más vendidos» (carrusel de tarjetas con bolitas de
+  color y botón de agregar, «Ver todo»), dos fotos grandes con «Ver más», Nosotros, Tienda con filtros, Cómo pedir,
+  Instagram, pie negro con foto y WhatsApp flotante. Al tocar una prenda se abre su ficha (fotos, color, talla). Qué sale en
+  cada carrusel: `SEASON` y `BEST` en el script. Conjunto Blue
+  no está en el catálogo: quedó fuera. Vista previa: https://claude.ai/artifact/V3MKk9xT8aLB4RJahF7G4y.
+  Instagram: https://www.instagram.com/zenovaoficial_/ (contacto y pie). Publicación: Rigoberto pidió una dirección gratis que empiece por «zenova» (proyecto de Vercel aparte, Root Directory
+  `clientes/zenova`, nombre en minúsculas); publicada el 19 oct 2026 en el proyecto `zenovaoficial` de Vercel (equipo `3-r3`). Dirección fija
+  (confirmada por Rigoberto): **https://zenovaoficial.vercel.app**. No usar la de la rama (`zenovaoficial-git-main-3-r3`).
 
 ## Este proyecto
 
