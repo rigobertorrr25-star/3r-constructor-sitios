@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import '@fontsource-variable/sora';
 import '@fontsource-variable/manrope';
+import '@fontsource/bebas-neue/400.css';
 import './globals.css';
 
 const title = '3R — Páginas web para negocios';
