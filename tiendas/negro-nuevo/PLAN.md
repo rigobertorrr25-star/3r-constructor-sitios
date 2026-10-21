@@ -1,6 +1,6 @@
 # Negro Nuevo — dropshipping de Rigoberto (Dropi)
 
-Producto: **Restaurador de partes negras** (Dropi id 5417; Dropi dice 250 ml pero la foto del frasco dice 500 ml con atomizador: confirmar con el proveedor, proveedor en Medellín, ~9.700 unidades).
+Producto: **Restaurador de partes negras** (Dropi id 5417; frasco de 250 ml, confirmado por Rigoberto el 21 oct 2026. La foto de Dropi muestra un frasco de 500 ml: en la página va como «imagen de referencia» hasta tener foto propia, proveedor en Medellín, ~9.700 unidades).
 Página: `tiendas/negro-nuevo/index.html` (pedido contra entrega que llega al WhatsApp 573107907194).
 
 ## Números (cotizados en Dropi el 21 oct 2026, envío con recaudo, Envía)

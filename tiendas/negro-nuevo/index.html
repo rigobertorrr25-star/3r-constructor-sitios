@@ -49,9 +49,10 @@
   @media (min-width: 860px) { .hero { grid-template-columns: 1.1fr 1fr; padding: 32px 0 72px; } .hero-photo { order: 0; } }
   .hero h1 span { color: var(--accent); }
   .hero .lead { color: var(--muted); font-size: 1.12rem; margin: 16px 0 24px; max-width: 34ch; }
-  .hero-photo { order: -1; background: #fff; border-radius: 10px; overflow: hidden; aspect-ratio: 1; display: grid; place-items: center; }
+  .hero-photo { position: relative; order: -1; background: #fff; border-radius: 10px; overflow: hidden; aspect-ratio: 1; display: grid; place-items: center; }
   .hero-photo img { width: 100%; height: 100%; object-fit: contain; }
   @media (max-width: 859px) { .hero-photo { aspect-ratio: auto; padding: 12px 0; } .hero-photo img { width: auto; height: auto; max-height: 340px; } }
+  .ref { position: absolute; left: 10px; bottom: 10px; background: rgba(0,0,0,.72); color: #fff; font-size: .78rem; padding: 4px 8px; border-radius: 4px; }
   .trust { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 20px; color: var(--muted); font-size: .92rem; }
   .trust b { color: var(--text); }
 
@@ -129,11 +130,12 @@
       <a class="btn btn-main" href="#pedir" style="width:100%">Pedir ahora · pago contra entrega</a>
       <div class="trust">
         <span><b>Contra entrega:</b> pagas en efectivo al recibir</span>
-        <span><b>Atomizador:</b> fácil de aplicar</span>
+        <span><b>250 ml</b> por frasco</span>
       </div>
     </div>
     <div class="hero-photo">
-      <img src="img/producto.jpg" alt="Frasco con atomizador de restaurador de partes negras" width="480" height="640">
+      <img src="img/producto.jpg" alt="Restaurador de partes negras (imagen de referencia)" width="480" height="640">
+      <span class="ref">Imagen de referencia · frasco de 250 ml</span>
     </div>
   </div>
 </div>
@@ -164,7 +166,7 @@
     </div>
     <div class="grid c3">
       <div class="card"><div class="big">Lava</div><h3>Limpia la parte</h3><p>Quita el polvo y la grasa, y deja secar.</p></div>
-      <div class="card"><div class="big">Rocía</div><h3>Aplica el producto</h3><p>Rocíalo y espárcelo con un paño, en capa delgada y pareja.</p></div>
+      <div class="card"><div class="big">Aplica</div><h3>Pasa el producto</h3><p>Con un paño, en capa delgada y pareja.</p></div>
       <div class="card"><div class="big">Listo</div><h3>Deja secar</h3><p>El negro vuelve. Sigue las indicaciones de la etiqueta.</p></div>
     </div>
   </div>
@@ -216,7 +218,7 @@
     <details><summary>¿Tengo que pagar antes?</summary><p>No. Pagas en efectivo cuando la transportadora te entrega el pedido.</p></details>
     <details><summary>¿Cuánto se demora en llegar?</summary><p>Depende de tu ciudad. Al confirmar tu pedido por WhatsApp te decimos la fecha aproximada.</p></details>
     <details><summary>¿Sirve para carro y para moto?</summary><p>Sí. Es para plásticos y cauchos negros de exterior e interior: carenajes, bómperes, molduras, tablero y más.</p></details>
-    <details><summary>¿Cuánto rinde un frasco?</summary><p>Se aplica en capa delgada, así que un frasco alcanza para varias aplicaciones. Con dos tienes para la moto y el carro, o para repasar después.</p></details>
+    <details><summary>¿Cuánto rinde un frasco?</summary><p>Cada frasco trae 250 ml y se aplica en capa delgada, así que alcanza para varias aplicaciones. Con dos tienes para la moto y el carro, o para repasar después.</p></details>
   </div>
 </section>
 
@@ -240,8 +242,8 @@
   // Número de WhatsApp que recibe los pedidos
   const WHATSAPP = "573107907194";
   const OFFERS = [
-    { id: "2", qty: 2, name: "2 frascos", sub: "Para moto y carro · el más pedido", price: 79900, tag: "Ahorras $19.900" },
-    { id: "1", qty: 1, name: "1 frasco", sub: "Con atomizador", price: 49900 },
+    { id: "2", qty: 2, name: "2 frascos", sub: "2 × 250 ml · para moto y carro", price: 79900, tag: "Ahorras $19.900" },
+    { id: "1", qty: 1, name: "1 frasco", sub: "Frasco de 250 ml", price: 49900 },
   ];
   const cop = (n) => "$" + n.toLocaleString("es-CO");
   let selected = "2";
