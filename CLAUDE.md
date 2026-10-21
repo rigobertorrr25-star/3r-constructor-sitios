@@ -135,6 +135,11 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   Breiner; administrador Agusto. Para ellos se hizo la «forma de trabajo» de Restaurant Control (Sedes): cada mesero cobra
   sus mesas y entrega su cierre, el administrador lo verifica en «Meseros»; y «solo bar». No usa impresoras (12 oct 2026): el bartender ve los pedidos en la pantalla «Barra». Cobro (12 oct 2026): el mesero toca «Cobrar cuenta» (en el mapa o en el pedido), elige efectivo, datáfono o transferencia y cierra; «Precuenta» muestra la cuenta en el teléfono; no hay «Pedir la cuenta». Propina: Sedes → Forma de trabajo → «Propina sugerida (%)»; en 0 no se ofrece al cobrar ni sale en la precuenta (Rigoberto pidió quitarla en DELIRIUM: la pone en 0 él en vivo). Una mesa que abrió el dueño o el administrador la cobra el mesero y entra a su cierre. Rigoberto ya armó su plano en vivo. Hay que crearlo en el sistema en
   vivo desde `/admin` (lo hace Rigoberto, que es el dueño; el administrador se llama Agusto, así, sin «u»).
+- **Dropshipping propio de Rigoberto** (21 oct 2026, con Dropi conectado a la sesión): primer producto, el restaurador de
+  partes negras (Dropi id 5417), escogido por margen; sin presupuesto de publicidad (venta por Marketplace, grupos y reels).
+  Página «Negro Nuevo» en `tiendas/negro-nuevo/` (pedido contra entrega por WhatsApp 573107907194); números y plan en
+  `tiendas/negro-nuevo/PLAN.md`. No es de 3R ni de un cliente: no enlazar desde 3rpaginas.com. Falta publicarla en Vercel
+  (proyecto aparte, Root Directory `tiendas/negro-nuevo`).
 - 3R Burgers: página de muestra a la venta, sin dueño (16 oct 2026). Rigoberto pidió ayuda para conseguir comprador.
 - **ZENOVA** (18 oct 2026): cliente nuevo, tienda de ropa deportiva para mujer. Página estática en `clientes/zenova/`
   (estructura del estilo que mandó el cliente, HNST Studio, con Raleway + Poppins; desde el 19 oct 2026 **solo negro y
