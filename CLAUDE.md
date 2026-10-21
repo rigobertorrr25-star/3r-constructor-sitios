@@ -138,8 +138,9 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 - **Dropshipping propio de Rigoberto** (21 oct 2026, con Dropi conectado a la sesión): primer producto, el restaurador de
   partes negras (Dropi id 5417), escogido por margen; sin presupuesto de publicidad (venta por Marketplace, grupos y reels).
   Página «Negro Nuevo» en `tiendas/negro-nuevo/` (pedido contra entrega por WhatsApp 573107907194); números y plan en
-  `tiendas/negro-nuevo/PLAN.md`. No es de 3R ni de un cliente: no enlazar desde 3rpaginas.com. Falta publicarla en Vercel
-  (proyecto aparte, Root Directory `tiendas/negro-nuevo`).
+  `tiendas/negro-nuevo/PLAN.md`. No es de 3R ni de un cliente: no enlazar desde 3rpaginas.com. **Publicada el 21 oct 2026** en
+  https://3r-constructor-sitios-negro-nuevo.vercel.app (proyecto aparte de Vercel, Root Directory `tiendas/negro-nuevo`;
+  entró a `main` con el PR #46).
 - 3R Burgers: página de muestra a la venta, sin dueño (16 oct 2026). Rigoberto pidió ayuda para conseguir comprador.
 - **ZENOVA** (18 oct 2026): cliente nuevo, tienda de ropa deportiva para mujer. Página estática en `clientes/zenova/`
   (estructura del estilo que mandó el cliente, HNST Studio, con Raleway + Poppins; desde el 19 oct 2026 **solo negro y
