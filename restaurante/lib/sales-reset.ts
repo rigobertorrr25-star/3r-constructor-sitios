@@ -81,3 +81,38 @@ export async function clearSales(businessId: string, confirmName: string): Promi
     return result;
   });
 }
+
+export type MenuReset = { categories: number; products: number };
+
+/**
+ * Borra toda la carta de un negocio (categorías, productos, recetas y fotos) para volver a cargarla (solo 3R, desde /admin).
+ * Si hay pedidos que nombran esos productos no se borra nada: primero hay que borrar las ventas de prueba.
+ * Se quedan: inventario (sus insumos y existencias), equipo, plano, gastos y reservas.
+ */
+export async function clearMenu(businessId: string, confirmName: string): Promise<MenuReset> {
+  if (!isUuid(businessId)) throw new AppError('NOT_FOUND', 'No encontramos ese negocio.');
+  return transaction(async (db) => {
+    const business = (await db.query<{ name: string }>(`SELECT name FROM businesses WHERE id = $1 FOR UPDATE`, [businessId])).rows[0];
+    if (!business) throw new AppError('NOT_FOUND', 'No encontramos ese negocio.');
+    if (confirmName.trim().toLowerCase() !== business.name.trim().toLowerCase()) {
+      throw new AppError('INVALID', `Para confirmar, escribe el nombre del negocio tal cual: ${business.name}`);
+    }
+    const sold = await db.query(`SELECT 1 FROM order_items WHERE business_id = $1 LIMIT 1`, [businessId]);
+    if (sold.rowCount) throw new AppError('CONFLICT', 'Este negocio tiene pedidos con productos de la carta. Primero toca «Borrar ventas de prueba».');
+    const totals = (
+      await db.query<{ categories: number; products: number }>(
+        `SELECT (SELECT count(*)::int FROM menu_categories WHERE business_id = $1) AS categories,
+                (SELECT count(*)::int FROM menu_products WHERE business_id = $1) AS products`,
+        [businessId],
+      )
+    ).rows[0];
+    // Las categorías arrastran sus productos, y los productos sus recetas y fotos.
+    await db.query(`DELETE FROM menu_categories WHERE business_id = $1`, [businessId]);
+    await db.query(
+      `INSERT INTO audit_events (business_id, actor_name, action, entity, entity_id, summary, data)
+       VALUES ($1, '3R (administración)', 'business.clear_menu', 'business', $1, $2, $3)`,
+      [businessId, `3R borró la carta: ${totals.categories} categorías y ${totals.products} productos`, JSON.stringify(totals)],
+    );
+    return totals;
+  });
+}
