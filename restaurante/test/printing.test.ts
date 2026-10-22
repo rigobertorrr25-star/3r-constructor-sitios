@@ -231,6 +231,23 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     assert.deepEqual(voids.map((j) => j.printerId).sort(), [barP, cashP, kitchenP].sort(), 'la anulación llega a la cocina y a las copias');
   });
 
+  it('una impresora por cable USB se guarda por su nombre en Windows y el programa la recibe así', async () => {
+    await assert.rejects(printing.savePrinter(owner, null, { ...base, name: 'Caja USB', host: 'usb:' }), { code: 'INVALID' });
+    await assert.rejects(printing.savePrinter(owner, null, { ...base, name: 'Caja USB', host: 'usb:<script>' }), { code: 'INVALID' });
+    const usb = await printing.savePrinter(owner, null, { ...base, name: 'Caja USB', host: 'usb:  EPSON TM-T20II   Receipt ', port: 0, printsCashier: true });
+    const saved = (await printing.listPrinters(owner)).find((p) => p.id === usb)!;
+    assert.equal(saved.host, 'usb:EPSON TM-T20II Receipt');
+    assert.equal(saved.port, 9100);
+    assert.equal(printing.printerAddress(saved), 'USB · EPSON TM-T20II Receipt');
+    await db.query(`DELETE FROM print_jobs WHERE location_id = $1`, [owner.locationId]);
+    await printing.printTest(owner, usb);
+    const code = await printing.createAgentCode(owner);
+    const got = await printing.claimJobs(code);
+    assert.equal(got!.length, 1);
+    assert.equal(got![0].host, 'usb:EPSON TM-T20II Receipt');
+    await printing.removePrinter(owner, usb);
+  });
+
   it('el aviso de papeles atascados cuenta lo que no ha salido', async () => {
     await printing.printTest(owner, kitchenP);
     await db.query(`UPDATE print_jobs SET created_at = now() - interval '1 minute' WHERE kind = 'prueba' AND location_id = $1`, [owner.locationId]);

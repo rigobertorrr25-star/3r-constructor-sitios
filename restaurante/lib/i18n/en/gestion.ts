@@ -201,21 +201,24 @@ export const en: Record<string, string> = {
   Conectado: 'Connected',
   'Desconectado · último contacto hace {time}': 'Disconnected · last seen {time} ago',
   'Todavía no se ha conectado': 'Hasn’t connected yet',
-  'Un computador del restaurante (con Windows, o un mini PC) queda prendido con este programa. Recibe lo que hay que imprimir y lo manda a cada impresora por la red del local.':
-    'A computer at the restaurant (Windows, or a mini PC) stays on running this program. It receives what needs printing and sends it to each printer over the local network.',
-  'Conecta cada impresora al router del local (cable de red o wifi) y dale una': 'Connect each printer to the restaurant’s router (network cable or Wi-Fi) and give it a',
+  'Un computador del restaurante con Windows queda prendido con este programa. Recibe lo que hay que imprimir y lo manda a cada impresora: a la que está conectada por cable USB a ese computador, o a las que están en la red del local.':
+    'A Windows computer at the restaurant stays on running this program. It receives what needs printing and sends it to each printer: the one plugged into that computer by USB cable, or the ones on the local network.',
+  'Si la impresora va con cable USB al computador de la caja, basta con que imprima desde Windows (su programa o «driver» instalado). Si va al router del local, dale una':
+    'If the printer is plugged into the cash register computer by USB, it only needs to print from Windows (its driver installed). If it goes to the restaurant’s router, give it a',
   'IP fija': 'static IP',
-  'Casi todas imprimen su IP si las prendes con el botón de avanzar papel (FEED) presionado.':
-    'Most print their IP if you turn them on while holding the paper feed (FEED) button.',
-  'Agrega cada impresora abajo, con su IP, y escoge qué imprime.': 'Add each printer below with its IP and choose what it prints.',
+  '(casi todas imprimen su IP si las prendes con el botón de avanzar papel, FEED, presionado).':
+    '(most print their IP if you turn them on while holding the paper feed button, FEED).',
   'En el computador instala': 'On the computer, install',
   '(nodejs.org, versión LTS). Crea una carpeta, por ejemplo «Impresion 3R», y descarga ahí estos dos archivos:':
     '(nodejs.org, LTS version). Create a folder, for example “Impresion 3R”, and download these two files into it:',
   Abre: 'Open',
+  'Si Windows avisa «No se pudo comprobar el editor», toca «Ejecutar» (el archivo es de 3R).':
+    'If Windows warns “The publisher could not be verified”, tap “Run” (the file is from 3R).',
   'La primera vez te pide la dirección del sistema': 'The first time, it asks for the system address',
-  'y el código de la sede (lo creas aquí abajo). Deja la ventana abierta.': 'and the location code (you create it below). Leave the window open.',
-  'Para que se prenda solo con el computador: tecla Windows + R, escribe': 'To have it start with the computer: press Windows + R, type',
-  'y pon ahí un acceso directo a iniciar-windows.bat.': 'and put a shortcut to iniciar-windows.bat there.',
+  'y el código de la sede (lo creas aquí abajo). Deja la ventana abierta: desde ahí se prende sola cada vez que prendas el computador.':
+    'and the location code (you create it below). Leave the window open: from then on it starts by itself every time you turn on the computer.',
+  'Agrega cada impresora abajo y escoge qué imprime. Si es de cable USB, escribe su nombre tal cual sale en la ventana del programa, en «Impresoras de este computador».':
+    'Add each printer below and choose what it prints. If it’s a USB printer, type its name exactly as it shows in the program window, under “Printers on this computer”.',
   'Toca «Imprimir prueba» en cada impresora. Debe salir un papel con su nombre y las tildes bien.':
     'Tap “Print test” on each printer. A slip should come out with its name and accented letters printed correctly.',
   'Código de la sede para el programa': 'Location code for the program',
@@ -249,6 +252,12 @@ export const en: Record<string, string> = {
   'El código no es válido. Crea uno nuevo en Impresoras y borra config.json.': 'The code isn’t valid. Create a new one in Printers and delete config.json.',
   // Formulario de impresora
   'Dirección IP': 'IP address',
+  '¿Cómo está conectada?': 'How is it connected?',
+  'Por cable USB al computador': 'By USB cable to the computer',
+  'A la red del local (tiene IP)': 'To the local network (has an IP)',
+  'Nombre de la impresora en Windows': 'Printer name in Windows',
+  'Tal cual lo muestra el programa de impresión al prenderse, en la lista «Impresoras de este computador».':
+    'Exactly as the printing program shows it when it starts, in the list “Printers on this computer”.',
   Puerto: 'Port',
   Papel: 'Paper',
   '80 mm (letra más grande)': '80 mm (larger text)',

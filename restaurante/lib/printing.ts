@@ -60,6 +60,12 @@ export async function hasPrinter(actor: Pick<Actor, 'businessId' | 'locationId'>
 }
 
 const HOST = /^[a-zA-Z0-9]([a-zA-Z0-9.-]{0,98}[a-zA-Z0-9])?$/;
+/** Impresora conectada por cable USB al computador del programa: se guarda como «usb:» + su nombre en Windows. */
+export const USB_PREFIX = 'usb:';
+const USB_NAME = /^[\p{L}\p{N} ._\-()#&+,]{2,90}$/u;
+export const isUsb = (host: string) => host.toLowerCase().startsWith(USB_PREFIX);
+/** Cómo se muestra dónde está la impresora: «USB · nombre» o «IP:puerto». */
+export const printerAddress = (p: { host: string; port: number }) => (isUsb(p.host) ? `USB · ${p.host.slice(USB_PREFIX.length)}` : `${p.host}:${p.port}`);
 
 export type PrinterInput = {
   name: string;
@@ -77,12 +83,22 @@ export type PrinterInput = {
 function cleanPrinter(input: PrinterInput) {
   const name = input.name.replace(/\s+/g, ' ').trim();
   if (name.length < 2 || name.length > 60) throw new AppError('INVALID', 'Nombre: entre 2 y 60 letras (por ejemplo «Cocina»).');
-  const host = input.host.trim();
-  if (!HOST.test(host)) throw new AppError('INVALID', 'Escribe la dirección IP de la impresora, por ejemplo 192.168.1.50.');
-  if (!Number.isInteger(input.port) || input.port < 1 || input.port > 65535) throw new AppError('INVALID', 'Puerto no válido (casi siempre es 9100).');
+  let host = input.host.trim();
+  let port = input.port;
+  if (isUsb(host)) {
+    const usbName = host.slice(USB_PREFIX.length).replace(/\s+/g, ' ').trim();
+    if (!USB_NAME.test(usbName)) {
+      throw new AppError('INVALID', 'Escribe el nombre de la impresora tal como sale en Windows (el programa de impresión lo muestra al prenderse).');
+    }
+    host = USB_PREFIX + usbName;
+    port = 9100;
+  } else {
+    if (!HOST.test(host)) throw new AppError('INVALID', 'Escribe la dirección IP de la impresora, por ejemplo 192.168.1.50.');
+    if (!Number.isInteger(port) || port < 1 || port > 65535) throw new AppError('INVALID', 'Puerto no válido (casi siempre es 9100).');
+  }
   if (!PAPER.some((p) => p.width === input.width)) throw new AppError('INVALID', 'Escoge el ancho del papel.');
   if (!Number.isInteger(input.copies) || input.copies < 1 || input.copies > 3) throw new AppError('INVALID', 'Copias: de 1 a 3.');
-  return { ...input, name, host };
+  return { ...input, name, host, port };
 }
 
 export async function savePrinter(actor: Actor, id: string | null, input: PrinterInput) {
@@ -117,7 +133,7 @@ export async function savePrinter(actor: Actor, id: string | null, input: Printe
       action: id ? 'printer.update' : 'printer.create',
       entity: 'printer',
       entityId: printerId,
-      summary: `${id ? 'Cambió' : 'Agregó'} la impresora ${p.name} (${p.host}:${p.port}, imprime: ${jobs}${p.isActive ? '' : ', apagada'})`,
+      summary: `${id ? 'Cambió' : 'Agregó'} la impresora ${p.name} (${printerAddress(p)}, imprime: ${jobs}${p.isActive ? '' : ', apagada'})`,
     });
     return printerId;
   });
@@ -321,7 +337,7 @@ export async function printTest(actor: Actor, printerId: string) {
     if (!p) throw new AppError('NOT_FOUND', 'No encontramos esa impresora.');
     const place = await placeInfo(db, actor);
     await enqueue(db, actor, 'cashier', 'prueba', `Prueba · ${p.name}`, (w) =>
-      prueba(w, { business: place.business, printer: p.name, address: `${p.host}:${p.port}`, time: formatDateTime(new Date(), place.timezone), jobs: printerTargets(p).map((t) => TARGET_LABEL[t]) }),
+      prueba(w, { business: place.business, printer: p.name, address: printerAddress(p), time: formatDateTime(new Date(), place.timezone), jobs: printerTargets(p).map((t) => TARGET_LABEL[t]) }),
       p.id,
     );
   });

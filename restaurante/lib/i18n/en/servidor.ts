@@ -168,6 +168,8 @@ export const en: Record<string, string> = {
   'El PIN debe tener de 4 a 6 números.': 'The PIN must have 4 to 6 digits.',
   'Ese PIN es muy fácil de adivinar. Usa otro.': 'That PIN is too easy to guess. Use another one.',
   'No encontramos ese negocio.': 'We couldn’t find that business.',
+  'Escribe el nombre de la impresora tal como sale en Windows (el programa de impresión lo muestra al prenderse).':
+    'Type the printer name exactly as it shows in Windows (the printing program lists it when it starts).',
   'Para confirmar, escribe el nombre del negocio tal cual: {name}': 'To confirm, type the business name exactly: {name}',
   'Este negocio tiene pedidos con productos de la carta. Primero toca «Borrar ventas de prueba».': 'This business has orders with menu products. Tap “Delete test sales” first.',
   'Listo. Se borraron {a} categorías y {b} productos. Ya puedes cargar la carta de nuevo.': 'Done. {a} categories and {b} products were deleted. You can load the menu again.',

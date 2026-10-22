@@ -1,18 +1,22 @@
 #!/usr/bin/env node
 // Programa de impresión de Restaurant Control (3R).
 // Queda prendido en un computador del restaurante: cada 2 segundos pregunta si hay comandas, precuentas o cierres de
-// caja para imprimir y los manda a cada impresora térmica de red (puerto 9100). Necesita Node.js 18 o más nuevo.
+// caja para imprimir y los manda a cada impresora térmica: por la red (puerto 9100) o, en Windows, a la que está
+// conectada por cable USB a este computador (por su nombre en Windows). Necesita Node.js 18 o más nuevo.
 //
 // La primera vez pide la dirección del sistema y el código de la sede (se crea en Restaurant Control → Impresoras)
 // y los guarda en config.json, al lado de este archivo. Para cambiar de código, borra config.json.
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { readFile, unlink, writeFile } from 'node:fs/promises';
 import { createConnection } from 'node:net';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 
-const VERSION = '1.0';
+const VERSION = '1.1';
 const EVERY_MS = 2000;
 const CONFIG = join(dirname(fileURLToPath(import.meta.url)), 'config.json');
 
@@ -56,6 +60,81 @@ function send(host, port, data) {
   });
 }
 
+// ───────── impresoras por cable USB (Windows) ─────────
+
+const USB = 'usb:';
+const isWindows = process.platform === 'win32';
+
+function powershell(script, env = {}) {
+  return new Promise((resolve, reject) => {
+    execFile(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script],
+      { env: { ...process.env, ...env }, windowsHide: true, timeout: 30000 },
+      (err, stdout, stderr) => (err ? reject(new Error((stderr || err.message).toString().trim())) : resolve(stdout.toString())),
+    );
+  });
+}
+
+// Manda los bytes tal cual (RAW) a una impresora instalada en Windows, como hacen los programas de caja.
+const RAW_PRINT = `
+$ErrorActionPreference = 'Stop'
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class RawPrint3R {
+  [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+  public class DOCINFO { public string pDocName; public string pOutputFile; public string pDataType; }
+  [DllImport("winspool.drv", CharSet = CharSet.Unicode, SetLastError = true)] static extern bool OpenPrinter(string name, out IntPtr h, IntPtr d);
+  [DllImport("winspool.drv", SetLastError = true)] static extern bool ClosePrinter(IntPtr h);
+  [DllImport("winspool.drv", CharSet = CharSet.Unicode, SetLastError = true)] static extern int StartDocPrinter(IntPtr h, int level, [In, MarshalAs(UnmanagedType.LPStruct)] DOCINFO di);
+  [DllImport("winspool.drv", SetLastError = true)] static extern bool EndDocPrinter(IntPtr h);
+  [DllImport("winspool.drv", SetLastError = true)] static extern bool StartPagePrinter(IntPtr h);
+  [DllImport("winspool.drv", SetLastError = true)] static extern bool EndPagePrinter(IntPtr h);
+  [DllImport("winspool.drv", SetLastError = true)] static extern bool WritePrinter(IntPtr h, byte[] b, int n, out int w);
+  public static string Send(string name, byte[] bytes) {
+    IntPtr h;
+    if (!OpenPrinter(name, out h, IntPtr.Zero)) return "Windows no tiene una impresora llamada '" + name + "'";
+    DOCINFO di = new DOCINFO(); di.pDocName = "Restaurant Control"; di.pDataType = "RAW";
+    if (StartDocPrinter(h, 1, di) == 0) { ClosePrinter(h); return "Windows no dejo empezar a imprimir en '" + name + "'"; }
+    StartPagePrinter(h);
+    int w; bool ok = WritePrinter(h, bytes, bytes.Length, out w);
+    EndPagePrinter(h); EndDocPrinter(h); ClosePrinter(h);
+    return ok && w == bytes.Length ? "" : "La impresora '" + name + "' no recibio todo el papel";
+  }
+}
+'@
+$e = [RawPrint3R]::Send($env:RC_PRINTER, [IO.File]::ReadAllBytes($env:RC_FILE))
+if ($e) { [Console]::Error.Write($e); exit 1 }
+`;
+
+async function sendUsb(name, data) {
+  if (!isWindows) throw new Error('Las impresoras por cable USB solo funcionan con este programa en Windows.');
+  const file = join(tmpdir(), `rc-${randomUUID()}.bin`);
+  await writeFile(file, data);
+  try {
+    await powershell(RAW_PRINT, { RC_PRINTER: name, RC_FILE: file });
+  } finally {
+    await unlink(file).catch(() => {});
+  }
+}
+
+/** Al prender, muestra las impresoras instaladas en Windows: ese nombre es el que va en Restaurant Control. */
+async function listWindowsPrinters() {
+  if (!isWindows) return;
+  try {
+    const out = await powershell('Get-WmiObject Win32_Printer | ForEach-Object { $_.Name }');
+    const names = out.split(/\r?\n/).map((n) => n.trim()).filter(Boolean);
+    console.log('\nImpresoras de este computador (para las de cable USB, copia el nombre exacto en Restaurant Control → Impresoras):');
+    for (const n of names) console.log(`   • ${n}`);
+    console.log('');
+  } catch (e) {
+    log(`No pude leer las impresoras de Windows (${e.message}).`);
+  }
+}
+
+const print = (t, data) => (t.host.toLowerCase().startsWith(USB) ? sendUsb(t.host.slice(USB.length), data) : send(t.host, t.port, data));
+
 async function api(c, path, init = {}) {
   const res = await fetch(c.servidor + path, {
     ...init,
@@ -70,6 +149,7 @@ async function api(c, path, init = {}) {
 async function main() {
   const c = await loadConfig();
   log(`Programa de impresión ${VERSION} prendido. Conectado a ${c.servidor}. No cierres esta ventana.`);
+  await listWindowsPrinters();
   let offline = false;
   for (;;) {
     try {
@@ -77,7 +157,7 @@ async function main() {
       if (offline) (log('Conexión con el sistema recuperada.'), (offline = false));
       for (const t of trabajos) {
         try {
-          await send(t.host, t.port, Buffer.from(t.data, 'base64'));
+          await print(t, Buffer.from(t.data, 'base64'));
           log(`Impreso: ${t.title}`);
           await api(c, `/api/impresion/trabajos/${t.id}`, { method: 'POST', body: JSON.stringify({ ok: true }) });
         } catch (e) {
