@@ -28,16 +28,41 @@ const PAPER = [
   { width: 32, label: '58 mm' },
 ];
 
+/** Las impresoras por cable USB se guardan como «usb:» + su nombre en Windows (el programa de impresión las usa por ese nombre). */
+const USB = 'usb:';
+const isUsb = (host?: string) => !!host && host.toLowerCase().startsWith(USB);
+const address = (p: { host: string; port: number }) => (isUsb(p.host) ? `USB · ${p.host.slice(USB.length)}` : `${p.host}:${p.port}`);
+
 function PrinterFields({ p, values, barOnly = false }: { p?: PrinterView; values?: Record<string, string>; barOnly?: boolean }) {
   const t = useT();
+  const [connection, setConnection] = useState(values?.connection ?? (p ? (isUsb(p.host) ? 'usb' : 'network') : 'usb'));
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2">
         <Field label={t('Nombre')} name="name" required maxLength={60} placeholder={barOnly ? t('Barra') : t('Cocina')} defaultValue={values?.name ?? p?.name} />
-        <div className="grid grid-cols-[1fr_110px] gap-3">
-          <Field label={t('Dirección IP')} name="host" required placeholder="192.168.1.50" defaultValue={values?.host ?? p?.host} autoCapitalize="none" />
-          <Field label={t('Puerto')} name="port" inputMode="numeric" required defaultValue={values?.port ?? String(p?.port ?? 9100)} />
-        </div>
+        <Select label={t('¿Cómo está conectada?')} name="connection" value={connection} onChange={(e) => setConnection(e.target.value)}>
+          <option value="usb">{t('Por cable USB al computador')}</option>
+          <option value="network">{t('A la red del local (tiene IP)')}</option>
+        </Select>
+        {connection === 'usb' ? (
+          <div className="md:col-span-2">
+            <Field
+              label={t('Nombre de la impresora en Windows')}
+              name="usbName"
+              required
+              maxLength={90}
+              placeholder="EPSON TM-T20II Receipt"
+              hint={t('Tal cual lo muestra el programa de impresión al prenderse, en la lista «Impresoras de este computador».')}
+              defaultValue={values?.usbName ?? (p && isUsb(p.host) ? p.host.slice(USB.length) : '')}
+              autoCapitalize="none"
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-[1fr_110px] gap-3 md:col-span-2">
+            <Field label={t('Dirección IP')} name="host" required placeholder="192.168.1.50" defaultValue={values?.host ?? (p && !isUsb(p.host) ? p.host : '')} autoCapitalize="none" />
+            <Field label={t('Puerto')} name="port" inputMode="numeric" required defaultValue={values?.port ?? String(p?.port ?? 9100)} />
+          </div>
+        )}
         <Select label={t('Papel')} name="width" defaultValue={values?.width ?? String(p?.width ?? 48)}>
           {PAPER.map((o) => (
             <option key={o.width} value={o.width}>
@@ -98,7 +123,7 @@ export function PrinterRow({ printer, barOnly = false }: { printer: PrinterView;
         <div>
           <p className="font-display text-[17px] font-semibold">{printer.name}</p>
           <p className="text-[14px] text-muted-foreground">
-            {targets(printer, t)} · {printer.host}:{printer.port} · {paper ? t(paper) : ''}
+            {targets(printer, t)} · {address(printer)} · {paper ? t(paper) : ''}
             {printer.copies > 1 ? ` · ${t('{n} copias', { n: printer.copies })}` : ''}
             {printer.isActive ? '' : ` · ${t('Apagada')}`}
           </p>

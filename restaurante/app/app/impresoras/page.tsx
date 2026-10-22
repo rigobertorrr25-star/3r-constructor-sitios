@@ -55,14 +55,14 @@ export default async function PrintersPage() {
           </span>
         </div>
         <p className="mt-2 max-w-3xl text-[14.5px] text-muted-foreground">
-          {t('Un computador del restaurante (con Windows, o un mini PC) queda prendido con este programa. Recibe lo que hay que imprimir y lo manda a cada impresora por la red del local.')}
+          {t('Un computador del restaurante con Windows queda prendido con este programa. Recibe lo que hay que imprimir y lo manda a cada impresora: a la que está conectada por cable USB a ese computador, o a las que están en la red del local.')}
         </p>
         <ol className="mt-4 max-w-3xl list-decimal space-y-2 pl-5 text-[14.5px] leading-relaxed">
           <li>
-            {t('Conecta cada impresora al router del local (cable de red o wifi) y dale una')} <strong>{t('IP fija')}</strong>.{' '}
-            {t('Casi todas imprimen su IP si las prendes con el botón de avanzar papel (FEED) presionado.')}
+            {t('Si la impresora va con cable USB al computador de la caja, basta con que imprima desde Windows (su programa o «driver» instalado). Si va al router del local, dale una')}{' '}
+            <strong>{t('IP fija')}</strong>{' '}
+            {t('(casi todas imprimen su IP si las prendes con el botón de avanzar papel, FEED, presionado).')}
           </li>
-          <li>{t('Agrega cada impresora abajo, con su IP, y escoge qué imprime.')}</li>
           <li>
             {t('En el computador instala')} <strong>Node.js</strong>{' '}
             {t('(nodejs.org, versión LTS). Crea una carpeta, por ejemplo «Impresion 3R», y descarga ahí estos dos archivos:')}{' '}
@@ -76,12 +76,13 @@ export default async function PrintersPage() {
             .
           </li>
           <li>
-            {t('Abre')} <strong>iniciar-windows.bat</strong>. {t('La primera vez te pide la dirección del sistema')} (<code className="text-[13.5px]">{origin}</code>){' '}
-            {t('y el código de la sede (lo creas aquí abajo). Deja la ventana abierta.')}
+            {t('Abre')} <strong>iniciar-windows.bat</strong>.{' '}
+            {t('Si Windows avisa «No se pudo comprobar el editor», toca «Ejecutar» (el archivo es de 3R).')}{' '}
+            {t('La primera vez te pide la dirección del sistema')} (<code className="text-[13.5px]">{origin}</code>){' '}
+            {t('y el código de la sede (lo creas aquí abajo). Deja la ventana abierta: desde ahí se prende sola cada vez que prendas el computador.')}
           </li>
           <li>
-            {t('Para que se prenda solo con el computador: tecla Windows + R, escribe')} <code className="text-[13.5px]">shell:startup</code>{' '}
-            {t('y pon ahí un acceso directo a iniciar-windows.bat.')}
+            {t('Agrega cada impresora abajo y escoge qué imprime. Si es de cable USB, escribe su nombre tal cual sale en la ventana del programa, en «Impresoras de este computador».')}
           </li>
           <li>{t('Toca «Imprimir prueba» en cada impresora. Debe salir un papel con su nombre y las tildes bien.')}</li>
         </ol>

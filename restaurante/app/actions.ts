@@ -984,8 +984,8 @@ export async function savePrinterAction(_prev: FormState, formData: FormData): P
     () =>
       savePrinter(staff, id, {
         name: text(formData, 'name'),
-        host: text(formData, 'host'),
-        port: int(formData, 'port'),
+        host: text(formData, 'connection') === 'usb' ? `usb:${text(formData, 'usbName')}` : text(formData, 'host'),
+        port: text(formData, 'connection') === 'usb' ? 9100 : int(formData, 'port'),
         width: int(formData, 'width'),
         printsKitchen: checked(formData, 'kitchen'),
         printsBar: checked(formData, 'bar'),
