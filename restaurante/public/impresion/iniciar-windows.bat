@@ -18,6 +18,12 @@ if exist "%INICIO%" goto inicio
 >> "%INICIO%" echo start "Impresion 3R" /min "%~f0"
 echo Listo: el programa se va a prender solo cada vez que prendas el computador.
 :inicio
+rem Si el navegador le cambio el nombre al programa (agente-3r (1).mjs, agente-3r.mjs.txt...), se usa ese.
+if not exist "agente-3r.mjs" for %%F in ("agente-3r*") do copy /y "%%F" "agente-3r.mjs" >nul
+rem Y si no esta en la carpeta, se descarga solo.
+if not exist "agente-3r.mjs" echo Descargando el programa de impresion...
+if not exist "agente-3r.mjs" curl -fsSL -o "agente-3r.mjs" "https://3r-constructor-sitios-git1.vercel.app/impresion/agente-3r.mjs"
+if not exist "agente-3r.mjs" echo No se encontro agente-3r.mjs en esta carpeta. Descargalo de nuevo desde Impresoras y ponlo junto a este archivo.
 node agente-3r.mjs
 echo El programa se detuvo. Se vuelve a prender en 5 segundos...
 timeout /t 5 >nul
