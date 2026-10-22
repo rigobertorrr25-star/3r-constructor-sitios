@@ -169,6 +169,8 @@ export const en: Record<string, string> = {
   'Ese PIN es muy fácil de adivinar. Usa otro.': 'That PIN is too easy to guess. Use another one.',
   'No encontramos ese negocio.': 'We couldn’t find that business.',
   'Para confirmar, escribe el nombre del negocio tal cual: {name}': 'To confirm, type the business name exactly: {name}',
+  'Este negocio tiene pedidos con productos de la carta. Primero toca «Borrar ventas de prueba».': 'This business has orders with menu products. Tap “Delete test sales” first.',
+  'Listo. Se borraron {a} categorías y {b} productos. Ya puedes cargar la carta de nuevo.': 'Done. {a} categories and {b} products were deleted. You can load the menu again.',
   'Listo. Se borraron {a} mesas, {b} pagos y {c} turnos de caja. El negocio arranca a vender de cero.':
     'Done. {a} tables, {b} payments and {c} cash shifts were deleted. The business starts selling from zero.',
   'Ya hay una sede con ese nombre.': 'There’s already a location with that name.',

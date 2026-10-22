@@ -89,4 +89,17 @@ describe('borrar ventas de prueba', { skip: url ? false : 'sin TEST_DATABASE_URL
     // El otro negocio sigue con su mesa abierta.
     assert.equal(await count('table_sessions', other.businessId), 1);
   });
+
+  it('borrar la carta: no se deja si hay pedidos; sin ventas borra categorías, productos y recetas', async () => {
+    const sid = (await db.query<{ id: string }>(`SELECT id FROM table_sessions WHERE business_id = $1`, [owner.businessId]))[0].id;
+    await orders.sendOrder(waiter, sid, [{ productId: beer, quantity: 1 }], randomUUID());
+    await assert.rejects(reset.clearMenu(owner.businessId, name), { code: 'CONFLICT' }, 'hay un pedido con la carta');
+    await reset.clearSales(owner.businessId, name);
+    await assert.rejects(reset.clearMenu(owner.businessId, 'otro'), { code: 'INVALID' });
+    assert.deepEqual(await reset.clearMenu(owner.businessId, name), { categories: 1, products: 1 });
+    for (const t of ['menu_categories', 'menu_products']) assert.equal(await count(t, owner.businessId), 0, t);
+    assert.equal((await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM recipe_lines r JOIN inventory_items i ON i.id = r.item_id WHERE i.business_id = $1`, [owner.businessId]))[0].n, 0);
+    assert.equal(await count('inventory_items', owner.businessId), 1, 'el inventario se queda');
+    assert.equal(await count('staff', owner.businessId), 2);
+  });
 });

@@ -31,7 +31,7 @@ import { registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } 
 import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
-import { clearSales } from '@/lib/sales-reset';
+import { clearMenu, clearSales } from '@/lib/sales-reset';
 import { removeBackground, saveBackground, setFloorBackground } from '@/lib/backgrounds';
 import { removeProductPhoto, saveProductPhoto } from '@/lib/product-photos';
 import { createAgentCode, enqueueClosing, printBill, printTest, removePrinter, reprint, savePrinter } from '@/lib/printing';
@@ -149,6 +149,19 @@ export async function clearSalesAction(_prev: FormState, formData: FormData): Pr
       ok: Date.now(),
       message: await trServer(`Listo. Se borraron ${r.sessions} mesas, ${r.payments} pagos y ${r.shifts} turnos de caja. El negocio arranca a vender de cero.`),
     };
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+}
+
+/** Borra toda la carta de un negocio (solo 3R). Hay que escribir el nombre del negocio para confirmar. */
+export async function clearMenuAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  try {
+    const r = await clearMenu(text(formData, 'businessId'), text(formData, 'confirmName'));
+    revalidatePath('/admin');
+    revalidatePath('/app', 'layout');
+    return { ok: Date.now(), message: await trServer(`Listo. Se borraron ${r.categories} categorías y ${r.products} productos. Ya puedes cargar la carta de nuevo.`) };
   } catch (error) {
     return fail(await messageOf(error), formData);
   }

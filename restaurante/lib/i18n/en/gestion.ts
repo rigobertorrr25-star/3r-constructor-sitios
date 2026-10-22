@@ -185,6 +185,9 @@ export const en: Record<string, string> = {
     'Deletes open and closed tables, orders, payments, discounts, invoices and cash shifts, and gives back to inventory what those sales took out. The team, floor plan, menu, loaded inventory, expenses and reservations stay. This can’t be undone.',
   'Para confirmar, escribe el nombre del negocio: {name}': 'To confirm, type the business name: {name}',
   'Borrando…': 'Deleting…',
+  'Borrar toda la carta': 'Delete the whole menu',
+  'Borra todas las categorías y productos, con sus fotos y recetas, para cargar la carta de nuevo (Carta → «Importar carta»). Si hay pedidos con esos productos, primero borra las ventas de prueba. El inventario, el equipo y el plano se quedan. No se puede deshacer.':
+    'Deletes every category and product, with their photos and recipes, so the menu can be loaded again (Menu → “Import menu”). If there are orders with those products, delete the test sales first. Inventory, team and floor plan stay. This can’t be undone.',
   'Usar esta foto en el plano de mesas': 'Use this photo on the table map',
   'Escoger otra foto': 'Choose another photo',
   'Guardar fondo': 'Save background',
