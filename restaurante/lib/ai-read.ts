@@ -84,3 +84,79 @@ export async function readWithAi(actor: Actor, kind: ReadKind, files: ReadFile[]
     throw new AppError('INVALID', 'No pudimos leer el archivo en este momento. Intenta de nuevo en un minuto o pega el texto a mano.');
   }
 }
+
+export const MATCH_MAX_PHOTOS = 20;
+
+/**
+ * Reconoce qué producto de la carta es cada foto (Carta → «Subir fotos de los platos»). Recibe fotos pequeñas y la lista de
+ * productos; devuelve, en el mismo orden, el id del producto o null si la IA no está segura. La persona lo revisa antes de guardar.
+ */
+export async function matchPhotosWithAi(actor: Actor, photos: ReadFile[], products: { id: string; name: string }[]): Promise<(string | null)[]> {
+  requirePermission(actor, 'menu.edit');
+  if (!photos.length) throw new AppError('INVALID', 'Escoge las fotos de los platos.');
+  if (photos.length > MATCH_MAX_PHOTOS) throw new AppError('INVALID', `Sube hasta ${MATCH_MAX_PHOTOS} archivos a la vez.`);
+  for (const f of photos) {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) throw new AppError('INVALID', 'Solo fotos JPG, PNG o WebP.');
+  }
+  if (photos.reduce((n, f) => n + f.size, 0) > READ_MAX_BYTES) throw new AppError('INVALID', 'Los archivos pesan más de 4 MB. Sube el PDF por partes o fotos más livianas.');
+  if (!products.length) throw new AppError('INVALID', 'Primero carga la carta: no hay productos para reconocer.');
+  if (!process.env.ANTHROPIC_API_KEY) throw new AppError('INVALID', 'La lectura de archivos con IA no está activada en este sistema. Escoge el plato de cada foto a mano.');
+  const list = products.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
+  const content: Anthropic.Beta.BetaContentBlockParam[] = [];
+  photos.forEach((f, i) => {
+    content.push({ type: 'text', text: `Foto ${i + 1}:` });
+    content.push({ type: 'image', source: { type: 'base64', media_type: f.type as Exclude<ReadType, 'application/pdf'>, data: f.data.toString('base64') } });
+  });
+  content.push({
+    type: 'text',
+    text: `Estos son los productos de la carta de un restaurante o bar de Colombia:
+${list}
+
+Para cada foto, di qué producto de la lista es. Usa el nombre del producto, lo que se ve en el plato o la bebida, y lo que
+diga la foto (si trae texto). Si no estás seguro o no está en la lista, usa 0. No repitas un producto en dos fotos salvo que
+sea claramente el mismo. Responde solo con JSON, sin texto alrededor: [{"foto": 1, "producto": 3}, ...] con todas las fotos.`,
+  });
+  const client = new Anthropic();
+  try {
+    const response = await client.beta.messages.create({
+      model: MODEL,
+      max_tokens: 4000,
+      output_config: { effort: 'low' },
+      betas: ['server-side-fallback-2026-07-01'],
+      fallbacks: 'default',
+      messages: [{ role: 'user', content }],
+    });
+    const text = response.content
+      .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')
+      .map((b) => b.text)
+      .join('');
+    return photoMatches(text, photos.length, products);
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    if (error instanceof Anthropic.AuthenticationError) console.error('ANTHROPIC_API_KEY no es válida');
+    else console.error('Reconocer fotos con IA falló:', error instanceof Error ? error.message : error);
+    throw new AppError('INVALID', 'No pudimos leer el archivo en este momento. Intenta de nuevo en un minuto o pega el texto a mano.');
+  }
+}
+
+/** Lee la respuesta de la IA ([{foto, producto}]) y la pasa a ids; lo que no se entienda queda sin producto. */
+export function photoMatches(text: string, count: number, products: { id: string }[]): (string | null)[] {
+  const result: (string | null)[] = Array.from({ length: count }, () => null);
+  const json = text.match(/\[[\s\S]*\]/)?.[0];
+  if (!json) return result;
+  let rows: unknown;
+  try {
+    rows = JSON.parse(json);
+  } catch {
+    return result;
+  }
+  if (!Array.isArray(rows)) return result;
+  for (const row of rows) {
+    const foto = Number((row as { foto?: unknown })?.foto);
+    const producto = Number((row as { producto?: unknown })?.producto);
+    if (Number.isInteger(foto) && foto >= 1 && foto <= count && Number.isInteger(producto) && producto >= 1 && producto <= products.length) {
+      result[foto - 1] = products[producto - 1].id;
+    }
+  }
+  return result;
+}

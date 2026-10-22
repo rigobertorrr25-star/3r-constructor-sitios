@@ -1,4 +1,5 @@
 import { LibraryPhotos, MenuImport } from '@/components/menu-import';
+import { BulkPhotos } from '@/components/bulk-photos';
 import { requireStaff } from '@/lib/auth';
 import { getMenu } from '@/lib/orders';
 import { productCosts } from '@/lib/inventory';
@@ -31,6 +32,13 @@ export default async function MenuPage() {
         }
       />
       {canEdit ? <MenuImport barOnly={staff.barOnly} open={menu.categories.length === 0} /> : null}
+      {canEdit && menu.products.length ? (
+        <BulkPhotos
+          products={menu.categories.flatMap((c) =>
+            menu.products.filter((p) => p.isActive && p.categoryId === c.id).map((p) => ({ id: p.id, name: p.name, category: c.name, hasPhoto: !!p.photo })),
+          )}
+        />
+      ) : null}
       {canEdit && menu.products.length ? <LibraryPhotos withoutPhoto={menu.products.filter((p) => p.isActive && !p.photo).length} /> : null}
       <MenuEditor categories={menu.categories} products={menu.products} canEdit={canEdit} canRecipe={canRecipe} costs={costs} barOnly={staff.barOnly} />
     </div>
