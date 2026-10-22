@@ -168,6 +168,9 @@ export const en: Record<string, string> = {
   'El PIN debe tener de 4 a 6 números.': 'The PIN must have 4 to 6 digits.',
   'Ese PIN es muy fácil de adivinar. Usa otro.': 'That PIN is too easy to guess. Use another one.',
   'No encontramos ese negocio.': 'We couldn’t find that business.',
+  'Para confirmar, escribe el nombre del negocio tal cual: {name}': 'To confirm, type the business name exactly: {name}',
+  'Listo. Se borraron {a} mesas, {b} pagos y {c} turnos de caja. El negocio arranca a vender de cero.':
+    'Done. {a} tables, {b} payments and {c} cash shifts were deleted. The business starts selling from zero.',
   'Ya hay una sede con ese nombre.': 'There’s already a location with that name.',
   'No encontramos esa sede.': 'We couldn’t find that location.',
   'No puedes desactivar la sede en la que estás trabajando.': 'You can’t deactivate the location you’re working in.',

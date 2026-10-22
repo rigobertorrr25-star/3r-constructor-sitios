@@ -31,6 +31,7 @@ import { registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } 
 import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
+import { clearSales } from '@/lib/sales-reset';
 import { removeBackground, saveBackground, setFloorBackground } from '@/lib/backgrounds';
 import { removeProductPhoto, saveProductPhoto } from '@/lib/product-photos';
 import { createAgentCode, enqueueClosing, printBill, printTest, removePrinter, reprint, savePrinter } from '@/lib/printing';
@@ -132,6 +133,22 @@ export async function createBusinessAction(_prev: FormState, formData: FormData)
     });
     revalidatePath('/admin');
     return { ok: Date.now(), message: await trServer(`Listo. El equipo entra en la página de inicio escogiendo «${text(formData, 'name')}» (o directo en /n/${created.slug}). El dueño usa el código ${created.ownerCode} y el PIN que pusiste.`) };
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+}
+
+/** Borra las ventas de prueba de un negocio (solo 3R). Hay que escribir el nombre del negocio para confirmar. */
+export async function clearSalesAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  try {
+    const r = await clearSales(text(formData, 'businessId'), text(formData, 'confirmName'));
+    revalidatePath('/admin');
+    revalidatePath('/app', 'layout');
+    return {
+      ok: Date.now(),
+      message: await trServer(`Listo. Se borraron ${r.sessions} mesas, ${r.payments} pagos y ${r.shifts} turnos de caja. El negocio arranca a vender de cero.`),
+    };
   } catch (error) {
     return fail(await messageOf(error), formData);
   }

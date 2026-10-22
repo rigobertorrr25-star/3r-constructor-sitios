@@ -1,7 +1,7 @@
 import { adminLogoutAction } from '@/app/actions';
 import { requireAdmin } from '@/lib/auth';
 import { listBusinesses } from '@/lib/store';
-import { BusinessToggle, CreateBusinessForm } from '@/components/admin-forms';
+import { BusinessToggle, ClearSalesForm, CreateBusinessForm } from '@/components/admin-forms';
 import { Empty, Lion, PageTitle, card, quietButton } from '@/components/ui';
 import { LangSwitch } from '@/components/i18n';
 import { getT } from '@/lib/i18n/server';
@@ -54,6 +54,7 @@ export default async function AdminHome() {
                   </p>
                 </div>
                 <BusinessToggle id={b.id} active={b.isActive} />
+                <ClearSalesForm id={b.id} name={b.name} />
               </li>
             ))}
           </ul>

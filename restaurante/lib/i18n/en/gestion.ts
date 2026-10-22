@@ -180,6 +180,11 @@ export const en: Record<string, string> = {
   'El plano de mesas usa esta foto de fondo.': 'The table map uses this background photo.',
   'El plano de mesas usa el piso de madera de 3R.': 'The table map uses the 3R wooden floor.',
   'Volver al piso de madera': 'Back to the wooden floor',
+  'Borrar ventas de prueba': 'Delete test sales',
+  'Borra mesas abiertas y cerradas, pedidos, pagos, descuentos, facturas y turnos de caja, y devuelve al inventario lo que esas ventas descontaron. El equipo, el plano, la carta, el inventario cargado, los gastos y las reservas se quedan. No se puede deshacer.':
+    'Deletes open and closed tables, orders, payments, discounts, invoices and cash shifts, and gives back to inventory what those sales took out. The team, floor plan, menu, loaded inventory, expenses and reservations stay. This can’t be undone.',
+  'Para confirmar, escribe el nombre del negocio: {name}': 'To confirm, type the business name: {name}',
+  'Borrando…': 'Deleting…',
   'Usar esta foto en el plano de mesas': 'Use this photo on the table map',
   'Escoger otra foto': 'Choose another photo',
   'Guardar fondo': 'Save background',

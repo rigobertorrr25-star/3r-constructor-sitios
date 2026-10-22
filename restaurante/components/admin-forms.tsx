@@ -1,7 +1,7 @@
 'use client';
 
 import { useTransition } from 'react';
-import { createBusinessAction, setBusinessActiveAction } from '@/app/actions';
+import { clearSalesAction, createBusinessAction, setBusinessActiveAction } from '@/app/actions';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Field, dangerButton, quietButton } from './ui';
@@ -44,5 +44,27 @@ export function BusinessToggle({ id, active }: { id: string; active: boolean }) 
     >
       {active ? t('Suspender') : t('Reactivar')}
     </button>
+  );
+}
+
+/** Borra las ventas de prueba de un negocio. Va plegado y pide escribir el nombre del negocio para que no se toque por error. */
+export function ClearSalesForm({ id, name }: { id: string; name: string }) {
+  const t = useT();
+  return (
+    <details className="w-full rounded-2xl border border-destructive/25 px-4 py-3">
+      <summary className="cursor-pointer text-[14px] text-[#ffb4b5]">{t('Borrar ventas de prueba')}</summary>
+      <p className="mt-2 text-[13px] text-muted-foreground">
+        {t('Borra mesas abiertas y cerradas, pedidos, pagos, descuentos, facturas y turnos de caja, y devuelve al inventario lo que esas ventas descontaron. El equipo, el plano, la carta, el inventario cargado, los gastos y las reservas se quedan. No se puede deshacer.')}
+      </p>
+      <ActionForm action={clearSalesAction} resetOnOk className="mt-3 space-y-3">
+        {() => (
+          <>
+            <input type="hidden" name="businessId" value={id} />
+            <Field label={t('Para confirmar, escribe el nombre del negocio: {name}', { name })} name="confirmName" required autoComplete="off" />
+            <SubmitButton tone="danger" pendingText={t('Borrando…')}>{t('Borrar ventas de prueba')}</SubmitButton>
+          </>
+        )}
+      </ActionForm>
+    </details>
   );
 }
