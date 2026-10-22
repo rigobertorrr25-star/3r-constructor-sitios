@@ -99,3 +99,28 @@ Ron blanco 60 ml`);
     assert.deepEqual(again.map((l) => Number(l.quantity)), [45]);
   });
 });
+
+describe('fotos de muchos platos', () => {
+  it('busca el plato por el nombre del archivo', async () => {
+    const { productForFile } = await import('../lib/photo-match');
+    const products = [
+      { id: 'a', name: 'Mojito' },
+      { id: 'b', name: 'Mojito de Maracuyá' },
+      { id: 'c', name: 'Bandeja Paisa' },
+      { id: 'd', name: 'Té' },
+    ];
+    assert.equal(productForFile('Mojito.jpg', products)?.id, 'a');
+    assert.equal(productForFile('mojito-de-maracuya (2).JPEG', products)?.id, 'b');
+    assert.equal(productForFile('bandeja_paisa.png', products)?.id, 'c');
+    assert.equal(productForFile('foto bandeja paisa grande.webp', products)?.id, 'c');
+    assert.equal(productForFile('IMG_1234.jpg', products), null);
+    assert.equal(productForFile('te.jpg', products), null, 'nombres muy cortos no se adivinan');
+  });
+
+  it('lee la respuesta de la IA y descarta lo que no calza', async () => {
+    const { photoMatches } = await import('../lib/ai-read');
+    const products = [{ id: 'a' }, { id: 'b' }];
+    assert.deepEqual(photoMatches('Aquí está: [{"foto":1,"producto":2},{"foto":2,"producto":0},{"foto":3,"producto":9}]', 3, products), ['b', null, null]);
+    assert.deepEqual(photoMatches('no sé', 2, products), [null, null]);
+  });
+});

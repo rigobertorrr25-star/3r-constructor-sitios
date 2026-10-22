@@ -2,7 +2,7 @@
 
 import { importMenu, parseMenuText } from '@/lib/menu-import';
 import { importRecipes, parseRecipesText } from '@/lib/recipe-import';
-import { readWithAi, type ReadKind } from '@/lib/ai-read';
+import { matchPhotosWithAi, readWithAi, type ReadKind } from '@/lib/ai-read';
 import { bulkStock, inventoryFromMenu, type StockRow } from '@/lib/inventory-bulk';
 import { applyLibraryPhotos } from '@/lib/photo-library';
 import { createFixture, removeFixture, saveFixtureLayout, updateFixture } from '@/lib/floor';
@@ -31,7 +31,7 @@ import { createReservation, requestReservation, seatReservation, updatePublicSet
 import { addExpense, voidExpense } from '@/lib/finance';
 import { registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
 import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
-import { saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
+import { getMenu, saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { clearMenu, clearSales } from '@/lib/sales-reset';
 import { removeBackground, saveBackground, setFloorBackground } from '@/lib/backgrounds';
@@ -1024,6 +1024,25 @@ export async function saveProductPhotoAction(_prev: FormState, formData: FormDat
   if (!(file instanceof File) || !file.size) return { error: await trServer('Escoge una foto.') };
   const bytes = new Uint8Array(await file.arrayBuffer());
   return run(formData, () => saveProductPhoto(staff, text(formData, 'productId'), bytes), ['/app/carta', '/app/mesa'], 'Listo. Ya se ve la foto en la carta.');
+}
+
+/** Carta → «Subir fotos de los platos»: la IA dice qué producto es cada foto (la persona lo revisa antes de guardar). */
+export async function matchPhotosAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('menu.edit');
+  try {
+    const photos = await Promise.all(
+      formData
+        .getAll('photos')
+        .filter((f): f is File => typeof f === 'object' && f !== null && 'arrayBuffer' in f && f.size > 0)
+        .map(async (f) => ({ type: f.type, size: f.size, data: Buffer.from(await f.arrayBuffer()) })),
+    );
+    const menu = await getMenu(staff.businessId);
+    const products = menu.products.filter((p) => p.isActive).map((p) => ({ id: p.id, name: p.name }));
+    const matches = await matchPhotosWithAi(staff, photos, products);
+    return { ok: Date.now(), values: { matches: JSON.stringify(matches) } };
+  } catch (error) {
+    return fail(await messageOf(error));
+  }
 }
 
 export async function removeProductPhotoAction(_prev: FormState, formData: FormData): Promise<FormState> {

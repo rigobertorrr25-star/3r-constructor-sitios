@@ -3,6 +3,8 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { imageMime } from './backgrounds';
+import { photoKey } from './photo-match';
+export { photoKey };
 import { query, transaction } from './db';
 import { PRODUCT_PHOTO_MAX_BYTES } from './product-photos';
 import { AppError, audit, requirePermission, type Actor } from './store';
@@ -86,20 +88,6 @@ const LIBRARY: [string, ...string[]][] = [
   ['rosquitas', 'Rosquitas'],
   ['vaso-michelado', 'Vaso Michelado'],
 ];
-
-/** Nombre comparable: sin tildes, mayúsculas, signos ni tamaños («750ml», «Litro»), para que «Old Parr 750ml» y «Old Parr Litro» sean lo mismo. */
-export function photoKey(name: string) {
-  return name
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/&/g, ' and ')
-    .replace(/['’`]/g, '')
-    .replace(/\b\d+\s?(ml|cl|lt|l)\b/g, ' ')
-    .replace(/\b(litro|litros|lt)\b/g, ' ')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-}
 
 const BY_KEY = new Map<string, string>(LIBRARY.flatMap(([file, ...names]) => names.map((n) => [photoKey(n), file] as const)));
 const KEYS_LONGEST_FIRST = [...BY_KEY.keys()].sort((a, b) => b.length - a.length);
