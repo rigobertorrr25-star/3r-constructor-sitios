@@ -9,9 +9,9 @@ import { anulacion, cierre, comanda, precuenta, prueba, type Ticket } from './es
 import { formatCop, formatDateTime, formatTime } from './format';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 
-export type Target = 'kitchen' | 'bar' | 'cashier';
-export const TARGET_LABEL: Record<Target, string> = { kitchen: 'Cocina', bar: 'Barra', cashier: 'Caja' };
-const TARGET_COLUMN: Record<Target, string> = { kitchen: 'prints_kitchen', bar: 'prints_bar', cashier: 'prints_cashier' };
+export type Target = 'kitchen' | 'bar' | 'cashier' | 'orders';
+export const TARGET_LABEL: Record<Target, string> = { kitchen: 'Cocina', bar: 'Barra', cashier: 'Caja', orders: 'Copia de pedidos' };
+const TARGET_COLUMN: Record<Target, string> = { kitchen: 'prints_kitchen', bar: 'prints_bar', cashier: 'prints_cashier', orders: 'prints_orders' };
 
 export const PAPER = [
   { width: 48, label: '80 mm' },
@@ -32,15 +32,18 @@ export type Printer = {
   printsKitchen: boolean;
   printsBar: boolean;
   printsCashier: boolean;
+  printsOrders: boolean;
   copies: number;
   isActive: boolean;
 };
 
 const PRINTER_SELECT = `SELECT id, name, host, port, width, prints_kitchen AS "printsKitchen", prints_bar AS "printsBar",
-  prints_cashier AS "printsCashier", copies, is_active AS "isActive" FROM printers`;
+  prints_cashier AS "printsCashier", prints_orders AS "printsOrders", copies, is_active AS "isActive" FROM printers`;
 
-export const printerTargets = (p: Pick<Printer, 'printsKitchen' | 'printsBar' | 'printsCashier'>) =>
-  (['kitchen', 'bar', 'cashier'] as Target[]).filter((t) => (t === 'kitchen' ? p.printsKitchen : t === 'bar' ? p.printsBar : p.printsCashier));
+export const printerTargets = (p: Pick<Printer, 'printsKitchen' | 'printsBar' | 'printsCashier' | 'printsOrders'>) =>
+  (['kitchen', 'bar', 'cashier', 'orders'] as Target[]).filter((t) =>
+    t === 'kitchen' ? p.printsKitchen : t === 'bar' ? p.printsBar : t === 'cashier' ? p.printsCashier : p.printsOrders,
+  );
 
 export async function listPrinters(actor: Actor): Promise<Printer[]> {
   requirePermission(actor, 'printers.manage');
@@ -66,6 +69,7 @@ export type PrinterInput = {
   printsKitchen: boolean;
   printsBar: boolean;
   printsCashier: boolean;
+  printsOrders: boolean;
   copies: number;
   isActive: boolean;
 };
@@ -84,15 +88,15 @@ function cleanPrinter(input: PrinterInput) {
 export async function savePrinter(actor: Actor, id: string | null, input: PrinterInput) {
   requirePermission(actor, 'printers.manage');
   const p = cleanPrinter(input);
-  const values = [p.name, p.host, p.port, p.width, p.printsKitchen, p.printsBar, p.printsCashier, p.copies, p.isActive];
+  const values = [p.name, p.host, p.port, p.width, p.printsKitchen, p.printsBar, p.printsCashier, p.copies, p.isActive, p.printsOrders];
   return transaction(async (db) => {
     let printerId: string;
     if (id) {
       if (!isUuid(id)) throw new AppError('NOT_FOUND', 'No encontramos esa impresora.');
       const res = await db.query<{ id: string }>(
         `UPDATE printers SET name = $1, host = $2, port = $3, width = $4, prints_kitchen = $5, prints_bar = $6, prints_cashier = $7,
-                copies = $8, is_active = $9
-          WHERE id = $10 AND location_id = $11 AND business_id = $12 RETURNING id`,
+                copies = $8, is_active = $9, prints_orders = $10
+          WHERE id = $11 AND location_id = $12 AND business_id = $13 RETURNING id`,
         [...values, id, actor.locationId, actor.businessId],
       );
       if (!res.rows[0]) throw new AppError('NOT_FOUND', 'No encontramos esa impresora.');
@@ -102,8 +106,8 @@ export async function savePrinter(actor: Actor, id: string | null, input: Printe
       if (count >= 20) throw new AppError('CONFLICT', 'Máximo 20 impresoras por sede.');
       printerId = (
         await db.query<{ id: string }>(
-          `INSERT INTO printers (name, host, port, width, prints_kitchen, prints_bar, prints_cashier, copies, is_active, business_id, location_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+          `INSERT INTO printers (name, host, port, width, prints_kitchen, prints_bar, prints_cashier, copies, is_active, prints_orders, business_id, location_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
           [...values, actor.businessId, actor.locationId],
         )
       ).rows[0].id;
@@ -148,12 +152,16 @@ async function placeInfo(db: Db, who: Who) {
   ).rows[0];
 }
 
-/** Deja un trabajo por cada impresora activa que imprime `target`. Devuelve cuántas impresoras lo recibieron. */
-async function enqueue(db: Db, who: Who, target: Target, kind: string, title: string, build: (width: number) => Ticket, printerId?: string) {
+/**
+ * Deja un trabajo por cada impresora activa que imprime `target`. Devuelve cuántas impresoras lo recibieron.
+ * `skipOrders`: las que sacan copia de cada pedido ya reciben todo junto; no se les repite el papel de la estación.
+ */
+async function enqueue(db: Db, who: Who, target: Target, kind: string, title: string, build: (width: number) => Ticket, printerId?: string, skipOrders = false) {
   const printers = (
     await db.query<{ id: string; width: number; copies: number }>(
       `SELECT id, width, copies FROM printers
-        WHERE location_id = $1 AND business_id = $2 AND is_active AND ${printerId ? 'id = $3' : TARGET_COLUMN[target]}`,
+        WHERE location_id = $1 AND business_id = $2 AND is_active AND ${printerId ? 'id = $3' : TARGET_COLUMN[target]}
+          ${skipOrders && !printerId ? 'AND NOT prints_orders' : ''}`,
       printerId ? [who.locationId, who.businessId, printerId] : [who.locationId, who.businessId],
     )
   ).rows;
@@ -185,18 +193,39 @@ export async function enqueueRound(db: Db, who: Who & Pick<Actor, 'name'>, round
     const items = rows.filter((r) => r.station === station);
     if (!items.length) continue;
     const first = items[0];
-    sent += await enqueue(db, who, station, 'comanda', `Mesa ${first.table} · ${TARGET_LABEL[station]} · Ronda ${first.round}`, (w) =>
-      comanda(w, {
-        station,
-        table: first.table,
-        zone: first.zone,
-        round: first.round,
-        sentBy: who.name,
-        time: formatTime(first.sentAt, place.timezone),
-        items: items.map((i) => ({ quantity: i.quantity, name: i.name, notes: i.notes })),
-      }),
+    sent += await enqueue(
+      db,
+      who,
+      station,
+      'comanda',
+      `Mesa ${first.table} · ${TARGET_LABEL[station]} · Ronda ${first.round}`,
+      (w) =>
+        comanda(w, {
+          station,
+          table: first.table,
+          zone: first.zone,
+          round: first.round,
+          sentBy: who.name,
+          time: formatTime(first.sentAt, place.timezone),
+          items: items.map((i) => ({ quantity: i.quantity, name: i.name, notes: i.notes })),
+        }),
+      undefined,
+      true,
     );
   }
+  // Copia de todo el pedido (por ejemplo en la caja): un solo papel con lo de cocina y lo de barra.
+  const first = rows[0];
+  sent += await enqueue(db, who, 'orders', 'comanda', `Mesa ${first.table} · Pedido · Ronda ${first.round}`, (w) =>
+    comanda(w, {
+      station: 'all',
+      table: first.table,
+      zone: first.zone,
+      round: first.round,
+      sentBy: who.name,
+      time: formatTime(first.sentAt, place.timezone),
+      items: rows.map((i) => ({ quantity: i.quantity, name: i.name, notes: i.notes })),
+    }),
+  );
   return sent;
 }
 
@@ -212,9 +241,11 @@ export async function enqueueVoid(db: Db, who: Who & Pick<Actor, 'name'>, itemId
   ).rows[0];
   if (!item || item.status === 'delivered') return 0;
   const place = await placeInfo(db, who);
-  return enqueue(db, who, item.station, 'anulacion', `ANULADO · Mesa ${item.table} · ${item.quantity} x ${item.name}`, (w) =>
-    anulacion(w, { station: item.station, table: item.table, quantity: item.quantity, name: item.name, reason, by: who.name, time: formatTime(new Date(), place.timezone) }),
-  );
+  const title = `ANULADO · Mesa ${item.table} · ${item.quantity} x ${item.name}`;
+  const build = (w: number) =>
+    anulacion(w, { station: item.station, table: item.table, quantity: item.quantity, name: item.name, reason, by: who.name, time: formatTime(new Date(), place.timezone) });
+  // A la estación, y a las que sacan copia de cada pedido (sin repetir el papel si es la misma impresora).
+  return (await enqueue(db, who, item.station, 'anulacion', title, build, undefined, true)) + (await enqueue(db, who, 'orders', 'anulacion', title, build));
 }
 
 /** Precuenta a la impresora de caja. */

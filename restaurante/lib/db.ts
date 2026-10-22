@@ -567,6 +567,15 @@ CREATE TABLE IF NOT EXISTS printers (
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS printers_location ON printers (location_id);
+-- Copia de cada pedido (pedido de Rigoberto, 22 oct 2026): la impresora recibe en un solo papel todo lo que manda cada
+-- mesero, y las anulaciones. Al crear la columna, las impresoras de caja que ya existían quedan con la copia prendida.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'printers' AND column_name = 'prints_orders') THEN
+    ALTER TABLE printers ADD COLUMN prints_orders BOOLEAN NOT NULL DEFAULT FALSE;
+    UPDATE printers SET prints_orders = prints_cashier;
+  END IF;
+END $$;
 CREATE TABLE IF NOT EXISTS print_jobs (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,

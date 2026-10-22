@@ -129,10 +129,11 @@ export class Ticket {
 
 // ───────── documentos ─────────
 
-const STATION_TITLE = { kitchen: 'Cocina', bar: 'Barra' } as const;
+const STATION_TITLE = { kitchen: 'Cocina', bar: 'Barra', all: 'Pedido' } as const;
 
 export type ComandaInput = {
-  station: 'kitchen' | 'bar';
+  /** all: copia de todo el pedido (cocina y barra juntas). */
+  station: 'kitchen' | 'bar' | 'all';
   table: string;
   zone: string;
   round: number;
