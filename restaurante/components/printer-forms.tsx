@@ -17,6 +17,7 @@ export type PrinterView = {
   printsKitchen: boolean;
   printsBar: boolean;
   printsCashier: boolean;
+  printsOrders: boolean;
   copies: number;
   isActive: boolean;
 };
@@ -53,12 +54,18 @@ function PrinterFields({ p, values, barOnly = false }: { p?: PrinterView; values
         </Select>
       </div>
       <p className="mt-5 text-sm font-medium text-foreground">{t('¿Qué imprime?')}</p>
-      <div className="mt-2 grid gap-3 md:grid-cols-3">
+      <div className="mt-2 grid gap-3 md:grid-cols-2">
         {barOnly && !p?.printsKitchen ? null : (
           <CheckField name="kitchen" label={t('Comandas de cocina')} hint={t('Los platos de las categorías de cocina.')} defaultChecked={p?.printsKitchen} />
         )}
         <CheckField name="bar" label={t('Comandas de barra')} hint={t('Los tragos de las categorías de barra.')} defaultChecked={p?.printsBar} />
         <CheckField name="cashier" label={t('Caja')} hint={t('Precuentas y cierre de caja.')} defaultChecked={p?.printsCashier} />
+        <CheckField
+          name="orders"
+          label={t('Copia de cada pedido')}
+          hint={t('Todo lo que manda cada mesero en un solo papel, y lo que se anula. Para la caja.')}
+          defaultChecked={p?.printsOrders}
+        />
       </div>
     </>
   );
@@ -79,7 +86,7 @@ export function NewPrinterForm({ barOnly = false }: { barOnly?: boolean }) {
 }
 
 const targets = (p: PrinterView, t: T) =>
-  [p.printsKitchen ? t('Cocina') : null, p.printsBar ? t('Barra') : null, p.printsCashier ? t('Caja') : null].filter(Boolean).join(' · ') || t('No imprime nada todavía');
+  [p.printsKitchen ? t('Cocina') : null, p.printsBar ? t('Barra') : null, p.printsCashier ? t('Caja') : null, p.printsOrders ? t('Copia de pedidos') : null].filter(Boolean).join(' · ') || t('No imprime nada todavía');
 
 export function PrinterRow({ printer, barOnly = false }: { printer: PrinterView; barOnly?: boolean }) {
   const [mode, setMode] = useState<'view' | 'edit' | 'remove'>('view');

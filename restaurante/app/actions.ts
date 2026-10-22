@@ -977,6 +977,7 @@ export async function savePrinterAction(_prev: FormState, formData: FormData): P
         printsKitchen: checked(formData, 'kitchen'),
         printsBar: checked(formData, 'bar'),
         printsCashier: checked(formData, 'cashier'),
+        printsOrders: checked(formData, 'orders'),
         copies: int(formData, 'copies'),
         isActive: id ? checked(formData, 'isActive') : true,
       }),

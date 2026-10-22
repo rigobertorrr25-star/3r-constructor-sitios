@@ -54,6 +54,7 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     printsKitchen: false,
     printsBar: false,
     printsCashier: false,
+    printsOrders: false,
     copies: 1,
     isActive: true,
   };
@@ -195,6 +196,39 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     assert.equal(closing.length, 1);
     assert.equal(closing[0].printerId, cashP);
     for (const s of ['CIERRE DE CAJA', 'Efectivo (1)', '$60.000', 'CUADRA']) assert.ok(closing[0].preview.includes(s), s);
+  });
+
+  it('la caja puede sacar copia de cada pedido: todo junto, con el mesero, y sin repetir papel en la misma impresora', async () => {
+    // La caja saca copia de pedidos; y la barra también, así que ya no recibe aparte su comanda de barra.
+    await printing.savePrinter(owner, cashP, { ...base, name: 'Caja', host: '192.168.1.52', printsCashier: true, printsOrders: true, copies: 1 });
+    await printing.savePrinter(owner, barP, { ...base, name: 'Barra', host: '192.168.1.51', printsBar: true, printsOrders: true, width: 32 });
+    assert.equal(await printing.hasPrinter(owner, 'orders'), true);
+    await db.query(`DELETE FROM print_jobs WHERE location_id = $1`, [owner.locationId]);
+    const t2 = await store.createTable(owner, { zone: 'Salón', number: '8', capacity: 2, shape: 'square' });
+    const s2 = await store.openTable(waiter, t2, { guests: 2 });
+    await orders.sendOrder(
+      waiter,
+      s2,
+      [
+        { productId: burger, quantity: 1 },
+        { productId: beer, quantity: 2 },
+      ],
+      randomUUID(),
+    );
+    const all = (await jobs()).filter((j) => j.kind === 'comanda');
+    assert.equal(all.filter((j) => j.printerId === kitchenP).length, 1, 'la cocina sigue con la suya');
+    const copies = all.filter((j) => j.printerId === cashP);
+    assert.equal(copies.length, 1);
+    for (const s of ['PEDIDO', 'MESA 8', '1 X HAMBURGUESA', '2 X CERVEZA', waiter.name]) assert.ok(copies[0].preview.includes(s), s);
+    const bar = all.filter((j) => j.printerId === barP);
+    assert.equal(bar.length, 1, 'un solo papel en la barra');
+    assert.ok(bar[0].preview.includes('PEDIDO'));
+
+    const order = await orders.getSessionOrder(owner, s2);
+    const burgerItem = order!.rounds.at(-1)!.items.find((i) => i.name === 'Hamburguesa')!;
+    await orders.voidItem(owner, burgerItem.id, 'El cliente se arrepintió');
+    const voids = (await jobs()).filter((j) => j.kind === 'anulacion');
+    assert.deepEqual(voids.map((j) => j.printerId).sort(), [barP, cashP, kitchenP].sort(), 'la anulación llega a la cocina y a las copias');
   });
 
   it('el aviso de papeles atascados cuenta lo que no ha salido', async () => {
