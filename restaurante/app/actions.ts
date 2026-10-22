@@ -1,6 +1,8 @@
 'use server';
 
-import { importMenu } from '@/lib/menu-import';
+import { importMenu, parseMenuText } from '@/lib/menu-import';
+import { importRecipes, parseRecipesText } from '@/lib/recipe-import';
+import { readWithAi, type ReadKind } from '@/lib/ai-read';
 import { bulkStock, inventoryFromMenu, type StockRow } from '@/lib/inventory-bulk';
 import { applyLibraryPhotos } from '@/lib/photo-library';
 import { createFixture, removeFixture, saveFixtureLayout, updateFixture } from '@/lib/floor';
@@ -448,6 +450,63 @@ export async function importMenuAction(_prev: FormState, formData: FormData): Pr
       `Listo: ${counts.categories} categorías nuevas, ${counts.products} productos nuevos y ${counts.prices} precios cambiados; ${counts.same} sin cambios.`,
     ),
   };
+}
+
+/** Pasa a texto el PDF o las fotos (de la carta o de las recetas) con IA, para revisarlo antes de importarlo. */
+async function readFiles(kind: ReadKind, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  let text: string;
+  try {
+    const files = await Promise.all(
+      formData
+        .getAll('files')
+        .filter((f): f is File => typeof f === 'object' && f !== null && 'arrayBuffer' in f)
+        .map(async (f) => ({ type: f.type, size: f.size, data: Buffer.from(await f.arrayBuffer()) })),
+    );
+    text = await readWithAi(staff, kind, files);
+  } catch (error) {
+    return fail(await messageOf(error));
+  }
+  // Se cuenta lo leído; si el texto no pasa la revisión, igual se entrega para que la persona lo corrija.
+  let message: string;
+  try {
+    if (kind === 'menu') {
+      const menu = parseMenuText(text);
+      const products = menu.categories.reduce((n, c) => n + c.products.length, 0);
+      message = await trServer(`Leímos ${menu.categories.length} categorías y ${products} productos. Revísalos abajo, corrige lo que haga falta y toca «Importar carta».`);
+    } else {
+      const recipes = parseRecipesText(text);
+      message = await trServer(`Leímos ${recipes.products.length} recetas. Revísalas abajo, corrige lo que haga falta y toca «Importar recetas».`);
+    }
+  } catch {
+    message = await trServer('Leímos el archivo, pero hay líneas que revisar. Corrígelas abajo antes de importar.');
+  }
+  return { ok: Date.now(), message, values: { text } };
+}
+
+export async function readMenuFileAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  return readFiles('menu', formData);
+}
+
+export async function readRecipesFileAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  return readFiles('recipes', formData);
+}
+
+/** Importar las recetas pegadas o leídas del PDF (Inventario → Importar recetas). */
+export async function importRecipesAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('inventory.manage');
+  let r: Awaited<ReturnType<typeof importRecipes>>;
+  try {
+    r = await importRecipes(staff, String(formData.get('recipes') ?? ''));
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+  revalidatePath('/app/inventario');
+  revalidatePath('/app/carta');
+  const parts = [await trServer(`Listo: ${r.recipes} productos con receta y ${r.items} insumos nuevos.`)];
+  if (r.missing.length) parts.push(await trServer(`No están en la carta (revisa el nombre): ${r.missing.slice(0, 15).join(', ')}${r.missing.length > 15 ? '…' : ''}.`));
+  if (r.conflicts.length) parts.push(await trServer(`Sin tocar (ya existe ese insumo en otra unidad): ${r.conflicts.slice(0, 15).join(', ')}${r.conflicts.length > 15 ? '…' : ''}.`));
+  return { ok: Date.now(), message: parts.join(' ') };
 }
 
 export async function saveCategoryAction(_prev: FormState, formData: FormData): Promise<FormState> {

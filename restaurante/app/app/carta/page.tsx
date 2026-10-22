@@ -8,6 +8,8 @@ import { PageTitle } from '@/components/ui';
 import { getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
+// Leer la carta de un PDF o fotos con IA puede tardar más de lo normal.
+export const maxDuration = 60;
 
 export default async function MenuPage() {
   const staff = await requireStaff('orders.take');

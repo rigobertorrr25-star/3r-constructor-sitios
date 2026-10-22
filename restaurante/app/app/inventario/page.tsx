@@ -7,11 +7,14 @@ import { formatQuantity } from '@/lib/units';
 import { InventoryActions, ItemForm } from '@/components/inventory-forms';
 import { BulkStock, InventoryFromMenu } from '@/components/inventory-bulk';
 import { menuForInventory } from '@/lib/inventory-bulk';
+import { RecipeImport } from '@/components/recipe-import';
 import { Empty, PageTitle, card } from '@/components/ui';
 import { makeT, tr } from '@/lib/i18n';
 import { getLang } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
+// Leer recetas de un PDF o fotos con IA puede tardar más de lo normal.
+export const maxDuration = 60;
 
 export default async function InventoryPage() {
   const staff = await requireStaff('inventory.view');
@@ -51,6 +54,7 @@ export default async function InventoryPage() {
       {load ? (
         <>
           <InventoryFromMenu categories={menu} open={items.length === 0} />
+          {manage ? <RecipeImport /> : null}
           <BulkStock showCost={manage} items={active.map((i) => ({ id: i.id, name: i.name, unit: i.unit, bottleSize: i.bottleSize, stock: i.stock, unitCost: i.unitCost, minStock: i.minStock }))} />
         </>
       ) : null}

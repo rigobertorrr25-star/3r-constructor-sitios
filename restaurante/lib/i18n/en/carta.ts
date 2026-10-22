@@ -31,4 +31,38 @@ export const en: Record<string, string> = {
   'Sin foto en la biblioteca: {names}.': 'No photo in the library for: {names}.',
   'Puso {n} fotos de la biblioteca de 3R en la carta': 'Added {n} photos from the 3R library to the menu',
   'No pudimos leer las fotos de la biblioteca. Intenta otra vez en un momento.': 'We couldn’t read the library photos. Try again in a moment.',
+  // Leer la carta o las recetas de un PDF o fotos con IA (lib/ai-read.ts y components/ai-read.tsx)
+  '¿La tienes en PDF o en fotos? Súbela y la IA la pasa a texto aquí abajo. Revísala antes de importar: puede equivocarse en algún nombre o precio.':
+    'Have it as a PDF or photos? Upload it and AI turns it into text below. Check it before importing: it may get a name or price wrong.',
+  '¿Tienes las recetas o fichas técnicas en PDF o en fotos? Súbelas y la IA las pasa a texto aquí abajo. Revísalas antes de importar: puede equivocarse en algún nombre o cantidad.':
+    'Have the recipes or spec sheets as a PDF or photos? Upload them and AI turns them into text below. Check them before importing: it may get a name or amount wrong.',
+  'Subir PDF o fotos': 'Upload PDF or photos',
+  'Leyendo… (puede tardar un minuto)': 'Reading… (may take a minute)',
+  'Los archivos pesan más de 4 MB. Sube el PDF por partes o fotos más livianas.': 'The files are over 4 MB. Upload the PDF in parts or lighter photos.',
+  'Escoge el PDF o las fotos de la carta.': 'Choose the PDF or photos of the menu.',
+  'Sube hasta {n} archivos a la vez.': 'Upload up to {n} files at a time.',
+  'Solo se leen archivos PDF o fotos (JPG, PNG o WEBP).': 'Only PDF files or photos (JPG, PNG or WEBP) can be read.',
+  'La lectura de archivos con IA no está activada en este sistema. Pega el texto a mano.': 'AI file reading isn’t enabled on this system. Paste the text by hand.',
+  'No pudimos leer el archivo. Prueba con una foto más clara o pega el texto a mano.': 'We couldn’t read the file. Try a clearer photo or paste the text by hand.',
+  'No pudimos leer el archivo en este momento. Intenta de nuevo en un minuto o pega el texto a mano.': 'We couldn’t read the file right now. Try again in a minute or paste the text by hand.',
+  'Leímos {c} categorías y {p} productos. Revísalos abajo, corrige lo que haga falta y toca «Importar carta».':
+    'We read {c} categories and {p} products. Check them below, fix anything needed and tap “Import menu”.',
+  'Leímos {n} recetas. Revísalas abajo, corrige lo que haga falta y toca «Importar recetas».': 'We read {n} recipes. Check them below, fix anything needed and tap “Import recipes”.',
+  'Leímos el archivo, pero hay líneas que revisar. Corrígelas abajo antes de importar.': 'We read the file, but some lines need checking. Fix them below before importing.',
+  // Importar recetas (lib/recipe-import.ts y components/recipe-import.tsx)
+  'Importar recetas': 'Import recipes',
+  'Recetas': 'Recipes',
+  'El nombre del producto tal como está en la carta en su propia línea y debajo cada insumo con lo que lleva una porción (60 ml, 8 g, 1 und). Los insumos que no existen se crean; la receta de cada producto se reemplaza.':
+    'The product name exactly as on the menu on its own line, and below it each ingredient with the amount for one serving (60 ml, 8 g, 1 und). Missing ingredients are created; each product’s recipe is replaced.',
+  'Son muchas líneas: pega las recetas por partes (hasta 1.500 líneas).': 'Too many lines: paste the recipes in parts (up to 1,500 lines).',
+  'Línea {n}: esa cantidad no parece correcta.': 'Line {n}: that amount doesn’t look right.',
+  'Línea {n}: el nombre del insumo es muy largo (hasta 80 letras).': 'Line {n}: the ingredient name is too long (up to 80 characters).',
+  'Línea {n}: escribe primero el nombre del producto de la carta (por ejemplo «Mojito»).': 'Line {n}: first write the menu product name (for example “Mojito”).',
+  'Línea {n}: «{name}» está dos veces en {product} con unidades distintas.': 'Line {n}: “{name}” appears twice in {product} with different units.',
+  'Línea {n}: «{line}» no tiene cantidad con unidad (g, ml o und) y no sirve como nombre de producto.': 'Line {n}: “{line}” has no amount with a unit (g, ml or und) and doesn’t work as a product name.',
+  'No encontramos recetas. Pon el nombre del producto y debajo cada insumo con su cantidad y unidad (60 ml, 8 g, 1 und).': 'We found no recipes. Write the product name and below it each ingredient with its amount and unit (60 ml, 8 g, 1 und).',
+  'Listo: {r} productos con receta y {i} insumos nuevos.': 'Done: {r} products with a recipe and {i} new ingredients.',
+  'No están en la carta (revisa el nombre): {names}.': 'Not on the menu (check the name): {names}.',
+  'Sin tocar (ya existe ese insumo en otra unidad): {names}.': 'Left untouched (that ingredient already exists in another unit): {names}.',
+  'Importó recetas: {r} productos con receta y {i} insumos nuevos': 'Imported recipes: {r} products with a recipe and {i} new ingredients',
 };
