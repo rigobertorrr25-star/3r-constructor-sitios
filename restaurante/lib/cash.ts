@@ -4,7 +4,7 @@ import { formatCop } from './format';
 import { pooled, query, transaction, type Db } from './db';
 import { createInvoice, voidInvoiceFor } from './invoices';
 import { can } from './permissions';
-import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
+import { AppError, audit, hasOrders, isUuid, releaseEmptySessions, requirePermission, type Actor } from './store';
 
 export const METHODS = ['cash', 'card', 'transfer'] as const;
 export const isMethod = (v: string): v is Method => (METHODS as readonly string[]).includes(v);
@@ -542,6 +542,7 @@ export async function reversePayment(actor: Actor, paymentId: string, reason: st
     }
     const session = await lockSessionForCash(db, actor, p.sessionId!);
     if (session.status === 'closed') {
+      await releaseEmptySessions(db, { tableId: session.tableId });
       const busy = await db.query(`SELECT 1 FROM table_sessions WHERE table_id = $1 AND status <> 'closed'`, [session.tableId]);
       if (busy.rowCount) throw new AppError('CONFLICT', `La mesa ${session.number} ya tiene otra cuenta abierta. Registra la devolución como una salida de caja.`);
       await db.query(`UPDATE table_sessions SET status = 'bill', closed_at = NULL, closed_by = NULL, bill_at = now() WHERE id = $1`, [session.id]);
@@ -569,7 +570,7 @@ export async function openAccounts(actor: Actor) {
             (SELECT COALESCE(sum(amount), 0) FROM session_discounts WHERE session_id = ts.id AND voided_at IS NULL) AS discounts,
             (SELECT COALESCE(sum(amount), 0) FROM payments WHERE session_id = ts.id AND reversed_at IS NULL) AS paid
        FROM table_sessions ts JOIN dining_tables t ON t.id = ts.table_id
-      WHERE ts.location_id = $1 AND ts.business_id = $2 AND ts.status <> 'closed'
+      WHERE ts.location_id = $1 AND ts.business_id = $2 AND ts.status <> 'closed' AND ${hasOrders('ts')}
       ORDER BY (ts.status = 'bill') DESC, ts.bill_at, ts.opened_at`,
     [actor.locationId, actor.businessId],
   );

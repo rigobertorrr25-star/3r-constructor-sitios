@@ -24,6 +24,23 @@ export function requirePermission(actor: Actor, permission: Permission) {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (value: unknown): value is string => typeof value === 'string' && UUID.test(value);
 
+/**
+ * Una mesa abierta cuenta como abierta solo si ya se comandó algo (pedido de Rigoberto, 23 oct 2026). Sin pedidos sale
+ * libre en el plano, no se cuenta en caja, tablero ni cierres, y quien la abra de nuevo usa esa misma cuenta vacía.
+ * `alias` es el nombre de table_sessions en la consulta.
+ */
+export const hasOrders = (alias: string) => `EXISTS (SELECT 1 FROM order_rounds r_ WHERE r_.session_id = ${alias}.id)`;
+
+/** Cierra las cuentas abiertas sin ningún pedido de una mesa o de una sede (antes de quitar la mesa, desactivar la sede…). */
+export async function releaseEmptySessions(db: Db, where: { tableId?: string; locationId?: string }) {
+  await db.query(
+    `UPDATE table_sessions ts SET status = 'closed', closed_at = now(), closed_by = ts.opened_by
+      WHERE ts.status <> 'closed' AND NOT ${hasOrders('ts')}
+        AND ($1::uuid IS NULL OR ts.table_id = $1) AND ($2::uuid IS NULL OR ts.location_id = $2)`,
+    [where.tableId ?? null, where.locationId ?? null],
+  );
+}
+
 const clean = (value: string) => value.replace(/\s+/g, ' ').trim();
 
 function requireText(value: string, label: string, min: number, max: number) {
@@ -161,7 +178,7 @@ export async function listBusinesses(): Promise<BusinessSummary[]> {
     `SELECT b.id, b.name, b.slug, b.timezone, b.is_active AS "isActive", b.created_at AS "createdAt",
             (SELECT count(*)::int FROM locations l WHERE l.business_id = b.id AND l.is_active) AS "locationCount",
             (SELECT count(*)::int FROM staff s WHERE s.business_id = b.id AND s.is_active) AS "staffCount",
-            (SELECT count(*)::int FROM table_sessions t WHERE t.business_id = b.id AND t.status <> 'closed') AS "openTables"
+            (SELECT count(*)::int FROM table_sessions t WHERE t.business_id = b.id AND t.status <> 'closed' AND ${hasOrders('t')}) AS "openTables"
        FROM businesses b ORDER BY b.created_at DESC`,
   );
 }
@@ -258,6 +275,7 @@ export async function updateLocation(actor: Actor, locationId: string, input: { 
     ).rows[0];
     if (!before) throw new AppError('NOT_FOUND', 'No encontramos esa sede.');
     if (!input.isActive && before.isActive) {
+      await releaseEmptySessions(db, { locationId });
       const open = await db.query(`SELECT 1 FROM table_sessions WHERE location_id = $1 AND status <> 'closed' LIMIT 1`, [locationId]);
       if (open.rowCount) throw new AppError('CONFLICT', 'Esa sede tiene mesas abiertas. Ciérralas antes de desactivarla.');
     }
@@ -593,7 +611,7 @@ export async function listTables(actor: Actor): Promise<FloorTable[]> {
             ts.id AS "sessionId", ts.guests, ts.notes, ts.opened_at AS "openedAt", ts.bill_at AS "billAt",
             ts.status AS "sessionStatus", s.name AS "openedBy", ts.opened_by AS "openedById", s.role AS "openedByRole"
        FROM dining_tables t
-       LEFT JOIN table_sessions ts ON ts.table_id = t.id AND ts.status <> 'closed'
+       LEFT JOIN table_sessions ts ON ts.table_id = t.id AND ts.status <> 'closed' AND ${hasOrders('ts')}
        LEFT JOIN staff s ON s.id = ts.opened_by
       WHERE t.location_id = $1 AND t.business_id = $2 AND t.is_active
       ORDER BY t.zone, length(t.number), t.number`,
@@ -783,6 +801,7 @@ export async function removeTable(actor: Actor, tableId: string) {
   requirePermission(actor, 'floor.edit');
   await transaction(async (db) => {
     const table = await lockTable(db, actor, tableId);
+    await releaseEmptySessions(db, { tableId });
     const open = await db.query(`SELECT 1 FROM table_sessions WHERE table_id = $1 AND status <> 'closed'`, [tableId]);
     if (open.rowCount) throw new AppError('CONFLICT', `La mesa ${table.number} está abierta. Ciérrala primero.`);
     await db.query(`UPDATE dining_tables SET is_active = FALSE WHERE id = $1`, [tableId]);
@@ -801,7 +820,7 @@ export async function removeTables(actor: Actor, ids: string[] | 'all') {
     const rows = (
       await db.query<{ id: string; number: string; open: boolean }>(
         `SELECT t.id, t.number,
-                EXISTS (SELECT 1 FROM table_sessions s WHERE s.table_id = t.id AND s.status <> 'closed') AS open
+                EXISTS (SELECT 1 FROM table_sessions s WHERE s.table_id = t.id AND s.status <> 'closed' AND ${hasOrders('s')}) AS open
            FROM dining_tables t WHERE t.location_id = $1 AND t.business_id = $2 AND t.is_active
             AND ($3::uuid[] IS NULL OR t.id = ANY($3::uuid[])) FOR UPDATE`,
         [actor.locationId, actor.businessId, ids === 'all' ? null : ids],
@@ -811,6 +830,7 @@ export async function removeTables(actor: Actor, ids: string[] | 'all') {
     const kept = rows.filter((r) => r.open).map((r) => r.number);
     if (!rows.length) throw new AppError('INVALID', 'No hay mesas para quitar.');
     if (removed.length) {
+      for (const r of removed) await releaseEmptySessions(db, { tableId: r.id });
       await db.query(`UPDATE dining_tables SET is_active = FALSE WHERE id = ANY($1::uuid[])`, [removed.map((r) => r.id)]);
       await audit(db, actor, { action: 'table.remove', entity: 'location', entityId: actor.locationId, summary: `Quitó ${removed.length} mesas del plano de una vez: ${removed.map((r) => r.number).join(', ')}` });
     }
@@ -828,10 +848,18 @@ export async function openTable(actor: Actor, tableId: string, input: { guests: 
     return await transaction(async (db) => {
       const table = await lockTable(db, actor, tableId);
       if (table.isBlocked) throw new AppError('CONFLICT', `La mesa ${table.number} está bloqueada.`);
-      const res = await db.query<{ id: string }>(
-        `INSERT INTO table_sessions (business_id, location_id, table_id, guests, notes, opened_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-        [actor.businessId, actor.locationId, tableId, input.guests, notes, actor.id],
+      // Si la mesa quedó abierta sin pedir nada, se usa esa misma cuenta (queda a nombre de quien la abre ahora).
+      const reused = await db.query<{ id: string }>(
+        `UPDATE table_sessions ts SET guests = $2, notes = $3, opened_by = $4, opened_at = now(), status = 'open', bill_at = NULL
+          WHERE ts.table_id = $1 AND ts.status <> 'closed' AND NOT ${hasOrders('ts')} RETURNING id`,
+        [tableId, input.guests, notes, actor.id],
       );
+      const res = reused.rows[0]
+        ? reused
+        : await db.query<{ id: string }>(
+            `INSERT INTO table_sessions (business_id, location_id, table_id, guests, notes, opened_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+            [actor.businessId, actor.locationId, tableId, input.guests, notes, actor.id],
+          );
       await audit(db, actor, {
         action: 'table.open',
         entity: 'table_session',
@@ -907,6 +935,8 @@ export async function moveSession(actor: Actor, sessionId: string, toTableId: st
       const target = await lockTable(db, actor, toTableId);
       if (target.id === session.tableId) return;
       if (target.isBlocked) throw new AppError('CONFLICT', `La mesa ${target.number} está bloqueada.`);
+      // Si la mesa de destino quedó abierta sin pedidos, en realidad está libre.
+      await releaseEmptySessions(db, { tableId: target.id });
       await db.query(`UPDATE table_sessions SET table_id = $2 WHERE id = $1`, [sessionId, target.id]);
       await audit(db, actor, {
         action: 'table.move',

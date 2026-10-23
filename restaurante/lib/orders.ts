@@ -337,7 +337,12 @@ export async function sendOrder(actor: Actor, sessionId: string, lines: CartLine
 }
 
 /** Anula un producto ya enviado (no lo borra). Solo dueño o administrador, siempre con motivo. */
-export async function voidItem(actor: Actor, itemId: string, reason: string) {
+/**
+ * Anula un producto ya enviado. `prepared` lo dice quien anula (la comanda se marca entera en la pantalla de cocina o
+ * barra, así que su estado no basta): si no se había preparado, los insumos vuelven al inventario. Sin decirlo, se
+ * toma el estado de la comanda.
+ */
+export async function voidItem(actor: Actor, itemId: string, reason: string, prepared?: boolean) {
   requirePermission(actor, 'orders.void');
   const why = requireText(reason, 'Motivo', 3, 300);
   if (!isUuid(itemId)) throw new AppError('NOT_FOUND', 'No encontramos ese producto.');
@@ -354,8 +359,9 @@ export async function voidItem(actor: Actor, itemId: string, reason: string) {
     if (item.voidedAt) throw new AppError('CONFLICT', 'Ese producto ya estaba anulado.');
     const session = await lockOpenSession(db, actor, item.sessionId);
     await db.query(`UPDATE order_items SET voided_at = now(), voided_by = $2, void_reason = $3 WHERE id = $1`, [itemId, actor.id, why]);
-    // Si la cocina no lo había empezado, los insumos vuelven al inventario; si ya lo preparó, se quedan gastados.
-    if (item.ticketStatus === 'sent') await returnForVoid(db, actor, itemId);
+    // Si no se había preparado, los insumos vuelven al inventario; si ya se preparó, se quedan gastados.
+    const wasPrepared = prepared ?? item.ticketStatus !== 'sent';
+    if (!wasPrepared) await returnForVoid(db, actor, itemId);
     // La estación recibe un papel de «ANULADO» para no prepararlo (o dejarlo de lado).
     await enqueueVoid(db, actor, itemId, why);
     const amount = Number(item.unitPrice) * item.quantity;
@@ -363,9 +369,9 @@ export async function voidItem(actor: Actor, itemId: string, reason: string) {
       action: 'order.void',
       entity: 'order_item',
       entityId: itemId,
-      summary: `Anuló ${item.quantity} × ${item.name} ($${amount.toLocaleString('es-CO')}) de la mesa ${session.number}${item.ticketStatus === 'sent' ? '' : ' (ya estaba en preparación o lista)'}`,
+      summary: `Anuló ${item.quantity} × ${item.name} ($${amount.toLocaleString('es-CO')}) de la mesa ${session.number}${wasPrepared ? ' (ya estaba preparado)' : ''}`,
       reason: why,
-      data: { sessionId: item.sessionId, amount, ticketStatus: item.ticketStatus },
+      data: { sessionId: item.sessionId, amount, ticketStatus: item.ticketStatus, prepared: wasPrepared },
     });
   });
 }

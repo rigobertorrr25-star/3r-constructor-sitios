@@ -90,7 +90,14 @@ describe('barras del plano', { skip: url ? false : 'sin TEST_DATABASE_URL' }, ()
     assert.equal(tables.length, 21);
     assert.ok(!tables.some((t) => ['2', '3', '4', '5', '6'].includes(t.number)));
 
-    await store.openTable(owner, byNumber('7'), { guests: 2 });
+    const seven = await store.openTable(owner, byNumber('7'), { guests: 2 });
+    // Una mesa cuenta como abierta solo si ya se comandó algo.
+    await db.query(`INSERT INTO order_rounds (business_id, location_id, session_id, number, client_key, sent_by) VALUES ($1, $2, $3, 1, gen_random_uuid(), $4)`, [
+      owner.businessId,
+      owner.locationId,
+      seven,
+      owner.id,
+    ]);
     await assert.rejects(store.removeTables(waiter, 'all'), /permiso/);
     await assert.rejects(store.removeTables(owner, []), /Elige/);
     assert.deepEqual(await store.removeTables(owner, 'all'), { removed: 20, kept: ['7'] });

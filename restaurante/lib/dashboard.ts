@@ -3,7 +3,7 @@
 import { query } from './db';
 import { getStatement, type Statement } from './finance';
 import { lowStock } from './inventory';
-import { requirePermission, isUuid, type Actor } from './store';
+import { hasOrders, requirePermission, isUuid, type Actor } from './store';
 import { LONG_TABLE_MINUTES, formatCop } from './format';
 
 export type Level = 'ok' | 'watch' | 'alert';
@@ -53,7 +53,7 @@ export async function getDashboard(actor: Actor, range: { from: string; to: stri
       `SELECT count(*)::int AS n,
               COALESCE(sum((SELECT COALESCE(sum(unit_price * quantity), 0) FROM order_items i WHERE i.session_id = ts.id AND i.voided_at IS NULL)), 0) AS value,
               count(*) FILTER (WHERE ts.opened_at < now() - make_interval(mins => ${LONG_TABLE_MINUTES}))::int AS long
-         FROM table_sessions ts WHERE ts.business_id = $1 AND ts.status <> 'closed' AND ($2::uuid IS NULL OR ts.location_id = $2)`,
+         FROM table_sessions ts WHERE ts.business_id = $1 AND ts.status <> 'closed' AND ${hasOrders('ts')} AND ($2::uuid IS NULL OR ts.location_id = $2)`,
       [actor.businessId, scope],
     ),
     // Efectivo esperado en las cajas abiertas.

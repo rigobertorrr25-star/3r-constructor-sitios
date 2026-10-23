@@ -148,13 +148,27 @@ describe('módulo 01: núcleo y mesas', { skip: url ? false : 'sin TEST_DATABASE
     await assert.rejects(store.saveLayout({ ...owner, locationId: north.locationId }, [{ id: t1, x: 1, y: 1, w: 110, h: 110 }]), { code: 'NOT_FOUND' });
   });
 
+  // Una mesa cuenta como abierta solo si ya se comandó algo: se simula una ronda enviada.
+  const comandar = (sessionId: string, by: { id: string; businessId: string; locationId: string }) =>
+    db.query(`INSERT INTO order_rounds (business_id, location_id, session_id, number, client_key, sent_by) VALUES ($1, $2, $3, 1, gen_random_uuid(), $4)`, [
+      by.businessId,
+      by.locationId,
+      sessionId,
+      by.id,
+    ]);
+
   it('abrir, pedir cuenta, mover y cerrar una mesa (con rastro)', async () => {
     const [t1, t2, t10] = await store.listTables(waiter);
     const sessionId = await store.openTable(waiter, t1.id, { guests: 3, notes: 'Cumpleaños' });
+    // Sin comandar nada, abrirla otra vez usa la misma cuenta; ya comandada, no se abre dos veces.
+    assert.equal(await store.openTable(waiter, t1.id, { guests: 3, notes: 'Cumpleaños' }), sessionId);
+    await comandar(sessionId, waiter);
     await assert.rejects(store.openTable(waiter, t1.id, { guests: 2 }), { code: 'CONFLICT' }, 'no se abre dos veces');
-    // Dos meseros al mismo tiempo sobre la misma mesa: solo uno gana.
+    // Dos meseros al mismo tiempo sobre la misma mesa: queda una sola cuenta.
     const race = await Promise.allSettled([store.openTable(waiter, t2.id, { guests: 2 }), store.openTable(cashier, t2.id, { guests: 2 })]);
-    assert.equal(race.filter((r) => r.status === 'fulfilled').length, 1);
+    const opened = race.filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled').map((r) => r.value);
+    assert.equal(new Set(opened).size, 1);
+    await comandar(opened[0], waiter);
 
     let view = (await store.listTables(waiter)).find((t) => t.id === t1.id)!;
     assert.equal(view.status, 'open');
