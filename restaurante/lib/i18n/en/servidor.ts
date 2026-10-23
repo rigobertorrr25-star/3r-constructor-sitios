@@ -173,6 +173,7 @@ export const en: Record<string, string> = {
   'Para confirmar, escribe el nombre del negocio tal cual: {name}': 'To confirm, type the business name exactly: {name}',
   'Este negocio tiene pedidos con productos de la carta. Primero toca «Borrar ventas de prueba».': 'This business has orders with menu products. Tap “Delete test sales” first.',
   'Escoge las opciones de {a}.': 'Choose the options for {a}.',
+  'Elige si el insumo es de barra o de cocina.': 'Choose whether the ingredient belongs to the bar or the kitchen.',
   'Opciones: hasta 10 grupos (una línea por grupo).': 'Options: up to 10 groups (one line per group).',
   'Opciones, línea {a}: el nombre del grupo va de 2 a 40 letras.': 'Options, line {a}: the group name must be 2 to 40 characters.',
   'Opciones, línea {a}: escribe las opciones después de «:», separadas por comas.': 'Options, line {a}: write the options after “:”, separated by commas.',

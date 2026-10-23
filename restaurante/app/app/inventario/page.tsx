@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/auth';
-import { MOVEMENT_LABEL, listItems, listMovements } from '@/lib/inventory';
+import { AREA_LABEL, MOVEMENT_LABEL, listItems, listMovements, type Area } from '@/lib/inventory';
 import { can } from '@/lib/permissions';
 import { formatCop, formatDateTime } from '@/lib/format';
 import { formatQuantity } from '@/lib/units';
@@ -16,14 +16,25 @@ export const dynamic = 'force-dynamic';
 // Leer recetas de un PDF o fotos con IA puede tardar más de lo normal.
 export const maxDuration = 60;
 
-export default async function InventoryPage() {
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ area?: string }> }) {
   const staff = await requireStaff('inventory.view');
+  // Barra y cocina cuentan cada una lo suyo: el bartender entra a Barra y cocina a Cocina; los demás ven todo.
+  const { area: areaParam } = await searchParams;
+  const area: Area | 'all' =
+    areaParam === 'barra' ? 'bar' : areaParam === 'cocina' ? 'kitchen' : areaParam === 'todo' ? 'all' : staff.role === 'bar' ? 'bar' : staff.role === 'kitchen' ? 'kitchen' : 'all';
   const manage = can(staff.role, 'inventory.manage');
   const load = can(staff.role, 'inventory.load');
   const lang = await getLang();
   const t = makeT(lang);
   const qty = (...args: Parameters<typeof formatQuantity>) => tr(lang, formatQuantity(...args));
-  const [items, moves, menu] = await Promise.all([listItems(staff), listMovements(staff, { limit: 40 }), load ? menuForInventory(staff) : Promise.resolve([])]);
+  const [allItems, moves, menu] = await Promise.all([listItems(staff), listMovements(staff, { limit: 40 }), load ? menuForInventory(staff) : Promise.resolve([])]);
+  const items = area === 'all' ? allItems : allItems.filter((i) => i.area === area);
+  const count = (a: Area) => allItems.filter((i) => i.isActive && i.area === a).length;
+  const tabs: [string, Area | 'all', string][] = [
+    ['todo', 'all', t('Todo')],
+    ['barra', 'bar', t('Barra · {n}', { n: count('bar') })],
+    ['cocina', 'kitchen', t('Cocina · {n}', { n: count('kitchen') })],
+  ];
   const active = items.filter((i) => i.isActive);
   const value = active.reduce((s, i) => s + Math.max(0, i.stock) * i.unitCost, 0);
   const low = active.filter((i) => i.minStock > 0 && i.stock < i.minStock);
@@ -33,6 +44,17 @@ export default async function InventoryPage() {
         title={t('Inventario')}
         text={t('Sede {location}. Cada venta descuenta sola lo que diga la receta del producto. Nada se borra: los errores se corrigen con un conteo.', { location: staff.locationName })}
       />
+      <div className="flex flex-wrap items-center gap-1.5">
+        {tabs.map(([param, a, label]) => (
+          <Link
+            key={a}
+            href={`/app/inventario?area=${param}`}
+            className={`rounded-full px-4 py-1.5 text-[14px] ${area === a ? 'bg-primary text-primary-foreground' : 'border border-white/[0.1] text-muted-foreground hover:text-foreground'}`}
+          >
+            {label}
+          </Link>
+        ))}
+      </div>
       {manage ? (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
           <div className="rounded-[22px] border border-white/[0.08] bg-card p-4">
@@ -53,7 +75,7 @@ export default async function InventoryPage() {
 
       {load ? (
         <>
-          <InventoryFromMenu categories={menu} open={items.length === 0} />
+          <InventoryFromMenu categories={menu} open={allItems.length === 0} />
           {manage ? <RecipeImport /> : null}
           <BulkStock showCost={manage} items={active.map((i) => ({ id: i.id, name: i.name, unit: i.unit, bottleSize: i.bottleSize, stock: i.stock, unitCost: i.unitCost, minStock: i.minStock }))} />
         </>
@@ -87,6 +109,7 @@ export default async function InventoryPage() {
                         <Link href={`/app/inventario/${i.id}`} className="font-medium hover:text-primary">
                           {i.name}
                         </Link>
+                        {area === 'all' ? <span className="ml-2 text-[12px] text-muted-foreground">{t(AREA_LABEL[i.area])}</span> : null}
                         {i.isActive ? null : <span className="ml-2 text-[12px] text-muted-foreground">{t('inactivo')}</span>}
                       </td>
                       <td className={`px-4 py-2.5 ${isLow ? 'font-semibold text-warning' : i.stock < 0 ? 'text-[#ffb4b5]' : ''}`}>{qty(i.stock, i.unit, i.bottleSize)}</td>
@@ -109,7 +132,7 @@ export default async function InventoryPage() {
         <section className={card}>
           <h2 className="font-display text-[18px] font-bold">{t('Nuevo insumo')}</h2>
           <div className="mt-4">
-            <ItemForm />
+            <ItemForm area={area === 'all' ? undefined : area} />
           </div>
         </section>
       ) : null}

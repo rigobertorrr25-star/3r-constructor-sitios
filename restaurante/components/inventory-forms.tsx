@@ -94,7 +94,7 @@ export function InventoryActions({ items, manage }: { items: Option[]; manage: b
   );
 }
 
-export function ItemForm({ item }: { item?: { id: string; name: string; unit: Unit; minStock: number; bottleSize: number | null; unitCost: number; isActive: boolean } }) {
+export function ItemForm({ item, area }: { item?: { id: string; name: string; area: 'bar' | 'kitchen'; unit: Unit; minStock: number; bottleSize: number | null; unitCost: number; isActive: boolean }; area?: 'bar' | 'kitchen' }) {
   const [unit, setUnit] = useState<Unit>(item?.unit ?? 'g');
   const t = useT();
   return (
@@ -103,6 +103,10 @@ export function ItemForm({ item }: { item?: { id: string; name: string; unit: Un
         <>
           {item ? <input type="hidden" name="id" value={item.id} /> : null}
           <Field label={t('Nombre')} name="name" required maxLength={80} defaultValue={state?.values?.name ?? item?.name} />
+          <Select label={t('Es de')} name="area" defaultValue={state?.values?.area ?? item?.area ?? area ?? 'kitchen'}>
+            <option value="bar">{t('Barra')}</option>
+            <option value="kitchen">{t('Cocina')}</option>
+          </Select>
           <Select label={t('Se mide en')} name="unit" value={unit} onChange={(e) => setUnit(e.target.value as Unit)}>
             <option value="g">{t('Gramos (carne, harina…)')}</option>
             <option value="ml">{t('Mililitros (licores, salsas…)')}</option>

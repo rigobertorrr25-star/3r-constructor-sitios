@@ -38,9 +38,16 @@ export function parseQuantity(value: string | number, label = 'Cantidad', { allo
 
 // ───────── insumos ─────────
 
+/** Área del insumo: barra o cocina. Cada una cuenta y carga lo suyo. */
+export const AREAS = ['bar', 'kitchen'] as const;
+export type Area = (typeof AREAS)[number];
+export const AREA_LABEL: Record<Area, string> = { bar: 'Barra', kitchen: 'Cocina' };
+export const isArea = (value: unknown): value is Area => (AREAS as readonly unknown[]).includes(value);
+
 export type InventoryItem = {
   id: string;
   name: string;
+  area: Area;
   unit: Unit;
   unitCost: number;
   minStock: number;
@@ -49,7 +56,7 @@ export type InventoryItem = {
   stock: number;
 };
 
-type ItemRow = { id: string; name: string; unit: Unit; unitCost: string; minStock: string; bottleSize: string | null; isActive: boolean; stock: string };
+type ItemRow = { id: string; name: string; area: Area; unit: Unit; unitCost: string; minStock: string; bottleSize: string | null; isActive: boolean; stock: string };
 const toItem = (r: ItemRow): InventoryItem => ({
   ...r,
   unitCost: Number(r.unitCost),
@@ -62,7 +69,7 @@ const toItem = (r: ItemRow): InventoryItem => ({
 export async function listItems(actor: Actor, { activeOnly = false } = {}): Promise<InventoryItem[]> {
   requirePermission(actor, 'inventory.view');
   const rows = await query<ItemRow>(
-    `SELECT i.id, i.name, i.unit, i.unit_cost AS "unitCost", i.min_stock AS "minStock", i.bottle_size AS "bottleSize", i.is_active AS "isActive",
+    `SELECT i.id, i.name, i.area, i.unit, i.unit_cost AS "unitCost", i.min_stock AS "minStock", i.bottle_size AS "bottleSize", i.is_active AS "isActive",
             COALESCE((SELECT sum(m.quantity) FROM inventory_movements m WHERE m.item_id = i.id AND m.location_id = $2), 0) AS stock
        FROM inventory_items i WHERE i.business_id = $1 ${activeOnly ? 'AND i.is_active' : ''} ORDER BY i.is_active DESC, i.name`,
     [actor.businessId, actor.locationId],
@@ -74,7 +81,7 @@ export async function getItem(actor: Actor, itemId: string) {
   requirePermission(actor, 'inventory.view');
   if (!isUuid(itemId)) return null;
   const rows = await query<ItemRow>(
-    `SELECT i.id, i.name, i.unit, i.unit_cost AS "unitCost", i.min_stock AS "minStock", i.bottle_size AS "bottleSize", i.is_active AS "isActive",
+    `SELECT i.id, i.name, i.area, i.unit, i.unit_cost AS "unitCost", i.min_stock AS "minStock", i.bottle_size AS "bottleSize", i.is_active AS "isActive",
             COALESCE((SELECT sum(m.quantity) FROM inventory_movements m WHERE m.item_id = i.id AND m.location_id = $3), 0) AS stock
        FROM inventory_items i WHERE i.id = $1 AND i.business_id = $2`,
     [itemId, actor.businessId, actor.locationId],
@@ -84,9 +91,21 @@ export async function getItem(actor: Actor, itemId: string) {
 
 export async function saveItem(
   actor: Actor,
-  input: { id?: string | null; name: string; unit: string; minStock: string | number; bottleSize?: string | number | null; unitCost?: string | number | null; isActive?: boolean },
+  input: {
+    id?: string | null;
+    name: string;
+    unit: string;
+    minStock: string | number;
+    bottleSize?: string | number | null;
+    unitCost?: string | number | null;
+    isActive?: boolean;
+    /** Barra o cocina. Sin decirlo, un insumo nuevo va a cocina y uno que ya existe se queda donde estaba. */
+    area?: string | null;
+  },
 ) {
   requirePermission(actor, 'inventory.manage');
+  if (input.area && !isArea(input.area)) throw new AppError('INVALID', 'Elige si el insumo es de barra o de cocina.');
+  const area = input.area ? (input.area as Area) : null;
   const name = requireText(input.name, 'Nombre del insumo', 2, 80);
   if (!(UNITS as readonly string[]).includes(input.unit)) throw new AppError('INVALID', 'Elige la unidad: gramos, mililitros o unidades.');
   const minStock = parseQuantity(input.minStock || 0, 'Mínimo', { allowZero: true });
@@ -98,17 +117,18 @@ export async function saveItem(
       if (input.id) {
         if (!isUuid(input.id)) throw new AppError('NOT_FOUND', 'No encontramos ese insumo.');
         const res = await db.query(
-          `UPDATE inventory_items SET name = $3, unit = $4, min_stock = $5, bottle_size = $6, unit_cost = COALESCE($7, unit_cost), is_active = $8
+          `UPDATE inventory_items SET name = $3, unit = $4, min_stock = $5, bottle_size = $6, unit_cost = COALESCE($7, unit_cost), is_active = $8,
+                  area = COALESCE($9, area)
             WHERE id = $1 AND business_id = $2`,
-          [input.id, actor.businessId, name, input.unit, minStock, bottle, cost, input.isActive ?? true],
+          [input.id, actor.businessId, name, input.unit, minStock, bottle, cost, input.isActive ?? true, area],
         );
         if (!res.rowCount) throw new AppError('NOT_FOUND', 'No encontramos ese insumo.');
         await audit(db, actor, { action: 'inventory.item', entity: 'inventory_item', entityId: input.id, summary: `Cambió el insumo ${name}` });
         return input.id;
       }
       const res = await db.query<{ id: string }>(
-        `INSERT INTO inventory_items (business_id, name, unit, min_stock, bottle_size, unit_cost) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-        [actor.businessId, name, input.unit, minStock, bottle, cost ?? 0],
+        `INSERT INTO inventory_items (business_id, name, unit, min_stock, bottle_size, unit_cost, area) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        [actor.businessId, name, input.unit, minStock, bottle, cost ?? 0, area ?? 'kitchen'],
       );
       await audit(db, actor, { action: 'inventory.item', entity: 'inventory_item', entityId: res.rows[0].id, summary: `Creó el insumo ${name} (${input.unit})` });
       return res.rows[0].id;

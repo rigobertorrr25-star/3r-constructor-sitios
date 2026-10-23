@@ -294,6 +294,18 @@ CREATE TABLE IF NOT EXISTS recipe_lines (
   PRIMARY KEY (product_id, item_id)
 );
 
+-- Área del insumo: barra o cocina (pedido de Rigoberto, 23 oct 2026), para que cada una cuente lo suyo. Al crear la
+-- columna, lo que solo usan productos de barra queda en barra y lo demás en cocina.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'inventory_items' AND column_name = 'area') THEN
+    ALTER TABLE inventory_items ADD COLUMN area VARCHAR(10) NOT NULL DEFAULT 'kitchen' CHECK (area IN ('kitchen', 'bar'));
+    UPDATE inventory_items i SET area = 'bar'
+     WHERE EXISTS (SELECT 1 FROM recipe_lines r JOIN menu_products p ON p.id = r.product_id WHERE r.item_id = i.id AND p.station = 'bar')
+       AND NOT EXISTS (SELECT 1 FROM recipe_lines r JOIN menu_products p ON p.id = r.product_id WHERE r.item_id = i.id AND p.station = 'kitchen');
+  END IF;
+END $$;
+
 -- Libro de movimientos por sede (la existencia es la suma). kind: purchase, sale, void (devuelto por anulación),
 -- waste (merma), count (ajuste por conteo físico), adjust. quantity con signo. No se cambia ni se borra.
 CREATE TABLE IF NOT EXISTS inventory_movements (

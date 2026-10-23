@@ -63,6 +63,16 @@ describe('inventario masivo', { skip: url ? false : 'sin TEST_DATABASE_URL' }, (
     assert.deepEqual(await bulk.inventoryFromMenu(owner, [beers]), { created: 0, linked: 0, skipped: [] }, 'no repite');
     assert.equal((await inv.getRecipe(owner, corona))[0].quantity, 1);
     assert.equal((await inv.getRecipe(owner, mojito)).length, 0, 'los cócteles no se tocan');
+    // Los insumos que salen de la carta de barra quedan en el inventario de barra; se pueden pasar a cocina.
+    assert.equal((await byName('Corona')).area, 'bar');
+    const corona_ = await byName('Corona');
+    await assert.rejects(inv.saveItem(owner, { id: corona_.id, name: 'Corona', unit: 'und', minStock: 0, area: 'bodega' }), { code: 'INVALID' });
+    await inv.saveItem(owner, { id: corona_.id, name: 'Corona', unit: 'und', minStock: 0, area: 'kitchen' });
+    assert.equal((await byName('Corona')).area, 'kitchen');
+    await inv.saveItem(owner, { id: corona_.id, name: 'Corona', unit: 'und', minStock: 0 });
+    assert.equal((await byName('Corona')).area, 'kitchen', 'sin decir el área, se queda donde estaba');
+    await inv.saveItem(owner, { id: corona_.id, name: 'Corona', unit: 'und', minStock: 0, area: 'bar' });
+    assert.equal((await inv.getItem(owner, await inv.saveItem(owner, { name: 'Papa criolla', unit: 'g', minStock: 0 })))!.area, 'kitchen', 'nuevo sin área: cocina');
 
     // Cargar 48 Coronas a $4.500 con mínimo 24, y vender 2.
     const item = await byName('Corona');

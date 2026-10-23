@@ -763,6 +763,7 @@ export async function saveItemAction(_prev: FormState, formData: FormData): Prom
         bottleSize: text(formData, 'bottleSize') || null,
         unitCost: text(formData, 'unitCost') || null,
         isActive: formData.has('id') ? formData.get('isActive') === 'on' : true,
+        area: text(formData, 'area') || null,
       }),
     ['/app/inventario'],
     'Insumo guardado.',

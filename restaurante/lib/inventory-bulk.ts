@@ -29,8 +29,8 @@ export async function inventoryFromMenu(actor: Actor, categoryIds: string[]) {
   if (!ids.length) throw new AppError('INVALID', 'Marca al menos una categoría de la carta.');
   return transaction(async (db) => {
     const products = (
-      await db.query<{ id: string; name: string }>(
-        `SELECT p.id, p.name FROM menu_products p JOIN menu_categories c ON c.id = p.category_id
+      await db.query<{ id: string; name: string; station: string }>(
+        `SELECT p.id, p.name, p.station FROM menu_products p JOIN menu_categories c ON c.id = p.category_id
           WHERE p.business_id = $1 AND p.category_id = ANY($2::uuid[]) AND p.is_active AND c.is_active
             AND NOT EXISTS (SELECT 1 FROM recipe_lines r WHERE r.product_id = p.id)
           ORDER BY c.sort, p.sort, p.name`,
@@ -55,7 +55,12 @@ export async function inventoryFromMenu(actor: Actor, categoryIds: string[]) {
         await db.query(`UPDATE inventory_items SET is_active = TRUE WHERE id = $1`, [itemId]);
       } else {
         itemId = (
-          await db.query<{ id: string }>(`INSERT INTO inventory_items (business_id, name, unit) VALUES ($1, $2, 'und') RETURNING id`, [actor.businessId, p.name.slice(0, 80)])
+          // El insumo queda en el área de la estación del producto (barra o cocina).
+          await db.query<{ id: string }>(`INSERT INTO inventory_items (business_id, name, unit, area) VALUES ($1, $2, 'und', $3) RETURNING id`, [
+            actor.businessId,
+            p.name.slice(0, 80),
+            p.station === 'bar' ? 'bar' : 'kitchen',
+          ])
         ).rows[0].id;
         created++;
       }
