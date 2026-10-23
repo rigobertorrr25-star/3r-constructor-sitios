@@ -5,7 +5,7 @@ import { query, transaction } from './db';
 import { formatCop } from './format';
 import { METHODS, type Method } from './cash';
 import { can } from './permissions';
-import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
+import { AppError, audit, hasOrders, isUuid, requirePermission, type Actor } from './store';
 
 const money = formatCop;
 
@@ -91,7 +91,7 @@ async function openTablesOf(actor: Actor, staffId: string) {
             (SELECT COALESCE(sum(amount), 0) FROM session_discounts WHERE session_id = ts.id AND voided_at IS NULL) AS discounts,
             (SELECT COALESCE(sum(amount), 0) FROM payments WHERE session_id = ts.id AND reversed_at IS NULL) AS paid
        FROM table_sessions ts JOIN dining_tables t ON t.id = ts.table_id
-      WHERE ts.business_id = $1 AND ts.location_id = $2 AND ts.opened_by = $3 AND ts.status <> 'closed'
+      WHERE ts.business_id = $1 AND ts.location_id = $2 AND ts.opened_by = $3 AND ts.status <> 'closed' AND ${hasOrders('ts')}
       ORDER BY ts.opened_at`,
     [actor.businessId, actor.locationId, staffId],
   );
@@ -132,7 +132,7 @@ export async function listWaiterAccounts(actor: Actor): Promise<WaiterAccount[]>
       WHERE s.business_id = $1 AND (
         (s.is_active AND s.role = 'waiter' AND (s.location_id IS NULL OR s.location_id = $2))
         OR EXISTS (SELECT 1 FROM cash_shifts c WHERE c.staff_id = s.id AND c.location_id = $2 AND c.closed_at IS NULL)
-        OR EXISTS (SELECT 1 FROM table_sessions ts WHERE ts.opened_by = s.id AND ts.location_id = $2 AND ts.status <> 'closed'))
+        OR EXISTS (SELECT 1 FROM table_sessions ts WHERE ts.opened_by = s.id AND ts.location_id = $2 AND ts.status <> 'closed' AND ${hasOrders('ts')}))
       ORDER BY s.name`,
     [actor.businessId, actor.locationId],
   );
@@ -213,7 +213,7 @@ export async function closeWaiterShift(actor: Actor, staffId: string, countedCas
     if (!can(actor.role, 'waiters.verify')) {
       const pending = await db.query<{ number: string }>(
         `SELECT t.number FROM table_sessions ts JOIN dining_tables t ON t.id = ts.table_id
-          WHERE ts.business_id = $1 AND ts.location_id = $2 AND ts.opened_by = $3 AND ts.status <> 'closed' ORDER BY t.number`,
+          WHERE ts.business_id = $1 AND ts.location_id = $2 AND ts.opened_by = $3 AND ts.status <> 'closed' AND ${hasOrders('ts')} ORDER BY t.number`,
         [actor.businessId, actor.locationId, staffId],
       );
       if (pending.rows.length) {
