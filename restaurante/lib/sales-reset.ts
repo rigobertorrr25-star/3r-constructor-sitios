@@ -116,3 +116,39 @@ export async function clearMenu(businessId: string, confirmName: string): Promis
     return totals;
   });
 }
+
+export type InventoryReset = { items: number; movements: number; recipes: number };
+
+/**
+ * Borra todo el inventario de un negocio para cargarlo de nuevo (solo 3R, desde /admin): los insumos de todas las sedes,
+ * sus existencias y movimientos (compras, conteos, ventas, mermas) y las recetas de la carta que los usaban.
+ * Se quedan: la carta (sin recetas), las ventas, los gastos y facturas de compra, el equipo y el plano.
+ */
+export async function clearInventory(businessId: string, confirmName: string): Promise<InventoryReset> {
+  if (!isUuid(businessId)) throw new AppError('NOT_FOUND', 'No encontramos ese negocio.');
+  return transaction(async (db) => {
+    const business = (await db.query<{ name: string }>(`SELECT name FROM businesses WHERE id = $1 FOR UPDATE`, [businessId])).rows[0];
+    if (!business) throw new AppError('NOT_FOUND', 'No encontramos ese negocio.');
+    if (confirmName.trim().toLowerCase() !== business.name.trim().toLowerCase()) {
+      throw new AppError('INVALID', `Para confirmar, escribe el nombre del negocio tal cual: ${business.name}`);
+    }
+    // Los movimientos de inventario están protegidos contra borrado: solo se dejan borrar con esta marca.
+    await db.query(`SET LOCAL app.purge = 'on'`);
+    const totals = (
+      await db.query<{ items: number; movements: number; recipes: number }>(
+        `SELECT (SELECT count(*)::int FROM inventory_items WHERE business_id = $1) AS items,
+                (SELECT count(*)::int FROM inventory_movements WHERE business_id = $1) AS movements,
+                (SELECT count(DISTINCT r.product_id)::int FROM recipe_lines r JOIN inventory_items i ON i.id = r.item_id WHERE i.business_id = $1) AS recipes`,
+        [businessId],
+      )
+    ).rows[0];
+    // Los insumos arrastran sus movimientos y las líneas de receta que los usaban.
+    await db.query(`DELETE FROM inventory_items WHERE business_id = $1`, [businessId]);
+    await db.query(
+      `INSERT INTO audit_events (business_id, actor_name, action, entity, entity_id, summary, data)
+       VALUES ($1, '3R (administración)', 'business.clear_inventory', 'business', $1, $2, $3)`,
+      [businessId, `3R borró el inventario: ${totals.items} insumos, ${totals.movements} movimientos y las recetas de ${totals.recipes} productos`, JSON.stringify(totals)],
+    );
+    return totals;
+  });
+}

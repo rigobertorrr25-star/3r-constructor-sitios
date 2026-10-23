@@ -33,7 +33,7 @@ import { itemsForPurchase, registerCount, registerPurchase, registerWaste, saveI
 import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
-import { clearMenu, clearSales } from '@/lib/sales-reset';
+import { clearInventory, clearMenu, clearSales } from '@/lib/sales-reset';
 import { removeBackground, saveBackground, setFloorBackground } from '@/lib/backgrounds';
 import { removeProductPhoto, saveProductPhoto } from '@/lib/product-photos';
 import { createAgentCode, enqueueClosing, printBill, printTest, removePrinter, reprint, savePrinter } from '@/lib/printing';
@@ -164,6 +164,19 @@ export async function clearMenuAction(_prev: FormState, formData: FormData): Pro
     revalidatePath('/admin');
     revalidatePath('/app', 'layout');
     return { ok: Date.now(), message: await trServer(`Listo. Se borraron ${r.categories} categorías y ${r.products} productos. Ya puedes cargar la carta de nuevo.`) };
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+}
+
+/** Borra todo el inventario de un negocio (solo 3R). Hay que escribir el nombre del negocio para confirmar. */
+export async function clearInventoryAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  try {
+    const r = await clearInventory(text(formData, 'businessId'), text(formData, 'confirmName'));
+    revalidatePath('/admin');
+    revalidatePath('/app', 'layout');
+    return { ok: Date.now(), message: await trServer(`Listo. Se borraron ${r.items} insumos y ${r.movements} movimientos. Ya puedes cargar el inventario de nuevo.`) };
   } catch (error) {
     return fail(await messageOf(error), formData);
   }

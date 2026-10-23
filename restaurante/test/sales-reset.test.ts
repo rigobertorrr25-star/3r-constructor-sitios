@@ -102,4 +102,20 @@ describe('borrar ventas de prueba', { skip: url ? false : 'sin TEST_DATABASE_URL
     assert.equal(await count('inventory_items', owner.businessId), 1, 'el inventario se queda');
     assert.equal(await count('staff', owner.businessId), 2);
   });
+
+  it('borrar el inventario: se van los insumos con sus movimientos; la carta y el equipo se quedan', async () => {
+    const name = (await db.query<{ name: string }>(`SELECT name FROM businesses WHERE id = $1`, [owner.businessId]))[0].name;
+    const cat = await orders.saveCategory(owner, { name: 'Cervezas', station: 'bar' });
+    const product = await orders.saveProduct(owner, { categoryId: cat, name: 'Club Colombia', price: 8000 });
+    await inv.saveRecipe(owner, product, [{ itemId: beerItem, quantity: 1 }]);
+    await assert.rejects(reset.clearInventory(owner.businessId, 'otro'), { code: 'INVALID' });
+    const r = await reset.clearInventory(owner.businessId, name);
+    assert.equal(r.items, 1);
+    assert.ok(r.movements >= 1);
+    assert.equal(r.recipes, 1);
+    assert.equal(await count('inventory_items', owner.businessId), 0);
+    assert.equal(await count('inventory_movements', owner.businessId), 0);
+    assert.equal(await count('menu_products', owner.businessId), 1, 'la carta se queda');
+    assert.equal(await count('staff', owner.businessId), 2);
+  });
 });
