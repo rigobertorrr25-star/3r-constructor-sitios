@@ -549,6 +549,10 @@ ALTER TABLE business_backgrounds ALTER COLUMN on_floor SET DEFAULT TRUE;
 ALTER TABLE menu_categories ADD COLUMN IF NOT EXISTS name_en VARCHAR(60);
 ALTER TABLE menu_products ADD COLUMN IF NOT EXISTS name_en VARCHAR(80);
 ALTER TABLE menu_products ADD COLUMN IF NOT EXISTS description_en VARCHAR(200);
+-- Opciones para armar un plato (PROMO ALMUERZO, 23 oct 2026): [{name, choose, options[]}]. Lo escogido viaja en la nota
+-- de la línea del pedido, que por eso ahora es más larga.
+ALTER TABLE menu_products ADD COLUMN IF NOT EXISTS option_groups JSONB;
+ALTER TABLE order_items ALTER COLUMN notes TYPE VARCHAR(300);
 
 -- Foto de cada producto de la carta (la sube quien edita la carta); se ve en la carta QR y al tomar pedidos.
 CREATE TABLE IF NOT EXISTS product_photos (
