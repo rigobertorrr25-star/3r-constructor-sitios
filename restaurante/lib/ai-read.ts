@@ -161,7 +161,8 @@ export function photoMatches(text: string, count: number, products: { id: string
   return result;
 }
 
-export type ReceiptReading = { supplier: string; total: number | null; date: string | null; category: string; description: string };
+export type ReceiptLine = { name: string; quantity: number; unit: 'g' | 'ml' | 'und'; total: number | null };
+export type ReceiptReading = { supplier: string; total: number | null; date: string | null; category: string; description: string; lines: ReceiptLine[] };
 
 const RECEIPT_CATEGORIES = ['suppliers', 'payroll', 'rent', 'utilities', 'maintenance', 'marketing', 'taxes', 'other'];
 
@@ -169,7 +170,7 @@ const RECEIPT_CATEGORIES = ['suppliers', 'payroll', 'rent', 'utilities', 'mainte
  * Facturas → «Facturas de compra»: lee la foto de una factura o recibo de compra y redacta el gasto (proveedor, total,
  * fecha, tipo y una frase de qué se compró). La cajera lo revisa antes de guardarlo.
  */
-export async function readReceiptWithAi(actor: Actor, file: ReadFile): Promise<ReceiptReading> {
+export async function readReceiptWithAi(actor: Actor, file: ReadFile, inventoryNames: string[] = []): Promise<ReceiptReading> {
   requirePermission(actor, 'expenses.add');
   const [real] = checkReadFiles([file]);
   if (!process.env.ANTHROPIC_API_KEY) throw new AppError('INVALID', 'La lectura de facturas con IA no está activada en este sistema. Llena el gasto a mano.');
@@ -180,9 +181,14 @@ export async function readReceiptWithAi(actor: Actor, file: ReadFile): Promise<R
     {
       type: 'text',
       text: `Es la foto de una factura o recibo de compra de un restaurante o bar de Colombia. Léela y responde solo con este JSON, sin texto alrededor:
-{"proveedor": "nombre del negocio que vendió o null", "total": valor total pagado en pesos como número entero sin puntos o null, "fecha": "AAAA-MM-DD" o null, "tipo": uno de ${JSON.stringify(RECEIPT_CATEGORIES)}, "descripcion": "frase corta en español de Colombia que diga qué se compró"}
+{"proveedor": "nombre del negocio que vendió o null", "total": valor total pagado en pesos como número entero sin puntos o null, "fecha": "AAAA-MM-DD" o null, "tipo": uno de ${JSON.stringify(RECEIPT_CATEGORIES)}, "descripcion": "frase corta en español de Colombia que diga qué se compró", "productos": [{"nombre": "...", "cantidad": número, "unidad": "und" | "g" | "ml", "total": valor de esa línea en pesos como número entero o null}]}
 Tipos: suppliers = insumos, comida, bebidas, licores, desechables o aseo para el negocio; payroll = pagos a personas por su trabajo; rent = arriendo; utilities = luz, agua, gas, internet, teléfono; maintenance = arreglos, repuestos, mantenimiento; marketing = publicidad; taxes = impuestos; other = lo demás.
 La descripción: máximo 160 caracteres, sin el valor ni la fecha, nombrando lo principal que se compró, por ejemplo «Compra de 10 kg de limón, 5 kg de tomate y 2 bultos de hielo». Si es una factura de servicio público, di cuál y de qué mes.
+Productos: una entrada por cada cosa comprada que el negocio guarda en su inventario (comida, bebidas, licores, desechables, aseo). No pongas servicios, domicilio, propina ni impuestos sueltos. La cantidad va en gramos (g), mililitros (ml) o unidades (und): 2 kg = 2000 g, 1,5 l = 1500 ml, una caja de 24 cervezas = 24 und, 3 botellas de aguardiente = 3 und, 2 bultos de hielo = 2 und. El nombre, corto y claro como lo llamaría el restaurante, sin códigos ni presentaciones raras (por ejemplo «Club Colombia», «Limón», «Aguardiente Antioqueño»).${
+        inventoryNames.length
+          ? ` Estos son los insumos que el negocio ya tiene; si un producto es uno de ellos, usa ese nombre exacto: ${JSON.stringify(inventoryNames.slice(0, 400))}.`
+          : ''
+      } Si la factura no trae productos de inventario (por ejemplo un servicio público), pon "productos": [].
 No inventes: si no se lee el total, pon null. Si la foto no es una factura o recibo, pon "descripcion": "" y todo lo demás null.`,
     },
   ];
@@ -191,7 +197,7 @@ No inventes: si no se lee el total, pon null. Si la foto no es una factura o rec
   try {
     const response = await client.beta.messages.create({
       model: MODEL,
-      max_tokens: 2000,
+      max_tokens: 6000,
       output_config: { effort: 'low' },
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
@@ -227,11 +233,22 @@ export function receiptReading(text: string): ReceiptReading | null {
   const total = typeof raw.total === 'number' ? raw.total : Number(String(raw.total ?? '').replace(/[^\d]/g, ''));
   const date = typeof raw.fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.fecha) ? raw.fecha : null;
   const category = typeof raw.tipo === 'string' && RECEIPT_CATEGORIES.includes(raw.tipo) ? raw.tipo : 'other';
+  const lines: ReceiptLine[] = [];
+  for (const p of Array.isArray(raw.productos) ? raw.productos.slice(0, 60) : []) {
+    const r = (p ?? {}) as Record<string, unknown>;
+    const name = clean(r.nombre, 80);
+    const quantity = typeof r.cantidad === 'number' ? r.cantidad : Number(String(r.cantidad ?? '').replace(',', '.'));
+    const unit = r.unidad === 'g' || r.unidad === 'ml' || r.unidad === 'und' ? r.unidad : null;
+    const lineTotal = typeof r.total === 'number' ? r.total : Number(String(r.total ?? '').replace(/[^\d]/g, ''));
+    if (name.length < 2 || !unit || !(quantity > 0 && quantity <= 10_000_000)) continue;
+    lines.push({ name, quantity: Math.round(quantity * 1000) / 1000, unit, total: Number.isInteger(lineTotal) && lineTotal > 0 && lineTotal <= 10_000_000_000 ? lineTotal : null });
+  }
   return {
     supplier: clean(raw.proveedor === null ? '' : raw.proveedor, 120),
     total: Number.isInteger(total) && total > 0 && total <= 10_000_000_000 ? total : null,
     date,
     category,
     description,
+    lines,
   };
 }

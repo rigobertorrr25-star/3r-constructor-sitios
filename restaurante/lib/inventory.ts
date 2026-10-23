@@ -154,25 +154,42 @@ export async function registerPurchase(actor: Actor, input: { itemId: string; qu
   requirePermission(actor, 'inventory.manage');
   const quantity = parseQuantity(input.quantity);
   const total = parseQuantity(input.total, 'Valor pagado', { allowZero: true });
-  await transaction(async (db) => {
-    const item = await lockItem(db, actor, input.itemId);
-    const unitCost = total / quantity;
-    // El promedio usa las existencias de todas las sedes: el costo es uno solo para el negocio.
-    const all = Number(
-      (await db.query<{ s: string }>(`SELECT COALESCE(sum(quantity), 0) AS s FROM inventory_movements WHERE item_id = $1`, [item.id])).rows[0].s,
-    );
-    const oldCost = Number(item.unitCost);
-    const newCost = all > 0 ? (all * oldCost + quantity * unitCost) / (all + quantity) : unitCost;
-    await insertMovement(db, actor, { itemId: item.id, kind: 'purchase', quantity, unitCost, reason: input.reason?.trim() || null });
-    await db.query(`UPDATE inventory_items SET unit_cost = $2 WHERE id = $1`, [item.id, newCost]);
-    await audit(db, actor, {
-      action: 'inventory.purchase',
-      entity: 'inventory_item',
-      entityId: item.id,
-      summary: `Compró ${qty(quantity, item.unit)} de ${item.name} por ${money(total)}`,
-      reason: input.reason?.trim() || null,
-    });
+  await transaction((db) => purchaseInTx(db, actor, { itemId: input.itemId, quantity, total, reason: input.reason }));
+}
+
+/**
+ * Entrada de una compra dentro de una transacción que ya está abierta: sube la existencia de la sede y recalcula el
+ * costo promedio. La usan la compra del inventario y la factura de compra de Facturas (que la registra la cajera).
+ */
+export async function purchaseInTx(db: Db, actor: Actor, input: { itemId: string; quantity: number; total: number; reason?: string | null }) {
+  const { quantity, total } = input;
+  const item = await lockItem(db, actor, input.itemId);
+  const unitCost = total / quantity;
+  // El promedio usa las existencias de todas las sedes: el costo es uno solo para el negocio.
+  const all = Number(
+    (await db.query<{ s: string }>(`SELECT COALESCE(sum(quantity), 0) AS s FROM inventory_movements WHERE item_id = $1`, [item.id])).rows[0].s,
+  );
+  const oldCost = Number(item.unitCost);
+  const newCost = all > 0 ? (all * oldCost + quantity * unitCost) / (all + quantity) : unitCost;
+  await insertMovement(db, actor, { itemId: item.id, kind: 'purchase', quantity, unitCost, reason: input.reason?.trim() || null });
+  await db.query(`UPDATE inventory_items SET unit_cost = $2 WHERE id = $1`, [item.id, newCost]);
+  await audit(db, actor, {
+    action: 'inventory.purchase',
+    entity: 'inventory_item',
+    entityId: item.id,
+    summary: `Compró ${qty(quantity, item.unit)} de ${item.name} por ${money(total)}`,
+    reason: input.reason?.trim() || null,
   });
+  return { name: item.name, unit: item.unit };
+}
+
+/** Los insumos del negocio para escoger a dónde va cada producto de una factura de compra (también para la cajera). */
+export async function itemsForPurchase(actor: Actor) {
+  requirePermission(actor, 'expenses.add');
+  return query<{ id: string; name: string; unit: Unit; bottleSize: number | null }>(
+    `SELECT id, name, unit, bottle_size::float AS "bottleSize" FROM inventory_items WHERE business_id = $1 AND is_active ORDER BY name`,
+    [actor.businessId],
+  );
 }
 
 /** Merma: se dañó, se cayó, se venció. Siempre con motivo. */

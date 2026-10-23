@@ -3,6 +3,7 @@
 import { imageMime } from './backgrounds';
 import { formatCop } from './format';
 import { query, transaction } from './db';
+import { UNITS, purchaseInTx, type Unit } from './inventory';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 
 export const EXPENSE_CATEGORIES = ['rent', 'payroll', 'utilities', 'suppliers', 'maintenance', 'marketing', 'taxes', 'other'] as const;
@@ -67,12 +68,41 @@ export type Expense = {
   hasPhoto: boolean;
 };
 
+/** Un producto de la factura de compra que entra al inventario: a un insumo que ya existe o a uno nuevo. Cantidad en la unidad del insumo. */
+export type PurchaseLine = { itemId?: string | null; newName?: string | null; newUnit?: string | null; quantity: number; total: number };
+
 /** La foto de la factura de compra se achica en el teléfono; se deja margen por si llega más pesada. */
 export const EXPENSE_PHOTO_MAX_BYTES = 1_500_000;
 
+/** Revisa los productos de la factura que van al inventario antes de abrir la transacción. */
+function checkLines(lines: PurchaseLine[]) {
+  if (lines.length > 60) throw new AppError('INVALID', 'Son muchos productos: registra la factura en dos partes (hasta 60).');
+  return lines.map((l, i) => {
+    const n = i + 1;
+    if (!(typeof l.quantity === 'number' && l.quantity > 0 && l.quantity <= 10_000_000)) throw new AppError('INVALID', `Producto ${n}: escribe la cantidad.`);
+    if (!(Number.isInteger(l.total) && l.total >= 0 && l.total <= 10_000_000_000)) throw new AppError('INVALID', `Producto ${n}: escribe el valor en pesos.`);
+    if (l.itemId) {
+      if (!isUuid(l.itemId)) throw new AppError('INVALID', 'Hay un insumo que no existe.');
+      return { itemId: l.itemId, newName: null, newUnit: null, quantity: l.quantity, total: l.total };
+    }
+    const newName = requireText(l.newName ?? '', `Producto ${n}: nombre del insumo`, 2, 80);
+    if (!(UNITS as readonly string[]).includes(l.newUnit ?? '')) throw new AppError('INVALID', `Producto ${n}: escoge si se cuenta en gramos, mililitros o unidades.`);
+    return { itemId: null, newName, newUnit: l.newUnit as Unit, quantity: l.quantity, total: l.total };
+  });
+}
+
 export async function addExpense(
   actor: Actor,
-  input: { category: string; description: string; supplier?: string; amount: number; spentOn: string; paidFromCash?: boolean; photo?: Uint8Array | null },
+  input: {
+    category: string;
+    description: string;
+    supplier?: string;
+    amount: number;
+    spentOn: string;
+    paidFromCash?: boolean;
+    photo?: Uint8Array | null;
+    lines?: PurchaseLine[];
+  },
 ) {
   requirePermission(actor, 'expenses.add');
   if (!(EXPENSE_CATEGORIES as readonly string[]).includes(input.category)) throw new AppError('INVALID', 'Elige el tipo de gasto.');
@@ -84,6 +114,7 @@ export async function addExpense(
   const photoMime = photo ? imageMime(photo) : null;
   if (photo && photo.length > EXPENSE_PHOTO_MAX_BYTES) throw new AppError('INVALID', 'La foto es muy pesada. Prueba con otra más liviana.');
   if (photo && !photoMime) throw new AppError('INVALID', 'Solo fotos JPG, PNG o WebP.');
+  const lines = checkLines(input.lines ?? []);
   return transaction(async (db) => {
     let movementId: string | null = null;
     if (input.paidFromCash) {
@@ -118,6 +149,27 @@ export async function addExpense(
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
       [actor.businessId, actor.locationId, input.category, description, supplier, input.amount, input.spentOn, Boolean(input.paidFromCash), movementId, actor.id],
     );
+    // Lo que se compró entra al inventario de la sede (sube la existencia y el costo promedio de cada insumo).
+    const reason = `Factura de compra${supplier ? ` de ${supplier}` : ''}: ${description}`.slice(0, 200);
+    for (const line of lines) {
+      let itemId = line.itemId;
+      if (!itemId) {
+        const found = (
+          await db.query<{ id: string; unit: Unit }>(`SELECT id, unit FROM inventory_items WHERE business_id = $1 AND lower(name) = lower($2)`, [actor.businessId, line.newName])
+        ).rows[0];
+        if (found && found.unit !== line.newUnit) throw new AppError('CONFLICT', `Ya hay un insumo «${line.newName}» en ${found.unit}: escógelo en la lista y escribe la cantidad en ${found.unit}.`);
+        itemId =
+          found?.id ??
+          (
+            await db.query<{ id: string }>(`INSERT INTO inventory_items (business_id, name, unit, min_stock) VALUES ($1, $2, $3, 0) RETURNING id`, [
+              actor.businessId,
+              line.newName,
+              line.newUnit,
+            ])
+          ).rows[0].id;
+      }
+      await purchaseInTx(db, actor, { itemId, quantity: line.quantity, total: line.total, reason });
+    }
     if (photo) {
       await db.query(`INSERT INTO expense_photos (expense_id, business_id, mime, image) VALUES ($1, $2, $3, $4)`, [res.rows[0].id, actor.businessId, photoMime, Buffer.from(photo)]);
     }
@@ -125,7 +177,7 @@ export async function addExpense(
       action: 'expense.create',
       entity: 'expense',
       entityId: res.rows[0].id,
-      summary: `Registró un gasto de ${money(input.amount)} (${EXPENSE_LABEL[input.category as ExpenseCategory]}): ${description}${input.paidFromCash ? ', pagado de la caja' : ''}${photo ? ', con foto de la factura' : ''}`,
+      summary: `Registró un gasto de ${money(input.amount)} (${EXPENSE_LABEL[input.category as ExpenseCategory]}): ${description}${input.paidFromCash ? ', pagado de la caja' : ''}${photo ? ', con foto de la factura' : ''}${lines.length ? `; ${lines.length} productos al inventario` : ''}`,
     });
     return res.rows[0].id;
   });
