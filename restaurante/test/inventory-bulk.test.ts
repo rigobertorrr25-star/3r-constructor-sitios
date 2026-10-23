@@ -121,6 +121,21 @@ describe('inventario masivo', { skip: url ? false : 'sin TEST_DATABASE_URL' }, (
     await assert.rejects(inv.movementPeople(breiner), { code: 'FORBIDDEN' });
   });
 
+  it('lo que la IA vio en la foto y no existe se crea con lo que hay (solo dueño o administrador)', async () => {
+    const r = await bulk.bulkStock(owner, [], undefined, [
+      { name: 'Hielo', counted: '6', unit: 'und', area: 'bar' },
+      { name: 'Limón', counted: '2,5', unit: 'kg', area: 'bar' },
+    ]);
+    assert.equal(r.created, 2);
+    const limon = await byName('Limón');
+    assert.deepEqual([limon.unit, limon.stock, limon.area], ['g', 2500, 'bar']);
+    assert.equal((await byName('Hielo')).stock, 6);
+    await assert.rejects(bulk.bulkStock(owner, [], undefined, [{ name: 'limón', counted: '1', unit: 'und' }]), /Ya hay un insumo limón/);
+    const slug = (await db.query<{ slug: string }>('SELECT slug FROM businesses WHERE id = $1', [owner.businessId]))[0].slug;
+    const breiner = await login(slug, '0003', '7391');
+    await assert.rejects(bulk.bulkStock(breiner, [], undefined, [{ name: 'Naranja', counted: '3', unit: 'und' }]), /dueño o el administrador/);
+  });
+
   it('los platos nunca se bloquean por inventario: cada venta descuenta los insumos aunque no alcancen', async () => {
     const club = (await orders.getMenu(owner.businessId)).products.find((p) => p.name === 'Club Colombia')!;
     await bulk.bulkStock(owner, [{ itemId: (await byName('Club Colombia')).id, counted: '2' }]);

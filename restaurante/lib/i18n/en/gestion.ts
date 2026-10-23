@@ -354,4 +354,21 @@ export const en: Record<string, string> = {
   'Escribe solo lo que quieras cambiar. «Hay» queda como un conteo con tu nombre, y el administrador lo ve en los movimientos.':
     'Fill in only what you want to change. "On hand" is saved as a count under your name, and the manager sees it in the movements.',
   'Los costos solo los cambia el dueño o el administrador.': 'Only the owner or the manager can change costs.',
+  'Llenar con una foto': 'Fill in from a photo',
+  'Tómale foto a la nevera, la barra o la bodega, o a la hoja donde anotaron el conteo (hasta 4 fotos). La IA cuenta lo que ve y llena la tabla; tú revisas y guardas.':
+    'Take a photo of the fridge, the bar or the storeroom, or of the sheet where the count was written down (up to 4 photos). AI counts what it sees and fills in the table; you review and save.',
+  'Leyendo la foto…': 'Reading the photo…',
+  'Subir o tomar fotos': 'Upload or take photos',
+  'leído de la foto': 'read from the photo',
+  'Vimos esto y no está en tu inventario': 'We saw this and it is not in your inventory',
+  'Los marcados se crean como insumos nuevos con esa cantidad. Corrige el nombre si hace falta.':
+    'Checked ones are created as new ingredients with that quantity. Fix the name if needed.',
+  'Pídele al dueño o al administrador que los cree.': 'Ask the owner or the manager to create them.',
+  'Crear {item}': 'Create {item}',
+  Unidad: 'Unit',
+  'La IA leyó {a} insumos. Revisa las cantidades abajo, corrige lo que haga falta y toca «Guardar todo».':
+    'AI read {a} ingredients. Check the quantities below, fix anything needed and tap "Save all".',
+  'La IA leyó {a} insumos y {b} que no están en tu inventario. Revisa las cantidades abajo, corrige lo que haga falta y toca «Guardar todo».':
+    'AI read {a} ingredients and {b} that are not in your inventory. Check the quantities below, fix anything needed and tap "Save all".',
+  'Insumos nuevos: {a}.': 'New ingredients: {a}.',
 };

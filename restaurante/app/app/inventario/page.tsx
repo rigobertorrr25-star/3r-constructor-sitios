@@ -77,7 +77,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         <>
           <InventoryFromMenu categories={menu} open={allItems.length === 0} />
           {manage ? <RecipeImport /> : null}
-          <BulkStock showCost={manage} items={active.map((i) => ({ id: i.id, name: i.name, unit: i.unit, bottleSize: i.bottleSize, stock: i.stock, unitCost: i.unitCost, minStock: i.minStock }))} />
+          <BulkStock showCost={manage} area={area} canCreate={manage} items={active.map((i) => ({ id: i.id, name: i.name, unit: i.unit, bottleSize: i.bottleSize, stock: i.stock, unitCost: i.unitCost, minStock: i.minStock }))} />
         </>
       ) : null}
 

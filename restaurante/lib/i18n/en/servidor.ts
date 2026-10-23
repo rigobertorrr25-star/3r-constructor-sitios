@@ -459,4 +459,11 @@ export const en: Record<string, string> = {
   'Quitó la impresora {name}': 'Removed printer {name}',
   'Creó un código nuevo para el programa de impresión': 'Created a new code for the printing program',
   'Cliente (en línea)': 'Customer (online)',
+  'La lectura de fotos con IA no está activada en este sistema. Escribe las cantidades a mano.': 'Reading photos with AI is not turned on in this system. Type the quantities by hand.',
+  'No pudimos leer la foto en este momento. Intenta de nuevo en un minuto o escribe las cantidades a mano.': 'We could not read the photo right now. Try again in a minute or type the quantities by hand.',
+  'No vimos insumos en la foto. Tómala de frente, con buena luz y que se vean las etiquetas, o escribe las cantidades a mano.': 'We did not see any ingredients in the photo. Take it straight on, in good light with the labels visible, or type the quantities by hand.',
+  'Los insumos nuevos solo los crea el dueño o el administrador.': 'Only the owner or the manager can create new ingredients.',
+  'Son demasiados insumos nuevos de una vez (hasta 60).': 'Too many new ingredients at once (up to 60).',
+  'El nombre de cada insumo nuevo va de 2 a 80 letras.': 'Each new ingredient name must be 2 to 80 letters.',
+  'Ya hay un insumo {name}: escribe su cantidad en la tabla.': 'There’s already an ingredient called {name}: enter its quantity in the table.',
 };
