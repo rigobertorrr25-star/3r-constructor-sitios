@@ -108,8 +108,9 @@ public static class RawPrint3R {
   }
 }
 '@
-[Console]::InputEncoding = [Text.Encoding]::UTF8
-[Console]::OutputEncoding = [Text.Encoding]::UTF8
+# Sin ventana propia Windows a veces no deja cambiar la codificación: no importa, se sigue.
+try { [Console]::InputEncoding = New-Object Text.UTF8Encoding $false } catch {}
+try { [Console]::OutputEncoding = New-Object Text.UTF8Encoding $false } catch {}
 [Console]::Out.WriteLine('LISTO')
 while ($true) {
   $line = [Console]::In.ReadLine()
