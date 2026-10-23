@@ -6,18 +6,24 @@ import { query, transaction } from './db';
 import { UNITS, purchaseInTx, type Unit } from './inventory';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 
-export const EXPENSE_CATEGORIES = ['rent', 'payroll', 'utilities', 'suppliers', 'maintenance', 'marketing', 'taxes', 'other'] as const;
+export const EXPENSE_CATEGORIES = ['rent', 'payroll', 'utilities', 'suppliers', 'packaging', 'maintenance', 'marketing', 'taxes', 'other'] as const;
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 export const EXPENSE_LABEL: Record<ExpenseCategory, string> = {
   rent: 'Arriendo',
   payroll: 'Nómina',
   utilities: 'Servicios públicos',
   suppliers: 'Proveedores',
+  packaging: 'Bolsas y empaques',
   maintenance: 'Mantenimiento',
   marketing: 'Publicidad',
   taxes: 'Impuestos',
   other: 'Otros',
 };
+
+/** Factura de insumos (entra a la bodega) o gasto (arriendo, servicios, mantenimiento…). */
+export const EXPENSE_KINDS = ['supplies', 'expense'] as const;
+export type ExpenseKind = (typeof EXPENSE_KINDS)[number];
+export const EXPENSE_KIND_LABEL: Record<ExpenseKind, string> = { supplies: 'Insumos', expense: 'Gasto' };
 
 const money = (n: number) => formatCop(n);
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -55,6 +61,7 @@ function scopeOf(actor: Actor, locationId: string | null | undefined) {
 
 export type Expense = {
   id: string;
+  kind: ExpenseKind;
   category: ExpenseCategory;
   description: string;
   supplier: string | null;
@@ -94,6 +101,7 @@ function checkLines(lines: PurchaseLine[]) {
 export async function addExpense(
   actor: Actor,
   input: {
+    kind?: string;
     category: string;
     description: string;
     supplier?: string;
@@ -102,6 +110,8 @@ export async function addExpense(
     paidFromCash?: boolean;
     photo?: Uint8Array | null;
     lines?: PurchaseLine[];
+    /** Parte del total que fue de bolsas: se guarda aparte como gasto «Bolsas y empaques». */
+    bags?: number;
   },
 ) {
   requirePermission(actor, 'expenses.add');
@@ -115,10 +125,19 @@ export async function addExpense(
   if (photo && photo.length > EXPENSE_PHOTO_MAX_BYTES) throw new AppError('INVALID', 'La foto es muy pesada. Prueba con otra más liviana.');
   if (photo && !photoMime) throw new AppError('INVALID', 'Solo fotos JPG, PNG o WebP.');
   const lines = checkLines(input.lines ?? []);
+  // Sin tipo (Finanzas → Registrar gasto), lo que trae productos o es de proveedores cuenta como insumos; lo demás, gasto.
+  const kind = (input.kind || (lines.length || input.category === 'suppliers' ? 'supplies' : 'expense')) as ExpenseKind;
+  if (!(EXPENSE_KINDS as readonly string[]).includes(kind)) throw new AppError('INVALID', 'Escoge si la factura es de insumos o un gasto.');
+  if (kind === 'expense' && lines.length) throw new AppError('INVALID', 'Un gasto no suma al inventario: si trae productos para la bodega, márcala como «Insumos».');
+  const bags = input.bags ?? 0;
+  if (!Number.isInteger(bags) || bags < 0) throw new AppError('INVALID', 'Bolsas: escribe el valor en pesos.');
+  if (bags && kind !== 'supplies') throw new AppError('INVALID', 'Las bolsas se separan solo en facturas de insumos.');
+  if (bags >= input.amount) throw new AppError('INVALID', 'Lo de bolsas tiene que ser menos que el total de la factura.');
+  const mainAmount = input.amount - bags;
   return transaction(async (db) => {
-    let movementId: string | null = null;
+    let shiftId: string | null = null;
     if (input.paidFromCash) {
-      // Pagado con la plata de la caja: sale de la caja abierta (y se revisa que alcance).
+      // Pagado con la plata de la caja: sale de la caja abierta (y se revisa que alcance para toda la factura).
       const shift = (
         await db.query<{ id: string; opening: string }>(
           `SELECT id, opening_amount AS opening FROM cash_shifts WHERE location_id = $1 AND business_id = $2 AND closed_at IS NULL AND staff_id IS NULL FOR UPDATE`,
@@ -137,18 +156,31 @@ export async function addExpense(
         ).rows[0].cash,
       );
       if (input.amount > cash) throw new AppError('CONFLICT', `En caja debería haber ${money(cash)}: no alcanza para ${money(input.amount)}.`);
-      movementId = (
+      shiftId = shift.id;
+    }
+    // Cada gasto lleva su propia salida de caja, para que anular uno devuelva solo lo suyo.
+    const insert = async (row: { kind: ExpenseKind; category: string; description: string; amount: number }) => {
+      const movementId = shiftId
+        ? (
+            await db.query<{ id: string }>(
+              `INSERT INTO cash_movements (business_id, shift_id, kind, amount, reason, created_by) VALUES ($1, $2, 'out', $3, $4, $5) RETURNING id`,
+              [actor.businessId, shiftId, row.amount, `Gasto: ${row.description}`.slice(0, 200), actor.id],
+            )
+          ).rows[0].id
+        : null;
+      return (
         await db.query<{ id: string }>(
-          `INSERT INTO cash_movements (business_id, shift_id, kind, amount, reason, created_by) VALUES ($1, $2, 'out', $3, $4, $5) RETURNING id`,
-          [actor.businessId, shift.id, input.amount, `Gasto: ${description}`.slice(0, 200), actor.id],
+          `INSERT INTO expenses (business_id, location_id, category, description, supplier, amount, spent_on, paid_from_cash, cash_movement_id, created_by, kind)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+          [actor.businessId, actor.locationId, row.category, row.description, supplier, row.amount, input.spentOn, Boolean(input.paidFromCash), movementId, actor.id, row.kind],
         )
       ).rows[0].id;
+    };
+    const expenseId = await insert({ kind, category: input.category, description, amount: mainAmount });
+    if (bags) {
+      const bagsId = await insert({ kind: 'expense', category: 'packaging', description: `Bolsas de la factura: ${description}`.slice(0, 200), amount: bags });
+      await audit(db, actor, { action: 'expense.create', entity: 'expense', entityId: bagsId, summary: `Separó ${money(bags)} de bolsas de la factura: ${description}` });
     }
-    const res = await db.query<{ id: string }>(
-      `INSERT INTO expenses (business_id, location_id, category, description, supplier, amount, spent_on, paid_from_cash, cash_movement_id, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
-      [actor.businessId, actor.locationId, input.category, description, supplier, input.amount, input.spentOn, Boolean(input.paidFromCash), movementId, actor.id],
-    );
     // Lo que se compró entra al inventario de la sede (sube la existencia y el costo promedio de cada insumo).
     const reason = `Factura de compra${supplier ? ` de ${supplier}` : ''}: ${description}`.slice(0, 200);
     for (const line of lines) {
@@ -171,15 +203,15 @@ export async function addExpense(
       await purchaseInTx(db, actor, { itemId, quantity: line.quantity, total: line.total, reason });
     }
     if (photo) {
-      await db.query(`INSERT INTO expense_photos (expense_id, business_id, mime, image) VALUES ($1, $2, $3, $4)`, [res.rows[0].id, actor.businessId, photoMime, Buffer.from(photo)]);
+      await db.query(`INSERT INTO expense_photos (expense_id, business_id, mime, image) VALUES ($1, $2, $3, $4)`, [expenseId, actor.businessId, photoMime, Buffer.from(photo)]);
     }
     await audit(db, actor, {
       action: 'expense.create',
       entity: 'expense',
-      entityId: res.rows[0].id,
-      summary: `Registró un gasto de ${money(input.amount)} (${EXPENSE_LABEL[input.category as ExpenseCategory]}): ${description}${input.paidFromCash ? ', pagado de la caja' : ''}${photo ? ', con foto de la factura' : ''}${lines.length ? `; ${lines.length} productos al inventario` : ''}`,
+      entityId: expenseId,
+      summary: `Registró un gasto de ${money(mainAmount)} (${EXPENSE_LABEL[input.category as ExpenseCategory]}): ${description}${input.paidFromCash ? ', pagado de la caja' : ''}${photo ? ', con foto de la factura' : ''}${lines.length ? `; ${lines.length} productos al inventario` : ''}`,
     });
-    return res.rows[0].id;
+    return expenseId;
   });
 }
 
@@ -224,7 +256,7 @@ export async function listExpenses(actor: Actor, range: { from: string; to: stri
   checkRange(range.from, range.to);
   const scope = scopeOf(actor, range.locationId);
   const rows = await query<Omit<Expense, 'amount' | 'spentOn'> & { amount: string; spentOn: string }>(
-    `SELECT e.id, e.category, e.description, e.supplier, e.amount, to_char(e.spent_on, 'YYYY-MM-DD') AS "spentOn", e.paid_from_cash AS "paidFromCash",
+    `SELECT e.id, e.kind, e.category, e.description, e.supplier, e.amount, to_char(e.spent_on, 'YYYY-MM-DD') AS "spentOn", e.paid_from_cash AS "paidFromCash",
             s.name AS "createdBy", l.name AS "locationName", (e.voided_at IS NOT NULL) AS voided, e.void_reason AS "voidReason",
             EXISTS (SELECT 1 FROM expense_photos f WHERE f.expense_id = e.id) AS "hasPhoto"
        FROM expenses e JOIN staff s ON s.id = e.created_by JOIN locations l ON l.id = e.location_id
@@ -243,7 +275,7 @@ export async function listPurchaseInvoices(actor: Actor, range: { from: string; 
   requirePermission(actor, 'expenses.add');
   checkRange(range.from, range.to);
   const rows = await query<Omit<Expense, 'amount' | 'spentOn'> & { amount: string; spentOn: string }>(
-    `SELECT e.id, e.category, e.description, e.supplier, e.amount, to_char(e.spent_on, 'YYYY-MM-DD') AS "spentOn", e.paid_from_cash AS "paidFromCash",
+    `SELECT e.id, e.kind, e.category, e.description, e.supplier, e.amount, to_char(e.spent_on, 'YYYY-MM-DD') AS "spentOn", e.paid_from_cash AS "paidFromCash",
             s.name AS "createdBy", l.name AS "locationName", (e.voided_at IS NOT NULL) AS voided, e.void_reason AS "voidReason",
             EXISTS (SELECT 1 FROM expense_photos f WHERE f.expense_id = e.id) AS "hasPhoto"
        FROM expenses e JOIN staff s ON s.id = e.created_by JOIN locations l ON l.id = e.location_id

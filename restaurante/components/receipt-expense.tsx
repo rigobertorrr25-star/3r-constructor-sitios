@@ -11,6 +11,7 @@ import { useT } from './i18n';
 
 const CATEGORIES: [string, string][] = [
   ['suppliers', 'Proveedores'],
+  ['packaging', 'Bolsas y empaques'],
   ['payroll', 'Nómina'],
   ['rent', 'Arriendo'],
   ['utilities', 'Servicios públicos'],
@@ -20,7 +21,13 @@ const CATEGORIES: [string, string][] = [
   ['other', 'Otros'],
 ];
 
-type Draft = { category: string; amount: string; spentOn: string; supplier: string; description: string };
+type Draft = { category: string; amount: string; spentOn: string; supplier: string; description: string; bags: string };
+type Kind = 'supplies' | 'expense';
+
+const KINDS: [Kind, string, string][] = [
+  ['supplies', 'Insumos', 'Lo que entra a la bodega: comida, bebidas, licor, desechables. Suma al inventario.'],
+  ['expense', 'Gasto', 'Arriendo, servicios, mantenimiento, publicidad… No toca el inventario.'],
+];
 
 /**
  * Facturas → «Facturas de compra»: la cajera toma la foto de la factura, la IA la lee y redacta el gasto (proveedor,
@@ -29,13 +36,14 @@ type Draft = { category: string; amount: string; spentOn: string; supplier: stri
 export function ReceiptExpense({ today, items }: { today: string; items: StockItem[] }) {
   const t = useT();
   const router = useRouter();
-  const empty: Draft = { category: 'suppliers', amount: '', spentOn: today, supplier: '', description: '' };
+  const empty: Draft = { category: 'suppliers', amount: '', spentOn: today, supplier: '', description: '', bags: '' };
   const [photo, setPhoto] = useState<{ blob: Blob; url: string } | null>(null);
   const [draft, setDraft] = useState<Draft>(empty);
   const [version, setVersion] = useState(0);
   const [reading, startReading] = useTransition();
   const [readState, setReadState] = useState<FormState>(undefined);
   const [photoError, setPhotoError] = useState('');
+  const [kind, setKind] = useState<Kind>('supplies');
   const [lines, setLines] = useState<Line[]>([]);
   const [linesError, setLinesError] = useState('');
   const [saveState, save, saving] = useActionState(addExpenseAction, undefined);
@@ -51,6 +59,7 @@ export function ReceiptExpense({ today, items }: { today: string; items: StockIt
       setVersion((v) => v + 1);
       setReadState(undefined);
       setLines([]);
+      setKind('supplies');
       router.refresh();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,13 +92,18 @@ export function ReceiptExpense({ today, items }: { today: string; items: StockIt
           spentOn: v.spentOn || d.spentOn,
           supplier: v.supplier || d.supplier,
           description: v.description || d.description,
+          bags: v.bags || '',
         }));
         setVersion((n) => n + 1);
+        let read: Line[] = [];
         try {
-          setLines(v.lines ? linesFromReading(JSON.parse(v.lines), items) : []);
+          read = v.lines ? linesFromReading(JSON.parse(v.lines), items) : [];
         } catch {
-          setLines([]);
+          read = [];
         }
+        setLines(read);
+        // Si la IA encontró productos o es de un proveedor, es de insumos; si no (luz, arriendo…), es un gasto.
+        setKind(read.length || (v.category || 'suppliers') === 'suppliers' ? 'supplies' : 'expense');
       }
     });
   }
@@ -152,31 +166,67 @@ export function ReceiptExpense({ today, items }: { today: string; items: StockIt
           e.preventDefault();
           setLinesError('');
           const data = new FormData(e.currentTarget);
-          const toSave = linesToSave(lines, items);
+          const toSave = kind === 'supplies' ? linesToSave(lines, items) : { lines: [], missing: undefined };
           if (toSave.missing) {
             setLinesError(t('Falta la cantidad o el valor de «{name}». Escríbelo o márcalo «No va al inventario».', { name: toSave.missing }));
             return;
           }
+          data.set('kind', kind);
+          if (kind !== 'supplies') data.delete('bags');
           data.set('lines', JSON.stringify(toSave.lines));
           if (photo) data.set('foto', new File([photo.blob], 'factura.jpg', { type: 'image/jpeg' }));
           startTransition(() => save(data));
         }}
       >
-        <Select label={t('Tipo')} name="category" defaultValue={values.category}>
+        <fieldset className="md:col-span-3">
+          <legend className="text-sm font-medium">{t('¿Qué es esta factura?')}</legend>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {KINDS.map(([k, label, hint]) => (
+              <button
+                key={k}
+                type="button"
+                aria-pressed={kind === k}
+                onClick={() => setKind(k)}
+                className={`rounded-2xl border p-3 text-left transition ${kind === k ? 'border-primary bg-primary/10' : 'border-white/[0.1] bg-white/[0.03] hover:border-white/25'}`}
+              >
+                <span className="block font-semibold">{t(label)}</span>
+                <span className="block text-[12.5px] text-muted-foreground">{t(hint)}</span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <Select label={t('Categoría')} name="category" defaultValue={values.category}>
           {CATEGORIES.map(([v, l]) => (
             <option key={v} value={v}>
               {t(l)}
             </option>
           ))}
         </Select>
-        <Field label={t('Valor')} name="amount" inputMode="numeric" required defaultValue={values.amount} />
+        <Field label={t('Valor total de la factura')} name="amount" inputMode="numeric" required defaultValue={values.amount} onChange={(e) => setDraft((d) => ({ ...d, amount: e.target.value.replace(/[^\d]/g, '') }))} />
         <Field label={t('Fecha')} name="spentOn" type="date" required defaultValue={values.spentOn} />
         <div className="md:col-span-2">
           <TextArea label={t('¿Qué se compró?')} name="description" rows={2} required minLength={3} maxLength={200} placeholder={t('Compra de 10 kg de limón y 2 bultos de hielo')} defaultValue={values.description} />
         </div>
         <Field label={t('Proveedor (opcional)')} name="supplier" maxLength={120} defaultValue={values.supplier} />
-        {lines.length ? (
-          <PurchaseLines lines={lines} items={items} onChange={setLines} amount={Number(values.amount) || 0} />
+        {kind === 'supplies' ? (
+          <div className="md:col-span-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3">
+            <Field
+              label={t('¿Cuánto fue de bolsas? (opcional)')}
+              name="bags"
+              inputMode="numeric"
+              placeholder="0"
+              defaultValue={values.bags}
+              onChange={(e) => setDraft((d) => ({ ...d, bags: e.target.value.replace(/[^\d]/g, '') }))}
+            />
+            <p className="mt-1.5 text-[12.5px] text-muted-foreground">
+              {Number(values.bags) > 0 && Number(values.amount) > Number(values.bags)
+                ? t('Se guardan aparte: {bags} en «Bolsas y empaques» y {rest} de insumos.', { bags: formatCop(Number(values.bags)), rest: formatCop(Number(values.amount) - Number(values.bags)) })
+                : t('Si la factura cobra bolsas, escribe aquí cuánto: se separan del total como gasto «Bolsas y empaques» y no entran al inventario.')}
+            </p>
+          </div>
+        ) : null}
+        {kind !== 'supplies' ? null : lines.length ? (
+          <PurchaseLines lines={lines} items={items} onChange={setLines} amount={Math.max(0, (Number(values.amount) || 0) - (Number(values.bags) || 0))} />
         ) : (
           <div className="md:col-span-3">
             <button type="button" className="text-[13.5px] text-primary underline" onClick={() => setLines([blankLine()])}>
@@ -194,7 +244,7 @@ export function ReceiptExpense({ today, items }: { today: string; items: StockIt
         </div>
         <div className="md:col-span-3 flex flex-wrap items-center gap-3">
           <button type="submit" className={primaryButton} disabled={saving || reading}>
-            {saving ? t('Guardando…') : t('Guardar gasto')}
+            {saving ? t('Guardando…') : kind === 'supplies' ? t('Guardar factura de insumos') : t('Guardar gasto')}
           </button>
           {values.amount && Number(values.amount) > 0 ? <span className="text-[14px] text-muted-foreground">{formatCop(Number(values.amount))}</span> : null}
         </div>
