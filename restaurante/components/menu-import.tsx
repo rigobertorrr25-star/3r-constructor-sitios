@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { applyLibraryPhotosAction, importMenuAction, readMenuFileAction } from '@/app/actions';
+import { applyLibraryPhotosAction, importMenuAction, readMenuFileAction, setCategoryStationsAction } from '@/app/actions';
 import { AiFileReader } from './ai-read';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
@@ -69,5 +69,43 @@ export function LibraryPhotos({ withoutPhoto }: { withoutPhoto: number }) {
         </ActionForm>
       ) : null}
     </section>
+  );
+}
+
+/** Carta → «¿A dónde va cada categoría?»: escoger cocina o barra para todas las categorías de una vez (sus productos se van con ellas). */
+export function CategoryStations({ categories }: { categories: { id: string; name: string; station: 'kitchen' | 'bar'; products: number }[] }) {
+  const t = useT();
+  return (
+    <details className={card}>
+      <summary className="cursor-pointer font-display text-[18px] font-bold">{t('¿A dónde va cada categoría?')}</summary>
+      <p className="mt-2 text-[14px] text-muted-foreground">
+        {t('Escoge si cada categoría sale en cocina o en barra. Sus productos se van con ella, en la pantalla y en la impresora de esa estación.')}
+      </p>
+      <ActionForm action={setCategoryStationsAction} className="mt-4 space-y-3">
+        {() => (
+          <>
+            <ul className="divide-y divide-white/[0.06] rounded-2xl border border-white/[0.08]">
+              {categories.map((c) => (
+                <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                  <span className="min-w-0">
+                    <span className="block truncate text-[15px] font-medium">{c.name}</span>
+                    <span className="text-[12.5px] text-muted-foreground">{c.products === 1 ? t('1 producto') : t('{n} productos', { n: c.products })}</span>
+                  </span>
+                  <span className="flex gap-2" role="radiogroup" aria-label={c.name}>
+                    {(['kitchen', 'bar'] as const).map((station) => (
+                      <label key={station} className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/[0.1] px-3 py-1.5 text-[14px] has-[:checked]:border-primary has-[:checked]:bg-primary/15">
+                        <input type="radio" name={`station:${c.id}`} value={station} defaultChecked={c.station === station} className="accent-[#8a9bff]" />
+                        {station === 'kitchen' ? t('Cocina') : t('Barra')}
+                      </label>
+                    ))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <SubmitButton pendingText={t('Guardando…')}>{t('Guardar')}</SubmitButton>
+          </>
+        )}
+      </ActionForm>
+    </details>
   );
 }

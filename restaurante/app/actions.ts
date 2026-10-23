@@ -31,7 +31,7 @@ import { createReservation, requestReservation, seatReservation, updatePublicSet
 import { addExpense, voidExpense } from '@/lib/finance';
 import { registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
 import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
-import { getMenu, saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
+import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { clearMenu, clearSales } from '@/lib/sales-reset';
 import { removeBackground, saveBackground, setFloorBackground } from '@/lib/backgrounds';
@@ -525,6 +525,24 @@ export async function saveCategoryAction(_prev: FormState, formData: FormData): 
     ['/app/carta'],
     'Categoría guardada.',
   );
+}
+
+/** Carta → «¿A dónde va cada categoría?» (campos station:ID). */
+export async function setCategoryStationsAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const changes: { id: string; station: string }[] = [];
+  for (const [key, value] of formData.entries()) {
+    const m = /^station:(.+)$/.exec(key);
+    if (m && typeof value === 'string') changes.push({ id: m[1], station: value });
+  }
+  let moved: number;
+  try {
+    moved = await setCategoryStations(staff, changes);
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+  revalidatePath('/app/carta');
+  return { ok: Date.now(), message: await trServer(moved ? `Listo: ${moved} categorías cambiaron de estación, con sus productos.` : 'No había nada que cambiar.') };
 }
 
 export async function saveProductAction(_prev: FormState, formData: FormData): Promise<FormState> {
