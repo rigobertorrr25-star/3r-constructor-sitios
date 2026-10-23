@@ -1,4 +1,4 @@
-import { LibraryPhotos, MenuImport } from '@/components/menu-import';
+import { CategoryStations, LibraryPhotos, MenuImport } from '@/components/menu-import';
 import { BulkPhotos } from '@/components/bulk-photos';
 import { requireStaff } from '@/lib/auth';
 import { getMenu } from '@/lib/orders';
@@ -32,6 +32,11 @@ export default async function MenuPage() {
         }
       />
       {canEdit ? <MenuImport barOnly={staff.barOnly} open={menu.categories.length === 0} /> : null}
+      {canEdit && !staff.barOnly && menu.categories.length ? (
+        <CategoryStations
+          categories={menu.categories.map((c) => ({ id: c.id, name: c.name, station: c.station, products: menu.products.filter((p) => p.categoryId === c.id).length }))}
+        />
+      ) : null}
       {canEdit && menu.products.length ? (
         <BulkPhotos
           products={menu.categories.flatMap((c) =>

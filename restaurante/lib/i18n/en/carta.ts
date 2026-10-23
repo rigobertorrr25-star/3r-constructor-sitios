@@ -88,4 +88,12 @@ export const en: Record<string, string> = {
   'Escoge las fotos de los platos.': 'Choose the dish photos.',
   'Primero carga la carta: no hay productos para reconocer.': 'Load the menu first: there are no products to recognize.',
   'La lectura de archivos con IA no está activada en este sistema. Escoge el plato de cada foto a mano.': 'AI reading isn’t enabled on this system. Choose the dish for each photo by hand.',
+  // ¿A dónde va cada categoría? (components/menu-import.tsx)
+  '¿A dónde va cada categoría?': 'Where does each category go?',
+  'Escoge si cada categoría sale en cocina o en barra. Sus productos se van con ella, en la pantalla y en la impresora de esa estación.':
+    'Choose whether each category goes to the kitchen or the bar. Its products go with it, on that station’s screen and printer.',
+  'Listo: {n} categorías cambiaron de estación, con sus productos.': 'Done: {n} categories changed station, with their products.',
+  'No había nada que cambiar.': 'There was nothing to change.',
+  '{name} ahora va a cocina': '{name} now goes to the kitchen',
+  '{name} ahora va a barra': '{name} now goes to the bar',
 };
