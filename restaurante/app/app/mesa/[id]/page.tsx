@@ -3,7 +3,6 @@ import { requireStaff } from '@/lib/auth';
 import { getMenu, getSessionOrder } from '@/lib/orders';
 import { can } from '@/lib/permissions';
 import { canCollectSession } from '@/lib/cash';
-import { sellableStock } from '@/lib/inventory';
 import { hasPrinter } from '@/lib/printing';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { PosScreen } from '@/components/pos-screen';
@@ -13,12 +12,11 @@ export const dynamic = 'force-dynamic';
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const staff = await requireStaff('orders.take');
   const { id } = await params;
-  const [order, menu, printBill, canCharge, stock] = await Promise.all([
+  const [order, menu, printBill, canCharge] = await Promise.all([
     getSessionOrder(staff, id),
     getMenu(staff.businessId, { activeOnly: true }),
     hasPrinter(staff, 'cashier'),
     canCollectSession(staff, id),
-    sellableStock(staff),
   ]);
   if (!order) notFound();
   return (
@@ -37,7 +35,6 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         canVoid={can(staff.role, 'orders.void')}
         canCharge={canCharge}
         waitersCollect={staff.waitersCollect}
-        stock={stock}
         timeZone={staff.timezone}
         printBill={printBill}
       />
