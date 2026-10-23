@@ -160,3 +160,78 @@ export function photoMatches(text: string, count: number, products: { id: string
   }
   return result;
 }
+
+export type ReceiptReading = { supplier: string; total: number | null; date: string | null; category: string; description: string };
+
+const RECEIPT_CATEGORIES = ['suppliers', 'payroll', 'rent', 'utilities', 'maintenance', 'marketing', 'taxes', 'other'];
+
+/**
+ * Facturas → «Facturas de compra»: lee la foto de una factura o recibo de compra y redacta el gasto (proveedor, total,
+ * fecha, tipo y una frase de qué se compró). La cajera lo revisa antes de guardarlo.
+ */
+export async function readReceiptWithAi(actor: Actor, file: ReadFile): Promise<ReceiptReading> {
+  requirePermission(actor, 'expenses.add');
+  const [real] = checkReadFiles([file]);
+  if (!process.env.ANTHROPIC_API_KEY) throw new AppError('INVALID', 'La lectura de facturas con IA no está activada en este sistema. Llena el gasto a mano.');
+  const content: Anthropic.Beta.BetaContentBlockParam[] = [
+    real.type === 'application/pdf'
+      ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: real.data.toString('base64') } }
+      : { type: 'image', source: { type: 'base64', media_type: real.type as Exclude<ReadType, 'application/pdf'>, data: real.data.toString('base64') } },
+    {
+      type: 'text',
+      text: `Es la foto de una factura o recibo de compra de un restaurante o bar de Colombia. Léela y responde solo con este JSON, sin texto alrededor:
+{"proveedor": "nombre del negocio que vendió o null", "total": valor total pagado en pesos como número entero sin puntos o null, "fecha": "AAAA-MM-DD" o null, "tipo": uno de ${JSON.stringify(RECEIPT_CATEGORIES)}, "descripcion": "frase corta en español de Colombia que diga qué se compró"}
+Tipos: suppliers = insumos, comida, bebidas, licores, desechables o aseo para el negocio; payroll = pagos a personas por su trabajo; rent = arriendo; utilities = luz, agua, gas, internet, teléfono; maintenance = arreglos, repuestos, mantenimiento; marketing = publicidad; taxes = impuestos; other = lo demás.
+La descripción: máximo 160 caracteres, sin el valor ni la fecha, nombrando lo principal que se compró, por ejemplo «Compra de 10 kg de limón, 5 kg de tomate y 2 bultos de hielo». Si es una factura de servicio público, di cuál y de qué mes.
+No inventes: si no se lee el total, pon null. Si la foto no es una factura o recibo, pon "descripcion": "" y todo lo demás null.`,
+    },
+  ];
+  const client = new Anthropic();
+  let text: string;
+  try {
+    const response = await client.beta.messages.create({
+      model: MODEL,
+      max_tokens: 2000,
+      output_config: { effort: 'low' },
+      betas: ['server-side-fallback-2026-07-01'],
+      fallbacks: 'default',
+      messages: [{ role: 'user', content }],
+    });
+    text = response.content
+      .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')
+      .map((b) => b.text)
+      .join('');
+  } catch (error) {
+    if (error instanceof Anthropic.AuthenticationError) console.error('ANTHROPIC_API_KEY no es válida');
+    else console.error('Leer factura con IA falló:', error instanceof Error ? error.message : error);
+    throw new AppError('INVALID', 'No pudimos leer la factura en este momento. Intenta de nuevo en un minuto o llena el gasto a mano.');
+  }
+  const reading = receiptReading(text);
+  if (!reading) throw new AppError('INVALID', 'No pudimos leer la factura. Toma la foto de cerca, derecha y con buena luz, o llena el gasto a mano.');
+  return reading;
+}
+
+/** Pasa la respuesta de la IA a un gasto; lo que no venga bien se deja vacío para que la cajera lo llene. Null si no es una factura. */
+export function receiptReading(text: string): ReceiptReading | null {
+  const json = text.match(/\{[\s\S]*\}/)?.[0];
+  if (!json) return null;
+  let raw: Record<string, unknown>;
+  try {
+    raw = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
+  const description = clean(raw.descripcion, 200);
+  if (description.length < 3) return null;
+  const total = typeof raw.total === 'number' ? raw.total : Number(String(raw.total ?? '').replace(/[^\d]/g, ''));
+  const date = typeof raw.fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.fecha) ? raw.fecha : null;
+  const category = typeof raw.tipo === 'string' && RECEIPT_CATEGORIES.includes(raw.tipo) ? raw.tipo : 'other';
+  return {
+    supplier: clean(raw.proveedor === null ? '' : raw.proveedor, 120),
+    total: Number.isInteger(total) && total > 0 && total <= 10_000_000_000 ? total : null,
+    date,
+    category,
+    description,
+  };
+}

@@ -62,6 +62,7 @@ type Row = {
   locationName: string;
   voided: boolean;
   voidReason: string | null;
+  hasPhoto: boolean;
 };
 
 export function ExpenseRow({ expense: e, showLocation }: { expense: Row; showLocation: boolean }) {
@@ -77,6 +78,14 @@ export function ExpenseRow({ expense: e, showLocation }: { expense: Row; showLoc
             {e.spentOn} · {e.createdBy}
             {e.paidFromCash ? t(' · de la caja') : ''}
             {showLocation ? ` · ${e.locationName}` : ''}
+            {e.hasPhoto ? (
+              <>
+                {' · '}
+                <a href={`/app/facturas/compra/${e.id}`} target="_blank" rel="noreferrer" className="text-primary underline">
+                  {t('Ver factura')}
+                </a>
+              </>
+            ) : null}
           </span>
         </span>
         <span className="flex items-center gap-3">

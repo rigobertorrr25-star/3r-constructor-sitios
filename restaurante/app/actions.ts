@@ -2,7 +2,7 @@
 
 import { importMenu, parseMenuText } from '@/lib/menu-import';
 import { importRecipes, parseRecipesText } from '@/lib/recipe-import';
-import { matchPhotosWithAi, readWithAi, type ReadKind } from '@/lib/ai-read';
+import { matchPhotosWithAi, readReceiptWithAi, readWithAi, type ReadKind } from '@/lib/ai-read';
 import { bulkStock, inventoryFromMenu, type StockRow } from '@/lib/inventory-bulk';
 import { applyLibraryPhotos } from '@/lib/photo-library';
 import { createFixture, removeFixture, saveFixtureLayout, updateFixture } from '@/lib/floor';
@@ -826,6 +826,8 @@ export async function saveRecipeAction(productId: string, lines: { itemId: strin
 
 export async function addExpenseAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
+  const file = formData.get('foto');
+  const photo = file instanceof File && file.size ? new Uint8Array(await file.arrayBuffer()) : null;
   return run(
     formData,
     () =>
@@ -836,10 +838,28 @@ export async function addExpenseAction(_prev: FormState, formData: FormData): Pr
         amount: pesos(formData, 'amount'),
         spentOn: text(formData, 'spentOn'),
         paidFromCash: formData.get('paidFromCash') === 'on',
+        photo,
       }),
-    ['/app/finanzas', '/app/caja'],
+    ['/app/finanzas', '/app/caja', '/app/facturas'],
     'Gasto registrado.',
   );
+}
+
+/** Facturas → «Facturas de compra»: la IA lee la foto de la factura y propone el gasto (la cajera lo revisa antes de guardar). */
+export async function readReceiptAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('expenses.add');
+  const file = formData.get('foto');
+  if (!(file instanceof File) || !file.size) return { error: await trServer('Escoge una foto.') };
+  try {
+    const r = await readReceiptWithAi(staff, { type: file.type, size: file.size, data: Buffer.from(await file.arrayBuffer()) });
+    return {
+      ok: Date.now(),
+      message: await trServer('Listo: revisa lo que leyó la IA, corrige lo que haga falta y toca «Guardar gasto».'),
+      values: { supplier: r.supplier, amount: r.total ? String(r.total) : '', spentOn: r.date ?? '', category: r.category, description: r.description },
+    };
+  } catch (error) {
+    return fail(await messageOf(error));
+  }
 }
 
 export async function voidExpenseAction(_prev: FormState, formData: FormData): Promise<FormState> {

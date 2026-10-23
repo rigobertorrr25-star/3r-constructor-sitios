@@ -45,6 +45,7 @@ export type Permission =
   | 'inventory.load'
   | 'inventory.waste'
   | 'finance.view'
+  | 'expenses.add'
   | 'reservations.manage'
   | 'agenda.view'
   | 'agenda.manage'
@@ -81,6 +82,8 @@ const GRANTS: Record<Permission, Role[]> = {
   'inventory.waste': ['owner', 'manager', 'kitchen', 'bar'],
   // Gastos y estado de resultados. El dueño ve todas las sedes; el administrador, la suya.
   'finance.view': ['owner', 'manager'],
+  // Registrar un gasto (con la foto de su factura de compra): también la cajera, desde Facturas. Verlos todos y anularlos, no.
+  'expenses.add': ['owner', 'manager', 'cashier'],
   'reservations.manage': ['owner', 'manager', 'cashier', 'waiter'],
   // Citas: el profesional ve la suya; dueño, administrador y cajero agendan, mueven y cobran.
   'agenda.view': ['owner', 'manager', 'cashier', 'pro'],
