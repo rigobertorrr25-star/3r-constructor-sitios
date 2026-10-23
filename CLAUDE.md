@@ -8,6 +8,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 - **Publicada en producción** en https://3rpaginas.com: base en Neon, API en Render, web en Vercel, archivos en
   Cloudflare R2 y correos con Resend. `main` es lo que está en vivo. API en Render: https://threer-api-79ux.onrender.com
   (plan gratis: se duerme sin uso; no lanzar dos deploys a la vez o `prisma migrate deploy` falla por el bloqueo).
+- **Vercel publica cada proyecto solo si cambió su carpeta** (23 oct 2026, pedido de Rigoberto tras llegar al límite gratis de 100 publicaciones al día): `ignoreCommand` en el `vercel.json` de `apps/web` (también mira `packages/` y el `package.json`/lock de la raíz), `asistencia`, `restaurante`, `clientes/zenova` y `tiendas/negro-nuevo`, comparando con la última publicación (`VERCEL_GIT_PREVIOUS_SHA`). Un proyecto nuevo de Vercel en este repo debe llevar su propio `vercel.json` con lo mismo.
 - Política de privacidad en `/privacidad` (Ley 1581), completa. Datos del responsable en `RESPONSABLE` de
   `apps/web/app/privacidad/page.tsx`.
 - Portada (26 sep 2026): botón "Ver paquetes" fijo arriba, sección "Lo que pasa hoy" (problema del cliente), león
