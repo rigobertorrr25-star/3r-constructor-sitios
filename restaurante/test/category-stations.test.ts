@@ -64,6 +64,16 @@ describe('estación de las categorías', { skip: url ? false : 'sin TEST_DATABAS
     assert.deepEqual(await stations('Cócteles'), ['Mojito:bar']);
   });
 
+  it('si la categoría ya decía cocina pero sus productos seguían en barra, guardar cocina los pasa', async () => {
+    const menu = await orders.getMenu(owner.businessId);
+    const cat = menu.categories.find((c) => c.name === 'Platos')!;
+    // Como quedó la carta de Azul: la categoría en cocina y sus productos todavía en barra.
+    await db.query(`UPDATE menu_products SET station = 'bar' WHERE category_id = $1`, [cat.id]);
+    assert.equal(await orders.setCategoryStations(owner, [{ id: cat.id, station: 'kitchen' }]), 1);
+    assert.deepEqual(await stations('Platos'), ['Griot:kitchen', 'Pescado:kitchen']);
+    assert.equal(await orders.setCategoryStations(owner, [{ id: cat.id, station: 'kitchen' }]), 0, 'ya no hay nada que cambiar');
+  });
+
   it('editar una sola categoría también arrastra sus productos', async () => {
     const menu = await orders.getMenu(owner.businessId);
     const cat = menu.categories.find((c) => c.name === 'Desayunos')!;

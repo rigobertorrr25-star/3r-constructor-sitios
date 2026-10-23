@@ -85,14 +85,9 @@ export async function saveCategory(
           [input.id, actor.businessId, name, input.station, sort, input.isActive ?? true, nameEn],
         );
         if (!res.rowCount) throw new AppError('NOT_FOUND', 'No encontramos esa categoría.');
-        // Si la categoría cambia de estación, sus productos se van con ella (los que ya iban a otra estación se quedan).
+        // Si la categoría cambia de estación, todos sus productos se van con ella.
         if (before && before.station !== input.station) {
-          await db.query(`UPDATE menu_products SET station = $3 WHERE category_id = $1 AND business_id = $2 AND station = $4`, [
-            input.id,
-            actor.businessId,
-            input.station,
-            before.station,
-          ]);
+          await db.query(`UPDATE menu_products SET station = $3 WHERE category_id = $1 AND business_id = $2`, [input.id, actor.businessId, input.station]);
         }
         await audit(db, actor, { action: 'menu.category', entity: 'menu_category', entityId: input.id, summary: `Cambió la categoría ${name}` });
         return input.id;
@@ -434,9 +429,15 @@ export async function setCategoryStations(actor: Actor, changes: { id: string; s
         await db.query<{ name: string; station: string }>(`SELECT name, station FROM menu_categories WHERE id = $1 AND business_id = $2 FOR UPDATE`, [c.id, actor.businessId])
       ).rows[0];
       if (!before) throw new AppError('NOT_FOUND', 'No encontramos esa categoría.');
-      if (before.station === c.station) continue;
+      // Todos sus productos quedan en la estación escogida, aunque la categoría ya estuviera ahí: una carta importada
+      // a barra pudo quedar con la categoría en cocina y los productos todavía en barra.
+      const products = await db.query(`UPDATE menu_products SET station = $3 WHERE category_id = $1 AND business_id = $2 AND station <> $3`, [
+        c.id,
+        actor.businessId,
+        c.station,
+      ]);
+      if (before.station === c.station && !products.rowCount) continue;
       await db.query(`UPDATE menu_categories SET station = $3 WHERE id = $1 AND business_id = $2`, [c.id, actor.businessId, c.station]);
-      await db.query(`UPDATE menu_products SET station = $3 WHERE category_id = $1 AND business_id = $2 AND station = $4`, [c.id, actor.businessId, c.station, before.station]);
       await audit(db, actor, {
         action: 'menu.category',
         entity: 'menu_category',
