@@ -549,6 +549,15 @@ CREATE TABLE IF NOT EXISTS product_photos (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Foto de la factura de compra de un gasto (la toma la cajera en Facturas; la IA llena el gasto con lo que lee).
+CREATE TABLE IF NOT EXISTS expense_photos (
+  expense_id  UUID PRIMARY KEY REFERENCES expenses(id) ON DELETE CASCADE,
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  mime        VARCHAR(20) NOT NULL,
+  image       BYTEA NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Impresión de comandas: impresoras térmicas de red de cada sede y lo que se les manda. Un programa de 3R en un
 -- computador del local pide los trabajos con el código de la sede y los manda a cada impresora (puerto 9100).
 CREATE TABLE IF NOT EXISTS printers (

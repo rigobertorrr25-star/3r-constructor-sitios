@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/auth';
-import { todayIn } from '@/lib/finance';
+import { EXPENSE_LABEL, listPurchaseInvoices, todayIn } from '@/lib/finance';
 import { formatCop, formatDateTime } from '@/lib/format';
 import { DOC_TYPES, INVOICE_STATUS, TAX_KINDS, getFiscal, listInvoices } from '@/lib/invoices';
 import { can } from '@/lib/permissions';
 import { PERIODS, periodRange } from '@/lib/periods';
 import { FiscalForm, InvoiceCustomer } from '@/components/invoice-forms';
+import { ReceiptExpense } from '@/components/receipt-expense';
 import { Empty, PageTitle, card, quietButton } from '@/components/ui';
 import { getLang } from '@/lib/i18n/server';
 import { makeT, tr } from '@/lib/i18n';
@@ -18,14 +19,23 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const lang = await getLang();
   const t = makeT(lang);
   const period = PERIODS.some((p) => p.key === periodo) ? periodo! : 'hoy';
-  const range = periodRange(period, todayIn(staff.timezone));
-  const [fiscal, invoices] = await Promise.all([getFiscal(staff.businessId), listInvoices(staff, range, staff.timezone)]);
+  const today = todayIn(staff.timezone);
+  const range = periodRange(period, today);
+  const addsExpenses = can(staff.role, 'expenses.add');
+  const [fiscal, invoices, purchases] = await Promise.all([
+    getFiscal(staff.businessId),
+    listInvoices(staff, range, staff.timezone),
+    addsExpenses ? listPurchaseInvoices(staff, range) : Promise.resolve([]),
+  ]);
   const live = invoices.filter((i) => i.status !== 'void');
   const totals = live.reduce((s, i) => ({ total: s.total + i.total, base: s.base + i.base, tax: s.tax + i.tax }), { total: 0, base: 0, tax: 0 });
   const pending = live.filter((i) => i.status === 'pending').length;
   return (
     <div className="space-y-6">
       <PageTitle title={t('Facturas')} text={t('Cada venta cobrada (mesa o cita) genera su factura, a nombre de consumidor final o del cliente que la pida.')} />
+      {addsExpenses ? <ReceiptExpense today={today} /> : null}
+
+      <h2 className="font-display text-[19px] font-bold">{t('Facturas de venta')}</h2>
       <div className="rounded-[22px] border border-warning/40 bg-warning/[0.07] p-4 text-[14.5px]">
         <strong>{t('Todavía no se envían a la DIAN.')}</strong>{' '}
         {t('Para eso hay que conectar un proveedor de facturación electrónica (Alegra, Siigo u otro). Mientras tanto quedan como «pendientes» y puedes descargarlas para tu contador o para subirlas al proveedor.')}
@@ -82,6 +92,37 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           ))}
         </ul>
       )}
+
+      {addsExpenses ? (
+        <section className="space-y-3">
+          <h2 className="font-display text-[19px] font-bold">{t('Facturas de compra')}</h2>
+          {purchases.length === 0 ? (
+            <Empty>{t('No hay gastos registrados en este periodo.')}</Empty>
+          ) : (
+            <ul className="divide-y divide-white/[0.06] overflow-hidden rounded-[22px] border border-white/[0.08] bg-card">
+              {purchases.map((e) => (
+                <li key={e.id} className={`flex items-center gap-3 px-4 py-3 text-[14px] ${e.voided ? 'opacity-50' : ''}`}>
+                  {e.hasPhoto ? (
+                    <a href={`/app/facturas/compra/${e.id}`} target="_blank" rel="noreferrer" className="size-14 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]" aria-label={t('Ver la foto de la factura')}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`/app/facturas/compra/${e.id}`} alt="" className="size-full object-cover" loading="lazy" />
+                    </a>
+                  ) : (
+                    <span className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-white/10 text-center text-[11px] text-muted-foreground">{t('Sin foto')}</span>
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className={`block font-medium ${e.voided ? 'line-through' : ''}`}>{e.description}</span>
+                    <span className="block text-[12.5px] text-muted-foreground">
+                      {[e.spentOn, t(EXPENSE_LABEL[e.category]), e.supplier, e.createdBy, e.paidFromCash ? t('de la caja') : null, e.voided ? t('Anulado') : null].filter(Boolean).join(' · ')}
+                    </span>
+                  </span>
+                  <span className="font-semibold">{formatCop(e.amount)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
 
       {can(staff.role, 'locations.manage') ? (
         <section className={card}>

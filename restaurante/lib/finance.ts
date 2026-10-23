@@ -1,5 +1,6 @@
 // Módulo 07: gastos y estado de resultados (lo que entró, lo que costó y lo que quedó).
 // Las fechas son días del negocio (hora de Colombia por defecto), no del servidor.
+import { imageMime } from './backgrounds';
 import { formatCop } from './format';
 import { query, transaction } from './db';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
@@ -63,18 +64,26 @@ export type Expense = {
   locationName: string;
   voided: boolean;
   voidReason: string | null;
+  hasPhoto: boolean;
 };
+
+/** La foto de la factura de compra se achica en el teléfono; se deja margen por si llega más pesada. */
+export const EXPENSE_PHOTO_MAX_BYTES = 1_500_000;
 
 export async function addExpense(
   actor: Actor,
-  input: { category: string; description: string; supplier?: string; amount: number; spentOn: string; paidFromCash?: boolean },
+  input: { category: string; description: string; supplier?: string; amount: number; spentOn: string; paidFromCash?: boolean; photo?: Uint8Array | null },
 ) {
-  requirePermission(actor, 'finance.view');
+  requirePermission(actor, 'expenses.add');
   if (!(EXPENSE_CATEGORIES as readonly string[]).includes(input.category)) throw new AppError('INVALID', 'Elige el tipo de gasto.');
   const description = requireText(input.description, 'Descripción', 3, 200);
   const supplier = input.supplier?.trim() ? requireText(input.supplier, 'Proveedor', 2, 120) : null;
   if (!Number.isInteger(input.amount) || input.amount < 1 || input.amount > 10_000_000_000) throw new AppError('INVALID', 'Valor: escribe el valor en pesos.');
   if (!DATE.test(input.spentOn)) throw new AppError('INVALID', 'Fecha no válida.');
+  const photo = input.photo?.length ? input.photo : null;
+  const photoMime = photo ? imageMime(photo) : null;
+  if (photo && photo.length > EXPENSE_PHOTO_MAX_BYTES) throw new AppError('INVALID', 'La foto es muy pesada. Prueba con otra más liviana.');
+  if (photo && !photoMime) throw new AppError('INVALID', 'Solo fotos JPG, PNG o WebP.');
   return transaction(async (db) => {
     let movementId: string | null = null;
     if (input.paidFromCash) {
@@ -109,11 +118,14 @@ export async function addExpense(
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
       [actor.businessId, actor.locationId, input.category, description, supplier, input.amount, input.spentOn, Boolean(input.paidFromCash), movementId, actor.id],
     );
+    if (photo) {
+      await db.query(`INSERT INTO expense_photos (expense_id, business_id, mime, image) VALUES ($1, $2, $3, $4)`, [res.rows[0].id, actor.businessId, photoMime, Buffer.from(photo)]);
+    }
     await audit(db, actor, {
       action: 'expense.create',
       entity: 'expense',
       entityId: res.rows[0].id,
-      summary: `Registró un gasto de ${money(input.amount)} (${EXPENSE_LABEL[input.category as ExpenseCategory]}): ${description}${input.paidFromCash ? ', pagado de la caja' : ''}`,
+      summary: `Registró un gasto de ${money(input.amount)} (${EXPENSE_LABEL[input.category as ExpenseCategory]}): ${description}${input.paidFromCash ? ', pagado de la caja' : ''}${photo ? ', con foto de la factura' : ''}`,
     });
     return res.rows[0].id;
   });
@@ -161,13 +173,46 @@ export async function listExpenses(actor: Actor, range: { from: string; to: stri
   const scope = scopeOf(actor, range.locationId);
   const rows = await query<Omit<Expense, 'amount' | 'spentOn'> & { amount: string; spentOn: string }>(
     `SELECT e.id, e.category, e.description, e.supplier, e.amount, to_char(e.spent_on, 'YYYY-MM-DD') AS "spentOn", e.paid_from_cash AS "paidFromCash",
-            s.name AS "createdBy", l.name AS "locationName", (e.voided_at IS NOT NULL) AS voided, e.void_reason AS "voidReason"
+            s.name AS "createdBy", l.name AS "locationName", (e.voided_at IS NOT NULL) AS voided, e.void_reason AS "voidReason",
+            EXISTS (SELECT 1 FROM expense_photos f WHERE f.expense_id = e.id) AS "hasPhoto"
        FROM expenses e JOIN staff s ON s.id = e.created_by JOIN locations l ON l.id = e.location_id
       WHERE e.business_id = $1 AND e.spent_on BETWEEN $2 AND $3 AND ($4::uuid IS NULL OR e.location_id = $4)
       ORDER BY e.spent_on DESC, e.created_at DESC`,
     [actor.businessId, range.from, range.to, scope],
   );
   return rows.map((r) => ({ ...r, amount: Number(r.amount) }));
+}
+
+/**
+ * Facturas → «Facturas de compra»: los gastos de la sede en el periodo, para quien los registra (también la cajera).
+ * El estado de resultados y anular gastos siguen siendo del dueño y el administrador (Finanzas).
+ */
+export async function listPurchaseInvoices(actor: Actor, range: { from: string; to: string }): Promise<Expense[]> {
+  requirePermission(actor, 'expenses.add');
+  checkRange(range.from, range.to);
+  const rows = await query<Omit<Expense, 'amount' | 'spentOn'> & { amount: string; spentOn: string }>(
+    `SELECT e.id, e.category, e.description, e.supplier, e.amount, to_char(e.spent_on, 'YYYY-MM-DD') AS "spentOn", e.paid_from_cash AS "paidFromCash",
+            s.name AS "createdBy", l.name AS "locationName", (e.voided_at IS NOT NULL) AS voided, e.void_reason AS "voidReason",
+            EXISTS (SELECT 1 FROM expense_photos f WHERE f.expense_id = e.id) AS "hasPhoto"
+       FROM expenses e JOIN staff s ON s.id = e.created_by JOIN locations l ON l.id = e.location_id
+      WHERE e.business_id = $1 AND e.location_id = $2 AND e.spent_on BETWEEN $3 AND $4
+      ORDER BY e.spent_on DESC, e.created_at DESC
+      LIMIT 200`,
+    [actor.businessId, actor.locationId, range.from, range.to],
+  );
+  return rows.map((r) => ({ ...r, amount: Number(r.amount) }));
+}
+
+/** La foto de la factura de compra de un gasto (solo de este negocio; el dueño ve todas las sedes, los demás la suya). */
+export async function getExpensePhoto(actor: Actor, expenseId: string) {
+  requirePermission(actor, 'expenses.add');
+  if (!isUuid(expenseId)) return null;
+  const rows = await query<{ mime: string; image: Buffer }>(
+    `SELECT f.mime, f.image FROM expense_photos f JOIN expenses e ON e.id = f.expense_id
+      WHERE f.expense_id = $1 AND f.business_id = $2 AND ($3::boolean OR e.location_id = $4)`,
+    [expenseId, actor.businessId, actor.role === 'owner', actor.locationId],
+  );
+  return rows[0] ?? null;
 }
 
 // ───────── estado de resultados ─────────
