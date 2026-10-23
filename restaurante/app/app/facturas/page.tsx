@@ -7,6 +7,7 @@ import { can } from '@/lib/permissions';
 import { PERIODS, periodRange } from '@/lib/periods';
 import { FiscalForm, InvoiceCustomer } from '@/components/invoice-forms';
 import { ReceiptExpense } from '@/components/receipt-expense';
+import { itemsForPurchase } from '@/lib/inventory';
 import { Empty, PageTitle, card, quietButton } from '@/components/ui';
 import { getLang } from '@/lib/i18n/server';
 import { makeT, tr } from '@/lib/i18n';
@@ -22,10 +23,11 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const today = todayIn(staff.timezone);
   const range = periodRange(period, today);
   const addsExpenses = can(staff.role, 'expenses.add');
-  const [fiscal, invoices, purchases] = await Promise.all([
+  const [fiscal, invoices, purchases, stockItems] = await Promise.all([
     getFiscal(staff.businessId),
     listInvoices(staff, range, staff.timezone),
     addsExpenses ? listPurchaseInvoices(staff, range) : Promise.resolve([]),
+    addsExpenses ? itemsForPurchase(staff) : Promise.resolve([]),
   ]);
   const live = invoices.filter((i) => i.status !== 'void');
   const totals = live.reduce((s, i) => ({ total: s.total + i.total, base: s.base + i.base, tax: s.tax + i.tax }), { total: 0, base: 0, tax: 0 });
@@ -33,7 +35,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-6">
       <PageTitle title={t('Facturas')} text={t('Cada venta cobrada (mesa o cita) genera su factura, a nombre de consumidor final o del cliente que la pida.')} />
-      {addsExpenses ? <ReceiptExpense today={today} /> : null}
+      {addsExpenses ? <ReceiptExpense today={today} items={stockItems} /> : null}
 
       <h2 className="font-display text-[19px] font-bold">{t('Facturas de venta')}</h2>
       <div className="rounded-[22px] border border-warning/40 bg-warning/[0.07] p-4 text-[14.5px]">

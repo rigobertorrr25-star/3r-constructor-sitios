@@ -28,8 +28,8 @@ import { saveFiscal, setInvoiceCustomer } from '@/lib/invoices';
 import { createAppointment, payAppointment, saveService, setAppointmentStatus } from '@/lib/appointments';
 import { getBrief } from '@/lib/brief';
 import { createReservation, requestReservation, seatReservation, updatePublicSettings, updateReservation } from '@/lib/reservations';
-import { addExpense, voidExpense } from '@/lib/finance';
-import { registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
+import { addExpense, voidExpense, type PurchaseLine } from '@/lib/finance';
+import { itemsForPurchase, registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
 import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
@@ -839,10 +839,23 @@ export async function addExpenseAction(_prev: FormState, formData: FormData): Pr
         spentOn: text(formData, 'spentOn'),
         paidFromCash: formData.get('paidFromCash') === 'on',
         photo,
+        lines: purchaseLines(formData),
       }),
-    ['/app/finanzas', '/app/caja', '/app/facturas'],
+    ['/app/finanzas', '/app/caja', '/app/facturas', '/app/inventario'],
     'Gasto registrado.',
   );
+}
+
+/** Los productos de la factura que van al inventario (campo «lines», JSON que arma la pantalla). */
+function purchaseLines(formData: FormData): PurchaseLine[] {
+  const raw = String(formData.get('lines') ?? '').trim();
+  if (!raw) return [];
+  try {
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? (list as PurchaseLine[]) : [];
+  } catch {
+    return [];
+  }
 }
 
 /** Facturas → «Facturas de compra»: la IA lee la foto de la factura y propone el gasto (la cajera lo revisa antes de guardar). */
@@ -851,11 +864,19 @@ export async function readReceiptAction(_prev: FormState, formData: FormData): P
   const file = formData.get('foto');
   if (!(file instanceof File) || !file.size) return { error: await trServer('Escoge una foto.') };
   try {
-    const r = await readReceiptWithAi(staff, { type: file.type, size: file.size, data: Buffer.from(await file.arrayBuffer()) });
+    const items = await itemsForPurchase(staff);
+    const r = await readReceiptWithAi(staff, { type: file.type, size: file.size, data: Buffer.from(await file.arrayBuffer()) }, items.map((i) => i.name));
     return {
       ok: Date.now(),
       message: await trServer('Listo: revisa lo que leyó la IA, corrige lo que haga falta y toca «Guardar gasto».'),
-      values: { supplier: r.supplier, amount: r.total ? String(r.total) : '', spentOn: r.date ?? '', category: r.category, description: r.description },
+      values: {
+        supplier: r.supplier,
+        amount: r.total ? String(r.total) : '',
+        spentOn: r.date ?? '',
+        category: r.category,
+        description: r.description,
+        lines: JSON.stringify(r.lines),
+      },
     };
   } catch (error) {
     return fail(await messageOf(error));

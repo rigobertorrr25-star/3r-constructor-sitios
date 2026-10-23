@@ -5,6 +5,7 @@ import { startTransition, useActionState, useEffect, useRef, useState, useTransi
 import { addExpenseAction, readReceiptAction, type FormState } from '@/app/actions';
 import { formatCop } from '@/lib/format';
 import { shrink } from './background-forms';
+import { PurchaseLines, blankLine, linesFromReading, linesToSave, type Line, type StockItem } from './purchase-lines';
 import { Alert, CheckField, Field, Select, TextArea, card, primaryButton, quietButton } from './ui';
 import { useT } from './i18n';
 
@@ -25,7 +26,7 @@ type Draft = { category: string; amount: string; spentOn: string; supplier: stri
  * Facturas → «Facturas de compra»: la cajera toma la foto de la factura, la IA la lee y redacta el gasto (proveedor,
  * total, fecha, tipo y qué se compró), ella lo revisa y lo guarda con la foto.
  */
-export function ReceiptExpense({ today }: { today: string }) {
+export function ReceiptExpense({ today, items }: { today: string; items: StockItem[] }) {
   const t = useT();
   const router = useRouter();
   const empty: Draft = { category: 'suppliers', amount: '', spentOn: today, supplier: '', description: '' };
@@ -35,6 +36,8 @@ export function ReceiptExpense({ today }: { today: string }) {
   const [reading, startReading] = useTransition();
   const [readState, setReadState] = useState<FormState>(undefined);
   const [photoError, setPhotoError] = useState('');
+  const [lines, setLines] = useState<Line[]>([]);
+  const [linesError, setLinesError] = useState('');
   const [saveState, save, saving] = useActionState(addExpenseAction, undefined);
   const lastOk = useRef<number | undefined>(undefined);
 
@@ -47,6 +50,7 @@ export function ReceiptExpense({ today }: { today: string }) {
       setDraft({ ...empty, spentOn: today });
       setVersion((v) => v + 1);
       setReadState(undefined);
+      setLines([]);
       router.refresh();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,6 +85,11 @@ export function ReceiptExpense({ today }: { today: string }) {
           description: v.description || d.description,
         }));
         setVersion((n) => n + 1);
+        try {
+          setLines(v.lines ? linesFromReading(JSON.parse(v.lines), items) : []);
+        } catch {
+          setLines([]);
+        }
       }
     });
   }
@@ -141,7 +150,14 @@ export function ReceiptExpense({ today }: { today: string }) {
         className="mt-4 grid gap-3 md:grid-cols-3"
         onSubmit={(e) => {
           e.preventDefault();
+          setLinesError('');
           const data = new FormData(e.currentTarget);
+          const toSave = linesToSave(lines, items);
+          if (toSave.missing) {
+            setLinesError(t('Falta la cantidad o el valor de «{name}». Escríbelo o márcalo «No va al inventario».', { name: toSave.missing }));
+            return;
+          }
+          data.set('lines', JSON.stringify(toSave.lines));
           if (photo) data.set('foto', new File([photo.blob], 'factura.jpg', { type: 'image/jpeg' }));
           startTransition(() => save(data));
         }}
@@ -159,6 +175,20 @@ export function ReceiptExpense({ today }: { today: string }) {
           <TextArea label={t('¿Qué se compró?')} name="description" rows={2} required minLength={3} maxLength={200} placeholder={t('Compra de 10 kg de limón y 2 bultos de hielo')} defaultValue={values.description} />
         </div>
         <Field label={t('Proveedor (opcional)')} name="supplier" maxLength={120} defaultValue={values.supplier} />
+        {lines.length ? (
+          <PurchaseLines lines={lines} items={items} onChange={setLines} amount={Number(values.amount) || 0} />
+        ) : (
+          <div className="md:col-span-3">
+            <button type="button" className="text-[13.5px] text-primary underline" onClick={() => setLines([blankLine()])}>
+              {t('+ Agregar productos al inventario')}
+            </button>
+          </div>
+        )}
+        {linesError ? (
+          <div className="md:col-span-3">
+            <Alert>{linesError}</Alert>
+          </div>
+        ) : null}
         <div className="md:col-span-3">
           <CheckField name="paidFromCash" label={t('Lo pagué con la plata de la caja')} hint={t('Sale de la caja abierta como una salida de efectivo.')} defaultChecked />
         </div>

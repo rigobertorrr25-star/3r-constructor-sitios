@@ -280,4 +280,31 @@ export const en: Record<string, string> = {
   'No pudimos leer la factura. Toma la foto de cerca, derecha y con buena luz, o llena el gasto a mano.': 'We couldn’t read the invoice. Take the photo close up, straight and well lit, or fill in the expense by hand.',
   'Registró un gasto de {amount} ({category}): {description}, con foto de la factura': 'Recorded an expense of {amount} ({category}): {description}, with the invoice photo',
   'Registró un gasto de {amount} ({category}): {description}, pagado de la caja, con foto de la factura': 'Recorded an expense of {amount} ({category}): {description}, paid from the cashier, with the invoice photo',
+  // Productos de la factura de compra al inventario (components/purchase-lines.tsx)
+  '¿Qué entra al inventario?': 'What goes into inventory?',
+  'Cada producto suma a las existencias de la sede y actualiza su costo. Revisa a qué insumo va; lo que no se guarda en inventario márcalo «No va al inventario».':
+    'Each product adds to this location’s stock and updates its cost. Check which ingredient it goes to; mark anything not kept in inventory as “Not for inventory”.',
+  'En la factura: {name} · {qty} {unit}': 'On the invoice: {name} · {qty} {unit}',
+  'Crear insumo nuevo': 'Create new ingredient',
+  'No va al inventario': 'Not for inventory',
+  'Nombre del insumo nuevo': 'New ingredient name',
+  'Se cuenta en': 'Counted in',
+  'Este insumo se cuenta en {unit}: escribe la cantidad en {unit}.': 'This ingredient is counted in {unit}: write the quantity in {unit}.',
+  'Suma de los productos: {sum} de {total} de la factura.': 'Products add up to {sum} of the invoice’s {total}.',
+  '+ Agregar otro producto': '+ Add another product',
+  '+ Agregar productos al inventario': '+ Add products to inventory',
+  'Falta la cantidad o el valor de «{name}». Escríbelo o márcalo «No va al inventario».': 'The quantity or amount of “{name}” is missing. Fill it in or mark it “Not for inventory”.',
+  'Son muchos productos: registra la factura en dos partes (hasta 60).': 'Too many products: record the invoice in two parts (up to 60).',
+  'Producto {n}: escribe la cantidad.': 'Product {n}: enter the quantity.',
+  'Producto {n}: escribe el valor en pesos.': 'Product {n}: enter the amount in pesos.',
+  'Producto {n}: escoge si se cuenta en gramos, mililitros o unidades.': 'Product {n}: choose whether it’s counted in grams, milliliters or units.',
+  'Producto {n}: nombre del insumo: entre {min} y {max} caracteres.': 'Product {n}: ingredient name: between {min} and {max} characters.',
+  'Ya hay un insumo «{name}» en {unit}: escógelo en la lista y escribe la cantidad en {unit}.': 'There is already an ingredient “{name}” in {unit}: pick it from the list and write the quantity in {unit}.',
+  'Registró un gasto de {amount} ({category}): {description}, con foto de la factura; {n} productos al inventario':
+    'Recorded an expense of {amount} ({category}): {description}, with the invoice photo; {n} products into inventory',
+  'Registró un gasto de {amount} ({category}): {description}, pagado de la caja, con foto de la factura; {n} productos al inventario':
+    'Recorded an expense of {amount} ({category}): {description}, paid from the cashier, with the invoice photo; {n} products into inventory',
+  gramos: 'grams',
+  mililitros: 'milliliters',
+  unidades: 'units',
 };

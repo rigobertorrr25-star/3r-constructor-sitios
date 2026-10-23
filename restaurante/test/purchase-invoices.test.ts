@@ -12,7 +12,7 @@ describe('leer la respuesta de la IA sobre una factura', () => {
     const { receiptReading } = await import('../lib/ai-read');
     assert.deepEqual(
       receiptReading('Aquí va: {"proveedor":"Surtifruver La Sexta","total":"$84.500","fecha":"2026-10-23","tipo":"suppliers","descripcion":"Compra de 10 kg de limón y 5 kg de tomate"}'),
-      { supplier: 'Surtifruver La Sexta', total: 84500, date: '2026-10-23', category: 'suppliers', description: 'Compra de 10 kg de limón y 5 kg de tomate' },
+      { supplier: 'Surtifruver La Sexta', total: 84500, date: '2026-10-23', category: 'suppliers', description: 'Compra de 10 kg de limón y 5 kg de tomate', lines: [] },
     );
     assert.deepEqual(receiptReading('{"proveedor":null,"total":null,"fecha":"23/10/2026","tipo":"comida","descripcion":"Hielo"}'), {
       supplier: '',
@@ -20,9 +20,17 @@ describe('leer la respuesta de la IA sobre una factura', () => {
       date: null,
       category: 'other',
       description: 'Hielo',
+      lines: [],
     });
     assert.equal(receiptReading('{"proveedor":null,"total":null,"fecha":null,"tipo":null,"descripcion":""}'), null, 'no era una factura');
     assert.equal(receiptReading('no sé'), null);
+    const withLines = receiptReading(
+      '{"proveedor":"Makro","total":250000,"fecha":"2026-10-23","tipo":"suppliers","descripcion":"Cerveza y limón","productos":[{"nombre":"Club Colombia","cantidad":24,"unidad":"und","total":"$96.000"},{"nombre":"Limón","cantidad":"2,5","unidad":"kg","total":10000},{"nombre":"Limón","cantidad":2500,"unidad":"g","total":10000},{"nombre":"x","cantidad":1,"unidad":"und"}]}',
+    );
+    assert.deepEqual(withLines?.lines, [
+      { name: 'Club Colombia', quantity: 24, unit: 'und', total: 96000 },
+      { name: 'Limón', quantity: 2500, unit: 'g', total: 10000 },
+    ], 'kg no es una unidad válida y el nombre muy corto se descarta');
   });
 });
 
@@ -66,12 +74,45 @@ describe('facturas de compra con foto', { skip: url ? false : 'sin TEST_DATABASE
     await db.closePool();
   });
 
+  it('los productos de la factura entran al inventario: a un insumo que existe y a uno nuevo', async () => {
+    const inv = await import('../lib/inventory');
+    const beer = await inv.saveItem(owner, { name: 'Club Colombia', unit: 'und', minStock: 0 });
+    await inv.registerPurchase(owner, { itemId: beer, quantity: 24, total: 72000 }); // 3.000 c/u
+    const items = await inv.itemsForPurchase(cashier);
+    assert.ok(items.some((i) => i.name === 'Club Colombia'));
+    await assert.rejects(inv.itemsForPurchase(waiter), { code: 'FORBIDDEN' });
+    const base = { category: 'suppliers', description: 'Cerveza y limones', supplier: 'Makro', amount: 106000, spentOn: today, paidFromCash: false };
+    await assert.rejects(fin.addExpense(cashier, { ...base, lines: [{ newName: 'Limón', newUnit: 'kg', quantity: 2, total: 10000 }] }), { code: 'INVALID' });
+    await assert.rejects(fin.addExpense(cashier, { ...base, lines: [{ itemId: beer, quantity: 0, total: 1 }] }), { code: 'INVALID' });
+    // Un insumo nuevo con el nombre de uno que existe en otra unidad no se crea a escondidas.
+    await assert.rejects(fin.addExpense(cashier, { ...base, lines: [{ newName: 'club colombia', newUnit: 'ml', quantity: 2, total: 1 }] }), { code: 'CONFLICT' });
+    await fin.addExpense(cashier, {
+      ...base,
+      lines: [
+        { itemId: beer, quantity: 24, total: 96000 }, // 4.000 c/u: el promedio queda en 3.500
+        { newName: 'Limón', newUnit: 'g', quantity: 2500, total: 10000 },
+      ],
+    });
+    const beerNow = (await inv.getItem(owner, beer))!;
+    assert.equal(beerNow.stock, 48);
+    assert.equal(beerNow.unitCost, 3500);
+    const lemon = (await inv.listItems(owner)).find((i) => i.name === 'Limón')!;
+    assert.equal(lemon.stock, 2500);
+    assert.equal(lemon.unitCost, 4);
+    const moves = await db.query<{ reason: string; by: string }>(
+      `SELECT m.reason, s.name AS by FROM inventory_movements m JOIN staff s ON s.id = m.created_by WHERE m.item_id = $1 AND m.kind = 'purchase' ORDER BY m.created_at DESC LIMIT 1`,
+      [beer],
+    );
+    assert.equal(moves[0].by, 'Cajera');
+    assert.match(moves[0].reason, /Factura de compra de Makro/);
+  });
+
   it('la cajera registra el gasto con la foto y pagado de la caja; el mesero no puede', async () => {
     const input = { category: 'suppliers', description: 'Compra de 10 kg de limón', supplier: 'Surtifruver', amount: 84500, spentOn: today, paidFromCash: true, photo: JPG };
     await assert.rejects(fin.addExpense(waiter, input), { code: 'FORBIDDEN' });
     await assert.rejects(fin.addExpense(cashier, { ...input, photo: new Uint8Array([1, 2, 3]) }), { code: 'INVALID' }, 'no es una foto');
     const id = await fin.addExpense(cashier, input);
-    const list = await fin.listPurchaseInvoices(cashier, { from: today, to: today });
+    const list = (await fin.listPurchaseInvoices(cashier, { from: today, to: today })).filter((e) => e.id === id);
     assert.equal(list.length, 1);
     assert.equal(list[0].hasPhoto, true);
     assert.equal(list[0].paidFromCash, true);
