@@ -4,6 +4,7 @@ import { query, transaction, type Db } from './db';
 import { consumeForRound, returnForVoid } from './inventory';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 import { enqueueRound, enqueueVoid } from './printing';
+import { completeChoices, describeChoices, parseOptionGroups, type OptionGroup } from './product-options';
 
 import { STATIONS, isStation, type Station } from './stations';
 
@@ -44,6 +45,8 @@ export type MenuProduct = {
   sort: number;
   /** Versión de la foto del producto (para armar su dirección), o null si no tiene. */
   photo: number | null;
+  /** Opciones para armar el plato (se escogen al pedirlo), o null. */
+  optionGroups: OptionGroup[] | null;
 };
 
 /** La carta completa. Para tomar pedidos, `activeOnly` deja solo lo que está en la carta. */
@@ -56,7 +59,7 @@ export async function getMenu(businessId: string, { activeOnly = false } = {}) {
     ),
     query<MenuProduct & { price: string }>(
       `SELECT p.id, p.category_id AS "categoryId", p.name, p.description, p.name_en AS "nameEn", p.description_en AS "descriptionEn", p.price, p.station, p.is_available AS "isAvailable",
-              p.is_active AS "isActive", p.sort, (extract(epoch FROM f.updated_at) * 1000)::bigint::float8 AS photo
+              p.is_active AS "isActive", p.sort, p.option_groups AS "optionGroups", (extract(epoch FROM f.updated_at) * 1000)::bigint::float8 AS photo
          FROM menu_products p JOIN menu_categories c ON c.id = p.category_id
          LEFT JOIN product_photos f ON f.product_id = p.id
         WHERE p.business_id = $1 ${activeOnly ? 'AND p.is_active AND c.is_active' : ''} ORDER BY p.sort, p.name`,
@@ -119,9 +122,14 @@ export async function saveProduct(
     price: string | number;
     station?: string;
     isActive?: boolean;
+    /** Opciones para armar el plato, una línea por grupo. Sin el campo, no se tocan. */
+    options?: string;
   },
 ) {
   requirePermission(actor, 'menu.edit');
+  const parsed = input.options === undefined ? null : parseOptionGroups(input.options);
+  if (parsed?.error) throw new AppError('INVALID', parsed.error);
+  const optionGroups = parsed ? JSON.stringify(parsed.groups.length ? parsed.groups : null) : undefined;
   const name = requireText(input.name, 'Nombre del producto', 2, 80);
   const description = input.description?.trim() ? requireText(input.description, 'Descripción', 2, 200) : null;
   const nameEn = input.nameEn?.trim() ? requireText(input.nameEn, 'Nombre en inglés', 2, 80) : null;
@@ -148,9 +156,10 @@ export async function saveProduct(
       ).rows[0];
       if (!before) throw new AppError('NOT_FOUND', 'No encontramos ese producto.');
       await db.query(
-        `UPDATE menu_products SET category_id = $3, name = $4, description = $5, price = $6, station = $7, is_active = $8, name_en = $9, description_en = $10
+        `UPDATE menu_products SET category_id = $3, name = $4, description = $5, price = $6, station = $7, is_active = $8, name_en = $9, description_en = $10,
+                option_groups = CASE WHEN $11::boolean THEN $12::jsonb ELSE option_groups END
           WHERE id = $1 AND business_id = $2`,
-        [input.id, actor.businessId, input.categoryId, name, description, price, station, input.isActive ?? true, nameEn, descriptionEn],
+        [input.id, actor.businessId, input.categoryId, name, description, price, station, input.isActive ?? true, nameEn, descriptionEn, optionGroups !== undefined, optionGroups ?? null],
       );
       const oldPrice = Number(before.price);
       // Los cambios de precio quedan siempre en la auditoría.
@@ -167,9 +176,9 @@ export async function saveProduct(
       return input.id;
     }
     const res = await db.query<{ id: string }>(
-      `INSERT INTO menu_products (business_id, category_id, name, description, price, station, sort, name_en, description_en)
-       VALUES ($1, $2, $3, $4, $5, $6, (SELECT COALESCE(max(sort), 0) + 10 FROM menu_products WHERE category_id = $2), $7, $8) RETURNING id`,
-      [actor.businessId, input.categoryId, name, description, price, station, nameEn, descriptionEn],
+      `INSERT INTO menu_products (business_id, category_id, name, description, price, station, sort, name_en, description_en, option_groups)
+       VALUES ($1, $2, $3, $4, $5, $6, (SELECT COALESCE(max(sort), 0) + 10 FROM menu_products WHERE category_id = $2), $7, $8, $9::jsonb) RETURNING id`,
+      [actor.businessId, input.categoryId, name, description, price, station, nameEn, descriptionEn, optionGroups ?? null],
     );
     await audit(db, actor, {
       action: 'menu.product',
@@ -202,7 +211,8 @@ export async function setProductAvailable(actor: Actor, productId: string, avail
 
 // ───────── pedidos ─────────
 
-export type CartLine = { productId: string; quantity: number; notes?: string };
+/** `choices`: lo escogido de cada grupo de opciones del producto (en el mismo orden), si las tiene. */
+export type CartLine = { productId: string; quantity: number; notes?: string; choices?: string[][] };
 
 export type SessionInfo = { id: string; tableId: string; tableNumber: string; zone: string; status: string; guests: number; openedAt: Date; openedBy: string };
 
@@ -232,7 +242,7 @@ export async function sendOrder(actor: Actor, sessionId: string, lines: CartLine
     if (!isUuid(l.productId)) throw new AppError('INVALID', 'Hay un producto que no existe.');
     if (!Number.isInteger(l.quantity) || l.quantity < 1 || l.quantity > 99) throw new AppError('INVALID', 'Cantidad: de 1 a 99.');
     const notes = l.notes?.replace(/\s+/g, ' ').trim().slice(0, 140) || null;
-    return { productId: l.productId, quantity: l.quantity, notes };
+    return { productId: l.productId, quantity: l.quantity, notes, choices: l.choices };
   });
 
   const existing = await query<{ id: string; number: number }>(`SELECT id, number FROM order_rounds WHERE business_id = $1 AND client_key = $2`, [
@@ -246,8 +256,8 @@ export async function sendOrder(actor: Actor, sessionId: string, lines: CartLine
       const session = await lockOpenSession(db, actor, sessionId);
       const ids = [...new Set(clean.map((l) => l.productId))];
       const products = (
-        await db.query<{ id: string; name: string; price: string; station: Station; isAvailable: boolean }>(
-          `SELECT p.id, p.name, p.price, p.station, p.is_available AS "isAvailable"
+        await db.query<{ id: string; name: string; price: string; station: Station; isAvailable: boolean; optionGroups: OptionGroup[] | null }>(
+          `SELECT p.id, p.name, p.price, p.station, p.is_available AS "isAvailable", p.option_groups AS "optionGroups"
              FROM menu_products p JOIN menu_categories c ON c.id = p.category_id
             WHERE p.id = ANY($1::uuid[]) AND p.business_id = $2 AND p.is_active AND c.is_active`,
           [ids, actor.businessId],
@@ -258,6 +268,14 @@ export async function sendOrder(actor: Actor, sessionId: string, lines: CartLine
         const product = byId.get(id);
         if (!product) throw new AppError('CONFLICT', 'Un producto del pedido ya no está en la carta. Recarga la página.');
         if (!product.isAvailable) throw new AppError('CONFLICT', `${product.name} está agotado. Quítalo del pedido.`);
+      }
+      // Lo escogido para armar el plato va adelante de la nota, para que salga en la comanda y en la cuenta.
+      for (const line of clean) {
+        const groups = byId.get(line.productId)!.optionGroups;
+        if (!groups?.length) continue;
+        const picked = completeChoices(groups, line.choices);
+        if (!picked) throw new AppError('INVALID', `Escoge las opciones de ${byId.get(line.productId)!.name}.`);
+        line.notes = [describeChoices(groups, picked), line.notes].filter(Boolean).join(' — ').slice(0, 300);
       }
       const number =
         (await db.query<{ n: number }>(`SELECT COALESCE(max(number), 0) + 1 AS n FROM order_rounds WHERE session_id = $1`, [sessionId])).rows[0].n;

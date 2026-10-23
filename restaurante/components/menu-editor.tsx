@@ -7,11 +7,12 @@ import { orOffline } from '@/lib/offline';
 import { formatCop } from '@/lib/format';
 import type { MenuCategory, MenuProduct } from '@/lib/orders';
 import { STATION_LABEL } from '@/lib/stations';
+import { optionGroupsText } from '@/lib/product-options';
 import { productPhotoUrl } from '@/lib/product-photo-url';
 import { ProductPhotoForm } from './product-photo-form';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
-import { Alert, CheckField, Empty, Field, Select, card, quietButton } from './ui';
+import { Alert, CheckField, Empty, Field, Select, TextArea, card, quietButton } from './ui';
 import { useT, useTr } from './i18n';
 
 // Solo bar (licores): todo va a barra, así que no se pregunta a qué estación va cada cosa.
@@ -159,6 +160,17 @@ function ProductForm({ categories, categoryId, product, onDone }: { categories: 
             </Select>
           )}
           {product ? <CheckField name="isActive" label={t('En la carta')} defaultChecked={product.isActive} /> : null}
+          <div className="sm:col-span-2">
+            <TextArea
+              label={t('Opciones para armar el plato (opcional)')}
+              name="options"
+              rows={4}
+              maxLength={2000}
+              defaultValue={state?.values?.options ?? optionGroupsText(product?.optionGroups)}
+              placeholder={'Sopa\nArroz: Arroz de coco, Arroz de frijol\nProteína: Pechuga, Carne en bistec'}
+              hint={t('Una línea por grupo: «Grupo: opción, opción». El mesero escoge una de cada grupo al pedirlo («(elige 2)» después del grupo para dos). Una línea sin «:» es algo que el plato siempre trae.')}
+            />
+          </div>
           <div className="sm:col-span-2">
             <SubmitButton pendingText={t('Guardando…')}>{product ? t('Guardar producto') : t('Agregar producto')}</SubmitButton>
           </div>

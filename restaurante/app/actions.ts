@@ -573,6 +573,7 @@ export async function saveProductAction(_prev: FormState, formData: FormData): P
         price: text(formData, 'price'),
         station: text(formData, 'station'),
         isActive: formData.has('id') ? formData.get('isActive') === 'on' : true,
+        options: formData.has('options') ? String(formData.get('options') ?? '') : undefined,
       }),
     ['/app/carta'],
     'Producto guardado.',

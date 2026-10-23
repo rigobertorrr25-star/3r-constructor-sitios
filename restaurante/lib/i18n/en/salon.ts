@@ -94,6 +94,12 @@ export const en: Record<string, string> = {
   Cantidad: 'Quantity',
   'Otro {name}': 'One more {name}',
   'Sin cebolla, término medio…': 'No onion, medium…',
+  // Opciones para armar un plato (PROMO ALMUERZO, components/pos-screen.tsx OptionPicker)
+  'Incluye: {name}': 'Includes: {name}',
+  '(escoge 1)': '(choose 1)',
+  '(escoge {n})': '(choose {n})',
+  'Agregar al pedido': 'Add to order',
+  'Escoge las opciones': 'Choose the options',
   'Nota para {name}': 'Note for {name}',
   Anulado: 'Voided',
   Anular: 'Void',

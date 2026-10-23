@@ -188,6 +188,9 @@ export const en: Record<string, string> = {
   'Borrar toda la carta': 'Delete the whole menu',
   'Borra todas las categorías y productos, con sus fotos y recetas, para cargar la carta de nuevo (Carta → «Importar carta»). Si hay pedidos con esos productos, primero borra las ventas de prueba. El inventario, el equipo y el plano se quedan. No se puede deshacer.':
     'Deletes every category and product, with their photos and recipes, so the menu can be loaded again (Menu → “Import menu”). If there are orders with those products, delete the test sales first. Inventory, team and floor plan stay. This can’t be undone.',
+  'Opciones para armar el plato (opcional)': 'Options to build the dish (optional)',
+  'Una línea por grupo: «Grupo: opción, opción». El mesero escoge una de cada grupo al pedirlo («(elige 2)» después del grupo para dos). Una línea sin «:» es algo que el plato siempre trae.':
+    'One line per group: “Group: option, option”. The waiter picks one from each group when ordering (“(elige 2)” after the group for two). A line without “:” is something the dish always includes.',
   'Borrar todo el inventario': 'Delete all inventory',
   'Borra todos los insumos de todas las sedes con sus existencias, compras, conteos y movimientos, y las recetas de la carta que los usaban. La carta, las ventas, los gastos y facturas de compra, el equipo y el plano se quedan. No se puede deshacer.':
     'Deletes every ingredient in every location with its stock, purchases, counts and movements, and the menu recipes that used them. The menu, sales, expenses and purchase invoices, team and floor plan stay. This can’t be undone.',
