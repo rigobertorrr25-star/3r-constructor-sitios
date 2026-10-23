@@ -172,6 +172,7 @@ export const en: Record<string, string> = {
     'Type the printer name exactly as it shows in Windows (the printing program lists it when it starts).',
   'Para confirmar, escribe el nombre del negocio tal cual: {name}': 'To confirm, type the business name exactly: {name}',
   'Este negocio tiene pedidos con productos de la carta. Primero toca «Borrar ventas de prueba».': 'This business has orders with menu products. Tap “Delete test sales” first.',
+  'Listo. Se borraron {a} insumos y {b} movimientos. Ya puedes cargar el inventario de nuevo.': 'Done. {a} ingredients and {b} movements were deleted. You can load the inventory again.',
   'Listo. Se borraron {a} categorías y {b} productos. Ya puedes cargar la carta de nuevo.': 'Done. {a} categories and {b} products were deleted. You can load the menu again.',
   'Listo. Se borraron {a} mesas, {b} pagos y {c} turnos de caja. El negocio arranca a vender de cero.':
     'Done. {a} tables, {b} payments and {c} cash shifts were deleted. The business starts selling from zero.',
