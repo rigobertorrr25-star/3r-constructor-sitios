@@ -349,6 +349,16 @@ CREATE TABLE IF NOT EXISTS expenses (
   void_reason      VARCHAR(200)
 );
 CREATE INDEX IF NOT EXISTS idx_expenses_location_date ON expenses (location_id, spent_on);
+-- Cada factura de compra es de insumos (lo que entra a la bodega: comida, bebida, licor, desechables) o un gasto
+-- (arriendo, servicios, mantenimiento…), pedido de Rigoberto 23 oct 2026. Al crear la columna, lo que ya estaba como
+-- «Proveedores» queda como insumos.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'expenses' AND column_name = 'kind') THEN
+    ALTER TABLE expenses ADD COLUMN kind VARCHAR(10) NOT NULL DEFAULT 'expense' CHECK (kind IN ('expense', 'supplies'));
+    UPDATE expenses SET kind = 'supplies' WHERE category = 'suppliers';
+  END IF;
+END $$;
 
 -- ───────── módulo 11: clientes, reservas y menú QR ─────────
 

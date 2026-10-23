@@ -12,7 +12,7 @@ describe('leer la respuesta de la IA sobre una factura', () => {
     const { receiptReading } = await import('../lib/ai-read');
     assert.deepEqual(
       receiptReading('Aquí va: {"proveedor":"Surtifruver La Sexta","total":"$84.500","fecha":"2026-10-23","tipo":"suppliers","descripcion":"Compra de 10 kg de limón y 5 kg de tomate"}'),
-      { supplier: 'Surtifruver La Sexta', total: 84500, date: '2026-10-23', category: 'suppliers', description: 'Compra de 10 kg de limón y 5 kg de tomate', lines: [] },
+      { supplier: 'Surtifruver La Sexta', total: 84500, date: '2026-10-23', category: 'suppliers', description: 'Compra de 10 kg de limón y 5 kg de tomate', lines: [], bags: 0 },
     );
     assert.deepEqual(receiptReading('{"proveedor":null,"total":null,"fecha":"23/10/2026","tipo":"comida","descripcion":"Hielo"}'), {
       supplier: '',
@@ -21,6 +21,7 @@ describe('leer la respuesta de la IA sobre una factura', () => {
       category: 'other',
       description: 'Hielo',
       lines: [],
+      bags: 0,
     });
     assert.equal(receiptReading('{"proveedor":null,"total":null,"fecha":null,"tipo":null,"descripcion":""}'), null, 'no era una factura');
     assert.equal(receiptReading('no sé'), null);
@@ -31,6 +32,12 @@ describe('leer la respuesta de la IA sobre una factura', () => {
       { name: 'Club Colombia', quantity: 24, unit: 'und', total: 96000 },
       { name: 'Limón', quantity: 2500, unit: 'g', total: 10000 },
     ], 'kg no es una unidad válida y el nombre muy corto se descarta');
+    // Las bolsas no van al inventario: se suman aparte, aunque la IA las deje como producto. La bolsa de hielo sí es insumo.
+    const withBags = receiptReading(
+      '{"descripcion":"Mercado","total":50000,"bolsas":"$300","productos":[{"nombre":"Bolsas plásticas","cantidad":3,"unidad":"und","total":600},{"nombre":"Impuesto a la bolsa","cantidad":1,"unidad":"und","total":200},{"nombre":"Bolsa de hielo","cantidad":2,"unidad":"und","total":8000}]}',
+    );
+    assert.equal(withBags?.bags, 1100);
+    assert.deepEqual(withBags?.lines.map((l) => l.name), ['Bolsa de hielo']);
   });
 });
 
@@ -105,6 +112,37 @@ describe('facturas de compra con foto', { skip: url ? false : 'sin TEST_DATABASE
     );
     assert.equal(moves[0].by, 'Cajera');
     assert.match(moves[0].reason, /Factura de compra de Makro/);
+    // Con productos y sin decir el tipo, es de insumos; un gasto no puede sumar al inventario.
+    const listed = await fin.listPurchaseInvoices(cashier, { from: today, to: today });
+    assert.ok(listed.some((e) => e.description === 'Cerveza y limones' && e.kind === 'supplies'));
+    await assert.rejects(fin.addExpense(cashier, { ...base, kind: 'expense', lines: [{ itemId: beer, quantity: 1, total: 4000 }] }), { code: 'INVALID' });
+    await assert.rejects(fin.addExpense(cashier, { ...base, kind: 'otro' }), { code: 'INVALID' });
+  });
+
+  it('separa insumos y gastos, y las bolsas quedan como gasto aparte (también en la caja)', async () => {
+    const luz = await fin.addExpense(cashier, { kind: 'expense', category: 'utilities', description: 'Luz de octubre', amount: 300000, spentOn: today });
+    const base = { kind: 'supplies', category: 'suppliers', description: 'Mercado de la semana', supplier: 'D1', amount: 50000, spentOn: today, paidFromCash: true };
+    await assert.rejects(fin.addExpense(cashier, { ...base, bags: 50000 }), { code: 'INVALID' }, 'las bolsas no pueden ser todo');
+    await assert.rejects(fin.addExpense(cashier, { ...base, kind: 'expense', bags: 500 }), { code: 'INVALID' });
+    const id = await fin.addExpense(cashier, { ...base, bags: 1100 });
+    const list = await fin.listPurchaseInvoices(cashier, { from: today, to: today });
+    assert.equal(list.find((e) => e.id === luz)?.kind, 'expense');
+    const main = list.find((e) => e.id === id)!;
+    assert.equal(main.kind, 'supplies');
+    assert.equal(main.amount, 48900);
+    const bags = list.find((e) => e.category === 'packaging')!;
+    assert.equal(bags.kind, 'expense');
+    assert.equal(bags.amount, 1100);
+    assert.equal(bags.supplier, 'D1');
+    assert.match(bags.description, /Bolsas de la factura: Mercado de la semana/);
+    // Cada uno con su salida de caja: anular las bolsas devuelve solo las bolsas.
+    const outs = await db.query<{ amount: string }>(`SELECT amount FROM cash_movements WHERE business_id = $1 AND kind = 'out' AND amount IN (48900, 1100) ORDER BY amount`, [owner.businessId]);
+    assert.deepEqual(outs.map((r) => Number(r.amount)), [1100, 48900]);
+    await fin.voidExpense(owner, bags.id, 'Prueba');
+    const back = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM cash_movements WHERE business_id = $1 AND kind = 'in' AND amount = 1100`, [owner.businessId]);
+    assert.equal(back[0].n, 1);
+    // En Finanzas, «Bolsas y empaques» es su propia categoría.
+    assert.equal(fin.EXPENSE_LABEL.packaging, 'Bolsas y empaques');
   });
 
   it('la cajera registra el gasto con la foto y pagado de la caja; el mesero no puede', async () => {

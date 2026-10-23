@@ -832,6 +832,7 @@ export async function addExpenseAction(_prev: FormState, formData: FormData): Pr
     formData,
     () =>
       addExpense(staff, {
+        kind: text(formData, 'kind'),
         category: text(formData, 'category'),
         description: text(formData, 'description'),
         supplier: text(formData, 'supplier'),
@@ -840,6 +841,7 @@ export async function addExpenseAction(_prev: FormState, formData: FormData): Pr
         paidFromCash: formData.get('paidFromCash') === 'on',
         photo,
         lines: purchaseLines(formData),
+        bags: formData.get('bags') ? pesos(formData, 'bags') : 0,
       }),
     ['/app/finanzas', '/app/caja', '/app/facturas', '/app/inventario'],
     'Gasto registrado.',
@@ -868,7 +870,7 @@ export async function readReceiptAction(_prev: FormState, formData: FormData): P
     const r = await readReceiptWithAi(staff, { type: file.type, size: file.size, data: Buffer.from(await file.arrayBuffer()) }, items.map((i) => i.name));
     return {
       ok: Date.now(),
-      message: await trServer('Listo: revisa lo que leyó la IA, corrige lo que haga falta y toca «Guardar gasto».'),
+      message: await trServer('Listo: revisa lo que leyó la IA, corrige lo que haga falta y guarda.'),
       values: {
         supplier: r.supplier,
         amount: r.total ? String(r.total) : '',
@@ -876,6 +878,7 @@ export async function readReceiptAction(_prev: FormState, formData: FormData): P
         category: r.category,
         description: r.description,
         lines: JSON.stringify(r.lines),
+        bags: r.bags ? String(r.bags) : '',
       },
     };
   } catch (error) {

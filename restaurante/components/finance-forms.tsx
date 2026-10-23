@@ -10,6 +10,7 @@ import { useT } from './i18n';
 
 const CATEGORIES: [string, string][] = [
   ['suppliers', 'Proveedores'],
+  ['packaging', 'Bolsas y empaques'],
   ['payroll', 'Nómina'],
   ['rent', 'Arriendo'],
   ['utilities', 'Servicios públicos'],
@@ -53,6 +54,7 @@ export function ExpenseForm({ today }: { today: string }) {
 type Row = {
   id: string;
   categoryLabel: string;
+  kind: 'supplies' | 'expense';
   description: string;
   supplier: string | null;
   amount: number;
@@ -72,7 +74,7 @@ export function ExpenseRow({ expense: e, showLocation }: { expense: Row; showLoc
     <li className="px-4 py-3 text-[14px]">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className={e.voided ? 'line-through opacity-50' : ''}>
-          <span className="font-medium">{e.description}</span> · {e.categoryLabel}
+          <span className="font-medium">{e.description}</span> · {e.kind === 'supplies' ? t('Insumos') : t('Gasto')} · {e.categoryLabel}
           {e.supplier ? ` · ${e.supplier}` : ''}
           <span className="block text-[12.5px] text-muted-foreground no-underline">
             {e.spentOn} · {e.createdBy}
