@@ -373,6 +373,7 @@ export const en: Record<string, string> = {
   'Envió la ronda {round} de la mesa {n}: {count} productos por ${total}': 'Sent round {round} for table {n}: {count} items for ${total}',
   'Anuló {qty} × {item} (${amount}) de la mesa {n}': 'Voided {qty} × {item} (${amount}) on table {n}',
   'Anuló {qty} × {item} (${amount}) de la mesa {n} (ya estaba en preparación o lista)': 'Voided {qty} × {item} (${amount}) on table {n} (it was already in progress or ready)',
+  'Anuló {qty} × {item} (${amount}) de la mesa {n} (ya estaba preparado)': 'Voided {qty} × {item} (${amount}) on table {n} (it was already made)',
 
   // Reservas
   'Reservó para {name} ({guests} p.) el {date} a las {time}': 'Booked for {name} ({guests} ppl) on {date} at {time}',

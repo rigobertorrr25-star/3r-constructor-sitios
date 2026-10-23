@@ -105,6 +105,8 @@ export const en: Record<string, string> = {
   Anular: 'Void',
   'Motivo: {reason}': 'Reason: {reason}',
   'Motivo de la anulación': 'Void reason',
+  'Ya se había preparado': 'It was already made',
+  'Si no se alcanzó a hacer, déjalo sin marcar: sus insumos vuelven al inventario.': 'If it wasn’t made yet, leave it unchecked: its ingredients go back to inventory.',
   'Se equivocó el mesero, cliente cambió…': 'Server error, guest changed their mind…',
   'Anulando…': 'Voiding…',
 

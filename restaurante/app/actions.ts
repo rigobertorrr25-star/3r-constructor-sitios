@@ -607,7 +607,12 @@ export async function sendOrderAction(sessionId: string, lines: CartLine[], clie
 
 export async function voidItemAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
-  return run(formData, () => voidItem(staff, text(formData, 'itemId'), text(formData, 'reason')), ['/app', `/app/mesa/${text(formData, 'sessionId')}`], 'Anulado.');
+  return run(
+    formData,
+    () => voidItem(staff, text(formData, 'itemId'), text(formData, 'reason'), formData.has('preparedChoice') ? formData.get('prepared') === 'on' : undefined),
+    ['/app', `/app/mesa/${text(formData, 'sessionId')}`],
+    'Anulado.',
+  );
 }
 
 // ───────── cocina y barra ─────────

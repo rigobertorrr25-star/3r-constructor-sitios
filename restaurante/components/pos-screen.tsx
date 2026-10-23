@@ -12,7 +12,7 @@ import { describeChoices, isFixed, type OptionGroup } from '@/lib/product-option
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { useNow } from './table-board';
-import { Alert, Empty, Field, card, inputClass, primaryButton, quietButton } from './ui';
+import { Alert, CheckField, Empty, Field, card, inputClass, primaryButton, quietButton } from './ui';
 import { PrintBillButton } from './printer-forms';
 import { useLang, useT, useTr } from './i18n';
 
@@ -508,6 +508,15 @@ function SentRow({ item, sessionId, canVoid }: { item: Item; sessionId: string; 
               <input type="hidden" name="sessionId" value={sessionId} />
               <div className="min-w-[220px] flex-1">
                 <Field label={t('Motivo de la anulación')} name="reason" required minLength={3} maxLength={300} placeholder={t('Se equivocó el mesero, cliente cambió…')} />
+              </div>
+              <input type="hidden" name="preparedChoice" value="1" />
+              <div className="w-full">
+                <CheckField
+                  name="prepared"
+                  label={t('Ya se había preparado')}
+                  hint={t('Si no se alcanzó a hacer, déjalo sin marcar: sus insumos vuelven al inventario.')}
+                  defaultChecked={false}
+                />
               </div>
               <SubmitButton tone="danger" pendingText={t('Anulando…')}>
                 {t('Anular')}

@@ -89,6 +89,14 @@ describe('módulos 05 y 06: inventario y recetas', { skip: url ? false : 'sin TE
     assert.equal(await stock(whisky), 2250 - 180);
     await orders.voidItem(owner, order.rounds[0].items[0].id, 'Lo devolvieron');
     assert.equal(await stock(whisky), 2250 - 180, 'ya preparado: no vuelve');
+    // La comanda dice «Preparando», pero quien anula dice que ese producto no se alcanzó a hacer: vuelve.
+    await orders.sendOrder(waiter, sessionId, [{ productId: drink, quantity: 1 }], randomUUID());
+    const third = (await orders.getSessionOrder(owner, sessionId))!.rounds[2].items[0];
+    const ticket = (await kds.listTickets(bartender, 'bar')).find((t) => t.items.some((i) => i.id === third.id))!;
+    await kds.moveTicket(bartender, ticket.id, 'preparing');
+    assert.equal(await stock(whisky), 2250 - 180 - 45);
+    await orders.voidItem(owner, third.id, 'No se alcanzó a hacer', false);
+    assert.equal(await stock(whisky), 2250 - 180, 'no se había preparado: vuelve aunque la comanda dijera preparando');
   });
 
   it('merma y conteo de botellas: la diferencia es la fuga', async () => {
