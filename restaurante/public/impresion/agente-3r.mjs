@@ -6,8 +6,9 @@
 //
 // La primera vez pide la dirección del sistema y el código de la sede (se crea en Restaurant Control → Impresoras)
 // y los guarda en config.json, al lado de este archivo. Para cambiar de código, borra config.json.
+// Al prender, si el sistema tiene una versión más nueva de este programa, se actualiza solo y vuelve a prender.
 
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { readFile, unlink, writeFile } from 'node:fs/promises';
 import { createConnection } from 'node:net';
@@ -16,9 +17,10 @@ import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 
-const VERSION = '1.1';
+const VERSION = '1.2';
+const SELF = fileURLToPath(import.meta.url);
 const EVERY_MS = 2000;
-const CONFIG = join(dirname(fileURLToPath(import.meta.url)), 'config.json');
+const CONFIG = join(dirname(SELF), 'config.json');
 
 const now = () => new Date().toLocaleTimeString('es-CO');
 const log = (msg) => console.log(`[${now()}] ${msg}`);
@@ -63,7 +65,7 @@ function send(host, port, data) {
 // ───────── impresoras por cable USB (Windows) ─────────
 
 const USB = 'usb:';
-const isWindows = process.platform === 'win32';
+const isWindows = process.platform === 'win32' || process.env.RC_TEST_WINDOWS === '1';
 
 function powershell(script, env = {}) {
   return new Promise((resolve, reject) => {
@@ -76,7 +78,9 @@ function powershell(script, env = {}) {
   });
 }
 
-// Manda los bytes tal cual (RAW) a una impresora instalada en Windows, como hacen los programas de caja.
+// Manda los bytes tal cual (RAW) a una impresora instalada en Windows, como hacen los programas de caja. Arrancar
+// PowerShell y armar esta parte tarda varios segundos en un computador de caja, así que se hace una sola vez: queda
+// prendido y recibe cada papel por una línea («nombre<TAB>archivo») y contesta «FIN<TAB>error» (vacío si salió).
 const RAW_PRINT = `
 $ErrorActionPreference = 'Stop'
 Add-Type -TypeDefinition @'
@@ -104,18 +108,104 @@ public static class RawPrint3R {
   }
 }
 '@
-$e = [RawPrint3R]::Send($env:RC_PRINTER, [IO.File]::ReadAllBytes($env:RC_FILE))
-if ($e) { [Console]::Error.Write($e); exit 1 }
+[Console]::InputEncoding = [Text.Encoding]::UTF8
+[Console]::OutputEncoding = [Text.Encoding]::UTF8
+[Console]::Out.WriteLine('LISTO')
+while ($true) {
+  $line = [Console]::In.ReadLine()
+  if ($line -eq $null) { break }
+  $parts = $line -split "\t", 2
+  try { $e = [RawPrint3R]::Send($parts[0], [IO.File]::ReadAllBytes($parts[1])) } catch { $e = $_.Exception.Message }
+  [Console]::Out.WriteLine("FIN\t" + ($e -replace '[\r\n\t]', ' '))
+}
 `;
 
-async function sendUsb(name, data) {
-  if (!isWindows) throw new Error('Las impresoras por cable USB solo funcionan con este programa en Windows.');
-  const file = join(tmpdir(), `rc-${randomUUID()}.bin`);
-  await writeFile(file, data);
+let shell = null;
+let queue = Promise.resolve();
+
+/** El PowerShell que queda prendido para imprimir por USB; si se cae, se vuelve a prender en el siguiente papel. */
+async function usbShell() {
+  if (shell) return shell.ready;
+  const script = join(tmpdir(), `rc-impresion-${process.pid}.ps1`);
+  await writeFile(script, '\ufeff' + RAW_PRINT);
+  const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script], {
+    windowsHide: true,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+  const current = { child, waiting: null, buffer: '', ready: null };
+  shell = current;
+  const close = (why) => {
+    if (shell === current) shell = null;
+    if (current.waiting) current.waiting.reject(new Error(why));
+    current.waiting = null;
+  };
+  current.ready = new Promise((resolve, reject) => {
+    current.waiting = { resolve: () => resolve(current), reject };
+  });
+  let errors = '';
+  child.stderr.on('data', (d) => (errors += d.toString()).length > 2000 && (errors = errors.slice(-2000)));
+  child.stdout.on('data', (d) => {
+    current.buffer += d.toString();
+    let i;
+    while ((i = current.buffer.indexOf('\n')) >= 0) {
+      const line = current.buffer.slice(0, i).replace(/\r$/, '').replace(/^\ufeff/, '');
+      current.buffer = current.buffer.slice(i + 1);
+      const w = current.waiting;
+      if (!w) continue;
+      if (line === 'LISTO') (current.waiting = null), w.resolve();
+      else if (line.startsWith('FIN\t')) {
+        current.waiting = null;
+        const error = line.slice(4).trim();
+        error ? w.reject(new Error(error)) : w.resolve();
+      }
+    }
+  });
+  child.on('error', (e) => close(`No pude abrir PowerShell (${e.message}).`));
+  child.on('exit', () => close(`PowerShell se cerró${errors.trim() ? `: ${errors.trim().split(/\r?\n/)[0]}` : ''}.`));
+  return current.ready;
+}
+
+/** Un papel por cable USB: se pasan de a uno al PowerShell prendido. */
+function sendUsb(name, data) {
+  if (!isWindows) return Promise.reject(new Error('Las impresoras por cable USB solo funcionan con este programa en Windows.'));
+  const job = queue.then(async () => {
+    const file = join(tmpdir(), `rc-${randomUUID()}.bin`);
+    await writeFile(file, data);
+    try {
+      const s = await usbShell();
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          s.child.kill();
+          reject(new Error(`La impresora '${name}' no contestó en 30 segundos.`));
+        }, 30000);
+        s.waiting = {
+          resolve: () => (clearTimeout(timer), resolve()),
+          reject: (e) => (clearTimeout(timer), reject(e)),
+        };
+        s.child.stdin.write(`${name}\t${file}\n`);
+      });
+    } finally {
+      await unlink(file).catch(() => {});
+    }
+  });
+  queue = job.catch(() => {});
+  return job;
+}
+
+/** Si el sistema tiene una versión más nueva de este programa, la descarga, se reemplaza y sale (el .bat lo vuelve a prender). */
+async function updateSelf(c) {
   try {
-    await powershell(RAW_PRINT, { RC_PRINTER: name, RC_FILE: file });
-  } finally {
-    await unlink(file).catch(() => {});
+    const res = await fetch(`${c.servidor}/impresion/agente-3r.mjs`, { signal: AbortSignal.timeout(15000) });
+    if (!res.ok) return;
+    const latest = await res.text();
+    const version = /const VERSION = '([^']+)'/.exec(latest)?.[1];
+    if (!version || version === VERSION || !latest.includes('async function main()')) return;
+    if ((await readFile(SELF, 'utf8')) === latest) return;
+    await writeFile(SELF, latest);
+    log(`Programa actualizado a la versión ${version}. Se vuelve a prender…`);
+    process.exit(0);
+  } catch {
+    // Sin conexión o sin permiso para escribir: sigue con esta versión.
   }
 }
 
@@ -148,8 +238,11 @@ async function api(c, path, init = {}) {
 
 async function main() {
   const c = await loadConfig();
+  await updateSelf(c);
   log(`Programa de impresión ${VERSION} prendido. Conectado a ${c.servidor}. No cierres esta ventana.`);
   await listWindowsPrinters();
+  // PowerShell se deja listo desde ya, para que el primer papel por USB también salga rápido.
+  if (isWindows) usbShell().catch((e) => log(`No pude preparar la impresión por USB (${e.message}).`));
   let offline = false;
   for (;;) {
     try {
@@ -166,6 +259,8 @@ async function main() {
           await api(c, `/api/impresion/trabajos/${t.id}`, { method: 'POST', body: JSON.stringify({ ok: false, error: e.message }) }).catch(() => {});
         }
       }
+      // Si había papeles, se vuelve a preguntar de una (puede haber más en cola).
+      if (trabajos.length) continue;
     } catch (e) {
       if (e.fatal) {
         log(e.message);
