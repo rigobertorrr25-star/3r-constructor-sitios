@@ -22,7 +22,7 @@ import {
   requireStaff,
   staffSessionValue,
 } from '@/lib/auth';
-import { homeOf } from '@/lib/permissions';
+import { can, homeOf, ownStation } from '@/lib/permissions';
 import { moveTicket } from '@/lib/kds';
 import { saveFiscal, setInvoiceCustomer } from '@/lib/invoices';
 import { createAppointment, payAppointment, saveService, setAppointmentStatus } from '@/lib/appointments';
@@ -827,7 +827,7 @@ export async function bulkStockAction(_prev: FormState, formData: FormData): Pro
 /** Inventario → «Llenar con una foto»: la IA cuenta lo que ve en la foto y llena la tabla (la persona revisa y guarda). */
 export async function readStockAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff('inventory.load');
-  const area = text(formData, 'area');
+  const area = (can(staff.role, 'inventory.manage') ? null : ownStation(staff.role)) ?? text(formData, 'area');
   try {
     const files = await Promise.all(
       formData

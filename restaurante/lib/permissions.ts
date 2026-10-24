@@ -76,8 +76,9 @@ const GRANTS: Record<Permission, Role[]> = {
   'inventory.view': ['owner', 'manager', 'kitchen', 'bar'],
   // Insumos, recetas, compras y conteos.
   'inventory.manage': ['owner', 'manager'],
-  // Inventario masivo (armarlo desde la carta y cargar cantidades y mínimos): también el bartender. Los costos, no.
-  'inventory.load': ['owner', 'manager', 'bar'],
+  // Inventario masivo (armarlo desde la carta, cargar cantidades y mínimos, y crear lo que la IA vio en la foto): también
+  // barra y cocina, cada una solo lo de su área. Los costos, no.
+  'inventory.load': ['owner', 'manager', 'kitchen', 'bar'],
   // Mermas (se cayó, se dañó): las registra quien las ve.
   'inventory.waste': ['owner', 'manager', 'kitchen', 'bar'],
   // Gastos y estado de resultados. El dueño ve todas las sedes; el administrador, la suya.
