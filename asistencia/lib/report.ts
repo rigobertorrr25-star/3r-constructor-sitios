@@ -221,7 +221,7 @@ const csvCell = (value: string | number, sep: string) => {
  */
 export function recordsCsv(records: AttendanceRecord[], shifts: Shift[], lang: Lang = 'es', now = Date.now()): string {
   const sep = lang === 'en' ? ',' : ';';
-  const header = (['csvDate', 'csvEmployee', 'csvShift', 'csvIn', 'csvOut', 'csvHours', 'csvLate', 'csvEarly', 'csvEdited'] as const).map((key) =>
+  const header = (['csvDate', 'csvEmployee', 'csvShift', 'csvIn', 'csvOut', 'csvHours', 'csvLate', 'csvEarly'] as const).map((key) =>
     t(lang, key),
   );
   const rows = records.map((record) => {
@@ -236,7 +236,6 @@ export function recordsCsv(records: AttendanceRecord[], shifts: Shift[], lang: L
       worked === null ? '' : lang === 'en' ? (worked / 60).toFixed(2) : (worked / 60).toFixed(2).replace('.', ','),
       minutesLate(record, shifts) ?? 0,
       minutesEarlyExit(record, shifts) ?? 0,
-      record.editedAt ? t(lang, 'csvYes') : '',
     ];
   });
   return '\uFEFF' + [header, ...rows].map((row) => row.map((cell) => csvCell(cell, sep)).join(sep)).join('\r\n') + '\r\n';
