@@ -81,7 +81,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <Kpi
           label={t('Propinas')}
           value={formatCop(st.tips)}
-          hint={days > 1 ? t('Promedio {amount} por día', { amount: formatCop(Math.round(st.tips / days)) }) : t('Del día, aparte de las ventas')}
+          hint={[
+            st.sales ? t('{pct} % de lo vendido', { pct: Math.round((st.tips / st.sales) * 100) }) : t('Aparte de las ventas'),
+            days > 1 ? t('{amount} por día', { amount: formatCop(Math.round(st.tips / days)) }) : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
           accent="#ffc861"
         />
         <Kpi
