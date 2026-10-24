@@ -1,0 +1,33 @@
+# Plan B de Restaurant Control en Render (24 oct 2026, pedido de Rigoberto: «tener todo listo para cuando lo quiera pasar a Render»).
+# Hoy el sistema sigue en Vercel; esto solo se usa el día que Rigoberto cree el Blueprint en Render.
+# Paso a paso en restaurante/RENDER.md. Es aparte del render.yaml de la raíz (la API de la tienda): en Render se escoge
+# como «Blueprint Path» restaurante/render.yaml. Solo declara Restaurant Control.
+services:
+  - type: web
+    name: restaurant-control
+    runtime: node
+    # Plan pagado más pequeño: el gratis se duerme y tarda en despertar, y un restaurante no puede esperar.
+    plan: starter
+    # La región no se puede cambiar después: que quede cerca de la base de Neon (ver RENDER.md, paso 1).
+    region: ohio
+    branch: main
+    rootDir: restaurante
+    buildCommand: npm ci --include=dev && npm run build
+    # Las herramientas para armar el sistema (Tailwind, TypeScript) están en devDependencies: se instalan siempre.
+    # Render dice en PORT dónde escuchar; el «npm start» del proyecto usa el 3200 de pruebas locales. Sin npx: ahorra
+    # unos 80 MB de memoria (medido: el servidor solo usa ~160 MB de los 512 MB del plan starter).
+    startCommand: ./node_modules/.bin/next start -H 0.0.0.0 -p $PORT
+    healthCheckPath: /api/salud
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Las mismas cuatro de Vercel: se copian a mano al crear el Blueprint (nunca se escriben aquí).
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
