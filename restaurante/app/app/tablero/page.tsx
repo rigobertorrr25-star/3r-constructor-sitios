@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { BriefCard, BriefSkeleton } from '@/components/brief-card';
 import { requireStaff } from '@/lib/auth';
 import { getDashboard, isValidScope, type Level } from '@/lib/dashboard';
+import { workMode } from '@/lib/cash';
 import { todayIn } from '@/lib/finance';
 import { formatCop } from '@/lib/format';
 import { periodRange } from '@/lib/periods';
@@ -40,8 +41,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const isOwner = staff.role === 'owner';
   const locations = isOwner && staff.locationCount > 1 ? await listLocations(staff.businessId, { activeOnly: true }) : [];
   const sede = isOwner && isValidScope(sp.sede) ? (sp.sede ?? (staff.locationCount > 1 ? 'all' : staff.locationId)) : staff.locationId;
-  const d = await getDashboard(staff, { ...range, locationId: sede }, staff.timezone);
+  const [d, mode] = await Promise.all([getDashboard(staff, { ...range, locationId: sede }, staff.timezone), workMode(staff.businessId)]);
   const st = d.statement;
+  // Propina: el porcentaje de Sedes → «Propina sugerida» sobre lo vendido (no la que se marcó al cobrar).
+  const tipPct = mode.suggestedTip;
+  const tips = Math.round((st.sales * tipPct) / 100);
   // Días del periodo, para el promedio de propina por día.
   const days = Math.round((Date.parse(range.to) - Date.parse(range.from)) / 86_400_000) + 1;
   const scoreLevel: Level = d.score >= 85 ? 'ok' : d.score >= 60 ? 'watch' : 'alert';
@@ -80,10 +84,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <Kpi label={t('Ventas')} value={formatCop(st.sales)} hint={t('{n} mesas cobradas · ticket {amount}', { n: st.tables, amount: formatCop(st.averageTicket) })} accent="#5ee0a0" />
         <Kpi
           label={t('Propinas')}
-          value={formatCop(st.tips)}
+          value={formatCop(tips)}
           hint={[
-            st.sales ? t('{pct} % de lo vendido', { pct: Math.round((st.tips / st.sales) * 100) }) : t('Aparte de las ventas'),
-            days > 1 ? t('{amount} por día', { amount: formatCop(Math.round(st.tips / days)) }) : null,
+            t('{pct} % de lo vendido', { pct: tipPct }),
+            days > 1 ? t('{amount} por día', { amount: formatCop(Math.round(tips / days)) }) : null,
           ]
             .filter(Boolean)
             .join(' · ')}

@@ -204,7 +204,6 @@ export const en: Record<string, string> = {
   'Control total': 'Full control',
   '{n} mesas cobradas · ticket {amount}': '{n} tables paid · avg check {amount}',
   '{pct} % de lo vendido': '{pct}% of sales',
-  'Aparte de las ventas': 'Not counted in sales',
   '{amount} por día': '{amount} per day',
   'Costo de productos': 'Product cost',
   'Según las recetas': 'Based on recipes',
