@@ -42,6 +42,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const sede = isOwner && isValidScope(sp.sede) ? (sp.sede ?? (staff.locationCount > 1 ? 'all' : staff.locationId)) : staff.locationId;
   const d = await getDashboard(staff, { ...range, locationId: sede }, staff.timezone);
   const st = d.statement;
+  // Días del periodo, para el promedio de propina por día.
+  const days = Math.round((Date.parse(range.to) - Date.parse(range.from)) / 86_400_000) + 1;
   const scoreLevel: Level = d.score >= 85 ? 'ok' : d.score >= 60 ? 'watch' : 'alert';
   const link = (patch: Record<string, string>) => `/app/tablero?${new URLSearchParams({ periodo: period, ...(isOwner && sede ? { sede } : {}), ...patch })}`;
   const dateLabel = new Date(`${today}T12:00:00Z`).toLocaleDateString(lang === 'en' ? 'en-US' : 'es-CO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
@@ -74,8 +76,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </Suspense>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
         <Kpi label={t('Ventas')} value={formatCop(st.sales)} hint={t('{n} mesas cobradas · ticket {amount}', { n: st.tables, amount: formatCop(st.averageTicket) })} accent="#5ee0a0" />
+        <Kpi
+          label={t('Propinas')}
+          value={formatCop(st.tips)}
+          hint={days > 1 ? t('Promedio {amount} por día', { amount: formatCop(Math.round(st.tips / days)) }) : t('Del día, aparte de las ventas')}
+          accent="#ffc861"
+        />
         <Kpi
           label={t('Costo de productos')}
           value={formatCop(st.costOfSales)}
@@ -92,6 +100,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               : t('{n} mesas abiertas · {amount} por cobrar', { n: d.openTables, amount: formatCop(d.openTablesValue) })
           }
           accent="#d6b0ff"
+          className="col-span-2 sm:col-span-1"
         />
       </div>
 
@@ -190,9 +199,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   );
 }
 
-function Kpi({ label, value, hint, accent }: { label: string; value: string; hint?: string; accent: string }) {
+function Kpi({ label, value, hint, accent, className = '' }: { label: string; value: string; hint?: string; accent: string; className?: string }) {
   return (
-    <div className="rounded-[22px] border border-white/[0.08] bg-card p-4" style={{ boxShadow: `inset 3px 0 0 ${accent}` }}>
+    <div className={`rounded-[22px] border border-white/[0.08] bg-card p-4 ${className}`} style={{ boxShadow: `inset 3px 0 0 ${accent}` }}>
       <p className="text-[13px] text-muted-foreground">{label}</p>
       <p className="mt-1 whitespace-nowrap font-display text-[19px] font-bold sm:text-[23px]">{value}</p>
       {hint ? <p className="mt-0.5 text-[12.5px] text-muted-foreground">{hint}</p> : null}
