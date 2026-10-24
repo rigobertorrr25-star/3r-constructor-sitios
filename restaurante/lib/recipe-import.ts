@@ -71,8 +71,8 @@ export async function importRecipes(actor: Actor, text: string): Promise<RecipeI
     );
     for (const product of parsed.products) {
       const found = (
-        await db.query<{ id: string; name: string }>(
-          `SELECT id, name FROM menu_products WHERE business_id = $1 AND lower(name) = lower($2) ORDER BY is_active DESC`,
+        await db.query<{ id: string; name: string; station: string }>(
+          `SELECT id, name, station FROM menu_products WHERE business_id = $1 AND lower(name) = lower($2) ORDER BY is_active DESC`,
           [actor.businessId, product.name],
         )
       ).rows;
@@ -89,10 +89,12 @@ export async function importRecipes(actor: Actor, text: string): Promise<RecipeI
         }
         if (!item) {
           const id = (
-            await db.query<{ id: string }>(`INSERT INTO inventory_items (business_id, name, unit, min_stock) VALUES ($1, $2, $3, 0) RETURNING id`, [
+            // Un insumo nuevo queda en el área del producto que lo usa (barra o cocina).
+            await db.query<{ id: string }>(`INSERT INTO inventory_items (business_id, name, unit, min_stock, area) VALUES ($1, $2, $3, 0, $4) RETURNING id`, [
               actor.businessId,
               line.name,
               line.unit,
+              found[0].station === 'bar' ? 'bar' : 'kitchen',
             ])
           ).rows[0].id;
           item = { id, name: line.name, unit: line.unit };

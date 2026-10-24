@@ -270,3 +270,106 @@ export function isBagLine(name: string) {
     /\b(impuesto|impoconsumo|ibua)\b.*\bbolsas?\b/.test(n)
   );
 }
+
+/** Un insumo como se cuenta en la tabla de existencias: «botellas», «und», «kg» o «L». */
+export type StockListItem = { id: string; name: string; countUnit: 'botellas' | 'und' | 'kg' | 'L' };
+export type StockReading = {
+  /** Insumos que ya existen: cuántos hay, en la unidad en que se cuentan. */
+  found: { itemId: string; count: number }[];
+  /** Lo que se ve en la foto y no está en el inventario: se ofrece crearlo. */
+  others: { name: string; count: number; unit: 'und' | 'kg' | 'L' }[];
+};
+
+/**
+ * Inventario → «Llenar con una foto»: lee la foto de la bodega, la nevera, la barra o de la hoja donde anotaron el conteo y
+ * dice cuántos hay de cada insumo. Solo llena la tabla de «Cargar existencias»: la persona revisa y guarda.
+ */
+export async function readStockWithAi(actor: Actor, files: ReadFile[], items: StockListItem[]): Promise<StockReading> {
+  requirePermission(actor, 'inventory.load');
+  const real = checkReadFiles(files);
+  if (!process.env.ANTHROPIC_API_KEY) throw new AppError('INVALID', 'La lectura de fotos con IA no está activada en este sistema. Escribe las cantidades a mano.');
+  const list = items
+    .slice(0, 500)
+    .map((i, n) => `${n + 1}. ${i.name} (se cuenta en ${i.countUnit})`)
+    .join('\n');
+  const content: Anthropic.Beta.BetaContentBlockParam[] = real.map((f) =>
+    f.type === 'application/pdf'
+      ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: f.data.toString('base64') } }
+      : { type: 'image', source: { type: 'base64', media_type: f.type as Exclude<ReadType, 'application/pdf'>, data: f.data.toString('base64') } },
+  );
+  content.push({
+    type: 'text',
+    text: `Son fotos del inventario de un restaurante o bar de Colombia: puede ser la bodega, la nevera, la barra o una hoja donde anotaron el conteo a mano. Di cuántos hay de cada cosa.
+${items.length ? `Estos son los insumos que el negocio ya tiene:\n${list}\n` : 'El negocio todavía no tiene insumos.\n'}
+Responde solo con este JSON, sin texto alrededor:
+{"hay": [{"insumo": número del insumo en la lista, "cantidad": número}], "otros": [{"nombre": "...", "cantidad": número, "unidad": "und" | "kg" | "L"}]}
+- "hay": los insumos de la lista que se ven o están anotados, con la cantidad en la unidad en que se cuenta ese insumo. En botellas, una botella a medias es 0.5 (redondea a cuartos: 0.25, 0.5, 0.75). Si es una hoja, copia el número anotado.
+- "otros": lo que se ve o está anotado y no está en la lista. El nombre corto y claro como lo llamaría el restaurante (por ejemplo «Club Colombia», «Aguardiente Antioqueño», «Limón»), en unidades (und) salvo que la hoja lo diga en kg o L.
+- Cuenta con cuidado lo que se ve; si una caja cerrada dice cuántas trae, úsalo. No inventes: lo que no se alcance a ver o leer, déjalo por fuera.
+- Un mismo insumo una sola vez (si sale en varias fotos, suma solo si son lugares distintos).`,
+  });
+  const client = new Anthropic();
+  let text: string;
+  try {
+    const response = await client.beta.messages.create({
+      model: MODEL,
+      max_tokens: 8000,
+      // Contar botellas en una foto pide más cuidado que copiar texto.
+      output_config: { effort: 'medium' },
+      betas: ['server-side-fallback-2026-07-01'],
+      fallbacks: 'default',
+      messages: [{ role: 'user', content }],
+    });
+    text = response.content
+      .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')
+      .map((b) => b.text)
+      .join('');
+  } catch (error) {
+    if (error instanceof Anthropic.AuthenticationError) console.error('ANTHROPIC_API_KEY no es válida');
+    else console.error('Leer inventario con IA falló:', error instanceof Error ? error.message : error);
+    throw new AppError('INVALID', 'No pudimos leer la foto en este momento. Intenta de nuevo en un minuto o escribe las cantidades a mano.');
+  }
+  const reading = stockReading(text, items);
+  if (!reading.found.length && !reading.others.length) {
+    throw new AppError('INVALID', 'No vimos insumos en la foto. Tómala de frente, con buena luz y que se vean las etiquetas, o escribe las cantidades a mano.');
+  }
+  return reading;
+}
+
+/** Pasa la respuesta de la IA a cantidades por insumo; lo que no se entienda se deja por fuera. */
+export function stockReading(text: string, items: { id: string; name: string }[]): StockReading {
+  const out: StockReading = { found: [], others: [] };
+  const json = text.match(/\{[\s\S]*\}/)?.[0];
+  if (!json) return out;
+  let raw: Record<string, unknown>;
+  try {
+    raw = JSON.parse(json);
+  } catch {
+    return out;
+  }
+  const num = (v: unknown) => (typeof v === 'number' ? v : Number(String(v ?? '').replace(',', '.')));
+  const ok = (n: number) => Number.isFinite(n) && n >= 0 && n <= 1_000_000;
+  const seen = new Set<string>();
+  for (const r of Array.isArray(raw.hay) ? raw.hay.slice(0, 500) : []) {
+    const row = (r ?? {}) as Record<string, unknown>;
+    const index = num(row.insumo);
+    const count = num(row.cantidad);
+    if (!Number.isInteger(index) || index < 1 || index > items.length || !ok(count)) continue;
+    const id = items[index - 1].id;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.found.push({ itemId: id, count: Math.round(count * 100) / 100 });
+  }
+  const names = new Set(items.map((i) => i.name.toLocaleLowerCase('es')));
+  for (const r of Array.isArray(raw.otros) ? raw.otros.slice(0, 60) : []) {
+    const row = (r ?? {}) as Record<string, unknown>;
+    const name = typeof row.nombre === 'string' ? row.nombre.replace(/\s+/g, ' ').trim().slice(0, 80) : '';
+    const count = num(row.cantidad);
+    const unit = row.unidad === 'kg' || row.unidad === 'L' ? row.unidad : 'und';
+    const key = name.toLocaleLowerCase('es');
+    if (name.length < 2 || !ok(count) || names.has(key)) continue;
+    names.add(key);
+    out.others.push({ name, count: Math.round(count * 100) / 100, unit });
+  }
+  return out;
+}

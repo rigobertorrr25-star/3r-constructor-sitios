@@ -2,8 +2,8 @@
 
 import { importMenu, parseMenuText } from '@/lib/menu-import';
 import { importRecipes, parseRecipesText } from '@/lib/recipe-import';
-import { matchPhotosWithAi, readReceiptWithAi, readWithAi, type ReadKind } from '@/lib/ai-read';
-import { bulkStock, inventoryFromMenu, type StockRow } from '@/lib/inventory-bulk';
+import { matchPhotosWithAi, readReceiptWithAi, readStockWithAi, readWithAi, type ReadKind } from '@/lib/ai-read';
+import { bulkStock, inventoryFromMenu, type NewStockItem, type StockRow } from '@/lib/inventory-bulk';
 import { applyLibraryPhotos } from '@/lib/photo-library';
 import { createFixture, removeFixture, saveFixtureLayout, updateFixture } from '@/lib/floor';
 import { cookies, headers } from 'next/headers';
@@ -29,7 +29,7 @@ import { createAppointment, payAppointment, saveService, setAppointmentStatus } 
 import { getBrief } from '@/lib/brief';
 import { createReservation, requestReservation, seatReservation, updatePublicSettings, updateReservation } from '@/lib/reservations';
 import { addExpense, voidExpense, type PurchaseLine } from '@/lib/finance';
-import { itemsForPurchase, registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
+import { itemsForPurchase, listItems, registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
 import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
@@ -763,6 +763,7 @@ export async function saveItemAction(_prev: FormState, formData: FormData): Prom
         bottleSize: text(formData, 'bottleSize') || null,
         unitCost: text(formData, 'unitCost') || null,
         isActive: formData.has('id') ? formData.get('isActive') === 'on' : true,
+        area: text(formData, 'area') || null,
       }),
     ['/app/inventario'],
     'Insumo guardado.',
@@ -798,14 +799,58 @@ export async function bulkStockAction(_prev: FormState, formData: FormData): Pro
     else row.minStock = value;
     rows.set(m[2], row);
   }
-  let r: { counted: number; costs: number; mins: number };
+  // Insumos nuevos que vio la IA en la foto y la persona dejó marcados (new:N:name, new:N:count, new:N:unit).
+  const newItems: NewStockItem[] = [];
+  const area = text(formData, 'area');
+  for (const [key, value] of formData.entries()) {
+    const m = /^new:(\d+):create$/.exec(key);
+    if (!m || value !== 'on') continue;
+    const unit = text(formData, `new:${m[1]}:unit`);
+    newItems.push({
+      name: text(formData, `new:${m[1]}:name`),
+      counted: text(formData, `new:${m[1]}:count`) || '0',
+      unit: unit === 'kg' || unit === 'L' ? unit : 'und',
+      area: area === 'bar' ? 'bar' : 'kitchen',
+    });
+  }
+  let r: { counted: number; costs: number; mins: number; created?: number };
   try {
-    r = await bulkStock(staff, [...rows.values()]);
+    r = await bulkStock(staff, [...rows.values()], undefined, newItems);
   } catch (error) {
     return fail(await messageOf(error), formData);
   }
   revalidatePath('/app/inventario');
-  return { ok: Date.now(), message: await trServer(`Guardado: ${r.counted} cantidades, ${r.costs} costos y ${r.mins} mínimos.`) };
+  const created = r.created ? ' ' + (await trServer(`Insumos nuevos: ${r.created}.`)) : '';
+  return { ok: Date.now(), message: (await trServer(`Guardado: ${r.counted} cantidades, ${r.costs} costos y ${r.mins} mínimos.`)) + created };
+}
+
+/** Inventario → «Llenar con una foto»: la IA cuenta lo que ve en la foto y llena la tabla (la persona revisa y guarda). */
+export async function readStockAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('inventory.load');
+  const area = text(formData, 'area');
+  try {
+    const files = await Promise.all(
+      formData
+        .getAll('files')
+        .filter((f): f is File => typeof f === 'object' && f !== null && 'arrayBuffer' in f)
+        .map(async (f) => ({ type: f.type, size: f.size, data: Buffer.from(await f.arrayBuffer()) })),
+    );
+    const items = (await listItems(staff)).filter((i) => i.isActive && (area !== 'bar' && area !== 'kitchen' ? true : i.area === area));
+    const reading = await readStockWithAi(
+      staff,
+      files,
+      items.map((i) => ({ id: i.id, name: i.name, countUnit: i.bottleSize ? 'botellas' : i.unit === 'und' ? 'und' : i.unit === 'g' ? 'kg' : 'L' })),
+    );
+    return {
+      ok: Date.now(),
+      message: await trServer(
+        `La IA leyó ${reading.found.length} insumos${reading.others.length ? ` y ${reading.others.length} que no están en tu inventario` : ''}. Revisa las cantidades abajo, corrige lo que haga falta y toca «Guardar todo».`,
+      ),
+      values: { reading: JSON.stringify(reading) },
+    };
+  } catch (error) {
+    return fail(await messageOf(error));
+  }
 }
 
 export async function inventoryMoveAction(_prev: FormState, formData: FormData): Promise<FormState> {

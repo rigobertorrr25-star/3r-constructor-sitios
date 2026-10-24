@@ -63,6 +63,16 @@ describe('inventario masivo', { skip: url ? false : 'sin TEST_DATABASE_URL' }, (
     assert.deepEqual(await bulk.inventoryFromMenu(owner, [beers]), { created: 0, linked: 0, skipped: [] }, 'no repite');
     assert.equal((await inv.getRecipe(owner, corona))[0].quantity, 1);
     assert.equal((await inv.getRecipe(owner, mojito)).length, 0, 'los cócteles no se tocan');
+    // Los insumos que salen de la carta de barra quedan en el inventario de barra; se pueden pasar a cocina.
+    assert.equal((await byName('Corona')).area, 'bar');
+    const corona_ = await byName('Corona');
+    await assert.rejects(inv.saveItem(owner, { id: corona_.id, name: 'Corona', unit: 'und', minStock: 0, area: 'bodega' }), { code: 'INVALID' });
+    await inv.saveItem(owner, { id: corona_.id, name: 'Corona', unit: 'und', minStock: 0, area: 'kitchen' });
+    assert.equal((await byName('Corona')).area, 'kitchen');
+    await inv.saveItem(owner, { id: corona_.id, name: 'Corona', unit: 'und', minStock: 0 });
+    assert.equal((await byName('Corona')).area, 'kitchen', 'sin decir el área, se queda donde estaba');
+    await inv.saveItem(owner, { id: corona_.id, name: 'Corona', unit: 'und', minStock: 0, area: 'bar' });
+    assert.equal((await inv.getItem(owner, await inv.saveItem(owner, { name: 'Papa criolla', unit: 'g', minStock: 0 })))!.area, 'kitchen', 'nuevo sin área: cocina');
 
     // Cargar 48 Coronas a $4.500 con mínimo 24, y vender 2.
     const item = await byName('Corona');
@@ -109,6 +119,21 @@ describe('inventario masivo', { skip: url ? false : 'sin TEST_DATABASE_URL' }, (
     assert.deepEqual([hisMoves[0].itemName, hisMoves[0].kind, hisMoves[0].counted, hisMoves[0].createdBy], ['Club Colombia', 'count', 24, 'Breiner']);
     assert.equal((await inv.listMovements(agusto, { staffId: breiner.id, days: { from: '2020-01-01', to: '2020-01-01', timeZone: tz } })).length, 0);
     await assert.rejects(inv.movementPeople(breiner), { code: 'FORBIDDEN' });
+  });
+
+  it('lo que la IA vio en la foto y no existe se crea con lo que hay (solo dueño o administrador)', async () => {
+    const r = await bulk.bulkStock(owner, [], undefined, [
+      { name: 'Hielo', counted: '6', unit: 'und', area: 'bar' },
+      { name: 'Limón', counted: '2,5', unit: 'kg', area: 'bar' },
+    ]);
+    assert.equal(r.created, 2);
+    const limon = await byName('Limón');
+    assert.deepEqual([limon.unit, limon.stock, limon.area], ['g', 2500, 'bar']);
+    assert.equal((await byName('Hielo')).stock, 6);
+    await assert.rejects(bulk.bulkStock(owner, [], undefined, [{ name: 'limón', counted: '1', unit: 'und' }]), /Ya hay un insumo limón/);
+    const slug = (await db.query<{ slug: string }>('SELECT slug FROM businesses WHERE id = $1', [owner.businessId]))[0].slug;
+    const breiner = await login(slug, '0003', '7391');
+    await assert.rejects(bulk.bulkStock(breiner, [], undefined, [{ name: 'Naranja', counted: '3', unit: 'und' }]), /dueño o el administrador/);
   });
 
   it('los platos nunca se bloquean por inventario: cada venta descuenta los insumos aunque no alcancen', async () => {
