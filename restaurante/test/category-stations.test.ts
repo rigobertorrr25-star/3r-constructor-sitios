@@ -79,6 +79,10 @@ describe('estación de las categorías', { skip: url ? false : 'sin TEST_DATABAS
     const cat = menu.categories.find((c) => c.name === 'Desayunos')!;
     await orders.saveCategory(owner, { id: cat.id, name: 'Desayunos', station: 'bar' });
     assert.deepEqual(await stations('Desayunos'), ['Huevos:bar']);
+    // Como «Desayuno» en Azul: la categoría ya en cocina y los productos en barra; guardarla sin cambiar nada los alinea.
+    await db.query(`UPDATE menu_categories SET station = 'kitchen' WHERE id = $1`, [cat.id]);
+    await orders.saveCategory(owner, { id: cat.id, name: 'Desayunos', station: 'kitchen' });
+    assert.deepEqual(await stations('Desayunos'), ['Huevos:kitchen']);
   });
 
   it('un producto que se pasa a otra categoría con «La de su categoría» se va a la estación de la nueva', async () => {

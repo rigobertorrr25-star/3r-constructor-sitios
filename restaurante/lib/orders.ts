@@ -82,16 +82,18 @@ export async function saveCategory(
     try {
       if (input.id) {
         if (!isUuid(input.id)) throw new AppError('NOT_FOUND', 'No encontramos esa categoría.');
-        const before = (await db.query<{ station: string }>(`SELECT station FROM menu_categories WHERE id = $1 AND business_id = $2`, [input.id, actor.businessId])).rows[0];
         const res = await db.query(
           `UPDATE menu_categories SET name = $3, station = $4, sort = $5, is_active = $6, name_en = $7 WHERE id = $1 AND business_id = $2`,
           [input.id, actor.businessId, name, input.station, sort, input.isActive ?? true, nameEn],
         );
         if (!res.rowCount) throw new AppError('NOT_FOUND', 'No encontramos esa categoría.');
-        // Si la categoría cambia de estación, todos sus productos se van con ella.
-        if (before && before.station !== input.station) {
-          await db.query(`UPDATE menu_products SET station = $3 WHERE category_id = $1 AND business_id = $2`, [input.id, actor.businessId, input.station]);
-        }
+        // Al guardar, todos sus productos quedan donde va la categoría, aunque no haya cambiado (27 oct 2026: en Azul,
+        // «Desayuno» decía cocina, sus productos seguían en barra y guardar la categoría no los movía).
+        await db.query(`UPDATE menu_products SET station = $3 WHERE category_id = $1 AND business_id = $2 AND station <> $3`, [
+          input.id,
+          actor.businessId,
+          input.station,
+        ]);
         await audit(db, actor, { action: 'menu.category', entity: 'menu_category', entityId: input.id, summary: `Cambió la categoría ${name}` });
         return input.id;
       }
