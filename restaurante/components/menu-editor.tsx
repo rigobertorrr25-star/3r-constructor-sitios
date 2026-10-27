@@ -129,6 +129,10 @@ function CategoryForm({ category, onDone }: { category?: MenuCategory; onDone?: 
 function ProductForm({ categories, categoryId, product, onDone }: { categories: MenuCategory[]; categoryId: string; product?: MenuProduct; onDone?: () => void }) {
   const t = useT();
   const barOnly = useContext(BarOnly);
+  // Si el producto va a donde va su categoría, se deja en «La de su categoría»: así, al pasarlo a otra categoría, se va
+  // con ella (en Azul quedaban platos de cocina diciendo «Barra» porque guardaban la estación vieja).
+  const ownCategory = categories.find((c) => c.id === (product?.categoryId ?? categoryId));
+  const stationDefault = product && product.station !== ownCategory?.station ? product.station : '';
   return (
     <ActionForm action={saveProductAction} resetOnOk={!product} onOk={onDone} className="mt-4 grid gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 sm:grid-cols-2">
       {(state) => (
@@ -153,7 +157,7 @@ function ProductForm({ categories, categoryId, product, onDone }: { categories: 
             ))}
           </Select>
           {barOnly ? null : (
-            <Select label={t('Va a')} name="station" defaultValue={state?.values?.station ?? product?.station ?? ''}>
+            <Select label={t('Va a')} name="station" defaultValue={state?.values?.station ?? stationDefault}>
               <option value="">{t('La de su categoría')}</option>
               <option value="kitchen">{t('Cocina')}</option>
               <option value="bar">{t('Barra')}</option>
@@ -218,6 +222,9 @@ function ProductRow({
             </p>
             <p className="text-[13.5px] text-muted-foreground">
               {formatCop(product.price)} · {t(STATION_LABEL[product.station])}
+              {categories.find((c) => c.id === product.categoryId)?.station !== product.station ? (
+                <span className="text-warning"> ({t('su categoría va a {station}', { station: t(STATION_LABEL[categories.find((c) => c.id === product.categoryId)?.station ?? product.station]).toLowerCase() })})</span>
+              ) : null}
               {canRecipe
                 ? cost !== undefined
                   ? ` · ${t('costo {cost} (margen {margin} %)', { cost: formatCop(cost), margin: product.price ? Math.round(((product.price - cost) / product.price) * 100) : 0 })}`

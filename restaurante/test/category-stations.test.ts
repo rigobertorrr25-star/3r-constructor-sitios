@@ -80,4 +80,13 @@ describe('estación de las categorías', { skip: url ? false : 'sin TEST_DATABAS
     await orders.saveCategory(owner, { id: cat.id, name: 'Desayunos', station: 'bar' });
     assert.deepEqual(await stations('Desayunos'), ['Huevos:bar']);
   });
+
+  it('un producto que se pasa a otra categoría con «La de su categoría» se va a la estación de la nueva', async () => {
+    const bar = await orders.saveCategory(owner, { name: 'Cócteles de paso', station: 'bar' });
+    const kitchen = await orders.saveCategory(owner, { name: 'Combos', station: 'kitchen' });
+    const id = await orders.saveProduct(owner, { categoryId: bar, name: 'Combo Hamburguesa', price: 30000 });
+    assert.equal((await orders.getMenu(owner.businessId)).products.find((p) => p.id === id)!.station, 'bar');
+    await orders.saveProduct(owner, { id, categoryId: kitchen, name: 'Combo Hamburguesa', price: 30000, station: '' });
+    assert.equal((await orders.getMenu(owner.businessId)).products.find((p) => p.id === id)!.station, 'kitchen');
+  });
 });
