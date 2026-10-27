@@ -69,7 +69,6 @@ const es = {
   shiftLabel: 'Turno {shift}',
   arrivedLate: 'llegó {time} tarde',
   leftEarly: 'salió {time} antes',
-  editedByHand: 'corregido a mano',
 
   // Empleados
   employees: 'Empleados',
@@ -164,10 +163,8 @@ const es = {
   csvHours: 'Horas trabajadas',
   csvLate: 'Minutos tarde',
   csvEarly: 'Minutos de salida temprano',
-  csvEdited: 'Corregido a mano',
   csvNoExit: 'Sin salida',
   csvOngoing: 'En turno',
-  csvYes: 'Sí',
   csvFile: 'asistencia',
 
   // Errores
@@ -207,7 +204,7 @@ const es = {
   errFutureRecord: 'La jornada no puede terminar en el futuro.',
   errRecordOverlap: 'Ese empleado ya tiene una jornada en esas horas. Corrígela en la lista en vez de agregar otra.',
   addRecord: '+ Agregar jornada a mano',
-  addRecordIntro: 'Para quien vino y no marcó. Queda en el reporte y en el Excel como “corregido a mano”.',
+  addRecordIntro: 'Para quien vino y no marcó.',
   addRecordEmployee: 'Empleado',
   addRecordSave: 'Agregar jornada',
   recordAdded: 'Jornada agregada.',
@@ -287,7 +284,6 @@ const en: Record<MessageKey, string> = {
   shiftLabel: 'Shift {shift}',
   arrivedLate: '{time} late',
   leftEarly: 'left {time} early',
-  editedByHand: 'edited manually',
 
   employees: 'Employees',
   employeesIntroOne: '1 active. Each person creates their own 4-digit PIN the first time they scan the QR. If someone forgets it, reset it and they will create a new one.',
@@ -375,10 +371,8 @@ const en: Record<MessageKey, string> = {
   csvHours: 'Hours worked',
   csvLate: 'Minutes late',
   csvEarly: 'Minutes left early',
-  csvEdited: 'Edited manually',
   csvNoExit: 'No clock-out',
   csvOngoing: 'On shift',
-  csvYes: 'Yes',
   csvFile: 'attendance',
 
   errGeneric: 'Something went wrong. Please try again in a moment.',
@@ -417,7 +411,7 @@ const en: Record<MessageKey, string> = {
   errFutureRecord: 'The workday cannot end in the future.',
   errRecordOverlap: 'That employee already has a workday at those times. Edit it in the list instead of adding another one.',
   addRecord: '+ Add a workday manually',
-  addRecordIntro: 'For someone who came in but did not clock in. It shows in the report and the Excel file as “edited manually”.',
+  addRecordIntro: 'For someone who came in but did not clock in.',
   addRecordEmployee: 'Employee',
   addRecordSave: 'Add workday',
   recordAdded: 'Workday added.',

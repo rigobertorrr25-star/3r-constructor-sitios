@@ -155,11 +155,11 @@ describe('asistencia: reporte', () => {
     const csv = recordsCsv([...records, record('5', '=HYPERLINK("x")', '2026-09-28T13:00:00Z', null)], shifts, 'es', Date.parse('2026-10-29T00:00:00Z'));
     assert.ok(csv.startsWith('\uFEFFFecha;Empleado;Turno (por la hora de llegada);'));
     const lines = csv.trim().split('\r\n');
-    assert.equal(lines[1], '2026-09-28;Ana;08:00–15:00;07:58;15:02;7,07;0;0;');
-    assert.equal(lines[2], '2026-09-29;Ana;08:00–15:00;08:20;Sin salida;;20;0;');
+    assert.equal(lines[1], '2026-09-28;Ana;08:00–15:00;07:58;15:02;7,07;0;0');
+    assert.equal(lines[2], '2026-09-29;Ana;08:00–15:00;08:20;Sin salida;;20;0');
     const live = recordsCsv(records, shifts, 'es', Date.parse('2026-09-29T16:50:00Z')).split('\r\n');
-    assert.equal(live[2], '2026-09-29;Ana;08:00–15:00;08:20;En turno;;20;0;');
-    assert.equal(lines[3], '2026-09-28;Beto;11:00–18:00;11:04;16:00;4,93;0;120;');
+    assert.equal(live[2], '2026-09-29;Ana;08:00–15:00;08:20;En turno;;20;0');
+    assert.equal(lines[3], '2026-09-28;Beto;11:00–18:00;11:04;16:00;4,93;0;120');
     assert.ok(lines[5].includes(`"'=HYPERLINK(""x"")"`));
   });
 });

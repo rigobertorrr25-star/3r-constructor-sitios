@@ -209,7 +209,6 @@ export default async function AttendanceBusinessPage({
                               {shift ? <span className="text-muted-foreground">{t(lang, 'shiftLabel', { shift: shiftLabel(shift) })}</span> : null}
                               {late ? <span className="text-warning">{t(lang, 'arrivedLate', { time: formatMinutes(late) })}</span> : null}
                               {early ? <span className="text-warning">{t(lang, 'leftEarly', { time: formatMinutes(early) })}</span> : null}
-                              {record.editedAt ? <span className="text-muted-foreground">{t(lang, 'editedByHand')}</span> : null}
                             </div>
                             {isAdmin ? <RecordEditor businessId={business.id} record={record} lang={lang} /> : null}
                           </li>
