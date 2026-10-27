@@ -1,0 +1,3 @@
+import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path';
+const root=process.argv[2]; const types={'.js':'text/javascript','.css':'text/css','.html':'text/html','.jpg':'image/jpeg','.png':'image/png','.mp4':'video/mp4','.ico':'image/x-icon','.svg':'image/svg+xml'};
+http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]);let f=path.join(root,p);if(!fs.existsSync(f)||fs.statSync(f).isDirectory())f=path.join(root,'caprichos-tienda','index.html');r.writeHead(200,{'content-type':types[path.extname(f)]||'application/octet-stream'});fs.createReadStream(f).pipe(r);}).listen(Number(process.argv[3]));
