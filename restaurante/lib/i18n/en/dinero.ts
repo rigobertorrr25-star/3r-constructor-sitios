@@ -203,6 +203,8 @@ export const en: Record<string, string> = {
   // Tablero del dueño
   'Control total': 'Full control',
   '{n} mesas cobradas · ticket {amount}': '{n} tables paid · avg check {amount}',
+  '{pct} % de lo vendido': '{pct}% of sales',
+  '{amount} por día': '{amount} per day',
   'Costo de productos': 'Product cost',
   'Según las recetas': 'Based on recipes',
   'Después de mermas, faltantes y gastos': 'After waste, shortages and expenses',
