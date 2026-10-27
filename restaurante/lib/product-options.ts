@@ -7,6 +7,29 @@ export type OptionGroup = { name: string; choose: number; options: string[] };
 
 const clean = (s: string) => s.replace(/\s+/g, ' ').trim();
 const same = (a: string, b: string) => a.toLocaleLowerCase('es') === b.toLocaleLowerCase('es');
+const capital = (s: string) => s.charAt(0).toLocaleUpperCase('es') + s.slice(1);
+
+/**
+ * Separa las opciones como las escribe la gente: con coma, punto y coma, «/», «|» o la palabra «o»
+ * («Limonada o panelada», «Papa francesa / Papas casco / Patacón»). En Azul se escribieron así y el mesero no veía
+ * qué escoger, porque solo se separaba con coma.
+ */
+export const splitOptions = (text: string) =>
+  String(text ?? '')
+    .split(/\s*[,;/|]\s*|\s+[oó]\s+/i)
+    .map(clean)
+    .filter(Boolean)
+    .map(capital);
+
+/** Lo guardado antes de separar con «o» o «/» queda como una sola opción: se vuelve a separar al leer la carta. */
+export function normalizeGroups(groups: OptionGroup[] | null | undefined): OptionGroup[] | null {
+  if (!groups?.length) return null;
+  return groups.map((g) => {
+    if (g.options.length !== 1) return g;
+    const parts = splitOptions(g.options[0]);
+    return parts.length > 1 && parts.every((o, j) => parts.findIndex((x) => same(x, o)) === j) ? { ...g, options: parts } : g;
+  });
+}
 
 /** Lee el texto de la carta. Devuelve los grupos o el error que hay que mostrar. */
 export function parseOptionGroups(text: string): { groups: OptionGroup[]; error?: string } {
@@ -25,7 +48,9 @@ export function parseOptionGroups(text: string): { groups: OptionGroup[]; error?
       head = clean(head.replace(pick[0], ''));
     }
     if (head.length < 2 || head.length > 40) return { groups: [], error: `Opciones, línea ${n}: el nombre del grupo va de 2 a 40 letras.` };
-    const options = colon >= 0 ? rest.split(/[,;]/).map(clean).filter(Boolean) : [head];
+    // Sin «:», la línea es algo que va siempre, salvo que traiga varias opciones («Sopa o crema»).
+    const alone = colon >= 0 ? [] : splitOptions(head);
+    const options = colon >= 0 ? splitOptions(rest) : alone.length > 1 ? alone : [head];
     if (!options.length) return { groups: [], error: `Opciones, línea ${n}: escribe las opciones después de «:», separadas por comas.` };
     if (options.length > 20) return { groups: [], error: `Opciones, línea ${n}: hasta 20 opciones por grupo.` };
     const bad = options.find((o) => o.length < 2 || o.length > 40);

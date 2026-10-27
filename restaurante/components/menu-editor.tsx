@@ -168,7 +168,7 @@ function ProductForm({ categories, categoryId, product, onDone }: { categories: 
               maxLength={2000}
               defaultValue={state?.values?.options ?? optionGroupsText(product?.optionGroups)}
               placeholder={'Sopa\nArroz: Arroz de coco, Arroz de frijol\nProteína: Pechuga, Carne en bistec'}
-              hint={t('Una línea por grupo: «Grupo: opción, opción». El mesero escoge una de cada grupo al pedirlo («(elige 2)» después del grupo para dos). Una línea sin «:» es algo que el plato siempre trae.')}
+              hint={t('Una línea por grupo: «Bebida: Limonada, Panelada» (también sirve «o» o «/» entre opciones). El mesero escoge una de cada grupo al pedirlo («(elige 2)» después del grupo para dos). Una línea sin «:» es algo que el plato siempre trae.')}
             />
           </div>
           <div className="sm:col-span-2">
