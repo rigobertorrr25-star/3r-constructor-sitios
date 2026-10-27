@@ -581,6 +581,18 @@ export async function saveProductAction(_prev: FormState, formData: FormData): P
 }
 
 /** Agotado / disponible (botón, no formulario). */
+/** Carta → «Todo a cocina» / «Todo a barra» en una categoría: ella y todos sus productos van a esa estación. */
+export async function moveCategoryAction(categoryId: string, station: string): Promise<string | null> {
+  const staff = await requireStaff();
+  try {
+    await setCategoryStations(staff, [{ id: categoryId, station }]);
+  } catch (error) {
+    return await messageOf(error);
+  }
+  revalidatePath('/app/carta');
+  return null;
+}
+
 export async function setAvailableAction(productId: string, available: boolean): Promise<string | null> {
   const staff = await requireStaff();
   try {

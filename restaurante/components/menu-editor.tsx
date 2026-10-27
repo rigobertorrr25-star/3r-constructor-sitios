@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { createContext, useContext, useState, useTransition } from 'react';
-import { saveCategoryAction, saveProductAction, setAvailableAction } from '@/app/actions';
+import { moveCategoryAction, saveCategoryAction, saveProductAction, setAvailableAction } from '@/app/actions';
 import { orOffline } from '@/lib/offline';
 import { formatCop } from '@/lib/format';
 import type { MenuCategory, MenuProduct } from '@/lib/orders';
@@ -56,7 +56,8 @@ export function MenuEditor({
                 </p>
               </div>
               {canEdit ? (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {barOnly ? null : <MoveCategory category={category} products={list} />}
                   <button type="button" className={quietButton} onClick={() => setEditing(editing === category.id ? null : category.id)}>
                     {t('Editar categoría')}
                   </button>
@@ -84,6 +85,45 @@ export function MenuEditor({
       ) : null}
     </div>
     </BarOnly.Provider>
+  );
+}
+
+/**
+ * «Todo a cocina» / «Todo a barra»: pasa la categoría y todos sus productos de un toque (pedido de Rigoberto, 27 oct 2026:
+ * pasar uno por uno era trabajoso). El botón del lugar donde ya está todo queda marcado.
+ */
+function MoveCategory({ category, products }: { category: MenuCategory; products: MenuProduct[] }) {
+  const t = useT();
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const allIn = (station: 'kitchen' | 'bar') => category.station === station && products.every((p) => p.station === station);
+  return (
+    <>
+      {(['kitchen', 'bar'] as const).map((station) =>
+        allIn(station) ? (
+          <span key={station} className="inline-flex items-center rounded-full border border-primary/50 bg-primary/10 px-4 py-2 text-[14px] text-foreground">
+            {station === 'kitchen' ? t('Todo en cocina') : t('Todo en barra')}
+          </span>
+        ) : (
+          <button
+            key={station}
+            type="button"
+            disabled={pending}
+            className={`${quietButton} disabled:opacity-60`}
+            onClick={() =>
+              start(async () => {
+                setError(null);
+                const result = await orOffline(moveCategoryAction(category.id, station));
+                if (result) setError(result);
+              })
+            }
+          >
+            {station === 'kitchen' ? t('Todo a cocina') : t('Todo a barra')}
+          </button>
+        ),
+      )}
+      {error ? <span className="w-full text-[13px] text-[#ffb4b5]">{error}</span> : null}
+    </>
   );
 }
 

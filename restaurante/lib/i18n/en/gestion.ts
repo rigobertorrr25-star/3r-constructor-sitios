@@ -193,6 +193,10 @@ export const en: Record<string, string> = {
     'One line per group: “Drink: Lemonade, Panelada” (“o” or “/” between options also works). The waiter picks one from each group when ordering (“(elige 2)” after the group for two). A line without “:” is something the dish always includes.',
   'Borrar todo el inventario': 'Delete all inventory',
   'su categoría va a {station}': 'its category goes to {station}',
+  'Todo a cocina': 'All to kitchen',
+  'Todo a barra': 'All to bar',
+  'Todo en cocina': 'All in kitchen',
+  'Todo en barra': 'All in bar',
   // Inventario separado en barra y cocina (app/app/inventario/page.tsx, components/inventory-forms.tsx)
   'Barra · {n}': 'Bar · {n}',
   'Cocina · {n}': 'Kitchen · {n}',
