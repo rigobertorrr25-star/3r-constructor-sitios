@@ -189,8 +189,8 @@ export const en: Record<string, string> = {
   'Borra todas las categorías y productos, con sus fotos y recetas, para cargar la carta de nuevo (Carta → «Importar carta»). Si hay pedidos con esos productos, primero borra las ventas de prueba. El inventario, el equipo y el plano se quedan. No se puede deshacer.':
     'Deletes every category and product, with their photos and recipes, so the menu can be loaded again (Menu → “Import menu”). If there are orders with those products, delete the test sales first. Inventory, team and floor plan stay. This can’t be undone.',
   'Opciones para armar el plato (opcional)': 'Options to build the dish (optional)',
-  'Una línea por grupo: «Grupo: opción, opción». El mesero escoge una de cada grupo al pedirlo («(elige 2)» después del grupo para dos). Una línea sin «:» es algo que el plato siempre trae.':
-    'One line per group: “Group: option, option”. The waiter picks one from each group when ordering (“(elige 2)” after the group for two). A line without “:” is something the dish always includes.',
+  'Una línea por grupo: «Bebida: Limonada, Panelada» (también sirve «o» o «/» entre opciones). El mesero escoge una de cada grupo al pedirlo («(elige 2)» después del grupo para dos). Una línea sin «:» es algo que el plato siempre trae.':
+    'One line per group: “Drink: Lemonade, Panelada” (“o” or “/” between options also works). The waiter picks one from each group when ordering (“(elige 2)” after the group for two). A line without “:” is something the dish always includes.',
   'Borrar todo el inventario': 'Delete all inventory',
   // Inventario separado en barra y cocina (app/app/inventario/page.tsx, components/inventory-forms.tsx)
   'Barra · {n}': 'Bar · {n}',

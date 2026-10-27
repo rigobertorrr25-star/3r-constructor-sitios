@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, it } from 'node:test';
-import { completeChoices, describeChoices, optionGroupsText, parseOptionGroups } from '../lib/product-options';
+import { completeChoices, describeChoices, normalizeGroups, optionGroupsText, parseOptionGroups } from '../lib/product-options';
 
 const url = process.env.TEST_DATABASE_URL;
 
@@ -19,6 +19,25 @@ describe('leer las opciones de un plato', () => {
     assert.match(parseOptionGroups('Arroz: coco, coco').error!, /repetida/);
     assert.match(parseOptionGroups('Salsas (elige 3): Rosada, Piña').error!, /no se pueden escoger 3 de 2/);
     assert.deepEqual(parseOptionGroups('  \n ').groups, []);
+  });
+
+  it('entiende «o», «/» y punto y coma como en Azul («Limonada o panelada»)', () => {
+    const { groups, error } = parseOptionGroups('Sopa\nAcompañante: Papa francesa / papas casco / patacón\nProteína: Pechuga o carne en bistec\nBebida: Limonada ó panelada; Jugo\nSopa o crema');
+    assert.equal(error, undefined);
+    assert.deepEqual(groups[0].options, ['Sopa'], 'una línea sola sigue siendo algo que va siempre');
+    assert.deepEqual(groups[1].options, ['Papa francesa', 'Papas casco', 'Patacón']);
+    assert.deepEqual(groups[2].options, ['Pechuga', 'Carne en bistec']);
+    assert.deepEqual(groups[3].options, ['Limonada', 'Panelada', 'Jugo']);
+    assert.deepEqual(groups[4], { name: 'Sopa o crema', choose: 1, options: ['Sopa', 'Crema'] });
+    assert.deepEqual(parseOptionGroups('Arroz: Arroz con coco').groups[0].options, ['Arroz con coco'], '«con» no separa');
+    // Lo que ya estaba guardado como una sola opción se separa al leer la carta; lo demás no se toca.
+    const saved = [
+      { name: 'Sopa', choose: 1, options: ['Sopa'] },
+      { name: 'Bebida', choose: 1, options: ['Limonada o panelada'] },
+      { name: 'Arroz', choose: 1, options: ['Arroz de coco', 'Arroz de frijol'] },
+    ];
+    assert.deepEqual(normalizeGroups(saved), [saved[0], { name: 'Bebida', choose: 1, options: ['Limonada', 'Panelada'] }, saved[2]]);
+    assert.equal(normalizeGroups(null), null);
   });
 
   it('lo escogido se revisa contra la carta y sale en la comanda', () => {
@@ -91,5 +110,23 @@ describe('pedir un plato con opciones', { skip: url ? false : 'sin TEST_DATABASE
     // Quitar las opciones de la carta.
     await orders.saveProduct(owner, { id, categoryId: cat, name: 'PROMO ALMUERZO', price: 19000, options: '' });
     assert.equal((await orders.getMenu(owner.businessId)).products.find((p) => p.id === id)!.optionGroups, null);
+  });
+
+  it('lo guardado antes como «Limonada o panelada» se pregunta y se pide bien (Azul Caribe)', async () => {
+    const cat = await orders.saveCategory(owner, { name: 'Almuerzos viejos', station: 'kitchen' });
+    const id = await orders.saveProduct(owner, { categoryId: cat, name: 'ALMUERZO DEL DÍA', price: 18000 });
+    // Así quedó guardado cuando solo se separaba con coma.
+    await db.query(`UPDATE menu_products SET option_groups = $2::jsonb WHERE id = $1`, [
+      id,
+      JSON.stringify([{ name: 'Sopa', choose: 1, options: ['Sopa'] }, { name: 'Bebida', choose: 1, options: ['Limonada o panelada'] }]),
+    ]);
+    const groups = (await orders.getMenu(owner.businessId)).products.find((p) => p.id === id)!.optionGroups!;
+    assert.deepEqual(groups[1].options, ['Limonada', 'Panelada'], 'la pantalla del mesero ya ve dos opciones');
+    const table = await store.createTable(owner, { zone: 'Salón', number: '8', capacity: 4, shape: 'square' });
+    const session = await store.openTable(waiter, table, { guests: 1 });
+    await assert.rejects(orders.sendOrder(waiter, session, [{ productId: id, quantity: 1 }], randomUUID()), /Escoge las opciones/);
+    await orders.sendOrder(waiter, session, [{ productId: id, quantity: 1, choices: [[], ['Panelada']] }], randomUUID());
+    const items = await db.query<{ notes: string }>(`SELECT notes FROM order_items WHERE session_id = $1`, [session]);
+    assert.deepEqual(items, [{ notes: 'Sopa · Bebida: Panelada' }]);
   });
 });

@@ -4,7 +4,7 @@ import { query, transaction, type Db } from './db';
 import { consumeForRound, returnForVoid } from './inventory';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 import { enqueueRound, enqueueVoid } from './printing';
-import { completeChoices, describeChoices, parseOptionGroups, type OptionGroup } from './product-options';
+import { completeChoices, describeChoices, normalizeGroups, parseOptionGroups, type OptionGroup } from './product-options';
 
 import { STATIONS, isStation, type Station } from './stations';
 
@@ -66,7 +66,7 @@ export async function getMenu(businessId: string, { activeOnly = false } = {}) {
       [businessId],
     ),
   ]);
-  return { categories, products: products.map((p) => ({ ...p, price: Number(p.price) })) };
+  return { categories, products: products.map((p) => ({ ...p, price: Number(p.price), optionGroups: normalizeGroups(p.optionGroups) })) };
 }
 
 export async function saveCategory(
@@ -271,7 +271,7 @@ export async function sendOrder(actor: Actor, sessionId: string, lines: CartLine
       }
       // Lo escogido para armar el plato va adelante de la nota, para que salga en la comanda y en la cuenta.
       for (const line of clean) {
-        const groups = byId.get(line.productId)!.optionGroups;
+        const groups = normalizeGroups(byId.get(line.productId)!.optionGroups);
         if (!groups?.length) continue;
         const picked = completeChoices(groups, line.choices);
         if (!picked) throw new AppError('INVALID', `Escoge las opciones de ${byId.get(line.productId)!.name}.`);

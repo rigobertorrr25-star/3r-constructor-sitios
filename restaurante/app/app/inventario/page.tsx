@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/auth';
 import { AREA_LABEL, MOVEMENT_LABEL, listItems, listMovements, type Area } from '@/lib/inventory';
-import { can } from '@/lib/permissions';
+import { can, ownStation } from '@/lib/permissions';
 import { formatCop, formatDateTime } from '@/lib/format';
 import { formatQuantity } from '@/lib/units';
 import { InventoryActions, ItemForm } from '@/components/inventory-forms';
@@ -18,11 +18,11 @@ export const maxDuration = 60;
 
 export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ area?: string }> }) {
   const staff = await requireStaff('inventory.view');
-  // Barra y cocina cuentan cada una lo suyo: el bartender entra a Barra y cocina a Cocina; los demás ven todo.
+  // Barra y cocina cuentan cada una lo suyo: el bartender solo ve Barra y cocina solo Cocina; los demás ven todo.
   const { area: areaParam } = await searchParams;
-  const area: Area | 'all' =
-    areaParam === 'barra' ? 'bar' : areaParam === 'cocina' ? 'kitchen' : areaParam === 'todo' ? 'all' : staff.role === 'bar' ? 'bar' : staff.role === 'kitchen' ? 'kitchen' : 'all';
   const manage = can(staff.role, 'inventory.manage');
+  const station = manage ? null : ownStation(staff.role);
+  const area: Area | 'all' = station ?? (areaParam === 'barra' ? 'bar' : areaParam === 'cocina' ? 'kitchen' : 'all');
   const load = can(staff.role, 'inventory.load');
   const lang = await getLang();
   const t = makeT(lang);
@@ -30,11 +30,13 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const [allItems, moves, menu] = await Promise.all([listItems(staff), listMovements(staff, { limit: 40 }), load ? menuForInventory(staff) : Promise.resolve([])]);
   const items = area === 'all' ? allItems : allItems.filter((i) => i.area === area);
   const count = (a: Area) => allItems.filter((i) => i.isActive && i.area === a).length;
-  const tabs: [string, Area | 'all', string][] = [
-    ['todo', 'all', t('Todo')],
-    ['barra', 'bar', t('Barra · {n}', { n: count('bar') })],
-    ['cocina', 'kitchen', t('Cocina · {n}', { n: count('kitchen') })],
-  ];
+  const tabs: [string, Area | 'all', string][] = station
+    ? []
+    : [
+        ['todo', 'all', t('Todo')],
+        ['barra', 'bar', t('Barra · {n}', { n: count('bar') })],
+        ['cocina', 'kitchen', t('Cocina · {n}', { n: count('kitchen') })],
+      ];
   const active = items.filter((i) => i.isActive);
   const value = active.reduce((s, i) => s + Math.max(0, i.stock) * i.unitCost, 0);
   const low = active.filter((i) => i.minStock > 0 && i.stock < i.minStock);
@@ -77,7 +79,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         <>
           <InventoryFromMenu categories={menu} open={allItems.length === 0} />
           {manage ? <RecipeImport /> : null}
-          <BulkStock showCost={manage} area={area} canCreate={manage} items={active.map((i) => ({ id: i.id, name: i.name, unit: i.unit, bottleSize: i.bottleSize, stock: i.stock, unitCost: i.unitCost, minStock: i.minStock }))} />
+          <BulkStock showCost={manage} area={area} canCreate={load} items={active.map((i) => ({ id: i.id, name: i.name, unit: i.unit, bottleSize: i.bottleSize, stock: i.stock, unitCost: i.unitCost, minStock: i.minStock }))} />
         </>
       ) : null}
 
