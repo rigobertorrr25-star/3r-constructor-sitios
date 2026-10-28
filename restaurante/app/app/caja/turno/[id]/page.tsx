@@ -4,6 +4,7 @@ import { requireStaff } from '@/lib/auth';
 import { METHOD_LABEL, METHODS, shiftSummary, workMode } from '@/lib/cash';
 import { closingInventory, dailyForm, shiftIncidents, shiftSalesByCategory, shortQuantity, sumAmounts, tipOfSales, type StockLine } from '@/lib/closing-report';
 import { AREA_LABEL } from '@/lib/inventory';
+import { cashCountLines } from '@/lib/cash-count';
 import { PrintClosingButton } from '@/components/printer-forms';
 import { formatCop, formatDateTime } from '@/lib/format';
 import { PageTitle, card } from '@/components/ui';
@@ -92,6 +93,26 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
           </div>
         ))}
       </dl>
+
+      {cashCountLines(sh.cashCount).length ? (
+        <section className={`${card} max-w-xl`}>
+          <h2 className="font-display text-[18px] font-bold">{t('Arqueo de billetes y monedas')}</h2>
+          <ul className="mt-3 space-y-1 text-[14px]">
+            {cashCountLines(sh.cashCount).map((x) => (
+              <li key={`${x.kind}${x.value}`} className="flex justify-between gap-3">
+                <span>
+                  {x.kind === 'bill' ? t('Billetes de {amount}', { amount: formatCop(x.value) }) : t('Monedas de {amount}', { amount: formatCop(x.value) })} × {x.quantity}
+                </span>
+                <span>{formatCop(x.total)}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 flex justify-between gap-3 border-t border-white/[0.06] pt-2 text-[14.5px] font-semibold">
+            <span>{t('Total del arqueo')}</span>
+            <span>{formatCop(cashCountLines(sh.cashCount).reduce((a, x) => a + x.total, 0))}</span>
+          </p>
+        </section>
+      ) : null}
 
       <div className="grid max-w-4xl gap-5 md:grid-cols-2">
         <section className={card}>

@@ -6,6 +6,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { getBill, METHOD_LABEL, METHODS, loadShiftSummary, suggestedTipFor, workMode } from './cash';
 import { closingInventory, dailyForm, shiftIncidents, shiftSalesByCategory, shortQuantity, sumAmounts, tipOfSales } from './closing-report';
 import { AREA_LABEL } from './inventory';
+import { cashCountLines } from './cash-count';
 import { query, transaction, type Db } from './db';
 import { anulacion, cierre, comanda, precuenta, prueba, ventasCategoria, type Ticket } from './escpos';
 import { formatCop, formatDateTime, formatTime } from './format';
@@ -334,6 +335,11 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
         movementsOut: formatCop(s.movementsOut),
         expected: formatCop(s.shift.expectedCash ?? 0),
         counted: formatCop(counted),
+        cashCount: cashCountLines(s.shift.cashCount).map((x) => ({
+          label: `${x.kind === 'bill' ? 'Billetes' : 'Monedas'} de ${formatCop(x.value)}`,
+          quantity: x.quantity,
+          total: formatCop(x.total),
+        })),
         result: diff === 0 ? 'CUADRA' : diff > 0 ? `SOBRAN ${formatCop(diff)}` : `FALTAN ${formatCop(-diff)}`,
         tables: s.tablesClosed,
         // Las observaciones de la caja van al final de «Ventas por categoría»; el cierre de un mesero las trae aquí.

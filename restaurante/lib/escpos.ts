@@ -224,6 +224,8 @@ export type CierreInput = {
   result: string;
   tables: number;
   notes: string | null;
+  /** Arqueo: cuántos billetes y monedas de cada uno se contaron (vacío si se escribió el total a mano). */
+  cashCount?: { label: string; quantity: number; total: string }[];
   /** Propina del día: el % de «Propina sugerida» sobre lo vendido. Sin ella (0 %), no sale. */
   tipOfSales?: { pct: number; amount: string } | null;
   /** Cómo queda el inventario de la sede (solo en el cierre de la caja, no en el de un mesero). */
@@ -253,8 +255,12 @@ export function cierre(width: number, c: CierreInput) {
     .row('Salidas de efectivo', c.movementsOut)
     .rule()
     .row('Efectivo esperado', c.expected)
-    .row('Efectivo contado', c.counted, { bold: true })
-    .line(c.result, { align: 'center', big: true })
+    .row('Efectivo contado', c.counted, { bold: true });
+  if (c.cashCount?.length) {
+    t.line('Arqueo:', { bold: true });
+    for (const x of c.cashCount) t.row(`  ${x.label} x ${x.quantity}`, x.total);
+  }
+  t.line(c.result, { align: 'center', big: true })
     .line(`${c.tables} ${c.tables === 1 ? 'mesa cerrada' : 'mesas cerradas'}`, { align: 'center' });
   if (c.notes) t.line(`Nota: ${c.notes}`);
   if (c.inventory) inventorySection(t, c.inventory);

@@ -1,6 +1,7 @@
 // Módulo 04: caja y pagos. Turnos de caja, cobro en partes y con varios medios, propina, descuentos y cierre de caja.
 // Nada se borra: un pago equivocado se reversa con motivo, un descuento se anula, una salida de plata se registra.
 import { formatCop } from './format';
+import { cashCountTotal, cleanCashCount, type CashCount } from './cash-count';
 import { pooled, query, transaction, type Db } from './db';
 import { createInvoice, voidInvoiceFor } from './invoices';
 import { can } from './permissions';
@@ -43,11 +44,13 @@ export type Shift = {
   envelopeKitchen: number;
   envelopeBar: number;
   safeAmount: number;
+  /** Arqueo: cuántos billetes y monedas de cada uno se contaron (null si se escribió el total a mano). */
+  cashCount: CashCount | null;
 };
 
 const SHIFT_SELECT = `SELECT c.id, c.opened_at AS "openedAt", o.name AS "openedBy", c.opening_amount AS "openingAmount", c.closed_at AS "closedAt",
        x.name AS "closedBy", c.expected_cash AS "expectedCash", c.counted_cash AS "countedCash", c.notes,
-       c.envelope_kitchen AS "envelopeKitchen", c.envelope_bar AS "envelopeBar", c.safe_amount AS "safeAmount"
+       c.envelope_kitchen AS "envelopeKitchen", c.envelope_bar AS "envelopeBar", c.safe_amount AS "safeAmount", c.cash_count AS "cashCount"
   FROM cash_shifts c JOIN staff o ON o.id = c.opened_by LEFT JOIN staff x ON x.id = c.closed_by`;
 
 type ShiftRow = Omit<Shift, 'openingAmount' | 'expectedCash' | 'countedCash' | 'envelopeKitchen' | 'envelopeBar' | 'safeAmount'> & {
@@ -291,7 +294,7 @@ export async function closeShift(
   actor: Actor,
   countedCash: number,
   notes?: string,
-  split: { envelopeKitchen?: number; envelopeBar?: number; safeAmount?: number } = {},
+  split: { envelopeKitchen?: number; envelopeBar?: number; safeAmount?: number; cashCount?: unknown } = {},
 ) {
   requirePermission(actor, 'cash.operate');
   requireAmount(countedCash, 'Efectivo contado', { allowZero: true });
@@ -303,6 +306,10 @@ export async function closeShift(
   requireAmount(envelopeKitchen, 'Sobre para la cocina', { allowZero: true });
   requireAmount(envelopeBar, 'Sobre para el bar', { allowZero: true });
   requireAmount(safeAmount, 'Caja fuerte', { allowZero: true });
+  // Con arqueo, lo contado tiene que ser la suma de los billetes y monedas.
+  const cashCount = cleanCashCount(split.cashCount);
+  if (cashCount && cashCountTotal(cashCount) !== countedCash)
+    throw new AppError('INVALID', `El arqueo suma ${money(cashCountTotal(cashCount))} y el efectivo contado dice ${money(countedCash)}: revísalos.`);
   if (envelopeKitchen + envelopeBar + safeAmount > countedCash)
     throw new AppError('INVALID', `Los sobres y la caja fuerte suman ${money(envelopeKitchen + envelopeBar + safeAmount)}: es más de lo contado (${money(countedCash)}).`);
   return transaction(async (db) => {
@@ -311,8 +318,8 @@ export async function closeShift(
     const diff = countedCash - expected;
     await db.query(
       `UPDATE cash_shifts SET closed_at = now(), closed_by = $2, expected_cash = $3, counted_cash = $4, notes = $5,
-              envelope_kitchen = $6, envelope_bar = $7, safe_amount = $8 WHERE id = $1`,
-      [shift.id, actor.id, expected, countedCash, why, envelopeKitchen, envelopeBar, safeAmount],
+              envelope_kitchen = $6, envelope_bar = $7, safe_amount = $8, cash_count = $9 WHERE id = $1`,
+      [shift.id, actor.id, expected, countedCash, why, envelopeKitchen, envelopeBar, safeAmount, cashCount ? JSON.stringify(cashCount) : null],
     );
     await audit(db, actor, {
       action: 'cash.close',
