@@ -13,7 +13,7 @@ describe('mesas del día', { skip: url ? false : 'sin TEST_DATABASE_URL' }, () =
   let finance: typeof import('../lib/finance');
   let db: typeof import('../lib/db');
   type Actor = import('../lib/store').Actor;
-  let ana: Actor, beto: Actor, cashier: Actor;
+  let ana: Actor, beto: Actor, cashier: Actor, chief: Actor;
   let burger: string, t1: string, t2: string, t3: string;
   const stamp = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
   const tz = 'America/Bogota';
@@ -40,6 +40,8 @@ describe('mesas del día', { skip: url ? false : 'sin TEST_DATABASE_URL' }, () =
     ana = await login(a.slug, '0002', '1357');
     beto = await login(a.slug, '0003', '3579');
     cashier = await login(a.slug, '0004', '2468');
+    await store.createStaff(owner, { name: 'Diana', role: 'service', locationId: null, pin: '8642' });
+    chief = await login(a.slug, '0005', '8642');
     const food = await orders.saveCategory(owner, { name: 'Platos', station: 'kitchen' });
     burger = await orders.saveProduct(owner, { categoryId: food, name: 'Hamburguesa', price: 30000 });
     t1 = await store.createTable(owner, { zone: 'Salón', number: '1', capacity: 4, shape: 'square' });
@@ -94,5 +96,19 @@ describe('mesas del día', { skip: url ? false : 'sin TEST_DATABASE_URL' }, () =
     assert.equal(yesterday.pending.length, 1, 'las por cobrar salen siempre');
 
     await assert.rejects(accounts.tableAccounts(ana, today, tz), { code: 'FORBIDDEN' }, 'el mesero no la ve');
+    assert.equal(r.tipPercent, 10, 'la propina sugerida del negocio (10 % por defecto)');
+  });
+
+  it('la jefe de servicio ve las ventas y anula lo comandado, pero no cobra', async () => {
+    const today = finance.todayIn(tz);
+    const r = await accounts.tableAccounts(chief, today, tz);
+    assert.equal(r.collected.length, 1);
+    const s1 = r.pending[0].id;
+    const item = (await db.query<{ id: string }>(`SELECT id FROM order_items WHERE session_id = $1 AND voided_at IS NULL LIMIT 1`, [s1]))[0].id;
+    await assert.rejects(orders.voidItem(ana, item, 'Se equivocó de plato'), { code: 'FORBIDDEN' }, 'el mesero no anula lo comandado');
+    await orders.voidItem(chief, item, 'Se equivocó de plato', false);
+    const after = await accounts.tableAccounts(chief, today, tz);
+    assert.equal(after.pending[0].balance, 30000);
+    await assert.rejects(cash.pay(chief, s1, { method: 'cash', amount: 30000, received: 30000, clientKey: randomUUID() }), { code: 'FORBIDDEN' });
   });
 });

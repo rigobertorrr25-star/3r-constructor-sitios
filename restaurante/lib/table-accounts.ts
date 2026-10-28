@@ -2,6 +2,7 @@
 // mesas por cobrar y quién las atendió»). Por cobrar: todas las cuentas abiertas de la sede con algún pedido, sin importar
 // el día. Cobradas: las cerradas en el día (hora de la sede). Quién atendió: quien abrió la mesa y quienes mandaron pedidos.
 import { query } from './db';
+import { tipOfSales } from './closing-report';
 import { METHODS, type Method } from './cash';
 import { hasOrders, requirePermission, type Actor } from './store';
 
@@ -88,7 +89,7 @@ export function summarizeByWaiter(pending: TableAccount[], collected: TableAccou
 
 /** Las mesas por cobrar (abiertas ahora) y las cobradas el día `date` (AAAA-MM-DD en la hora de la sede). */
 export async function tableAccounts(actor: Actor, date: string, timeZone: string) {
-  requirePermission(actor, 'cash.operate');
+  requirePermission(actor, 'sales.view');
   const rows = await query<Row>(
     `SELECT ts.id, t.number AS "tableNumber", t.zone, ts.status, ts.guests, ts.opened_at AS "openedAt", ts.closed_at AS "closedAt",
             ts.opened_by AS "openerId", o.name AS "openerName",
@@ -112,5 +113,6 @@ export async function tableAccounts(actor: Actor, date: string, timeZone: string
   const all = rows.map(toAccount);
   const pending = all.filter((a) => a.status !== 'closed');
   const collected = all.filter((a) => a.status === 'closed');
-  return { pending, collected, waiters: summarizeByWaiter(pending, collected) };
+  const pct = (await query<{ pct: number }>(`SELECT suggested_tip AS pct FROM businesses WHERE id = $1`, [actor.businessId]))[0]?.pct ?? 0;
+  return { pending, collected, waiters: summarizeByWaiter(pending, collected), tipPercent: Number(pct) };
 }

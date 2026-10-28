@@ -1,12 +1,13 @@
 // Roles fijos y lo que puede hacer cada uno. Se revisa siempre en el servidor, no solo escondiendo botones.
 
-export const ROLES = ['owner', 'manager', 'cashier', 'waiter', 'kitchen', 'bar', 'pro'] as const;
+export const ROLES = ['owner', 'manager', 'cashier', 'service', 'waiter', 'kitchen', 'bar', 'pro'] as const;
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_LABEL: Record<Role, string> = {
   owner: 'Dueño',
   manager: 'Administrador',
   cashier: 'Cajero',
+  service: 'Jefe de servicio',
   waiter: 'Mesero',
   kitchen: 'Cocina',
   bar: 'Barra',
@@ -17,6 +18,7 @@ export const ROLE_HINT: Record<Role, string> = {
   owner: 'Todo, incluidas las sedes y el equipo.',
   manager: 'Opera la sede: carta, plano, equipo, anulaciones y auditoría.',
   cashier: 'Mesas, pedidos y cierre de cuentas.',
+  service: 'Lo mismo que un mesero, y además anula productos ya comandados y ve las ventas y la propina del día (Mesas del día). No cobra.',
   waiter: 'Abre mesas, toma pedidos y pide la cuenta.',
   kitchen: 'Pantalla de cocina.',
   bar: 'Pantalla de barra.',
@@ -51,24 +53,26 @@ export type Permission =
   | 'agenda.manage'
   | 'invoices.manage'
   | 'printers.manage'
-  | 'waiters.verify';
+  | 'waiters.verify'
+  | 'sales.view';
 
 const GRANTS: Record<Permission, Role[]> = {
-  'tables.view': ['owner', 'manager', 'cashier', 'waiter'],
-  'tables.open': ['owner', 'manager', 'cashier', 'waiter'],
-  'tables.bill': ['owner', 'manager', 'cashier', 'waiter'],
+  'tables.view': ['owner', 'manager', 'cashier', 'service', 'waiter'],
+  'tables.open': ['owner', 'manager', 'cashier', 'service', 'waiter'],
+  'tables.bill': ['owner', 'manager', 'cashier', 'service', 'waiter'],
   'tables.close': ['owner', 'manager', 'cashier'],
   'floor.edit': ['owner', 'manager'],
   'staff.manage': ['owner', 'manager'],
   'locations.manage': ['owner'],
   'audit.view': ['owner', 'manager'],
-  'orders.take': ['owner', 'manager', 'cashier', 'waiter'],
-  'orders.void': ['owner', 'manager'],
+  'orders.take': ['owner', 'manager', 'cashier', 'service', 'waiter'],
+  // Anular lo ya comandado: también la jefe de servicio (28 oct 2026, pedido de Rigoberto).
+  'orders.void': ['owner', 'manager', 'service'],
   'menu.edit': ['owner', 'manager'],
   // Pantallas de cocina y barra: cada estación ve la suya; dueño y administrador, las dos.
   'kds.view': ['owner', 'manager', 'kitchen', 'bar'],
   // Marcar "entregado a la mesa": quien lleva los platos.
-  'tickets.deliver': ['owner', 'manager', 'cashier', 'waiter', 'kitchen', 'bar'],
+  'tickets.deliver': ['owner', 'manager', 'cashier', 'service', 'waiter', 'kitchen', 'bar'],
   // Caja: abrir y cerrar turno, cobrar, descuentos (el cajero hasta el límite del negocio), entradas y salidas.
   'cash.operate': ['owner', 'manager', 'cashier'],
   'payments.reverse': ['owner', 'manager'],
@@ -85,7 +89,7 @@ const GRANTS: Record<Permission, Role[]> = {
   'finance.view': ['owner', 'manager'],
   // Registrar un gasto (con la foto de su factura de compra): también la cajera, desde Facturas. Verlos todos y anularlos, no.
   'expenses.add': ['owner', 'manager', 'cashier'],
-  'reservations.manage': ['owner', 'manager', 'cashier', 'waiter'],
+  'reservations.manage': ['owner', 'manager', 'cashier', 'service', 'waiter'],
   // Citas: el profesional ve la suya; dueño, administrador y cajero agendan, mueven y cobran.
   'agenda.view': ['owner', 'manager', 'cashier', 'pro'],
   'agenda.manage': ['owner', 'manager', 'cashier'],
@@ -94,6 +98,8 @@ const GRANTS: Record<Permission, Role[]> = {
   'printers.manage': ['owner', 'manager'],
   // Bar sin cajero: ver la cuenta de cada mesero, cerrarla por él y verificar los cierres.
   'waiters.verify': ['owner', 'manager'],
+  // Mesas del día: lo cobrado, lo por cobrar y la propina. También la jefe de servicio (28 oct 2026, pedido de Rigoberto), que no cobra.
+  'sales.view': ['owner', 'manager', 'cashier', 'service'],
 };
 
 export const can = (role: Role, permission: Permission) => GRANTS[permission].includes(role);
