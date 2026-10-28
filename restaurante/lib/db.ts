@@ -372,6 +372,35 @@ BEGIN
   END IF;
 END $$;
 
+-- Formulario diario de Rigoberto (28 oct 2026): cada factura lleva su número, de dónde salió la plata (caja, caja
+-- fuerte, sobre de la cocina, sobre del bar u otro) y si todavía no se paga, su fecha de vencimiento (paid_from vacío =
+-- por pagar). Al crear la columna, lo que ya estaba queda pagado: de la caja si salió de ella, si no «otro».
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS invoice_number VARCHAR(40);
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS due_on DATE;
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'expenses' AND column_name = 'paid_from') THEN
+    ALTER TABLE expenses ADD COLUMN paid_from VARCHAR(10) CHECK (paid_from IN ('cash', 'safe', 'kitchen', 'bar', 'other'));
+    UPDATE expenses SET paid_from = CASE WHEN paid_from_cash THEN 'cash' ELSE 'other' END, paid_at = created_at;
+  END IF;
+END $$;
+
+-- Pérdidas del día que no son del inventario (se rompió un vaso, se dañó un plato): descripción y valor estimado.
+-- Nada se borra: se anulan.
+CREATE TABLE IF NOT EXISTS losses (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  description VARCHAR(200) NOT NULL,
+  amount      BIGINT NOT NULL CHECK (amount >= 0),
+  created_by  UUID NOT NULL REFERENCES staff(id),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  voided_at   TIMESTAMPTZ,
+  voided_by   UUID REFERENCES staff(id)
+);
+CREATE INDEX IF NOT EXISTS idx_losses_location ON losses (location_id, created_at);
+
 -- ───────── módulo 11: clientes, reservas y menú QR ─────────
 
 -- Datos públicos del negocio para su carta y sus reservas en línea.
@@ -567,6 +596,10 @@ ALTER TABLE menu_products ADD COLUMN IF NOT EXISTS option_groups JSONB;
 ALTER TABLE order_items ALTER COLUMN notes TYPE VARCHAR(300);
 -- Observaciones del día al cerrar la caja (se cayó un vaso, se devolvió un plato…): más espacio (28 oct 2026).
 ALTER TABLE cash_shifts ALTER COLUMN notes TYPE VARCHAR(1500);
+-- Al cerrar, el efectivo se reparte: sobre para la cocina, sobre para el bar y caja fuerte; lo demás queda en la caja.
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS envelope_kitchen BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS envelope_bar BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS safe_amount BIGINT NOT NULL DEFAULT 0;
 
 -- Foto de cada producto de la carta (la sube quien edita la carta); se ve en la carta QR y al tomar pedidos.
 CREATE TABLE IF NOT EXISTS product_photos (

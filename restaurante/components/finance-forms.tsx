@@ -5,8 +5,9 @@ import { addExpenseAction, voidExpenseAction } from '@/app/actions';
 import { formatCop } from '@/lib/format';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
-import { CheckField, Field, Select } from './ui';
+import { Field, Select } from './ui';
 import { useT } from './i18n';
+import { PaidFromFields } from './paid-from-fields';
 
 const CATEGORIES: [string, string][] = [
   ['suppliers', 'Proveedores'],
@@ -39,9 +40,8 @@ export function ExpenseForm({ today }: { today: string }) {
             <Field label={t('Descripción')} name="description" required minLength={3} maxLength={200} placeholder={t('Factura de carnes de la semana')} defaultValue={state?.values?.description} />
           </div>
           <Field label={t('Proveedor (opcional)')} name="supplier" maxLength={120} defaultValue={state?.values?.supplier} />
-          <div className="md:col-span-3">
-            <CheckField name="paidFromCash" label={t('Lo pagué con la plata de la caja')} hint={t('Sale de la caja abierta como una salida de efectivo.')} />
-          </div>
+          <Field label={t('Número de factura (opcional)')} name="invoiceNumber" maxLength={40} defaultValue={state?.values?.invoiceNumber} />
+          <PaidFromFields defaultValue={state?.values?.paidFrom ?? 'other'} dueOn={state?.values?.dueOn} />
           <div className="md:col-span-3">
             <SubmitButton pendingText={t('Guardando…')}>{t('Registrar gasto')}</SubmitButton>
           </div>
@@ -60,12 +60,19 @@ type Row = {
   amount: number;
   spentOn: string;
   paidFromCash: boolean;
+  /** Null: por pagar. */
+  paidFrom?: string | null;
+  invoiceNumber?: string | null;
+  dueOn?: string | null;
   createdBy: string;
   locationName: string;
   voided: boolean;
   voidReason: string | null;
   hasPhoto: boolean;
 };
+
+// De dónde salió la plata, como sale en la lista (lib/finance.ts PAID_FROM_LABEL; aquí sin importar el servidor).
+const PAID_FROM_SHORT: Record<string, string> = { cash: 'de la caja', safe: 'de la caja fuerte', kitchen: 'del sobre de la cocina', bar: 'del sobre del bar', other: 'pagado aparte' };
 
 export function ExpenseRow({ expense: e, showLocation }: { expense: Row; showLocation: boolean }) {
   const [voiding, setVoiding] = useState(false);
@@ -78,7 +85,16 @@ export function ExpenseRow({ expense: e, showLocation }: { expense: Row; showLoc
           {e.supplier ? ` · ${e.supplier}` : ''}
           <span className="block text-[12.5px] text-muted-foreground no-underline">
             {e.spentOn} · {e.createdBy}
-            {e.paidFromCash ? t(' · de la caja') : ''}
+            {e.invoiceNumber ? ` · ${t('Factura {n}', { n: e.invoiceNumber })}` : ''}
+            {e.paidFrom === null ? (
+              <span className="text-warning"> · {e.dueOn ? t('por pagar, vence {date}', { date: e.dueOn }) : t('por pagar')}</span>
+            ) : e.paidFrom ? (
+              ` · ${t(PAID_FROM_SHORT[e.paidFrom] ?? '')}`
+            ) : e.paidFromCash ? (
+              t(' · de la caja')
+            ) : (
+              ''
+            )}
             {showLocation ? ` · ${e.locationName}` : ''}
             {e.hasPhoto ? (
               <>
