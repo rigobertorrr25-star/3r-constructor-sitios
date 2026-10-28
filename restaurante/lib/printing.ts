@@ -3,7 +3,9 @@
 // local los pide con el código de la sede y los manda a cada impresora. Si la impresora falla, se reintenta y queda a la
 // vista en la pantalla de Impresoras para reimprimir.
 import { createHash, randomBytes } from 'node:crypto';
-import { getBill, METHOD_LABEL, METHODS, loadShiftSummary, suggestedTipFor } from './cash';
+import { getBill, METHOD_LABEL, METHODS, loadShiftSummary, suggestedTipFor, workMode } from './cash';
+import { closingInventory, shortQuantity, tipOfSales } from './closing-report';
+import { AREA_LABEL } from './inventory';
 import { query, transaction, type Db } from './db';
 import { anulacion, cierre, comanda, precuenta, prueba, type Ticket } from './escpos';
 import { formatCop, formatDateTime, formatTime } from './format';
@@ -298,6 +300,9 @@ export async function printBill(actor: Actor, sessionId: string) {
 export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: string) {
   const s = await loadShiftSummary(actor, shiftId);
   if (!s || !s.shift.closedAt) return 0;
+  const { suggestedTip } = await workMode(actor.businessId);
+  // El inventario va en el cierre de la caja; el cierre de un mesero (DELIRIUM) es solo su plata.
+  const inv = waiter ? null : await closingInventory(actor);
   return transaction(async (db) => {
     const place = await placeInfo(db, actor);
     const counted = s.shift.countedCash ?? 0;
@@ -324,6 +329,18 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
         result: diff === 0 ? 'CUADRA' : diff > 0 ? `SOBRAN ${formatCop(diff)}` : `FALTAN ${formatCop(-diff)}`,
         tables: s.tablesClosed,
         notes: s.shift.notes,
+        tipOfSales: suggestedTip > 0 ? { pct: suggestedTip, amount: formatCop(tipOfSales(s.sales, suggestedTip)) } : null,
+        inventory: inv && {
+          remaining: inv.remaining.map((i) => ({ area: AREA_LABEL[i.area], name: i.name, qty: shortQuantity(i.stock, i.unit, i.bottleSize) })),
+          out: inv.out.map((i) => ({ area: AREA_LABEL[i.area], name: i.name })),
+          toBuy: inv.toBuy.map((i) => ({
+            area: AREA_LABEL[i.area],
+            name: i.name,
+            qty: shortQuantity(i.buy, i.unit, i.bottleSize),
+            detail: `hay ${shortQuantity(i.stock, i.unit, i.bottleSize)} · mínimo ${shortQuantity(i.minStock, i.unit, i.bottleSize)}`,
+          })),
+          hasMinimums: inv.hasMinimums,
+        },
       }),
     );
   });

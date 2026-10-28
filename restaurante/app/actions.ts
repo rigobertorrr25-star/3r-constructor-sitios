@@ -1238,6 +1238,19 @@ export async function createAgentCodeAction(_prev: FormState, formData: FormData
   return state?.error ? state : { ok: Date.now(), message: code };
 }
 
+/** «Imprimir cierre» en la pantalla del cuadre: vuelve a mandar el cierre completo a la impresora de caja. */
+export async function printClosingAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('cash.operate');
+  return run(
+    formData,
+    async () => {
+      if (!(await enqueueClosing(staff, text(formData, 'shiftId')))) throw new AppError('CONFLICT', 'Esta sede no tiene impresora de caja. Agrégala en Impresoras.');
+    },
+    [],
+    'Cierre enviado a la impresora de caja.',
+  );
+}
+
 export async function printBillAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   return run(formData, () => printBill(staff, text(formData, 'sessionId')), [], 'Precuenta enviada a la impresora de caja.');

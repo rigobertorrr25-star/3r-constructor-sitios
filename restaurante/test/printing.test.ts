@@ -190,12 +190,32 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
   it('al cerrar la caja sale el resumen en la impresora de caja', async () => {
     await cash.openShift(owner, 100000);
     await cash.pay(owner, sessionId, { method: 'cash', amount: 60000, clientKey: randomUUID() });
+    // Cómo queda el inventario (27 oct 2026): lo que hay, lo que se acabó y lo que hay que comprar para llegar al mínimo.
+    const inv = await import('../lib/inventory');
+    const bulk = await import('../lib/inventory-bulk');
+    const limon = await inv.saveItem(owner, { name: 'Limón', unit: 'g', minStock: 0, area: 'bar' });
+    const hielo = await inv.saveItem(owner, { name: 'Hielo', unit: 'und', minStock: 0, area: 'bar' });
+    const papa = await inv.saveItem(owner, { name: 'Papa', unit: 'g', minStock: 0, area: 'kitchen' });
+    await bulk.bulkStock(owner, [
+      { itemId: limon, counted: '0,5', minStock: '2' },
+      { itemId: hielo, counted: '0', minStock: '3' },
+      { itemId: papa, counted: '10', minStock: '5' },
+    ]);
     const { shiftId } = await cash.closeShift(owner, 160000);
     assert.equal(await printing.enqueueClosing(owner, shiftId), 1);
     const closing = (await jobs()).filter((j) => j.kind === 'cierre');
     assert.equal(closing.length, 1);
     assert.equal(closing[0].printerId, cashP);
-    for (const s of ['CIERRE DE CAJA', 'Efectivo (1)', '$60.000', 'CUADRA']) assert.ok(closing[0].preview.includes(s), s);
+    const paper = closing[0].preview;
+    for (const s of ['CIERRE DE CAJA', 'Efectivo (1)', '$60.000', 'CUADRA']) assert.ok(paper.includes(s), s);
+    for (const s of ['Propina (10 % de ventas)', '$6.000', 'Propinas cobradas', 'INVENTARIO QUE QUEDA', 'SE ACABÓ', 'POR COMPRAR PARA MAÑANA', 'hay 500 g · mínimo 2 kg'])
+      assert.ok(paper.includes(s), s);
+    const after = (title: string) => paper.slice(paper.indexOf(title));
+    assert.match(after('INVENTARIO QUE QUEDA'), /COCINA\n.*Papa\s+10 kg/);
+    assert.match(after('SE ACABÓ'), /- Hielo/);
+    assert.match(after('POR COMPRAR PARA MAÑANA'), /Limón\s+1,5 kg/);
+    assert.match(after('POR COMPRAR PARA MAÑANA'), /Hielo\s+3 und/);
+    assert.doesNotMatch(after('POR COMPRAR PARA MAÑANA'), /Papa/, 'la papa quedó sobre el mínimo');
   });
 
   it('la caja puede sacar copia de cada pedido: todo junto, con el mesero, y sin repetir papel en la misma impresora', async () => {

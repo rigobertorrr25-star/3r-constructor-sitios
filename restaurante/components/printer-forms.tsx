@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createAgentCodeAction, printBillAction, printTestAction, removePrinterAction, reprintAction, savePrinterAction } from '@/app/actions';
+import { createAgentCodeAction, printBillAction, printClosingAction, printTestAction, removePrinterAction, reprintAction, savePrinterAction } from '@/app/actions';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Alert, CheckField, Field, Select, card, quietButton } from './ui';
@@ -236,6 +236,21 @@ export function ReprintButton({ jobId }: { jobId: string }) {
           <SubmitButton tone="quiet" pendingText={t('Enviando…')} className="py-1.5 text-[13px]">
             {t('Reimprimir')}
           </SubmitButton>
+        </>
+      )}
+    </ActionForm>
+  );
+}
+
+/** «Imprimir cierre» en el cuadre de una caja cerrada: el cierre completo, con el inventario, a la impresora de caja. */
+export function PrintClosingButton({ shiftId }: { shiftId: string }) {
+  const t = useT();
+  return (
+    <ActionForm action={printClosingAction} className="flex flex-col gap-2">
+      {() => (
+        <>
+          <input type="hidden" name="shiftId" value={shiftId} />
+          <SubmitButton pendingText={t('Enviando…')}>{t('Imprimir cierre')}</SubmitButton>
         </>
       )}
     </ActionForm>

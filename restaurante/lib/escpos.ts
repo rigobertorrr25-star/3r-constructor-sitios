@@ -224,6 +224,15 @@ export type CierreInput = {
   result: string;
   tables: number;
   notes: string | null;
+  /** Propina del día: el % de «Propina sugerida» sobre lo vendido. Sin ella (0 %), no sale. */
+  tipOfSales?: { pct: number; amount: string } | null;
+  /** Cómo queda el inventario de la sede (solo en el cierre de la caja, no en el de un mesero). */
+  inventory?: {
+    remaining: { area: string; name: string; qty: string }[];
+    out: { area: string; name: string }[];
+    toBuy: { area: string; name: string; qty: string; detail: string }[];
+    hasMinimums: boolean;
+  } | null;
 };
 
 export function cierre(width: number, c: CierreInput) {
@@ -235,8 +244,9 @@ export function cierre(width: number, c: CierreInput) {
     .rule()
     .row('Base', c.opening);
   for (const m of c.methods) t.row(`${m.label} (${m.count})`, m.amount);
-  t.row('Ventas', c.sales, { bold: true })
-    .row('Propinas', c.tips)
+  t.row('Ventas', c.sales, { bold: true });
+  if (c.tipOfSales) t.row(`Propina (${c.tipOfSales.pct} % de ventas)`, c.tipOfSales.amount, { bold: true });
+  t.row(c.tipOfSales ? 'Propinas cobradas' : 'Propinas', c.tips)
     .row('Descuentos', c.discounts)
     .row('Anulaciones', c.voids)
     .row('Entradas de efectivo', c.movementsIn)
@@ -247,7 +257,32 @@ export function cierre(width: number, c: CierreInput) {
     .line(c.result, { align: 'center', big: true })
     .line(`${c.tables} ${c.tables === 1 ? 'mesa cerrada' : 'mesas cerradas'}`, { align: 'center' });
   if (c.notes) t.line(`Nota: ${c.notes}`);
+  if (c.inventory) inventorySection(t, c.inventory);
   return t.rule().blank().line('Firma: ______________________');
+}
+
+/** Lo que queda, lo que se acabó y lo que hay que comprar, cada lista por área (Barra / Cocina). */
+function inventorySection(t: Ticket, inv: NonNullable<CierreInput['inventory']>) {
+  const title = (s: string) => t.rule('=').line(s, { align: 'center', bold: true });
+  const byArea = <T extends { area: string }>(list: T[], each: (x: T) => void) => {
+    let area = '';
+    for (const x of list) {
+      if (x.area !== area) (area = x.area), t.line(area.toUpperCase(), { bold: true });
+      each(x);
+    }
+  };
+  title('INVENTARIO QUE QUEDA');
+  if (inv.remaining.length) byArea(inv.remaining, (x) => t.row(x.name, x.qty));
+  else t.line('No queda nada cargado en el inventario.');
+  title('SE ACABÓ');
+  if (inv.out.length) byArea(inv.out, (x) => t.line(`- ${x.name}`));
+  else t.line('Nada: hay de todo.');
+  title('POR COMPRAR PARA MAÑANA');
+  if (!inv.hasMinimums) t.line('Pon el mínimo de cada insumo en Inventario y aquí sale cuánto comprar.');
+  else if (inv.toBuy.length) {
+    t.line('Lo que quedó debajo del mínimo, hasta llegar a él:');
+    byArea(inv.toBuy, (x) => t.row(x.name, x.qty, { bold: true }).line(`  ${x.detail}`));
+  } else t.line('Nada: todo quedó sobre el mínimo.');
 }
 
 export function prueba(width: number, p: { business: string; printer: string; address: string; time: string; jobs: string[] }) {
