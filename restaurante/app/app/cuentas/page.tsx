@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/auth';
 import { METHOD_LABEL } from '@/lib/cash';
+import { tipOfSales } from '@/lib/closing-report';
+import { can } from '@/lib/permissions';
 import { todayIn } from '@/lib/finance';
 import { elapsedMinutes, formatCop, formatElapsed, formatTime } from '@/lib/format';
 import { addDays } from '@/lib/periods';
@@ -16,7 +18,9 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 // Mesas del día: todas las por cobrar y las cobradas del día, con quién las atendió (28 oct 2026, pedido de Rigoberto).
 export default async function AccountsPage({ searchParams }: { searchParams: Promise<{ dia?: string; mesero?: string }> }) {
-  const staff = await requireStaff('cash.operate');
+  const staff = await requireStaff('sales.view');
+  // La jefe de servicio ve todo pero no cobra: sus mesas no abren la cuenta de Caja.
+  const collects = can(staff.role, 'cash.operate');
   const lang = await getLang();
   const t = makeT(lang);
   const sp = await searchParams;
@@ -41,6 +45,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   const dateLabel = longDate.charAt(0).toUpperCase() + longDate.slice(1);
   const pendingTotal = pending.reduce((s, a) => s + a.balance, 0);
   const collectedTotal = collected.reduce((s, a) => s + a.paid, 0);
+  const tipsMarked = collected.reduce((s, a) => s + a.tip, 0);
   const now = Date.now();
   const chip = (active: boolean) =>
     `rounded-full px-4 py-1.5 text-[14px] ${active ? 'bg-primary text-primary-foreground' : 'border border-white/[0.1] text-muted-foreground hover:text-foreground'}`;
@@ -73,6 +78,15 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={t('Por cobrar')} value={formatCop(pendingTotal)} hint={pending.length === 1 ? t('1 mesa') : t('{n} mesas', { n: pending.length })} strong={pending.length > 0} />
         <Stat label={t('Cobradas')} value={formatCop(collectedTotal)} hint={collected.length === 1 ? t('1 mesa') : t('{n} mesas', { n: collected.length })} />
+        {data.tipPercent > 0 ? (
+          <Stat
+            label={t('Propina ({pct} % de lo vendido)', { pct: data.tipPercent })}
+            value={formatCop(tipOfSales(collectedTotal, data.tipPercent))}
+            hint={tipsMarked ? t('Marcada al cobrar: {amount}', { amount: formatCop(tipsMarked) }) : undefined}
+          />
+        ) : (
+          <Stat label={t('Propinas cobradas')} value={formatCop(tipsMarked)} />
+        )}
       </div>
 
       {data.waiters.length > 0 ? (
@@ -113,8 +127,8 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
           <ul className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
             {pending.map((a) => (
               <li key={a.id}>
-                <Link
-                  href={`/app/caja/mesa/${a.id}`}
+                <MaybeLink
+                  href={collects ? `/app/caja/mesa/${a.id}` : null}
                   className={`flex items-start justify-between gap-3 rounded-2xl border bg-card px-4 py-3.5 transition hover:border-white/[0.2] ${a.status === 'bill' ? 'border-warning/60' : 'border-white/[0.08]'}`}
                 >
                   <span className="min-w-0">
@@ -127,7 +141,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                     <Attended t={t} account={a} />
                   </span>
                   <span className="shrink-0 font-display text-[18px] font-bold">{formatCop(a.balance)}</span>
-                </Link>
+                </MaybeLink>
               </li>
             ))}
           </ul>
@@ -142,7 +156,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
           <ul className="divide-y divide-white/[0.06] rounded-2xl border border-white/[0.08] bg-card">
             {collected.map((a) => (
               <li key={a.id}>
-                <Link href={`/app/caja/mesa/${a.id}`} className="flex items-start justify-between gap-3 px-4 py-3 transition hover:bg-white/[0.03]">
+                <MaybeLink href={collects ? `/app/caja/mesa/${a.id}` : null} className="flex items-start justify-between gap-3 px-4 py-3 transition hover:bg-white/[0.03]">
                   <span className="min-w-0">
                     <span className="font-display text-[16px] font-semibold">{t('Mesa {n}', { n: a.tableNumber })}</span>
                     <span className="block text-[13px] text-muted-foreground">
@@ -160,13 +174,23 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                       <span className="text-[13.5px] font-semibold text-warning">{t('Cerrada sin cobrar')}</span>
                     )}
                   </span>
-                </Link>
+                </MaybeLink>
               </li>
             ))}
           </ul>
         )}
       </section>
     </div>
+  );
+}
+
+function MaybeLink({ href, className, children }: { href: string | null; className: string; children: React.ReactNode }) {
+  return href ? (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
+  ) : (
+    <div className={className.replace(/ ?hover:\S+/g, '')}>{children}</div>
   );
 }
 

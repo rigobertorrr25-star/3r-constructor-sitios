@@ -438,4 +438,6 @@ export const en: Record<string, string> = {
   'Cobró: {names}': 'Collected by: {names}',
   'Cerrada sin cobrar': 'Closed without payment',
   'Atendió: {names}': 'Served by: {names}',
+  'Propina ({pct} % de lo vendido)': 'Tip ({pct}% of sales)',
+  'Marcada al cobrar: {amount}': 'Marked at checkout: {amount}',
 };

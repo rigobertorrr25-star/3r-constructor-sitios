@@ -24,7 +24,7 @@ const LINKS: { href: string; label: string; permission: Permission; station?: St
   { href: '/app/agenda', label: 'Agenda', permission: 'agenda.view' },
   { href: '/app/caja', label: 'Caja', permission: 'cash.operate', only: 'register' },
   { href: '/app/meseros', label: 'Meseros', permission: 'waiters.verify', only: 'collect' },
-  { href: '/app/cuentas', label: 'Mesas del día', permission: 'cash.operate' },
+  { href: '/app/cuentas', label: 'Mesas del día', permission: 'sales.view' },
   { href: '/app/finanzas', label: 'Finanzas', permission: 'finance.view' },
   { href: '/app/facturas', label: 'Facturas', permission: 'invoices.manage' },
   { href: '/app/carta', label: 'Carta', permission: 'orders.take' },

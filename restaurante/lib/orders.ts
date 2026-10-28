@@ -338,7 +338,7 @@ export async function sendOrder(actor: Actor, sessionId: string, lines: CartLine
   }
 }
 
-/** Anula un producto ya enviado (no lo borra). Solo dueño o administrador, siempre con motivo. */
+/** Anula un producto ya enviado (no lo borra). Dueño, administrador o jefe de servicio, siempre con motivo. */
 /**
  * Anula un producto ya enviado. `prepared` lo dice quien anula (la comanda se marca entera en la pantalla de cocina o
  * barra, así que su estado no basta): si no se había preparado, los insumos vuelven al inventario. Sin decirlo, se
