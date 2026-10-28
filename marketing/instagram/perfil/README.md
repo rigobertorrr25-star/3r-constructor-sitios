@@ -16,7 +16,7 @@ Comenta PRECIOS en cualquier post 👇
 - Categoría: Diseñador de sitios web.
 - Botón de contacto: WhatsApp 310 790 7194.
 
-## Destacadas (portadas en esta carpeta, en este orden)
+## Destacadas (portadas en esta carpeta, en este orden; versión 2 del 28 oct: cada una toma un color de la franja de luz de 3R, azul → lila → rosado → coral → amarillo, y juntas forman el degradado en el perfil. Al subirlas, ajustar el círculo de Instagram al aro de color)
 1. Precios: `destacada-precios.png`. Las imágenes del carrusel de precios c13 cuando salga (14 nov).
 2. Trabajos: `destacada-trabajos.png`. Los reels de Azul Caribe (4 idiomas), 3R Burgers y Caprichos compartidos en historias.
 3. Cómo funciona: `destacada-funciona.png`. El carrusel del 6 oct («¿Qué pasa después de pedir tu página?»).
