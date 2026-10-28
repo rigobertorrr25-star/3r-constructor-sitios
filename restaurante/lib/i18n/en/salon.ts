@@ -1,6 +1,9 @@
 // Textos en inglés: salon. La llave es el texto exacto en español (con sus {huecos}).
 // Mesas, tomar pedido, cobrar una mesa, plano y pantallas de cocina y barra.
 export const en: Record<string, string> = {
+  'Quitar {name} del pedido': 'Remove {name} from the order',
+  '¿Borrar todo lo que no se ha enviado?': 'Clear everything that hasn’t been sent?',
+  'Borrar todo': 'Clear all',
   // Estados de mesa (STATUS_LABEL de components/table-board.tsx)
   Libre: 'Free',
   Ocupada: 'Seated',
