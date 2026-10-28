@@ -6,7 +6,8 @@ import { addExpenseAction, readReceiptAction, type FormState } from '@/app/actio
 import { formatCop } from '@/lib/format';
 import { shrink } from './background-forms';
 import { PurchaseLines, blankLine, linesFromReading, linesToSave, type Line, type StockItem } from './purchase-lines';
-import { Alert, CheckField, Field, Select, TextArea, card, primaryButton, quietButton } from './ui';
+import { Alert, Field, Select, TextArea, card, primaryButton, quietButton } from './ui';
+import { PaidFromFields } from './paid-from-fields';
 import { useT } from './i18n';
 
 const CATEGORIES: [string, string][] = [
@@ -21,7 +22,7 @@ const CATEGORIES: [string, string][] = [
   ['other', 'Otros'],
 ];
 
-type Draft = { category: string; amount: string; spentOn: string; supplier: string; description: string; bags: string };
+type Draft = { category: string; amount: string; spentOn: string; supplier: string; invoiceNumber: string; description: string; bags: string };
 type Kind = 'supplies' | 'expense';
 
 const KINDS: [Kind, string, string][] = [
@@ -36,7 +37,7 @@ const KINDS: [Kind, string, string][] = [
 export function ReceiptExpense({ today, items }: { today: string; items: StockItem[] }) {
   const t = useT();
   const router = useRouter();
-  const empty: Draft = { category: 'suppliers', amount: '', spentOn: today, supplier: '', description: '', bags: '' };
+  const empty: Draft = { category: 'suppliers', amount: '', spentOn: today, supplier: '', invoiceNumber: '', description: '', bags: '' };
   const [photo, setPhoto] = useState<{ blob: Blob; url: string } | null>(null);
   const [draft, setDraft] = useState<Draft>(empty);
   const [version, setVersion] = useState(0);
@@ -91,6 +92,7 @@ export function ReceiptExpense({ today, items }: { today: string; items: StockIt
           amount: v.amount || d.amount,
           spentOn: v.spentOn || d.spentOn,
           supplier: v.supplier || d.supplier,
+          invoiceNumber: v.invoiceNumber || d.invoiceNumber,
           description: v.description || d.description,
           bags: v.bags || '',
         }));
@@ -208,6 +210,7 @@ export function ReceiptExpense({ today, items }: { today: string; items: StockIt
           <TextArea label={t('¿Qué se compró?')} name="description" rows={2} required minLength={3} maxLength={200} placeholder={t('Compra de 10 kg de limón y 2 bultos de hielo')} defaultValue={values.description} />
         </div>
         <Field label={t('Proveedor (opcional)')} name="supplier" maxLength={120} defaultValue={values.supplier} />
+        <Field label={t('Número de factura (opcional)')} name="invoiceNumber" maxLength={40} defaultValue={values.invoiceNumber} />
         {kind === 'supplies' ? (
           <div className="md:col-span-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3">
             <Field
@@ -240,7 +243,9 @@ export function ReceiptExpense({ today, items }: { today: string; items: StockIt
           </div>
         ) : null}
         <div className="md:col-span-3">
-          <CheckField name="paidFromCash" label={t('Lo pagué con la plata de la caja')} hint={t('Sale de la caja abierta como una salida de efectivo.')} defaultChecked />
+          <div className="grid gap-3 md:grid-cols-3">
+            <PaidFromFields />
+          </div>
         </div>
         <div className="md:col-span-3 flex flex-wrap items-center gap-3">
           <button type="submit" className={primaryButton} disabled={saving || reading}>

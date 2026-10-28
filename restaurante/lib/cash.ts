@@ -29,16 +29,41 @@ export const suggestedTipFor = (total: number, percent: number) => Math.round((t
 
 // ───────── turnos de caja ─────────
 
-export type Shift = { id: string; openedAt: Date; openedBy: string; openingAmount: number; closedAt: Date | null; closedBy: string | null; expectedCash: number | null; countedCash: number | null; notes: string | null };
+export type Shift = {
+  id: string;
+  openedAt: Date;
+  openedBy: string;
+  openingAmount: number;
+  closedAt: Date | null;
+  closedBy: string | null;
+  expectedCash: number | null;
+  countedCash: number | null;
+  notes: string | null;
+  /** Cómo se repartió el efectivo al cerrar (formulario diario de Rigoberto): sobres y caja fuerte. */
+  envelopeKitchen: number;
+  envelopeBar: number;
+  safeAmount: number;
+};
 
 const SHIFT_SELECT = `SELECT c.id, c.opened_at AS "openedAt", o.name AS "openedBy", c.opening_amount AS "openingAmount", c.closed_at AS "closedAt",
-       x.name AS "closedBy", c.expected_cash AS "expectedCash", c.counted_cash AS "countedCash", c.notes
+       x.name AS "closedBy", c.expected_cash AS "expectedCash", c.counted_cash AS "countedCash", c.notes,
+       c.envelope_kitchen AS "envelopeKitchen", c.envelope_bar AS "envelopeBar", c.safe_amount AS "safeAmount"
   FROM cash_shifts c JOIN staff o ON o.id = c.opened_by LEFT JOIN staff x ON x.id = c.closed_by`;
 
-type ShiftRow = Omit<Shift, 'openingAmount' | 'expectedCash' | 'countedCash'> & { openingAmount: string; expectedCash: string | null; countedCash: string | null };
+type ShiftRow = Omit<Shift, 'openingAmount' | 'expectedCash' | 'countedCash' | 'envelopeKitchen' | 'envelopeBar' | 'safeAmount'> & {
+  openingAmount: string;
+  expectedCash: string | null;
+  countedCash: string | null;
+  envelopeKitchen: string;
+  envelopeBar: string;
+  safeAmount: string;
+};
 const toShift = (r: ShiftRow): Shift => ({
   ...r,
   openingAmount: Number(r.openingAmount),
+  envelopeKitchen: Number(r.envelopeKitchen),
+  envelopeBar: Number(r.envelopeBar),
+  safeAmount: Number(r.safeAmount),
   expectedCash: r.expectedCash === null ? null : Number(r.expectedCash),
   countedCash: r.countedCash === null ? null : Number(r.countedCash),
 });
@@ -262,21 +287,33 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
 }
 
 /** Cierra la caja: se cuenta la plata y queda la diferencia contra lo esperado. */
-export async function closeShift(actor: Actor, countedCash: number, notes?: string) {
+export async function closeShift(
+  actor: Actor,
+  countedCash: number,
+  notes?: string,
+  split: { envelopeKitchen?: number; envelopeBar?: number; safeAmount?: number } = {},
+) {
   requirePermission(actor, 'cash.operate');
   requireAmount(countedCash, 'Efectivo contado', { allowZero: true });
-  const why = notes?.trim() ? requireText(notes, 'Nota', 2, 300) : null;
+  const why = notes?.trim() ? requireText(notes, 'Observaciones', 2, 1500) : null;
+  // El efectivo contado se reparte en sobres y caja fuerte; lo que sobra queda en la caja. No se puede repartir más de lo contado.
+  const envelopeKitchen = split.envelopeKitchen ?? 0;
+  const envelopeBar = split.envelopeBar ?? 0;
+  const safeAmount = split.safeAmount ?? 0;
+  requireAmount(envelopeKitchen, 'Sobre para la cocina', { allowZero: true });
+  requireAmount(envelopeBar, 'Sobre para el bar', { allowZero: true });
+  requireAmount(safeAmount, 'Caja fuerte', { allowZero: true });
+  if (envelopeKitchen + envelopeBar + safeAmount > countedCash)
+    throw new AppError('INVALID', `Los sobres y la caja fuerte suman ${money(envelopeKitchen + envelopeBar + safeAmount)}: es más de lo contado (${money(countedCash)}).`);
   return transaction(async (db) => {
     const shift = await lockOpenShift(db, actor);
     const expected = await expectedCash(db, shift.id, Number(shift.openingAmount));
     const diff = countedCash - expected;
-    await db.query(`UPDATE cash_shifts SET closed_at = now(), closed_by = $2, expected_cash = $3, counted_cash = $4, notes = $5 WHERE id = $1`, [
-      shift.id,
-      actor.id,
-      expected,
-      countedCash,
-      why,
-    ]);
+    await db.query(
+      `UPDATE cash_shifts SET closed_at = now(), closed_by = $2, expected_cash = $3, counted_cash = $4, notes = $5,
+              envelope_kitchen = $6, envelope_bar = $7, safe_amount = $8 WHERE id = $1`,
+      [shift.id, actor.id, expected, countedCash, why, envelopeKitchen, envelopeBar, safeAmount],
+    );
     await audit(db, actor, {
       action: 'cash.close',
       entity: 'cash_shift',

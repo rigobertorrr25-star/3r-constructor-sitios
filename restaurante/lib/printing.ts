@@ -3,9 +3,11 @@
 // local los pide con el código de la sede y los manda a cada impresora. Si la impresora falla, se reintenta y queda a la
 // vista en la pantalla de Impresoras para reimprimir.
 import { createHash, randomBytes } from 'node:crypto';
-import { getBill, METHOD_LABEL, METHODS, loadShiftSummary, suggestedTipFor } from './cash';
+import { getBill, METHOD_LABEL, METHODS, loadShiftSummary, suggestedTipFor, workMode } from './cash';
+import { closingInventory, dailyForm, shiftIncidents, shiftSalesByCategory, shortQuantity, sumAmounts, tipOfSales } from './closing-report';
+import { AREA_LABEL } from './inventory';
 import { query, transaction, type Db } from './db';
-import { anulacion, cierre, comanda, precuenta, prueba, type Ticket } from './escpos';
+import { anulacion, cierre, comanda, precuenta, prueba, ventasCategoria, type Ticket } from './escpos';
 import { formatCop, formatDateTime, formatTime } from './format';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 
@@ -298,6 +300,17 @@ export async function printBill(actor: Actor, sessionId: string) {
 export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: string) {
   const s = await loadShiftSummary(actor, shiftId);
   if (!s || !s.shift.closedAt) return 0;
+  const { suggestedTip } = await workMode(actor.businessId);
+  // El inventario va en el cierre de la caja; el cierre de un mesero (DELIRIUM) es solo su plata.
+  const inv = waiter ? null : await closingInventory(actor);
+  // Y aparte, el papel de ventas por categoría con las observaciones del día.
+  const [byCategory, incidents, form] = waiter
+    ? [null, null, null]
+    : await Promise.all([
+        shiftSalesByCategory(actor, shiftId),
+        shiftIncidents(actor, s.shift.openedAt, s.shift.closedAt),
+        dailyForm(actor, shiftId, s.shift.openedAt, s.shift.closedAt),
+      ]);
   return transaction(async (db) => {
     const place = await placeInfo(db, actor);
     const counted = s.shift.countedCash ?? 0;
@@ -323,9 +336,60 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
         counted: formatCop(counted),
         result: diff === 0 ? 'CUADRA' : diff > 0 ? `SOBRAN ${formatCop(diff)}` : `FALTAN ${formatCop(-diff)}`,
         tables: s.tablesClosed,
-        notes: s.shift.notes,
+        // Las observaciones de la caja van al final de «Ventas por categoría»; el cierre de un mesero las trae aquí.
+        notes: waiter ? s.shift.notes : null,
+        tipOfSales: suggestedTip > 0 ? { pct: suggestedTip, amount: formatCop(tipOfSales(s.sales, suggestedTip)) } : null,
+        inventory: inv && {
+          remaining: inv.remaining.map((i) => ({ area: AREA_LABEL[i.area], name: i.name, qty: shortQuantity(i.stock, i.unit, i.bottleSize) })),
+          out: inv.out.map((i) => ({ area: AREA_LABEL[i.area], name: i.name })),
+          toBuy: inv.toBuy.map((i) => ({
+            area: AREA_LABEL[i.area],
+            name: i.name,
+            qty: shortQuantity(i.buy, i.unit, i.bottleSize),
+            detail: `hay ${shortQuantity(i.stock, i.unit, i.bottleSize)} · mínimo ${shortQuantity(i.minStock, i.unit, i.bottleSize)}`,
+          })),
+          hasMinimums: inv.hasMinimums,
+        },
       }),
-    );
+    ).then(async (n) => {
+      if (byCategory && incidents && form) {
+        const closedAt = formatDateTime(s.shift.closedAt!, place.timezone);
+        const sh = s.shift;
+        const out = sumAmounts(form.withInvoice) + sumAmounts(form.withoutInvoice);
+        await enqueue(db, actor, 'cashier', 'ventas', `Formulario diario · ${closedAt}`, (w) =>
+          ventasCategoria(w, {
+            business: place.business,
+            location: place.locations > 1 ? place.location : null,
+            date: closedAt,
+            employee: sh.closedBy ?? '',
+            categories: byCategory.map((c) => ({ ...c, total: formatCop(c.total), products: c.products.map((p) => ({ ...p, total: formatCop(p.total) })) })),
+            total: formatCop(byCategory.reduce((sum, c) => sum + c.total, 0)),
+            withInvoice: form.withInvoice.map((x) => ({ ...x, amount: formatCop(x.amount) })),
+            withInvoiceTotal: formatCop(sumAmounts(form.withInvoice)),
+            withoutInvoice: form.withoutInvoice.map((x) => ({ ...x, amount: formatCop(x.amount) })),
+            withoutInvoiceTotal: formatCop(sumAmounts(form.withoutInvoice)),
+            toPay: form.toPay.map((x) => ({ ...x, amount: formatCop(x.amount), dueOn: x.dueOn ?? 'sin fecha' })),
+            toPayTotal: formatCop(sumAmounts(form.toPay)),
+            losses: form.losses.map((x) => ({ ...x, amount: formatCop(x.amount) })),
+            lossesTotal: formatCop(sumAmounts(form.losses)),
+            totals: {
+              sales: formatCop(s.sales),
+              out: formatCop(out),
+              losses: formatCop(sumAmounts(form.losses)),
+              inCash: formatCop(Math.max(0, (sh.countedCash ?? 0) - sh.envelopeKitchen - sh.envelopeBar - sh.safeAmount)),
+              kitchen: formatCop(sh.envelopeKitchen),
+              bar: formatCop(sh.envelopeBar),
+              safe: formatCop(sh.safeAmount),
+            },
+            notes: s.shift.notes,
+            voids: incidents.voids.map((v) => `${v.quantity} x ${v.name} · mesa ${v.table}${v.reason ? `: ${v.reason}` : ''}${v.by ? ` (${v.by})` : ''}`),
+            discounts: incidents.discounts.map((d) => `Mesa ${d.table} · ${formatCop(d.amount)}: ${d.reason}${d.by ? ` (${d.by})` : ''}`),
+            closedUnpaid: incidents.closedUnpaid.map((c) => `${c.summary}: ${c.reason}${c.by ? ` (${c.by})` : ''}`),
+          }),
+        );
+      }
+      return n;
+    });
   });
 }
 

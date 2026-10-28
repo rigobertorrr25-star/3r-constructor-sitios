@@ -3,7 +3,8 @@ import { requireStaff } from '@/lib/auth';
 import { METHOD_LABEL, METHODS, getOpenShift, listShifts, openAccounts, shiftSummary } from '@/lib/cash';
 import { elapsedMinutes, formatCop, formatDateTime, formatElapsed } from '@/lib/format';
 import { AutoRefresh } from '@/components/auto-refresh';
-import { CloseShiftForm, MovementForm, OpenShiftForm } from '@/components/cash-forms';
+import { CloseShiftForm, LossForm, MovementForm, OpenShiftForm, VoidLossButton } from '@/components/cash-forms';
+import { listLosses } from '@/lib/losses';
 import { Empty, PageTitle, card } from '@/components/ui';
 import { getLang } from '@/lib/i18n/server';
 import { makeT, type T, type Lang } from '@/lib/i18n';
@@ -29,7 +30,7 @@ export default async function CashPage() {
     );
   }
 
-  const [summary, accounts] = await Promise.all([shiftSummary(staff, shift.id), openAccounts(staff)]);
+  const [summary, accounts, losses] = await Promise.all([shiftSummary(staff, shift.id), openAccounts(staff), listLosses(staff, shift.openedAt, null)]);
   const s = summary!;
   const now = Date.now();
   return (
@@ -100,6 +101,31 @@ export default async function CashPage() {
                   <span className={m.kind === 'in' ? 'text-success' : 'text-[#ffb4b5]'}>
                     {m.kind === 'in' ? '+' : '−'}
                     {formatCop(m.amount)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+        <section className={card}>
+          <h2 className="font-display text-[18px] font-bold">{t('Pérdidas del día')}</h2>
+          <p className="mt-1 text-[14px] text-muted-foreground">{t('Lo que se rompió o se dañó y no está en el inventario, con lo que costaba. Sale en el informe del cierre.')}</p>
+          <div className="mt-4">
+            <LossForm />
+          </div>
+          {losses.length ? (
+            <ul className="mt-4 divide-y divide-white/[0.06] text-[14px]">
+              {losses.map((l) => (
+                <li key={l.id} className={`flex justify-between gap-3 py-2 ${l.voided ? 'opacity-50' : ''}`}>
+                  <span className={l.voided ? 'line-through' : ''}>
+                    {l.description}
+                    <span className="block text-[12.5px] text-muted-foreground">
+                      {l.createdBy} · {formatDateTime(l.createdAt, staff.timezone, lang)}
+                    </span>
+                  </span>
+                  <span className="flex items-start gap-3">
+                    <span>{formatCop(l.amount)}</span>
+                    {l.voided ? null : <VoidLossButton lossId={l.id} />}
                   </span>
                 </li>
               ))}

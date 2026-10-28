@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/auth';
-import { EXPENSE_KIND_LABEL, EXPENSE_LABEL, listPurchaseInvoices, todayIn, type ExpenseKind } from '@/lib/finance';
+import { EXPENSE_KIND_LABEL, EXPENSE_LABEL, PAID_FROM_LABEL, listPurchaseInvoices, pendingExpenses, todayIn, type ExpenseKind } from '@/lib/finance';
+import { PayExpenseForm } from '@/components/paid-from-fields';
 import { formatCop, formatDateTime } from '@/lib/format';
 import { DOC_TYPES, INVOICE_STATUS, TAX_KINDS, getFiscal, listInvoices } from '@/lib/invoices';
 import { can } from '@/lib/permissions';
@@ -23,11 +24,12 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const today = todayIn(staff.timezone);
   const range = periodRange(period, today);
   const addsExpenses = can(staff.role, 'expenses.add');
-  const [fiscal, invoices, purchases, stockItems] = await Promise.all([
+  const [fiscal, invoices, purchases, stockItems, toPay] = await Promise.all([
     getFiscal(staff.businessId),
     listInvoices(staff, range, staff.timezone),
     addsExpenses ? listPurchaseInvoices(staff, range) : Promise.resolve([]),
     addsExpenses ? itemsForPurchase(staff) : Promise.resolve([]),
+    addsExpenses ? pendingExpenses(staff) : Promise.resolve([]),
   ]);
   const live = invoices.filter((i) => i.status !== 'void');
   const totals = live.reduce((s, i) => ({ total: s.total + i.total, base: s.base + i.base, tax: s.tax + i.tax }), { total: 0, base: 0, tax: 0 });
@@ -45,6 +47,28 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
     <div className="space-y-6">
       <PageTitle title={t('Facturas')} text={t('Cada venta cobrada (mesa o cita) genera su factura, a nombre de consumidor final o del cliente que la pida.')} />
       {addsExpenses ? <ReceiptExpense today={today} items={stockItems} /> : null}
+
+      {toPay.length ? (
+        <section className={`${card} border-warning/40`}>
+          <h2 className="font-display text-[19px] font-bold">{t('Facturas por pagar ({n})', { n: toPay.length })}</h2>
+          <p className="mt-1 text-[13.5px] text-muted-foreground">{t('Total: {amount}. Las que vencen primero, arriba.', { amount: formatCop(toPay.reduce((s, e) => s + e.amount, 0)) })}</p>
+          <ul className="mt-3 divide-y divide-white/[0.06]">
+            {toPay.map((e) => (
+              <li key={e.id} className="flex flex-wrap items-end justify-between gap-3 py-3 text-[14px]">
+                <span className="min-w-0">
+                  <span className="font-medium">{e.supplier || e.description}</span> · {formatCop(e.amount)}
+                  <span className="block text-[12.5px] text-muted-foreground">
+                    {[e.supplier ? e.description : null, e.invoiceNumber ? t('Factura {n}', { n: e.invoiceNumber }) : null, e.dueOn ? t('vence {date}', { date: e.dueOn }) : t('sin fecha de vencimiento')]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </span>
+                </span>
+                <PayExpenseForm expenseId={e.id} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <h2 className="font-display text-[19px] font-bold">{t('Facturas de venta')}</h2>
       <div className="rounded-[22px] border border-warning/40 bg-warning/[0.07] p-4 text-[14.5px]">
@@ -140,7 +164,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                       {e.description}
                     </span>
                     <span className="block text-[12.5px] text-muted-foreground">
-                      {[e.spentOn, t(EXPENSE_LABEL[e.category]), e.supplier, e.createdBy, e.paidFromCash ? t('de la caja') : null, e.voided ? t('Anulado') : null].filter(Boolean).join(' · ')}
+                      {[e.spentOn, t(EXPENSE_LABEL[e.category]), e.supplier, e.createdBy, e.invoiceNumber ? t('Factura {n}', { n: e.invoiceNumber }) : null, e.paidFrom === null ? t('por pagar') : e.paidFrom ? t(PAID_FROM_LABEL[e.paidFrom]) : null, e.voided ? t('Anulado') : null].filter(Boolean).join(' · ')}
                     </span>
                   </span>
                   <span className="font-semibold">{formatCop(e.amount)}</span>

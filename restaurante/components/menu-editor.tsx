@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { createContext, useContext, useState, useTransition } from 'react';
-import { saveCategoryAction, saveProductAction, setAvailableAction } from '@/app/actions';
+import { moveCategoryAction, saveCategoryAction, saveProductAction, setAvailableAction } from '@/app/actions';
 import { orOffline } from '@/lib/offline';
 import { formatCop } from '@/lib/format';
 import type { MenuCategory, MenuProduct } from '@/lib/orders';
@@ -56,7 +56,8 @@ export function MenuEditor({
                 </p>
               </div>
               {canEdit ? (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {barOnly ? null : <MoveCategory category={category} products={list} />}
                   <button type="button" className={quietButton} onClick={() => setEditing(editing === category.id ? null : category.id)}>
                     {t('Editar categoría')}
                   </button>
@@ -84,6 +85,45 @@ export function MenuEditor({
       ) : null}
     </div>
     </BarOnly.Provider>
+  );
+}
+
+/**
+ * «Todo a cocina» / «Todo a barra»: pasa la categoría y todos sus productos de un toque (pedido de Rigoberto, 27 oct 2026:
+ * pasar uno por uno era trabajoso). El botón del lugar donde ya está todo queda marcado.
+ */
+function MoveCategory({ category, products }: { category: MenuCategory; products: MenuProduct[] }) {
+  const t = useT();
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const allIn = (station: 'kitchen' | 'bar') => category.station === station && products.every((p) => p.station === station);
+  return (
+    <>
+      {(['kitchen', 'bar'] as const).map((station) =>
+        allIn(station) ? (
+          <span key={station} className="inline-flex items-center rounded-full border border-primary/50 bg-primary/10 px-4 py-2 text-[14px] text-foreground">
+            {station === 'kitchen' ? t('Todo en cocina') : t('Todo en barra')}
+          </span>
+        ) : (
+          <button
+            key={station}
+            type="button"
+            disabled={pending}
+            className={`${quietButton} disabled:opacity-60`}
+            onClick={() =>
+              start(async () => {
+                setError(null);
+                const result = await orOffline(moveCategoryAction(category.id, station));
+                if (result) setError(result);
+              })
+            }
+          >
+            {station === 'kitchen' ? t('Todo a cocina') : t('Todo a barra')}
+          </button>
+        ),
+      )}
+      {error ? <span className="w-full text-[13px] text-[#ffb4b5]">{error}</span> : null}
+    </>
   );
 }
 
@@ -129,6 +169,10 @@ function CategoryForm({ category, onDone }: { category?: MenuCategory; onDone?: 
 function ProductForm({ categories, categoryId, product, onDone }: { categories: MenuCategory[]; categoryId: string; product?: MenuProduct; onDone?: () => void }) {
   const t = useT();
   const barOnly = useContext(BarOnly);
+  // Si el producto va a donde va su categoría, se deja en «La de su categoría»: así, al pasarlo a otra categoría, se va
+  // con ella (en Azul quedaban platos de cocina diciendo «Barra» porque guardaban la estación vieja).
+  const ownCategory = categories.find((c) => c.id === (product?.categoryId ?? categoryId));
+  const stationDefault = product && product.station !== ownCategory?.station ? product.station : '';
   return (
     <ActionForm action={saveProductAction} resetOnOk={!product} onOk={onDone} className="mt-4 grid gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 sm:grid-cols-2">
       {(state) => (
@@ -153,7 +197,7 @@ function ProductForm({ categories, categoryId, product, onDone }: { categories: 
             ))}
           </Select>
           {barOnly ? null : (
-            <Select label={t('Va a')} name="station" defaultValue={state?.values?.station ?? product?.station ?? ''}>
+            <Select label={t('Va a')} name="station" defaultValue={state?.values?.station ?? stationDefault}>
               <option value="">{t('La de su categoría')}</option>
               <option value="kitchen">{t('Cocina')}</option>
               <option value="bar">{t('Barra')}</option>
@@ -218,6 +262,9 @@ function ProductRow({
             </p>
             <p className="text-[13.5px] text-muted-foreground">
               {formatCop(product.price)} · {t(STATION_LABEL[product.station])}
+              {categories.find((c) => c.id === product.categoryId)?.station !== product.station ? (
+                <span className="text-warning"> ({t('su categoría va a {station}', { station: t(STATION_LABEL[categories.find((c) => c.id === product.categoryId)?.station ?? product.station]).toLowerCase() })})</span>
+              ) : null}
               {canRecipe
                 ? cost !== undefined
                   ? ` · ${t('costo {cost} (margen {margin} %)', { cost: formatCop(cost), margin: product.price ? Math.round(((product.price - cost) / product.price) * 100) : 0 })}`

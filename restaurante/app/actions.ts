@@ -28,7 +28,8 @@ import { saveFiscal, setInvoiceCustomer } from '@/lib/invoices';
 import { createAppointment, payAppointment, saveService, setAppointmentStatus } from '@/lib/appointments';
 import { getBrief } from '@/lib/brief';
 import { createReservation, requestReservation, seatReservation, updatePublicSettings, updateReservation } from '@/lib/reservations';
-import { addExpense, voidExpense, type PurchaseLine } from '@/lib/finance';
+import { addExpense, payExpense, voidExpense, type PurchaseLine } from '@/lib/finance';
+import { addLoss, voidLoss } from '@/lib/losses';
 import { itemsForPurchase, listItems, registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
 import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
@@ -581,6 +582,18 @@ export async function saveProductAction(_prev: FormState, formData: FormData): P
 }
 
 /** Agotado / disponible (botón, no formulario). */
+/** Carta → «Todo a cocina» / «Todo a barra» en una categoría: ella y todos sus productos van a esa estación. */
+export async function moveCategoryAction(categoryId: string, station: string): Promise<string | null> {
+  const staff = await requireStaff();
+  try {
+    await setCategoryStations(staff, [{ id: categoryId, station }]);
+  } catch (error) {
+    return await messageOf(error);
+  }
+  revalidatePath('/app/carta');
+  return null;
+}
+
 export async function setAvailableAction(productId: string, available: boolean): Promise<string | null> {
   const staff = await requireStaff();
   try {
@@ -650,7 +663,14 @@ export async function closeShiftAction(_prev: FormState, formData: FormData): Pr
   const state = await run(
     formData,
     async () => {
-      shiftId = (await closeShift(staff, pesos(formData, 'countedCash'), text(formData, 'notes'))).shiftId;
+      const optional = (name: string) => (text(formData, name) ? pesos(formData, name) : 0);
+      shiftId = (
+        await closeShift(staff, pesos(formData, 'countedCash'), text(formData, 'notes'), {
+          envelopeKitchen: optional('envelopeKitchen'),
+          envelopeBar: optional('envelopeBar'),
+          safeAmount: optional('safeAmount'),
+        })
+      ).shiftId;
     },
     ['/app/caja'],
   );
@@ -903,6 +923,9 @@ export async function addExpenseAction(_prev: FormState, formData: FormData): Pr
         amount: pesos(formData, 'amount'),
         spentOn: text(formData, 'spentOn'),
         paidFromCash: formData.get('paidFromCash') === 'on',
+        paidFrom: text(formData, 'paidFrom') || undefined,
+        invoiceNumber: text(formData, 'invoiceNumber'),
+        dueOn: text(formData, 'dueOn'),
         photo,
         lines: purchaseLines(formData),
         bags: formData.get('bags') ? pesos(formData, 'bags') : 0,
@@ -910,6 +933,29 @@ export async function addExpenseAction(_prev: FormState, formData: FormData): Pr
     ['/app/finanzas', '/app/caja', '/app/facturas', '/app/inventario'],
     'Gasto registrado.',
   );
+}
+
+/** Caja → «Pérdidas del día»: se rompió un vaso, se dañó un plato… con su valor estimado. */
+export async function addLossAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => addLoss(staff, { description: text(formData, 'description'), amount: pesos(formData, 'amount') }), ['/app/caja'], 'Pérdida anotada.');
+}
+
+export async function voidLossAction(lossId: string): Promise<string | null> {
+  const staff = await requireStaff();
+  try {
+    await voidLoss(staff, lossId);
+  } catch (error) {
+    return await messageOf(error);
+  }
+  revalidatePath('/app/caja');
+  return null;
+}
+
+/** Facturas → «Facturas por pagar» → «Marcar pagada». */
+export async function payExpenseAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => payExpense(staff, text(formData, 'expenseId'), text(formData, 'paidFrom')), ['/app/facturas', '/app/caja', '/app/finanzas'], 'Factura marcada como pagada.');
 }
 
 /** Los productos de la factura que van al inventario (campo «lines», JSON que arma la pantalla). */
@@ -937,6 +983,7 @@ export async function readReceiptAction(_prev: FormState, formData: FormData): P
       message: await trServer('Listo: revisa lo que leyó la IA, corrige lo que haga falta y guarda.'),
       values: {
         supplier: r.supplier,
+        invoiceNumber: r.invoiceNumber,
         amount: r.total ? String(r.total) : '',
         spentOn: r.date ?? '',
         category: r.category,
@@ -1224,6 +1271,19 @@ export async function createAgentCodeAction(_prev: FormState, formData: FormData
   let code = '';
   const state = await run(formData, async () => (code = await createAgentCode(staff)), ['/app/impresoras']);
   return state?.error ? state : { ok: Date.now(), message: code };
+}
+
+/** «Imprimir cierre» en la pantalla del cuadre: vuelve a mandar el cierre completo a la impresora de caja. */
+export async function printClosingAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('cash.operate');
+  return run(
+    formData,
+    async () => {
+      if (!(await enqueueClosing(staff, text(formData, 'shiftId')))) throw new AppError('CONFLICT', 'Esta sede no tiene impresora de caja. Agrégala en Impresoras.');
+    },
+    [],
+    'Cierre y formulario diario enviados a la impresora de caja.',
+  );
 }
 
 export async function printBillAction(_prev: FormState, formData: FormData): Promise<FormState> {

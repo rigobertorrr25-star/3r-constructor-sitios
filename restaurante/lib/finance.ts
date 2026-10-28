@@ -25,6 +25,14 @@ export const EXPENSE_KINDS = ['supplies', 'expense'] as const;
 export type ExpenseKind = (typeof EXPENSE_KINDS)[number];
 export const EXPENSE_KIND_LABEL: Record<ExpenseKind, string> = { supplies: 'Insumos', expense: 'Gasto' };
 
+/**
+ * De dónde salió la plata de una factura (formulario diario de Rigoberto, 28 oct 2026). Sin pagar todavía, la factura
+ * queda «por pagar» con su fecha de vencimiento hasta que alguien la marque pagada.
+ */
+export const PAID_FROM = ['cash', 'safe', 'kitchen', 'bar', 'other'] as const;
+export type PaidFrom = (typeof PAID_FROM)[number];
+export const PAID_FROM_LABEL: Record<PaidFrom, string> = { cash: 'Caja', safe: 'Caja fuerte', kitchen: 'Sobre de la cocina', bar: 'Sobre del bar', other: 'Otro' };
+
 const money = (n: number) => formatCop(n);
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -68,6 +76,10 @@ export type Expense = {
   amount: number;
   spentOn: string;
   paidFromCash: boolean;
+  /** Null: todavía no se paga (por pagar). */
+  paidFrom: PaidFrom | null;
+  invoiceNumber: string | null;
+  dueOn: string | null;
   createdBy: string;
   locationName: string;
   voided: boolean;
@@ -108,6 +120,11 @@ export async function addExpense(
     amount: number;
     spentOn: string;
     paidFromCash?: boolean;
+    /** De dónde salió la plata, o «unpaid» si queda por pagar. Sin decirlo, de la caja si `paidFromCash`, si no «otro». */
+    paidFrom?: string;
+    invoiceNumber?: string;
+    /** Fecha de vencimiento de una factura por pagar. */
+    dueOn?: string;
     photo?: Uint8Array | null;
     lines?: PurchaseLine[];
     /** Parte del total que fue de bolsas: se guarda aparte como gasto «Bolsas y empaques». */
@@ -134,9 +151,15 @@ export async function addExpense(
   if (bags && kind !== 'supplies') throw new AppError('INVALID', 'Las bolsas se separan solo en facturas de insumos.');
   if (bags >= input.amount) throw new AppError('INVALID', 'Lo de bolsas tiene que ser menos que el total de la factura.');
   const mainAmount = input.amount - bags;
+  const source = input.paidFrom || (input.paidFromCash ? 'cash' : 'other');
+  if (source !== 'unpaid' && !(PAID_FROM as readonly string[]).includes(source)) throw new AppError('INVALID', 'Escoge de dónde salió la plata.');
+  const paidFrom = source === 'unpaid' ? null : (source as PaidFrom);
+  const invoiceNumber = input.invoiceNumber?.trim() ? requireText(input.invoiceNumber, 'Número de factura', 1, 40) : null;
+  const dueOn = paidFrom === null && input.dueOn?.trim() ? input.dueOn.trim() : null;
+  if (dueOn && !DATE.test(dueOn)) throw new AppError('INVALID', 'Fecha de vencimiento no válida.');
   return transaction(async (db) => {
     let shiftId: string | null = null;
-    if (input.paidFromCash) {
+    if (paidFrom === 'cash') {
       // Pagado con la plata de la caja: sale de la caja abierta (y se revisa que alcance para toda la factura).
       const shift = (
         await db.query<{ id: string; opening: string }>(
@@ -170,9 +193,11 @@ export async function addExpense(
         : null;
       return (
         await db.query<{ id: string }>(
-          `INSERT INTO expenses (business_id, location_id, category, description, supplier, amount, spent_on, paid_from_cash, cash_movement_id, created_by, kind)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
-          [actor.businessId, actor.locationId, row.category, row.description, supplier, row.amount, input.spentOn, Boolean(input.paidFromCash), movementId, actor.id, row.kind],
+          `INSERT INTO expenses (business_id, location_id, category, description, supplier, amount, spent_on, paid_from_cash, cash_movement_id, created_by, kind,
+                                 invoice_number, paid_from, due_on, paid_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::varchar, $14::date, CASE WHEN $13::varchar IS NULL THEN NULL ELSE now() END) RETURNING id`,
+          [actor.businessId, actor.locationId, row.category, row.description, supplier, row.amount, input.spentOn, paidFrom === 'cash', movementId, actor.id, row.kind,
+           invoiceNumber, paidFrom, dueOn],
         )
       ).rows[0].id;
     };
@@ -209,7 +234,7 @@ export async function addExpense(
       action: 'expense.create',
       entity: 'expense',
       entityId: expenseId,
-      summary: `Registró un gasto de ${money(mainAmount)} (${EXPENSE_LABEL[input.category as ExpenseCategory]}): ${description}${input.paidFromCash ? ', pagado de la caja' : ''}${photo ? ', con foto de la factura' : ''}${lines.length ? `; ${lines.length} productos al inventario` : ''}`,
+      summary: `Registró un gasto de ${money(mainAmount)} (${EXPENSE_LABEL[input.category as ExpenseCategory]}): ${description}${paidFrom === null ? `, por pagar${dueOn ? ` (vence ${dueOn})` : ''}` : `, pagado de: ${PAID_FROM_LABEL[paidFrom].toLowerCase()}`}${invoiceNumber ? `, factura ${invoiceNumber}` : ''}${photo ? ', con foto de la factura' : ''}${lines.length ? `; ${lines.length} productos al inventario` : ''}`,
     });
     return expenseId;
   });
@@ -257,6 +282,7 @@ export async function listExpenses(actor: Actor, range: { from: string; to: stri
   const scope = scopeOf(actor, range.locationId);
   const rows = await query<Omit<Expense, 'amount' | 'spentOn'> & { amount: string; spentOn: string }>(
     `SELECT e.id, e.kind, e.category, e.description, e.supplier, e.amount, to_char(e.spent_on, 'YYYY-MM-DD') AS "spentOn", e.paid_from_cash AS "paidFromCash",
+            e.paid_from AS "paidFrom", e.invoice_number AS "invoiceNumber", to_char(e.due_on, 'YYYY-MM-DD') AS "dueOn",
             s.name AS "createdBy", l.name AS "locationName", (e.voided_at IS NOT NULL) AS voided, e.void_reason AS "voidReason",
             EXISTS (SELECT 1 FROM expense_photos f WHERE f.expense_id = e.id) AS "hasPhoto"
        FROM expenses e JOIN staff s ON s.id = e.created_by JOIN locations l ON l.id = e.location_id
@@ -276,6 +302,7 @@ export async function listPurchaseInvoices(actor: Actor, range: { from: string; 
   checkRange(range.from, range.to);
   const rows = await query<Omit<Expense, 'amount' | 'spentOn'> & { amount: string; spentOn: string }>(
     `SELECT e.id, e.kind, e.category, e.description, e.supplier, e.amount, to_char(e.spent_on, 'YYYY-MM-DD') AS "spentOn", e.paid_from_cash AS "paidFromCash",
+            e.paid_from AS "paidFrom", e.invoice_number AS "invoiceNumber", to_char(e.due_on, 'YYYY-MM-DD') AS "dueOn",
             s.name AS "createdBy", l.name AS "locationName", (e.voided_at IS NOT NULL) AS voided, e.void_reason AS "voidReason",
             EXISTS (SELECT 1 FROM expense_photos f WHERE f.expense_id = e.id) AS "hasPhoto"
        FROM expenses e JOIN staff s ON s.id = e.created_by JOIN locations l ON l.id = e.location_id
@@ -285,6 +312,79 @@ export async function listPurchaseInvoices(actor: Actor, range: { from: string; 
     [actor.businessId, actor.locationId, range.from, range.to],
   );
   return rows.map((r) => ({ ...r, amount: Number(r.amount) }));
+}
+
+/** Las facturas de la sede que todavía no se pagan, las que vencen primero arriba. */
+export async function pendingExpenses(actor: Actor): Promise<Expense[]> {
+  requirePermission(actor, 'expenses.add');
+  const rows = await query<Omit<Expense, 'amount' | 'spentOn'> & { amount: string; spentOn: string }>(
+    `SELECT e.id, e.kind, e.category, e.description, e.supplier, e.amount, to_char(e.spent_on, 'YYYY-MM-DD') AS "spentOn", e.paid_from_cash AS "paidFromCash",
+            e.paid_from AS "paidFrom", e.invoice_number AS "invoiceNumber", to_char(e.due_on, 'YYYY-MM-DD') AS "dueOn",
+            s.name AS "createdBy", l.name AS "locationName", (e.voided_at IS NOT NULL) AS voided, e.void_reason AS "voidReason",
+            EXISTS (SELECT 1 FROM expense_photos f WHERE f.expense_id = e.id) AS "hasPhoto"
+       FROM expenses e JOIN staff s ON s.id = e.created_by JOIN locations l ON l.id = e.location_id
+      WHERE e.business_id = $1 AND e.location_id = $2 AND e.paid_from IS NULL AND e.voided_at IS NULL
+      ORDER BY e.due_on NULLS LAST, e.spent_on`,
+    [actor.businessId, actor.locationId],
+  );
+  return rows.map((r) => ({ ...r, amount: Number(r.amount) }));
+}
+
+/** Marca pagada una factura que estaba por pagar. Si se paga de la caja, sale de la caja abierta. */
+export async function payExpense(actor: Actor, expenseId: string, paidFromInput: string) {
+  requirePermission(actor, 'expenses.add');
+  if (!isUuid(expenseId)) throw new AppError('NOT_FOUND', 'No encontramos esa factura.');
+  if (!(PAID_FROM as readonly string[]).includes(paidFromInput)) throw new AppError('INVALID', 'Escoge de dónde salió la plata.');
+  const paidFrom = paidFromInput as PaidFrom;
+  await transaction(async (db) => {
+    const e = (
+      await db.query<{ amount: string; description: string; paidFrom: string | null; voided: boolean }>(
+        `SELECT amount, description, paid_from AS "paidFrom", (voided_at IS NOT NULL) AS voided FROM expenses
+          WHERE id = $1 AND business_id = $2 AND location_id = $3 FOR UPDATE`,
+        [expenseId, actor.businessId, actor.locationId],
+      )
+    ).rows[0];
+    if (!e || e.voided) throw new AppError('NOT_FOUND', 'No encontramos esa factura.');
+    if (e.paidFrom) throw new AppError('CONFLICT', 'Esa factura ya estaba pagada.');
+    const amount = Number(e.amount);
+    let movementId: string | null = null;
+    if (paidFrom === 'cash') {
+      const shift = (
+        await db.query<{ id: string; opening: string }>(
+          `SELECT id, opening_amount AS opening FROM cash_shifts WHERE location_id = $1 AND business_id = $2 AND closed_at IS NULL AND staff_id IS NULL FOR UPDATE`,
+          [actor.locationId, actor.businessId],
+        )
+      ).rows[0];
+      if (!shift) throw new AppError('CONFLICT', 'La caja está cerrada: no se puede pagar con su plata.');
+      const cash = Number(
+        (
+          await db.query<{ cash: string }>(
+            `SELECT $2::bigint
+                  + (SELECT COALESCE(sum(amount + tip), 0) FROM payments WHERE shift_id = $1 AND method = 'cash' AND reversed_at IS NULL)
+                  + (SELECT COALESCE(sum(CASE WHEN kind = 'in' THEN amount ELSE -amount END), 0) FROM cash_movements WHERE shift_id = $1) AS cash`,
+            [shift.id, shift.opening],
+          )
+        ).rows[0].cash,
+      );
+      if (amount > cash) throw new AppError('CONFLICT', `En caja debería haber ${money(cash)}: no alcanza para ${money(amount)}.`);
+      movementId = (
+        await db.query<{ id: string }>(
+          `INSERT INTO cash_movements (business_id, shift_id, kind, amount, reason, created_by) VALUES ($1, $2, 'out', $3, $4, $5) RETURNING id`,
+          [actor.businessId, shift.id, amount, `Pago de factura: ${e.description}`.slice(0, 200), actor.id],
+        )
+      ).rows[0].id;
+    }
+    await db.query(
+      `UPDATE expenses SET paid_from = $2, paid_at = now(), paid_from_cash = $3, cash_movement_id = COALESCE($4, cash_movement_id) WHERE id = $1`,
+      [expenseId, paidFrom, paidFrom === 'cash', movementId],
+    );
+    await audit(db, actor, {
+      action: 'expense.pay',
+      entity: 'expense',
+      entityId: expenseId,
+      summary: `Pagó una factura de ${money(amount)} (${PAID_FROM_LABEL[paidFrom].toLowerCase()}): ${e.description}`,
+    });
+  });
 }
 
 /** La foto de la factura de compra de un gasto (solo de este negocio; el dueño ve todas las sedes, los demás la suya). */
