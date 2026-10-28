@@ -127,3 +127,90 @@ export async function shiftIncidents(actor: Pick<Actor, 'businessId' | 'location
     closedUnpaid: closedUnpaid.map((c) => ({ summary: c.summary, by: c.by ?? '', reason: c.reason ?? '' })),
   };
 }
+
+// ───────── formulario diario de operaciones (28 oct 2026) ─────────
+// El formulario que usa Rigoberto («Formulaire quotidien / Formulario diario»): 1. ventas del día, 2. salidas de dinero
+// con factura, 3. salidas sin factura, 4. facturas por pagar, 5. pérdidas del día, y los totales: ventas, salidas,
+// pérdidas, en caja, sobre de la cocina, sobre del bar y caja fuerte. Todo sale del turno de caja (de la apertura al cierre).
+
+export type OutWithInvoice = { description: string; invoiceNumber: string; amount: number; from: string };
+export type OutWithoutInvoice = { description: string; reason: string; amount: number; from: string };
+export type ToPay = { supplier: string; description: string; amount: number; dueOn: string | null };
+export type LossLine = { description: string; amount: number };
+export type DailyForm = {
+  withInvoice: OutWithInvoice[];
+  withoutInvoice: OutWithoutInvoice[];
+  toPay: ToPay[];
+  losses: LossLine[];
+};
+
+const FROM_LABEL: Record<string, string> = { cash: 'Caja', safe: 'Caja fuerte', kitchen: 'Sobre cocina', bar: 'Sobre bar', other: 'Otro' };
+const CATEGORY_LABEL: Record<string, string> = {
+  rent: 'Arriendo',
+  payroll: 'Nómina',
+  utilities: 'Servicios públicos',
+  suppliers: 'Proveedores',
+  packaging: 'Bolsas y empaques',
+  maintenance: 'Mantenimiento',
+  marketing: 'Publicidad',
+  taxes: 'Impuestos',
+  other: 'Otros',
+};
+
+/** Las partes 2 a 5 del formulario para la sede, entre la apertura y el cierre de la caja. */
+export async function dailyForm(actor: Pick<Actor, 'businessId' | 'locationId'>, shiftId: string, from: Date, to: Date | null): Promise<DailyForm> {
+  const p = [actor.businessId, actor.locationId, from, to ?? new Date()];
+  const [expenses, movements, pending, losses, waste] = await Promise.all([
+    // Facturas y gastos pagados en el turno (lo que se pagó después de registrado cuenta cuando se pagó).
+    query<{ description: string; supplier: string | null; invoiceNumber: string | null; amount: string; paidFrom: string; category: string; hasPhoto: boolean }>(
+      `SELECT e.description, e.supplier, e.invoice_number AS "invoiceNumber", e.amount, e.paid_from AS "paidFrom", e.category,
+              EXISTS (SELECT 1 FROM expense_photos f WHERE f.expense_id = e.id) AS "hasPhoto"
+         FROM expenses e
+        WHERE e.business_id = $1 AND e.location_id = $2 AND e.voided_at IS NULL AND e.paid_from IS NOT NULL
+          AND COALESCE(e.paid_at, e.created_at) >= $3 AND COALESCE(e.paid_at, e.created_at) <= $4
+        ORDER BY COALESCE(e.paid_at, e.created_at)`,
+      p,
+    ),
+    // Salidas de efectivo de la caja que no son el pago de una factura registrada.
+    query<{ reason: string; amount: string }>(
+      `SELECT m.reason, m.amount FROM cash_movements m
+        WHERE m.shift_id = $1 AND m.kind = 'out' AND NOT EXISTS (SELECT 1 FROM expenses e WHERE e.cash_movement_id = m.id)
+        ORDER BY m.created_at`,
+      [shiftId],
+    ),
+    query<{ supplier: string | null; description: string; amount: string; dueOn: string | null }>(
+      `SELECT e.supplier, e.description, e.amount, to_char(e.due_on, 'YYYY-MM-DD') AS "dueOn" FROM expenses e
+        WHERE e.business_id = $1 AND e.location_id = $2 AND e.paid_from IS NULL AND e.voided_at IS NULL ORDER BY e.due_on NULLS LAST, e.spent_on`,
+      [actor.businessId, actor.locationId],
+    ),
+    query<{ description: string; amount: string }>(
+      `SELECT description, amount FROM losses WHERE business_id = $1 AND location_id = $2 AND voided_at IS NULL AND created_at >= $3 AND created_at <= $4 ORDER BY created_at`,
+      p,
+    ),
+    // Las mermas del inventario también son pérdidas (al costo del insumo).
+    query<{ name: string; reason: string | null; value: string }>(
+      `SELECT i.name, m.reason, -m.quantity * m.unit_cost AS value FROM inventory_movements m JOIN inventory_items i ON i.id = m.item_id
+        WHERE m.business_id = $1 AND m.location_id = $2 AND m.kind = 'waste' AND m.created_at >= $3 AND m.created_at <= $4 ORDER BY m.created_at`,
+      p,
+    ),
+  ]);
+  const withInvoice: OutWithInvoice[] = [];
+  const withoutInvoice: OutWithoutInvoice[] = [];
+  for (const e of expenses) {
+    const description = e.supplier ? `${e.supplier}: ${e.description}` : e.description;
+    if (e.invoiceNumber || e.hasPhoto) withInvoice.push({ description, invoiceNumber: e.invoiceNumber ?? 'con foto', amount: Number(e.amount), from: FROM_LABEL[e.paidFrom] ?? e.paidFrom });
+    else withoutInvoice.push({ description, reason: CATEGORY_LABEL[e.category] ?? e.category, amount: Number(e.amount), from: FROM_LABEL[e.paidFrom] ?? e.paidFrom });
+  }
+  for (const m of movements) withoutInvoice.push({ description: m.reason, reason: 'Salida de efectivo', amount: Number(m.amount), from: 'Caja' });
+  return {
+    withInvoice,
+    withoutInvoice,
+    toPay: pending.map((e) => ({ supplier: e.supplier ?? '', description: e.description, amount: Number(e.amount), dueOn: e.dueOn })),
+    losses: [
+      ...losses.map((l) => ({ description: l.description, amount: Number(l.amount) })),
+      ...waste.map((w) => ({ description: `Merma de ${w.name}${w.reason ? ` (${w.reason})` : ''}`, amount: Math.round(Number(w.value)) })),
+    ],
+  };
+}
+
+export const sumAmounts = (rows: { amount: number }[]) => rows.reduce((s, r) => s + r.amount, 0);

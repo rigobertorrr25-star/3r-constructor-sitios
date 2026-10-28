@@ -11,11 +11,12 @@ describe('leer la respuesta de la IA sobre una factura', () => {
   it('toma proveedor, total, fecha, tipo y qué se compró; lo raro queda vacío', async () => {
     const { receiptReading } = await import('../lib/ai-read');
     assert.deepEqual(
-      receiptReading('Aquí va: {"proveedor":"Surtifruver La Sexta","total":"$84.500","fecha":"2026-10-23","tipo":"suppliers","descripcion":"Compra de 10 kg de limón y 5 kg de tomate"}'),
-      { supplier: 'Surtifruver La Sexta', total: 84500, date: '2026-10-23', category: 'suppliers', description: 'Compra de 10 kg de limón y 5 kg de tomate', lines: [], bags: 0 },
+      receiptReading('Aquí va: {"proveedor":"Surtifruver La Sexta","numero_factura":"FE-1043","total":"$84.500","fecha":"2026-10-23","tipo":"suppliers","descripcion":"Compra de 10 kg de limón y 5 kg de tomate"}'),
+      { supplier: 'Surtifruver La Sexta', invoiceNumber: 'FE-1043', total: 84500, date: '2026-10-23', category: 'suppliers', description: 'Compra de 10 kg de limón y 5 kg de tomate', lines: [], bags: 0 },
     );
     assert.deepEqual(receiptReading('{"proveedor":null,"total":null,"fecha":"23/10/2026","tipo":"comida","descripcion":"Hielo"}'), {
       supplier: '',
+      invoiceNumber: '',
       total: null,
       date: null,
       category: 'other',
@@ -169,5 +170,30 @@ describe('facturas de compra con foto', { skip: url ? false : 'sin TEST_DATABASE
     // En Finanzas se ve que tiene foto.
     const finance = await fin.listExpenses(owner, { from: today, to: today, locationId: null });
     assert.equal(finance.find((e) => e.id === id)?.hasPhoto, true);
+  });
+
+  it('formulario diario: número de factura, de dónde salió la plata y facturas por pagar que se pagan después', async () => {
+    const base = { category: 'suppliers', supplier: 'Distribuidora Costa', spentOn: today };
+    await assert.rejects(fin.addExpense(cashier, { ...base, description: 'Cajas de cerveza', amount: 300000, paidFrom: 'bolsillo' }), /de dónde salió la plata/);
+    // Pagada de la caja fuerte: no toca la caja abierta.
+    const before = (await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM cash_movements WHERE business_id = $1`, [owner.businessId]))[0].n;
+    const safe = await fin.addExpense(cashier, { ...base, description: 'Carne de la semana', amount: 420000, paidFrom: 'safe', invoiceNumber: 'FV-88' });
+    assert.equal((await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM cash_movements WHERE business_id = $1`, [owner.businessId]))[0].n, before);
+    const listed = (await fin.listPurchaseInvoices(cashier, { from: today, to: today })).find((e) => e.id === safe)!;
+    assert.deepEqual([listed.paidFrom, listed.invoiceNumber, listed.paidFromCash], ['safe', 'FV-88', false]);
+    // Por pagar, con vencimiento: no sale plata hasta que se paga.
+    const unpaid = await fin.addExpense(cashier, { ...base, description: 'Licores del mes', amount: 900000, paidFrom: 'unpaid', dueOn: '2026-11-15', invoiceNumber: 'A-2001' });
+    const pending = await fin.pendingExpenses(cashier);
+    assert.deepEqual(
+      pending.filter((e) => e.id === unpaid).map((e) => [e.paidFrom, e.dueOn, e.invoiceNumber]),
+      [[null, '2026-11-15', 'A-2001']],
+    );
+    await assert.rejects(fin.payExpense(waiter, unpaid, 'cash'), { code: 'FORBIDDEN' });
+    await assert.rejects(fin.payExpense(cashier, unpaid, 'unpaid'), /de dónde salió la plata/);
+    await fin.payExpense(cashier, unpaid, 'bar');
+    assert.equal((await fin.pendingExpenses(cashier)).some((e) => e.id === unpaid), false);
+    await assert.rejects(fin.payExpense(cashier, unpaid, 'cash'), /ya estaba pagada/);
+    const paid = (await fin.listPurchaseInvoices(cashier, { from: today, to: today })).find((e) => e.id === unpaid)!;
+    assert.equal(paid.paidFrom, 'bar');
   });
 });

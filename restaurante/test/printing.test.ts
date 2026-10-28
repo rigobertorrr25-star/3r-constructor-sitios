@@ -202,19 +202,40 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     const limon = await inv.saveItem(owner, { name: 'Limón', unit: 'g', minStock: 0, area: 'bar' });
     const hielo = await inv.saveItem(owner, { name: 'Hielo', unit: 'und', minStock: 0, area: 'bar' });
     const papa = await inv.saveItem(owner, { name: 'Papa', unit: 'g', minStock: 0, area: 'kitchen' });
+    await db.query(`UPDATE inventory_items SET unit_cost = 4 WHERE id = $1`, [papa]);
     await bulk.bulkStock(owner, [
       { itemId: limon, counted: '0,5', minStock: '2' },
       { itemId: hielo, counted: '0', minStock: '3' },
       { itemId: papa, counted: '10', minStock: '5' },
     ]);
-    const { shiftId } = await cash.closeShift(owner, 160000, 'Se rompió un vaso en la mesa 3');
+    // El formulario diario (28 oct 2026): facturas con y sin número, una salida de efectivo, una factura por pagar,
+    // una pérdida suelta, una merma del inventario y el reparto del efectivo en sobres y caja fuerte.
+    const fin = await import('../lib/finance');
+    const losses = await import('../lib/losses');
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date());
+    await fin.addExpense(owner, { category: 'suppliers', description: 'Hielo', supplier: 'Hielos del Mar', amount: 15000, spentOn: today, paidFrom: 'cash', invoiceNumber: 'H-77' });
+    await fin.addExpense(owner, { category: 'maintenance', description: 'Bombillo del baño', amount: 8000, spentOn: today, paidFrom: 'kitchen' });
+    await fin.addExpense(owner, { category: 'suppliers', description: 'Licores', supplier: 'Dislicores', amount: 500000, spentOn: today, paidFrom: 'unpaid', dueOn: '2026-11-15' });
+    await cash.addMovement(owner, { kind: 'out', amount: 5000, reason: 'Propina del domiciliario' });
+    await losses.addLoss(owner, { description: 'Se rompió un vaso', amount: 6000 });
+    await inv.registerWaste(owner, { itemId: papa, quantity: '1000', reason: 'Se dañó' });
+    const { shiftId } = await cash.closeShift(owner, 140000, 'Se rompió un vaso en la mesa 3', { envelopeKitchen: 30000, envelopeBar: 20000, safeAmount: 50000 });
+    await assert.rejects(cash.closeShift(owner, 1000, undefined, { safeAmount: 2000 }), /es más de lo contado/, 'no se reparte más de lo contado');
     assert.equal(await printing.enqueueClosing(owner, shiftId), 1);
-    // El segundo papel: ventas por categoría y observaciones (28 oct 2026).
     const sales = (await jobs()).filter((j) => j.kind === 'ventas');
     assert.equal(sales.length, 1);
     // Los renglones largos se parten: se revisa el texto seguido.
     const salesText = sales[0].preview.replace(/\s+/g, ' ');
-    for (const s of ['VENTAS POR CATEGORÍA', 'PLATOS', 'x Hamburguesa', 'Total Platos', 'Total vendido (antes de descuentos)', 'OBSERVACIONES', 'Se rompió un vaso en la mesa 3', 'Anulaciones y devoluciones:', '1 x Cerveza · mesa 9: Se cayó la cerveza', 'Firma'])
+    for (const s of [
+      'FORMULARIO DIARIO',
+      '1. VENTAS DEL DÍA', 'PLATOS', 'x Hamburguesa', 'Total Platos',
+      '2. SALIDAS DE DINERO CON FACTURA', 'Hielos del Mar: Hielo $15.000', 'Factura H-77 · de: Caja',
+      '3. SALIDAS DE DINERO SIN FACTURA', 'Bombillo del baño $8.000', 'Mantenimiento · de: Sobre cocina', 'Propina del domiciliario $5.000',
+      '4. FACTURAS POR PAGAR', 'Dislicores $500.000', 'vence: 2026-11-15',
+      '5. PÉRDIDAS DEL DÍA', 'Se rompió un vaso $6.000', 'Merma de Papa (Se dañó)',
+      'Total salidas de dinero $28.000', 'Total en caja $40.000', 'Sobre para la cocina $30.000', 'Sobre para el bar $20.000', 'Caja fuerte $50.000',
+      'COMENTARIOS', 'Se rompió un vaso en la mesa 3', 'Anulaciones y devoluciones:', '1 x Cerveza · mesa 9: Se cayó la cerveza', 'Firma',
+    ])
       assert.ok(salesText.includes(s), s);
     const closing = (await jobs()).filter((j) => j.kind === 'cierre');
     assert.equal(closing.length, 1);
@@ -224,7 +245,7 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     for (const s of ['Propina (10 % de ventas)', '$6.000', 'Propinas cobradas', 'INVENTARIO QUE QUEDA', 'SE ACABÓ', 'POR COMPRAR PARA MAÑANA', 'hay 500 g · mínimo 2 kg'])
       assert.ok(paper.includes(s), s);
     const after = (title: string) => paper.slice(paper.indexOf(title));
-    assert.match(after('INVENTARIO QUE QUEDA'), /COCINA\n.*Papa\s+10 kg/);
+    assert.match(after('INVENTARIO QUE QUEDA'), /COCINA\n.*Papa\s+9 kg/);
     assert.match(after('SE ACABÓ'), /- Hielo/);
     assert.match(after('POR COMPRAR PARA MAÑANA'), /Limón\s+1,5 kg/);
     assert.match(after('POR COMPRAR PARA MAÑANA'), /Hielo\s+3 und/);

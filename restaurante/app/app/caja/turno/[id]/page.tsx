@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireStaff } from '@/lib/auth';
 import { METHOD_LABEL, METHODS, shiftSummary, workMode } from '@/lib/cash';
-import { closingInventory, shiftIncidents, shiftSalesByCategory, shortQuantity, tipOfSales, type StockLine } from '@/lib/closing-report';
+import { closingInventory, dailyForm, shiftIncidents, shiftSalesByCategory, shortQuantity, sumAmounts, tipOfSales, type StockLine } from '@/lib/closing-report';
 import { AREA_LABEL } from '@/lib/inventory';
 import { PrintClosingButton } from '@/components/printer-forms';
 import { formatCop, formatDateTime } from '@/lib/format';
@@ -19,12 +19,34 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
   const t = makeT(lang);
   const s = await shiftSummary(staff, id);
   if (!s) notFound();
-  const [{ suggestedTip }, inv, byCategory, incidents] = await Promise.all([
+  const [{ suggestedTip }, inv, byCategory, incidents, form] = await Promise.all([
     workMode(staff.businessId),
     closingInventory(staff),
     shiftSalesByCategory(staff, s.shift.id),
     shiftIncidents(staff, s.shift.openedAt, s.shift.closedAt),
+    dailyForm(staff, s.shift.id, s.shift.openedAt, s.shift.closedAt),
   ]);
+  // Totales del formulario diario: lo que queda en caja es lo contado menos los sobres y la caja fuerte.
+  const sh = s.shift;
+  const inCash = sh.countedCash === null ? null : Math.max(0, sh.countedCash - sh.envelopeKitchen - sh.envelopeBar - sh.safeAmount);
+  const formSections: { title: string; rows: { left: string; detail: string; amount: number }[]; empty: string }[] = [
+    {
+      title: t('Salidas de dinero con factura'),
+      rows: form.withInvoice.map((x) => ({ left: x.description, detail: `${t('Factura {n}', { n: x.invoiceNumber })} · ${t('de: {from}', { from: t(x.from) })}`, amount: x.amount })),
+      empty: t('Ninguna.'),
+    },
+    {
+      title: t('Salidas de dinero sin factura'),
+      rows: form.withoutInvoice.map((x) => ({ left: x.description, detail: `${t(x.reason)} · ${t('de: {from}', { from: t(x.from) })}`, amount: x.amount })),
+      empty: t('Ninguna.'),
+    },
+    {
+      title: t('Facturas por pagar'),
+      rows: form.toPay.map((x) => ({ left: x.supplier || x.description, detail: `${x.supplier ? `${x.description} · ` : ''}${x.dueOn ? t('vence {date}', { date: x.dueOn }) : t('sin fecha de vencimiento')}`, amount: x.amount })),
+      empty: t('Ninguna.'),
+    },
+    { title: t('Pérdidas del día'), rows: form.losses.map((x) => ({ left: x.description, detail: '', amount: x.amount })), empty: t('Ninguna.') },
+  ];
   const hasIncidents = incidents.voids.length + incidents.discounts.length + incidents.closedUnpaid.length > 0;
   const qty = (value: number, i: StockLine) => shortQuantity(value, i.unit, i.bottleSize);
   const diff = s.shift.countedCash === null ? null : s.shift.countedCash - (s.shift.expectedCash ?? s.expectedCash);
@@ -59,7 +81,7 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
       {s.shift.closedAt ? (
         <div className="max-w-xl">
           <PrintClosingButton shiftId={s.shift.id} />
-          <p className="mt-1.5 text-[13px] text-muted-foreground">{t('Salen dos papeles en la impresora de caja: el cierre (cuadre, propina e inventario) y las ventas por categoría con las observaciones.')}</p>
+          <p className="mt-1.5 text-[13px] text-muted-foreground">{t('Salen dos papeles en la impresora de caja: el cierre (cuadre, propina e inventario) y el formulario diario (ventas, salidas, facturas por pagar, pérdidas, totales y comentarios).')}</p>
         </div>
       ) : null}
       <dl className={`${card} max-w-xl divide-y divide-white/[0.06] p-0`}>
@@ -103,8 +125,55 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
             <p className="mt-3 text-[14px] text-muted-foreground">{t('No hubo ventas en este turno.')}</p>
           )}
         </section>
+        {formSections.map((sec) => (
+          <section key={sec.title} className={card}>
+            <h2 className="font-display text-[18px] font-bold">{sec.title}</h2>
+            {sec.rows.length ? (
+              <>
+                <ul className="mt-3 space-y-1.5 text-[14px]">
+                  {sec.rows.map((r, i) => (
+                    <li key={i} className="flex justify-between gap-3">
+                      <span>
+                        {r.left}
+                        {r.detail ? <span className="block text-[12.5px] text-muted-foreground">{r.detail}</span> : null}
+                      </span>
+                      <span className="shrink-0">{formatCop(r.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 flex justify-between gap-3 border-t border-white/[0.06] pt-2 text-[14.5px] font-semibold">
+                  <span>{t('Subtotal')}</span>
+                  <span>{formatCop(sumAmounts(sec.rows))}</span>
+                </p>
+              </>
+            ) : (
+              <p className="mt-3 text-[14px] text-muted-foreground">{sec.empty}</p>
+            )}
+          </section>
+        ))}
         <section className={card}>
-          <h2 className="font-display text-[18px] font-bold">{t('Observaciones')}</h2>
+          <h2 className="font-display text-[18px] font-bold">{t('Totales del día')}</h2>
+          <dl className="mt-3 space-y-1.5 text-[14.5px]">
+            {(
+              [
+                [t('Total ventas'), formatCop(s.sales)],
+                [t('Total salidas de dinero'), formatCop(sumAmounts(form.withInvoice) + sumAmounts(form.withoutInvoice))],
+                [t('Total pérdidas'), formatCop(sumAmounts(form.losses))],
+                [t('Total en caja'), inCash === null ? '—' : formatCop(inCash)],
+                [t('Sobre para la cocina'), formatCop(sh.envelopeKitchen)],
+                [t('Sobre para el bar'), formatCop(sh.envelopeBar)],
+                [t('Caja fuerte'), formatCop(sh.safeAmount)],
+              ] as [string, string][]
+            ).map(([k, v]) => (
+              <div key={k} className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">{k}</dt>
+                <dd className="font-medium">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+        <section className={card}>
+          <h2 className="font-display text-[18px] font-bold">{t('Comentarios')}</h2>
           {s.shift.notes ? <p className="mt-3 whitespace-pre-line text-[14.5px]">{s.shift.notes}</p> : null}
           {hasIncidents ? (
             <div className="mt-3 space-y-3 text-[14px]">

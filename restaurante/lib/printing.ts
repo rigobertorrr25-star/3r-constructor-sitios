@@ -4,7 +4,7 @@
 // vista en la pantalla de Impresoras para reimprimir.
 import { createHash, randomBytes } from 'node:crypto';
 import { getBill, METHOD_LABEL, METHODS, loadShiftSummary, suggestedTipFor, workMode } from './cash';
-import { closingInventory, shiftIncidents, shiftSalesByCategory, shortQuantity, tipOfSales } from './closing-report';
+import { closingInventory, dailyForm, shiftIncidents, shiftSalesByCategory, shortQuantity, sumAmounts, tipOfSales } from './closing-report';
 import { AREA_LABEL } from './inventory';
 import { query, transaction, type Db } from './db';
 import { anulacion, cierre, comanda, precuenta, prueba, ventasCategoria, type Ticket } from './escpos';
@@ -304,9 +304,13 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
   // El inventario va en el cierre de la caja; el cierre de un mesero (DELIRIUM) es solo su plata.
   const inv = waiter ? null : await closingInventory(actor);
   // Y aparte, el papel de ventas por categoría con las observaciones del día.
-  const [byCategory, incidents] = waiter
-    ? [null, null]
-    : await Promise.all([shiftSalesByCategory(actor, shiftId), shiftIncidents(actor, s.shift.openedAt, s.shift.closedAt)]);
+  const [byCategory, incidents, form] = waiter
+    ? [null, null, null]
+    : await Promise.all([
+        shiftSalesByCategory(actor, shiftId),
+        shiftIncidents(actor, s.shift.openedAt, s.shift.closedAt),
+        dailyForm(actor, shiftId, s.shift.openedAt, s.shift.closedAt),
+      ]);
   return transaction(async (db) => {
     const place = await placeInfo(db, actor);
     const counted = s.shift.countedCash ?? 0;
@@ -348,16 +352,35 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
         },
       }),
     ).then(async (n) => {
-      if (byCategory && incidents) {
+      if (byCategory && incidents && form) {
         const closedAt = formatDateTime(s.shift.closedAt!, place.timezone);
-        await enqueue(db, actor, 'cashier', 'ventas', `Ventas por categoría · ${closedAt}`, (w) =>
+        const sh = s.shift;
+        const out = sumAmounts(form.withInvoice) + sumAmounts(form.withoutInvoice);
+        await enqueue(db, actor, 'cashier', 'ventas', `Formulario diario · ${closedAt}`, (w) =>
           ventasCategoria(w, {
             business: place.business,
             location: place.locations > 1 ? place.location : null,
-            closedBy: s.shift.closedBy ?? '',
-            closedAt,
+            date: closedAt,
+            employee: sh.closedBy ?? '',
             categories: byCategory.map((c) => ({ ...c, total: formatCop(c.total), products: c.products.map((p) => ({ ...p, total: formatCop(p.total) })) })),
             total: formatCop(byCategory.reduce((sum, c) => sum + c.total, 0)),
+            withInvoice: form.withInvoice.map((x) => ({ ...x, amount: formatCop(x.amount) })),
+            withInvoiceTotal: formatCop(sumAmounts(form.withInvoice)),
+            withoutInvoice: form.withoutInvoice.map((x) => ({ ...x, amount: formatCop(x.amount) })),
+            withoutInvoiceTotal: formatCop(sumAmounts(form.withoutInvoice)),
+            toPay: form.toPay.map((x) => ({ ...x, amount: formatCop(x.amount), dueOn: x.dueOn ?? 'sin fecha' })),
+            toPayTotal: formatCop(sumAmounts(form.toPay)),
+            losses: form.losses.map((x) => ({ ...x, amount: formatCop(x.amount) })),
+            lossesTotal: formatCop(sumAmounts(form.losses)),
+            totals: {
+              sales: formatCop(s.sales),
+              out: formatCop(out),
+              losses: formatCop(sumAmounts(form.losses)),
+              inCash: formatCop(Math.max(0, (sh.countedCash ?? 0) - sh.envelopeKitchen - sh.envelopeBar - sh.safeAmount)),
+              kitchen: formatCop(sh.envelopeKitchen),
+              bar: formatCop(sh.envelopeBar),
+              safe: formatCop(sh.safeAmount),
+            },
             notes: s.shift.notes,
             voids: incidents.voids.map((v) => `${v.quantity} x ${v.name} · mesa ${v.table}${v.reason ? `: ${v.reason}` : ''}${v.by ? ` (${v.by})` : ''}`),
             discounts: incidents.discounts.map((d) => `Mesa ${d.table} · ${formatCop(d.amount)}: ${d.reason}${d.by ? ` (${d.by})` : ''}`),

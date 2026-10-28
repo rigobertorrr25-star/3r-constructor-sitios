@@ -286,16 +286,27 @@ function inventorySection(t: Ticket, inv: NonNullable<CierreInput['inventory']>)
 }
 
 /**
- * Segundo papel del cierre de caja (28 oct 2026): qué se vendió por categoría y, al final, las observaciones del día
- * (lo que escribió la cajera, lo que el sistema sabe que pasó y renglones para escribir a mano).
+ * Segundo papel del cierre de caja: el formulario diario de operaciones de Rigoberto (28 oct 2026). 1. ventas del día
+ * por categoría, 2. salidas de dinero con factura, 3. salidas sin factura, 4. facturas por pagar, 5. pérdidas del día,
+ * los totales (ventas, salidas, pérdidas, en caja, sobres y caja fuerte) y los comentarios con renglones para escribir.
  */
 export type VentasInput = {
   business: string;
   location: string | null;
-  closedBy: string;
-  closedAt: string;
+  date: string;
+  employee: string;
   categories: { category: string; quantity: number; total: string; products: { name: string; quantity: number; total: string }[] }[];
+  /** Lo vendido antes de descuentos (suma de las categorías). */
   total: string;
+  withInvoice: { description: string; invoiceNumber: string; amount: string; from: string }[];
+  withInvoiceTotal: string;
+  withoutInvoice: { description: string; reason: string; amount: string; from: string }[];
+  withoutInvoiceTotal: string;
+  toPay: { supplier: string; description: string; amount: string; dueOn: string }[];
+  toPayTotal: string;
+  losses: { description: string; amount: string }[];
+  lossesTotal: string;
+  totals: { sales: string; out: string; losses: string; inCash: string; kitchen: string; bar: string; safe: string };
   notes: string | null;
   voids: string[];
   discounts: string[];
@@ -305,15 +316,51 @@ export type VentasInput = {
 export function ventasCategoria(width: number, v: VentasInput) {
   const t = new Ticket(width).line(v.business, { align: 'center', bold: true });
   if (v.location) t.line(v.location, { align: 'center' });
-  t.line('VENTAS POR CATEGORÍA', { align: 'center', big: true }).line(`Cerró: ${v.closedBy} · ${v.closedAt}`).rule();
-  if (!v.categories.length) t.line('No hubo ventas en este turno.');
+  t.line('FORMULARIO DIARIO', { align: 'center', big: true }).line('OPERACIONES', { align: 'center', bold: true }).row('Fecha', v.date).row('Empleado', v.employee);
+  const section = (title: string) => t.rule('=').line(title, { bold: true });
+  const subtotal = (value: string) => t.row('Subtotal', value, { bold: true });
+  const none = (text: string) => t.line(text);
+
+  section('1. VENTAS DEL DÍA');
+  if (!v.categories.length) none('No hubo ventas en este turno.');
   for (const c of v.categories) {
     t.line(c.category.toUpperCase(), { bold: true });
     for (const p of c.products) t.row(`${p.quantity} x ${p.name}`, p.total);
-    t.row(`Total ${c.category} (${c.quantity})`, c.total, { bold: true }).blank();
+    t.row(`Total ${c.category} (${c.quantity})`, c.total);
   }
-  t.rule().row('Total vendido (antes de descuentos)', v.total, { bold: true });
-  t.rule('=').line('OBSERVACIONES', { align: 'center', bold: true });
+  subtotal(v.total);
+  t.line('(antes de descuentos)');
+
+  section('2. SALIDAS DE DINERO CON FACTURA');
+  if (!v.withInvoice.length) none('Ninguna.');
+  for (const x of v.withInvoice) t.row(x.description, x.amount).line(`  Factura ${x.invoiceNumber} · de: ${x.from}`);
+  subtotal(v.withInvoiceTotal);
+
+  section('3. SALIDAS DE DINERO SIN FACTURA');
+  if (!v.withoutInvoice.length) none('Ninguna.');
+  for (const x of v.withoutInvoice) t.row(x.description, x.amount).line(`  ${x.reason} · de: ${x.from}`);
+  subtotal(v.withoutInvoiceTotal);
+
+  section('4. FACTURAS POR PAGAR');
+  if (!v.toPay.length) none('Ninguna.');
+  for (const x of v.toPay) t.row(x.supplier || x.description, x.amount).line(`  ${x.supplier ? `${x.description} · ` : ''}vence: ${x.dueOn}`);
+  subtotal(v.toPayTotal);
+
+  section('5. PÉRDIDAS DEL DÍA');
+  if (!v.losses.length) none('Ninguna.');
+  for (const x of v.losses) t.row(x.description, x.amount);
+  subtotal(v.lossesTotal);
+
+  t.rule('=')
+    .row('Total ventas', v.totals.sales, { bold: true })
+    .row('Total salidas de dinero', v.totals.out)
+    .row('Total pérdidas', v.totals.losses)
+    .row('Total en caja', v.totals.inCash, { bold: true })
+    .row('Sobre para la cocina', v.totals.kitchen)
+    .row('Sobre para el bar', v.totals.bar)
+    .row('Caja fuerte', v.totals.safe);
+
+  section('COMENTARIOS');
   if (v.notes) t.line(v.notes);
   const list = (title: string, items: string[]) => {
     if (!items.length) return;

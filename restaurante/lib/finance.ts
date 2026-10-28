@@ -195,7 +195,7 @@ export async function addExpense(
         await db.query<{ id: string }>(
           `INSERT INTO expenses (business_id, location_id, category, description, supplier, amount, spent_on, paid_from_cash, cash_movement_id, created_by, kind,
                                  invoice_number, paid_from, due_on, paid_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CASE WHEN $13::text IS NULL THEN NULL ELSE now() END) RETURNING id`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::varchar, $14::date, CASE WHEN $13::varchar IS NULL THEN NULL ELSE now() END) RETURNING id`,
           [actor.businessId, actor.locationId, row.category, row.description, supplier, row.amount, input.spentOn, paidFrom === 'cash', movementId, actor.id, row.kind,
            invoiceNumber, paidFrom, dueOn],
         )

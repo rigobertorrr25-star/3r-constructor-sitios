@@ -53,8 +53,8 @@ export function LossForm() {
     <ActionForm action={addLossAction} resetOnOk className="grid gap-3 sm:grid-cols-[1fr_160px]">
       {(state) => (
         <>
-          <Field label={t('¿Qué se perdió?')} name="description" required minLength={3} maxLength={200} placeholder={t('Se rompió un vaso, se dañó un plato…')} defaultValue={state?.values?.description} />
-          <Field label={t('Valor estimado')} name="amount" inputMode="numeric" required defaultValue={state?.values?.amount} />
+          <Field id="loss-description" label={t('¿Qué se perdió?')} name="description" required minLength={3} maxLength={200} placeholder={t('Se rompió un vaso, se dañó un plato…')} defaultValue={state?.values?.description} />
+          <Field id="loss-amount" label={t('Valor estimado')} name="amount" inputMode="numeric" required defaultValue={state?.values?.amount} />
           <div className="sm:col-span-2">
             <SubmitButton tone="quiet" pendingText={t('Guardando…')}>
               {t('Anotar pérdida')}
@@ -109,7 +109,7 @@ export function CloseShiftForm() {
             rows={4}
             maxLength={1500}
             placeholder={t('Lo que pasó en el restaurante: se cayó un vaso, se devolvió un plato… Si la caja no cuadra, por qué.')}
-            hint={t('Sale impreso al final de «Ventas por categoría».')}
+            hint={t('Sale impreso en «Comentarios» del formulario diario.')}
             defaultValue={state?.values?.notes}
           />
           <SubmitButton pendingText={t('Cerrando…')}>{t('Cerrar caja')}</SubmitButton>
