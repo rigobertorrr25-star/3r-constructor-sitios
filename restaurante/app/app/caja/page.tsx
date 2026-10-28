@@ -139,7 +139,7 @@ export default async function CashPage() {
             {accounts.length ? t(' Ojo: quedan {n} mesas abiertas; se podrán cobrar en la siguiente caja.', { n: accounts.length }) : ''}
           </p>
           <div className="mt-4">
-            <CloseShiftForm />
+            <CloseShiftForm expected={s.expectedCash} />
           </div>
         </section>
       </div>

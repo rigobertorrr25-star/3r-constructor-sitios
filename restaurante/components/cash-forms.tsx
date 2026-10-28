@@ -4,7 +4,9 @@ import { useState, useTransition } from 'react';
 import { addLossAction, closeShiftAction, movementAction, openShiftAction, voidLossAction } from '@/app/actions';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
-import { Field, Select, TextArea } from './ui';
+import { Field, Select, TextArea, inputClass } from './ui';
+import { formatCop } from '@/lib/format';
+import { DENOMINATIONS, cashCountTotal, cleanCashCount, denominationKey } from '@/lib/cash-count';
 import { useT } from './i18n';
 
 export function OpenShiftForm() {
@@ -90,13 +92,69 @@ export function VoidLossButton({ lossId }: { lossId: string }) {
   );
 }
 
-export function CloseShiftForm() {
+export function CloseShiftForm({ expected }: { expected?: number }) {
   const t = useT();
+  // Arqueo (28 oct 2026): cuántos billetes y monedas de cada uno; si se llena, el efectivo contado es su suma.
+  const [counts, setCounts] = useState<Record<string, string>>({});
+  const [manual, setManual] = useState('');
+  const count = cleanCashCount(counts);
+  const total = cashCountTotal(count);
+  const counted = count ? String(total) : manual;
+  const diff = expected !== undefined && counted !== '' ? Number(counted.replace(/[^\d]/g, '')) - expected : null;
   return (
     <ActionForm action={closeShiftAction}>
       {(state) => (
         <>
-          <Field label={t('Efectivo contado')} name="countedCash" inputMode="numeric" required defaultValue={state?.values?.countedCash} />
+          <details open className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-3">
+            <summary className="cursor-pointer text-[15px] font-semibold">{t('Arqueo de billetes y monedas')}</summary>
+            <p className="mt-1 text-[13px] text-muted-foreground">{t('Escribe cuántos hay de cada uno; el efectivo contado se suma solo.')}</p>
+            {(['bill', 'coin'] as const).map((kind) => (
+              <div key={kind} className="mt-3">
+                <p className="text-[13px] font-semibold text-muted-foreground">{kind === 'bill' ? t('Billetes') : t('Monedas')}</p>
+                <div className="mt-1.5 space-y-1.5">
+                  {DENOMINATIONS.filter((d) => d.kind === kind).map((d) => {
+                    const key = denominationKey(d);
+                    const qty = Number(counts[key] || 0);
+                    return (
+                      <div key={key} className="grid grid-cols-[96px_1fr_auto] items-center gap-2 text-[14px]">
+                        <label htmlFor={`count-${key}`}>{formatCop(d.value)}</label>
+                        <input
+                          id={`count-${key}`}
+                          className={`${inputClass} py-1.5`}
+                          inputMode="numeric"
+                          placeholder="0"
+                          value={counts[key] ?? ''}
+                          onChange={(e) => setCounts((c) => ({ ...c, [key]: e.target.value.replace(/[^\d]/g, '') }))}
+                          aria-label={t('Cuántos de {amount}', { amount: formatCop(d.value) })}
+                        />
+                        <span className="min-w-[88px] text-right text-muted-foreground">{qty ? formatCop(qty * d.value) : ''}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            <p className="mt-3 flex justify-between border-t border-white/[0.06] pt-2 text-[15px] font-semibold">
+              <span>{t('Total del arqueo')}</span>
+              <span>{formatCop(total)}</span>
+            </p>
+          </details>
+          <input type="hidden" name="cashCount" value={count ? JSON.stringify(count) : ''} />
+          <Field
+            label={t('Efectivo contado')}
+            name="countedCash"
+            inputMode="numeric"
+            required
+            readOnly={Boolean(count)}
+            value={counted || (state?.values?.countedCash ?? '')}
+            onChange={(e) => setManual(e.target.value)}
+            hint={count ? t('Sale del arqueo.') : t('O escríbelo directo si no hiciste arqueo.')}
+          />
+          {diff !== null ? (
+            <p className={`text-[14px] font-semibold ${diff === 0 ? 'text-success' : 'text-warning'}`}>
+              {diff === 0 ? t('Cuadra') : diff > 0 ? t('Sobran {amount}', { amount: formatCop(diff) }) : t('Faltan {amount}', { amount: formatCop(-diff) })}
+            </p>
+          ) : null}
           <p className="mt-3 text-[13.5px] text-muted-foreground">{t('¿Cómo se reparte el efectivo? Lo que no vaya en sobres ni en la caja fuerte queda en la caja.')}</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label={t('Sobre para la cocina')} name="envelopeKitchen" inputMode="numeric" placeholder="0" defaultValue={state?.values?.envelopeKitchen} />

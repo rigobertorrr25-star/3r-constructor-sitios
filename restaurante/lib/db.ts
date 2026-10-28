@@ -600,6 +600,8 @@ ALTER TABLE cash_shifts ALTER COLUMN notes TYPE VARCHAR(1500);
 ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS envelope_kitchen BIGINT NOT NULL DEFAULT 0;
 ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS envelope_bar BIGINT NOT NULL DEFAULT 0;
 ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS safe_amount BIGINT NOT NULL DEFAULT 0;
+-- Arqueo al cerrar: cuántos billetes y monedas de cada uno (llaves «b50000», «c500»…); el contado es su suma.
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS cash_count JSONB;
 
 -- Foto de cada producto de la carta (la sube quien edita la carta); se ve en la carta QR y al tomar pedidos.
 CREATE TABLE IF NOT EXISTS product_photos (

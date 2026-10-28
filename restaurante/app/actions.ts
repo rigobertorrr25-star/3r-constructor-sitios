@@ -669,6 +669,13 @@ export async function closeShiftAction(_prev: FormState, formData: FormData): Pr
           envelopeKitchen: optional('envelopeKitchen'),
           envelopeBar: optional('envelopeBar'),
           safeAmount: optional('safeAmount'),
+          cashCount: (() => {
+            try {
+              return JSON.parse(text(formData, 'cashCount') || 'null');
+            } catch {
+              return null;
+            }
+          })(),
         })
       ).shiftId;
     },

@@ -462,6 +462,7 @@ export const en: Record<string, string> = {
   'La lectura de fotos con IA no está activada en este sistema. Escribe las cantidades a mano.': 'Reading photos with AI is not turned on in this system. Type the quantities by hand.',
   'No pudimos leer la foto en este momento. Intenta de nuevo en un minuto o escribe las cantidades a mano.': 'We could not read the photo right now. Try again in a minute or type the quantities by hand.',
   'No vimos insumos en la foto. Tómala de frente, con buena luz y que se vean las etiquetas, o escribe las cantidades a mano.': 'We did not see any ingredients in the photo. Take it straight on, in good light with the labels visible, or type the quantities by hand.',
+  'El arqueo suma {sum} y el efectivo contado dice {counted}: revísalos.': 'The count adds up to {sum} but counted cash says {counted}: check them.',
   'Los sobres y la caja fuerte suman {sum}: es más de lo contado ({counted}).': 'The envelopes and the safe add up to {sum}: more than what was counted ({counted}).',
   '¿Qué se perdió?: entre 3 y 200 caracteres.': 'What was lost?: between 3 and 200 characters.',
   'Valor estimado: escribe el valor en pesos.': 'Estimated value: enter the amount in pesos.',

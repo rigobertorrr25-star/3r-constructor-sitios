@@ -219,7 +219,14 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     await cash.addMovement(owner, { kind: 'out', amount: 5000, reason: 'Propina del domiciliario' });
     await losses.addLoss(owner, { description: 'Se rompió un vaso', amount: 6000 });
     await inv.registerWaste(owner, { itemId: papa, quantity: '1000', reason: 'Se dañó' });
-    const { shiftId } = await cash.closeShift(owner, 140000, 'Se rompió un vaso en la mesa 3', { envelopeKitchen: 30000, envelopeBar: 20000, safeAmount: 50000 });
+    // Arqueo: 1 de 100.000, 2 de 10.000, 3 monedas de 500 y… no da 140.000: se rechaza; con lo que falta, sí.
+    await assert.rejects(cash.closeShift(owner, 140000, undefined, { cashCount: { b100000: 1, b10000: 2 } }), /El arqueo suma \$120\.000/);
+    const { shiftId } = await cash.closeShift(owner, 140000, 'Se rompió un vaso en la mesa 3', {
+      envelopeKitchen: 30000,
+      envelopeBar: 20000,
+      safeAmount: 50000,
+      cashCount: { b100000: 1, b10000: 3, b5000: 1, c1000: 3, c500: 4, x99: 7, c200: 'nada' },
+    });
     await assert.rejects(cash.closeShift(owner, 1000, undefined, { safeAmount: 2000 }), /es más de lo contado/, 'no se reparte más de lo contado');
     assert.equal(await printing.enqueueClosing(owner, shiftId), 1);
     const sales = (await jobs()).filter((j) => j.kind === 'ventas');
@@ -241,6 +248,8 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     assert.equal(closing.length, 1);
     assert.equal(closing[0].printerId, cashP);
     const paper = closing[0].preview;
+    for (const s of ['Arqueo:', 'Billetes de $100.000 x 1', 'Billetes de $10.000 x 3', 'Monedas de $1.000 x 3', 'Monedas de $500 x 4']) assert.ok(paper.includes(s), s);
+    assert.ok(!paper.includes('Monedas de $200'), 'lo que no se contó no sale');
     for (const s of ['CIERRE DE CAJA', 'Efectivo (1)', '$60.000', 'CUADRA']) assert.ok(paper.includes(s), s);
     for (const s of ['Propina (10 % de ventas)', '$6.000', 'Propinas cobradas', 'INVENTARIO QUE QUEDA', 'SE ACABÓ', 'POR COMPRAR PARA MAÑANA', 'hay 500 g · mínimo 2 kg'])
       assert.ok(paper.includes(s), s);

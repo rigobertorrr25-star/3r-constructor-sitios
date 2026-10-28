@@ -283,7 +283,18 @@ export function PosScreen({
 
         <aside className="space-y-4 lg:sticky lg:top-[132px] lg:self-start">
           <div className={card}>
-            <h2 className="font-display text-[18px] font-bold">{t('Pedido nuevo')}</h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-display text-[18px] font-bold">{t('Pedido nuevo')}</h2>
+              {lines.length > 1 && !queued ? (
+                <button
+                  type="button"
+                  className="text-[13px] text-muted-foreground hover:text-[#ffb4b5]"
+                  onClick={() => window.confirm(t('¿Borrar todo lo que no se ha enviado?')) && setLines([])}
+                >
+                  {t('Borrar todo')}
+                </button>
+              ) : null}
+            </div>
             {lines.length === 0 ? (
               <p className="mt-3 text-[14px] text-muted-foreground">{sent ? t('Ronda {n} enviada. Toca productos para pedir más.', { n: sent }) : t('Toca los productos para agregarlos.')}</p>
             ) : (
@@ -455,6 +466,15 @@ function CartRow({ line, groups, onChange }: { line: Line; groups: OptionGroup[]
             + {t('Nota')}
           </button>
         ) : null}
+        {/* Si se tocó por error: se quita del pedido (todavía no se ha enviado, no queda rastro). */}
+        <button
+          type="button"
+          className={`${noting ? 'ml-auto' : 'ml-4'} py-1 text-[13px] text-muted-foreground hover:text-[#ffb4b5]`}
+          onClick={() => onChange({ quantity: 0 })}
+          aria-label={t('Quitar {name} del pedido', { name: line.name })}
+        >
+          {t('Quitar')}
+        </button>
       </div>
       {noting ? (
         <input
