@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireStaff } from '@/lib/auth';
 import { METHOD_LABEL, METHODS, shiftSummary, workMode } from '@/lib/cash';
-import { closingInventory, shortQuantity, tipOfSales, type StockLine } from '@/lib/closing-report';
+import { closingInventory, shiftIncidents, shiftSalesByCategory, shortQuantity, tipOfSales, type StockLine } from '@/lib/closing-report';
 import { AREA_LABEL } from '@/lib/inventory';
 import { PrintClosingButton } from '@/components/printer-forms';
 import { formatCop, formatDateTime } from '@/lib/format';
@@ -19,7 +19,13 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
   const t = makeT(lang);
   const s = await shiftSummary(staff, id);
   if (!s) notFound();
-  const [{ suggestedTip }, inv] = await Promise.all([workMode(staff.businessId), closingInventory(staff)]);
+  const [{ suggestedTip }, inv, byCategory, incidents] = await Promise.all([
+    workMode(staff.businessId),
+    closingInventory(staff),
+    shiftSalesByCategory(staff, s.shift.id),
+    shiftIncidents(staff, s.shift.openedAt, s.shift.closedAt),
+  ]);
+  const hasIncidents = incidents.voids.length + incidents.discounts.length + incidents.closedUnpaid.length > 0;
   const qty = (value: number, i: StockLine) => shortQuantity(value, i.unit, i.bottleSize);
   const diff = s.shift.countedCash === null ? null : s.shift.countedCash - (s.shift.expectedCash ?? s.expectedCash);
   const rows: [string, string][] = [
@@ -49,11 +55,11 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
       <Link href="/app/caja" className="text-[14px] text-muted-foreground hover:text-foreground">
         ← {t('Caja')}
       </Link>
-      <PageTitle title={t('Cuadre de caja')} text={s.shift.notes ? t('Nota: {note}', { note: s.shift.notes }) : undefined} />
+      <PageTitle title={t('Cuadre de caja')} />
       {s.shift.closedAt ? (
         <div className="max-w-xl">
           <PrintClosingButton shiftId={s.shift.id} />
-          <p className="mt-1.5 text-[13px] text-muted-foreground">{t('Sale en la impresora de caja: el cuadre, la propina y cómo queda el inventario.')}</p>
+          <p className="mt-1.5 text-[13px] text-muted-foreground">{t('Salen dos papeles en la impresora de caja: el cierre (cuadre, propina e inventario) y las ventas por categoría con las observaciones.')}</p>
         </div>
       ) : null}
       <dl className={`${card} max-w-xl divide-y divide-white/[0.06] p-0`}>
@@ -66,6 +72,64 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
       </dl>
 
       <div className="grid max-w-4xl gap-5 md:grid-cols-2">
+        <section className={card}>
+          <h2 className="font-display text-[18px] font-bold">{t('Ventas por categoría')}</h2>
+          {byCategory.length ? (
+            <div className="mt-3 space-y-4">
+              {byCategory.map((c) => (
+                <div key={c.category}>
+                  <h3 className="flex justify-between gap-3 text-[14.5px] font-semibold">
+                    <span>{c.category}</span>
+                    <span>{formatCop(c.total)}</span>
+                  </h3>
+                  <ul className="mt-1 space-y-0.5 text-[14px]">
+                    {c.products.map((p) => (
+                      <li key={p.name} className="flex justify-between gap-3 text-muted-foreground">
+                        <span>
+                          {p.quantity} × {p.name}
+                        </span>
+                        <span>{formatCop(p.total)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              <p className="flex justify-between gap-3 border-t border-white/[0.06] pt-2 text-[14.5px] font-semibold">
+                <span>{t('Total vendido (antes de descuentos)')}</span>
+                <span>{formatCop(byCategory.reduce((sum, c) => sum + c.total, 0))}</span>
+              </p>
+            </div>
+          ) : (
+            <p className="mt-3 text-[14px] text-muted-foreground">{t('No hubo ventas en este turno.')}</p>
+          )}
+        </section>
+        <section className={card}>
+          <h2 className="font-display text-[18px] font-bold">{t('Observaciones')}</h2>
+          {s.shift.notes ? <p className="mt-3 whitespace-pre-line text-[14.5px]">{s.shift.notes}</p> : null}
+          {hasIncidents ? (
+            <div className="mt-3 space-y-3 text-[14px]">
+              {(
+                [
+                  [t('Anulaciones y devoluciones'), incidents.voids.map((v) => `${v.quantity} × ${v.name} · ${t('Mesa {n}', { n: v.table })}${v.reason ? `: ${v.reason}` : ''}${v.by ? ` (${v.by})` : ''}`)],
+                  [t('Descuentos'), incidents.discounts.map((d) => `${t('Mesa {n}', { n: d.table })} · ${formatCop(d.amount)}: ${d.reason}${d.by ? ` (${d.by})` : ''}`)],
+                  [t('Mesas cerradas sin cobrar'), incidents.closedUnpaid.map((c) => `${c.summary}: ${c.reason}${c.by ? ` (${c.by})` : ''}`)],
+                ] as [string, string[]][]
+              ).map(([title, items]) =>
+                items.length ? (
+                  <div key={title}>
+                    <h3 className="font-semibold">{title}</h3>
+                    <ul className="mt-1 list-disc space-y-0.5 pl-5 text-muted-foreground">
+                      {items.map((x, i) => (
+                        <li key={i}>{x}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null,
+              )}
+            </div>
+          ) : null}
+          {!s.shift.notes && !hasIncidents ? <p className="mt-3 text-[14px] text-muted-foreground">{t('Nada registrado en el sistema.')}</p> : null}
+        </section>
         <section className={card}>
           <h2 className="font-display text-[18px] font-bold">{t('Por comprar para mañana')}</h2>
           <p className="mt-1 text-[13px] text-muted-foreground">{t('Lo que quedó debajo del mínimo, hasta llegar a él.')}</p>

@@ -565,6 +565,8 @@ ALTER TABLE menu_products ADD COLUMN IF NOT EXISTS description_en VARCHAR(200);
 -- de la línea del pedido, que por eso ahora es más larga.
 ALTER TABLE menu_products ADD COLUMN IF NOT EXISTS option_groups JSONB;
 ALTER TABLE order_items ALTER COLUMN notes TYPE VARCHAR(300);
+-- Observaciones del día al cerrar la caja (se cayó un vaso, se devolvió un plato…): más espacio (28 oct 2026).
+ALTER TABLE cash_shifts ALTER COLUMN notes TYPE VARCHAR(1500);
 
 -- Foto de cada producto de la carta (la sube quien edita la carta); se ve en la carta QR y al tomar pedidos.
 CREATE TABLE IF NOT EXISTS product_photos (
@@ -616,7 +618,7 @@ CREATE TABLE IF NOT EXISTS print_jobs (
   business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
   location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
   printer_id  UUID NOT NULL REFERENCES printers(id) ON DELETE CASCADE,
-  kind        VARCHAR(12) NOT NULL CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'prueba')),
+  kind        VARCHAR(12) NOT NULL CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'ventas', 'prueba')),
   title       VARCHAR(160) NOT NULL,
   data        BYTEA NOT NULL,
   preview     TEXT NOT NULL,
@@ -629,6 +631,9 @@ CREATE TABLE IF NOT EXISTS print_jobs (
   printed_at  TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS print_jobs_queue ON print_jobs (location_id, status, created_at);
+-- «Ventas por categoría» sale con el cierre de caja (28 oct 2026).
+ALTER TABLE print_jobs DROP CONSTRAINT IF EXISTS print_jobs_kind_check;
+ALTER TABLE print_jobs ADD CONSTRAINT print_jobs_kind_check CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'ventas', 'prueba'));
 ALTER TABLE locations ADD COLUMN IF NOT EXISTS print_token_hash VARCHAR(64);
 ALTER TABLE locations ADD COLUMN IF NOT EXISTS print_agent_seen_at TIMESTAMPTZ;
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_print_token ON locations (print_token_hash) WHERE print_token_hash IS NOT NULL;

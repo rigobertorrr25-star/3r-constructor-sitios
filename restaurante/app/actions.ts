@@ -1247,7 +1247,7 @@ export async function printClosingAction(_prev: FormState, formData: FormData): 
       if (!(await enqueueClosing(staff, text(formData, 'shiftId')))) throw new AppError('CONFLICT', 'Esta sede no tiene impresora de caja. Agrégala en Impresoras.');
     },
     [],
-    'Cierre enviado a la impresora de caja.',
+    'Cierre y ventas por categoría enviados a la impresora de caja.',
   );
 }
 

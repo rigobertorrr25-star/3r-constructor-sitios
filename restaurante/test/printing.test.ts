@@ -190,6 +190,12 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
   it('al cerrar la caja sale el resumen en la impresora de caja', async () => {
     await cash.openShift(owner, 100000);
     await cash.pay(owner, sessionId, { method: 'cash', amount: 60000, clientKey: randomUUID() });
+    // Lo que pasó en el turno: una cerveza que se devolvió en otra mesa (sale en las observaciones).
+    const t9 = await store.createTable(owner, { zone: 'Salón', number: '9', capacity: 2, shape: 'square' });
+    const s9 = await store.openTable(waiter, t9, { guests: 1 });
+    await orders.sendOrder(waiter, s9, [{ productId: beer, quantity: 1 }], randomUUID());
+    const [spilled] = await db.query<{ id: string }>(`SELECT id FROM order_items WHERE session_id = $1`, [s9]);
+    await orders.voidItem(owner, spilled.id, 'Se cayó la cerveza');
     // Cómo queda el inventario (27 oct 2026): lo que hay, lo que se acabó y lo que hay que comprar para llegar al mínimo.
     const inv = await import('../lib/inventory');
     const bulk = await import('../lib/inventory-bulk');
@@ -201,8 +207,15 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
       { itemId: hielo, counted: '0', minStock: '3' },
       { itemId: papa, counted: '10', minStock: '5' },
     ]);
-    const { shiftId } = await cash.closeShift(owner, 160000);
+    const { shiftId } = await cash.closeShift(owner, 160000, 'Se rompió un vaso en la mesa 3');
     assert.equal(await printing.enqueueClosing(owner, shiftId), 1);
+    // El segundo papel: ventas por categoría y observaciones (28 oct 2026).
+    const sales = (await jobs()).filter((j) => j.kind === 'ventas');
+    assert.equal(sales.length, 1);
+    // Los renglones largos se parten: se revisa el texto seguido.
+    const salesText = sales[0].preview.replace(/\s+/g, ' ');
+    for (const s of ['VENTAS POR CATEGORÍA', 'PLATOS', 'x Hamburguesa', 'Total Platos', 'Total vendido (antes de descuentos)', 'OBSERVACIONES', 'Se rompió un vaso en la mesa 3', 'Anulaciones y devoluciones:', '1 x Cerveza · mesa 9: Se cayó la cerveza', 'Firma'])
+      assert.ok(salesText.includes(s), s);
     const closing = (await jobs()).filter((j) => j.kind === 'cierre');
     assert.equal(closing.length, 1);
     assert.equal(closing[0].printerId, cashP);

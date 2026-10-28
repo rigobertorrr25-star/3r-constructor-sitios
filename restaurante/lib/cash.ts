@@ -265,7 +265,7 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
 export async function closeShift(actor: Actor, countedCash: number, notes?: string) {
   requirePermission(actor, 'cash.operate');
   requireAmount(countedCash, 'Efectivo contado', { allowZero: true });
-  const why = notes?.trim() ? requireText(notes, 'Nota', 2, 300) : null;
+  const why = notes?.trim() ? requireText(notes, 'Observaciones', 2, 1500) : null;
   return transaction(async (db) => {
     const shift = await lockOpenShift(db, actor);
     const expected = await expectedCash(db, shift.id, Number(shift.openingAmount));

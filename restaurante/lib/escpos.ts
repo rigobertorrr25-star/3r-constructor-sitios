@@ -285,6 +285,50 @@ function inventorySection(t: Ticket, inv: NonNullable<CierreInput['inventory']>)
   } else t.line('Nada: todo quedó sobre el mínimo.');
 }
 
+/**
+ * Segundo papel del cierre de caja (28 oct 2026): qué se vendió por categoría y, al final, las observaciones del día
+ * (lo que escribió la cajera, lo que el sistema sabe que pasó y renglones para escribir a mano).
+ */
+export type VentasInput = {
+  business: string;
+  location: string | null;
+  closedBy: string;
+  closedAt: string;
+  categories: { category: string; quantity: number; total: string; products: { name: string; quantity: number; total: string }[] }[];
+  total: string;
+  notes: string | null;
+  voids: string[];
+  discounts: string[];
+  closedUnpaid: string[];
+};
+
+export function ventasCategoria(width: number, v: VentasInput) {
+  const t = new Ticket(width).line(v.business, { align: 'center', bold: true });
+  if (v.location) t.line(v.location, { align: 'center' });
+  t.line('VENTAS POR CATEGORÍA', { align: 'center', big: true }).line(`Cerró: ${v.closedBy} · ${v.closedAt}`).rule();
+  if (!v.categories.length) t.line('No hubo ventas en este turno.');
+  for (const c of v.categories) {
+    t.line(c.category.toUpperCase(), { bold: true });
+    for (const p of c.products) t.row(`${p.quantity} x ${p.name}`, p.total);
+    t.row(`Total ${c.category} (${c.quantity})`, c.total, { bold: true }).blank();
+  }
+  t.rule().row('Total vendido (antes de descuentos)', v.total, { bold: true });
+  t.rule('=').line('OBSERVACIONES', { align: 'center', bold: true });
+  if (v.notes) t.line(v.notes);
+  const list = (title: string, items: string[]) => {
+    if (!items.length) return;
+    t.line(title, { bold: true });
+    for (const x of items) t.line(`- ${x}`);
+  };
+  list('Anulaciones y devoluciones:', v.voids);
+  list('Descuentos:', v.discounts);
+  list('Mesas cerradas sin cobrar:', v.closedUnpaid);
+  if (!v.notes && !v.voids.length && !v.discounts.length && !v.closedUnpaid.length) t.line('Nada registrado en el sistema.');
+  t.blank();
+  for (let i = 0; i < 5; i++) t.blank().line('_'.repeat(width));
+  return t.blank().line('Firma: ______________________');
+}
+
 export function prueba(width: number, p: { business: string; printer: string; address: string; time: string; jobs: string[] }) {
   return new Ticket(width)
     .line('Prueba de impresión', { align: 'center', big: true })

@@ -37,3 +37,16 @@ describe('cierre de caja: inventario y propina', () => {
     assert.equal(tipOfSales(345000, 0), 0);
   });
 });
+
+describe('ventas por categoría', () => {
+  it('agrupa en el orden de la carta y lo más vendido primero', async () => {
+    const { groupByCategory } = await import('../lib/closing-report');
+    const r = groupByCategory([
+      { category: 'Almuerzos', name: 'Empanada', quantity: 2, total: 6000 },
+      { category: 'Almuerzos', name: 'PROMO ALMUERZO', quantity: 5, total: 110000 },
+      { category: 'Cafetería', name: 'Tinto', quantity: 7, total: 14000 },
+    ]);
+    assert.deepEqual(r.map((c) => [c.category, c.quantity, c.total]), [['Almuerzos', 7, 116000], ['Cafetería', 7, 14000]]);
+    assert.deepEqual(r[0].products.map((p) => p.name), ['PROMO ALMUERZO', 'Empanada']);
+  });
+});

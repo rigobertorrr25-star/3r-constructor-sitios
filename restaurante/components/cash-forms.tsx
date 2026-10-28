@@ -52,7 +52,15 @@ export function CloseShiftForm() {
       {(state) => (
         <>
           <Field label={t('Efectivo contado')} name="countedCash" inputMode="numeric" required defaultValue={state?.values?.countedCash} />
-          <TextArea label={t('Nota (opcional)')} name="notes" maxLength={300} placeholder={t('Si no cuadra, ¿por qué?')} defaultValue={state?.values?.notes} />
+          <TextArea
+            label={t('Observaciones del día (opcional)')}
+            name="notes"
+            rows={4}
+            maxLength={1500}
+            placeholder={t('Lo que pasó en el restaurante: se cayó un vaso, se devolvió un plato… Si la caja no cuadra, por qué.')}
+            hint={t('Sale impreso al final de «Ventas por categoría».')}
+            defaultValue={state?.values?.notes}
+          />
           <SubmitButton pendingText={t('Cerrando…')}>{t('Cerrar caja')}</SubmitButton>
         </>
       )}
