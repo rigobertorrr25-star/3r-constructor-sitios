@@ -1,5 +1,6 @@
 // Módulo 04: caja y pagos. Turnos de caja, cobro en partes y con varios medios, propina, descuentos y cierre de caja.
 // Nada se borra: un pago equivocado se reversa con motivo, un descuento se anula, una salida de plata se registra.
+import { randomUUID } from 'node:crypto';
 import { formatCop } from './format';
 import { cashCountTotal, cleanCashCount, type CashCount } from './cash-count';
 import { pooled, query, transaction, type Db } from './db';
@@ -602,6 +603,88 @@ export async function reversePayment(actor: Actor, paymentId: string, reason: st
       summary: `Reversó un pago de ${money(Number(p.amount))} en ${METHOD_LABEL[p.method].toLowerCase()} de la mesa ${session.number}${session.status === 'closed' ? ' (la mesa volvió a quedar abierta)' : ''}`,
       reason: why,
     });
+  });
+}
+
+// ───────── faltante al cerrar (29 oct 2026) ─────────
+// Pedido de Rigoberto en pleno cierre: «cuando el arqueo me manda que me faltan dinero, agrega 2 opciones: dinero que se
+// agarró para pagar, y las diferencias que pagaron en transferencia pero que marcaron en efectivo». Lo primero es una
+// salida de caja (`addMovement`); lo segundo cambia el medio de un cobro en efectivo de la caja abierta.
+
+export type CashPayment = { id: string; tableNumber: string | null; amount: number; tip: number; createdBy: string; createdAt: Date };
+
+/** Los cobros en efectivo (sin reversar) de la caja abierta, lo más nuevo primero. */
+export async function openShiftCashPayments(actor: Actor): Promise<CashPayment[]> {
+  requirePermission(actor, 'cash.operate');
+  const rows = await query<{ id: string; tableNumber: string | null; amount: string; tip: string; createdBy: string; createdAt: Date }>(
+    `SELECT p.id, t.number AS "tableNumber", p.amount, p.tip, s.name AS "createdBy", p.created_at AS "createdAt"
+       FROM payments p
+       JOIN cash_shifts c ON c.id = p.shift_id AND c.closed_at IS NULL AND c.staff_id IS NULL
+       JOIN staff s ON s.id = p.created_by
+       LEFT JOIN table_sessions ts ON ts.id = p.session_id
+       LEFT JOIN dining_tables t ON t.id = ts.table_id
+      WHERE p.location_id = $1 AND p.business_id = $2 AND p.method = 'cash' AND p.reversed_at IS NULL
+      ORDER BY p.created_at DESC`,
+    [actor.locationId, actor.businessId],
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    tableNumber: r.tableNumber,
+    amount: Number(r.amount),
+    tip: Number(r.tip),
+    createdBy: r.createdBy,
+    createdAt: r.createdAt,
+  }));
+}
+
+/**
+ * Un cobro marcado en efectivo que en verdad fue por transferencia o datáfono. `amount` es cuánto fue por el otro medio:
+ * todo el cobro (con su propina) cambia de medio; una parte (hasta el valor sin propina) se separa en otro pago del mismo
+ * cobro, así lo cobrado no cambia y el efectivo esperado baja justo eso. Solo en la caja abierta.
+ */
+export async function moveCashPayment(actor: Actor, paymentId: string, input: { method: string; amount: number }) {
+  requirePermission(actor, 'cash.operate');
+  if (input.method !== 'transfer' && input.method !== 'card') throw new AppError('INVALID', 'Elige transferencia o datáfono.');
+  const method = input.method;
+  requireAmount(input.amount, 'Valor');
+  if (!isUuid(paymentId)) throw new AppError('NOT_FOUND', 'No encontramos ese cobro.');
+  return transaction(async (db) => {
+    const shift = await lockOpenShift(db, actor);
+    const p = (
+      await db.query<{ id: string; sessionId: string | null; appointmentId: string | null; amount: string; tip: string; method: Method; reversed: boolean; shiftId: string; createdBy: string; createdAt: Date; tableNumber: string | null }>(
+        `SELECT p.id, p.session_id AS "sessionId", p.appointment_id AS "appointmentId", p.amount, p.tip, p.method, (p.reversed_at IS NOT NULL) AS reversed,
+                p.shift_id AS "shiftId", p.created_by AS "createdBy", p.created_at AS "createdAt", t.number AS "tableNumber"
+           FROM payments p LEFT JOIN table_sessions ts ON ts.id = p.session_id LEFT JOIN dining_tables t ON t.id = ts.table_id
+          WHERE p.id = $1 AND p.business_id = $2 AND p.location_id = $3 FOR UPDATE OF p`,
+        [paymentId, actor.businessId, actor.locationId],
+      )
+    ).rows[0];
+    if (!p || p.reversed) throw new AppError('NOT_FOUND', 'No encontramos ese cobro.');
+    if (p.shiftId !== shift.id) throw new AppError('CONFLICT', 'Ese cobro no es de la caja abierta.');
+    if (p.method !== 'cash') throw new AppError('CONFLICT', 'Ese cobro ya no está en efectivo.');
+    const amount = Number(p.amount);
+    const total = amount + Number(p.tip);
+    const where = p.tableNumber ? `de la mesa ${p.tableNumber}` : 'de una cita';
+    const label = METHOD_LABEL[method].toLowerCase();
+    if (input.amount === total) {
+      await db.query(`UPDATE payments SET method = $2, received = NULL, change_given = NULL WHERE id = $1`, [p.id, method]);
+    } else if (input.amount < amount) {
+      await db.query(`UPDATE payments SET amount = amount - $2, received = NULL, change_given = NULL WHERE id = $1`, [p.id, input.amount]);
+      await db.query(
+        `INSERT INTO payments (business_id, location_id, session_id, appointment_id, shift_id, method, amount, tip, client_key, created_by, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, $10)`,
+        [actor.businessId, actor.locationId, p.sessionId, p.appointmentId, p.shiftId, method, input.amount, randomUUID(), p.createdBy, p.createdAt],
+      );
+    } else {
+      throw new AppError('INVALID', `Ese cobro fue de ${money(total)}: escribe ${money(total)} si todo fue por ${label}, o una parte menor a ${money(amount)}.`);
+    }
+    await audit(db, actor, {
+      action: 'payment.method',
+      entity: 'payment',
+      entityId: p.id,
+      summary: `Pasó ${money(input.amount)} de un cobro en efectivo ${where} a ${label} (se había marcado en efectivo)`,
+    });
+    return { expectedCash: await expectedCash(db, shift.id, Number(shift.openingAmount)) };
   });
 }
 

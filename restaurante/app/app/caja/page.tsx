@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/auth';
-import { METHOD_LABEL, METHODS, getOpenShift, listShifts, openAccounts, shiftSummary } from '@/lib/cash';
+import { METHOD_LABEL, METHODS, getOpenShift, listShifts, openAccounts, openShiftCashPayments, shiftSummary } from '@/lib/cash';
 import { elapsedMinutes, formatCop, formatDateTime, formatElapsed } from '@/lib/format';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { CloseShiftForm, LossForm, MovementForm, OpenShiftForm, VoidLossButton } from '@/components/cash-forms';
@@ -30,7 +30,7 @@ export default async function CashPage() {
     );
   }
 
-  const [summary, accounts, losses] = await Promise.all([shiftSummary(staff, shift.id), openAccounts(staff), listLosses(staff, shift.openedAt, null)]);
+  const [summary, accounts, losses, cashPayments] = await Promise.all([shiftSummary(staff, shift.id), openAccounts(staff), listLosses(staff, shift.openedAt, null), openShiftCashPayments(staff)]);
   const s = summary!;
   const now = Date.now();
   return (
@@ -139,7 +139,7 @@ export default async function CashPage() {
             {accounts.length ? t(' Ojo: quedan {n} mesas abiertas; se podrán cobrar en la siguiente caja.', { n: accounts.length }) : ''}
           </p>
           <div className="mt-4">
-            <CloseShiftForm expected={s.expectedCash} />
+            <CloseShiftForm expected={s.expectedCash} cashPayments={cashPayments.map((p) => ({ ...p, createdAt: p.createdAt.toISOString() }))} timeZone={staff.timezone} />
           </div>
         </section>
       </div>
