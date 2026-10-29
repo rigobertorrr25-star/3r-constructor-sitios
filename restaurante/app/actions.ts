@@ -31,7 +31,7 @@ import { createReservation, requestReservation, seatReservation, updatePublicSet
 import { addExpense, payExpense, voidExpense, type PurchaseLine } from '@/lib/finance';
 import { addLoss, voidLoss } from '@/lib/losses';
 import { itemsForPurchase, listItems, registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
-import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
+import { addMovement, applyDiscount, closeShift, moveCashPayment, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { clearInventory, clearMenu, clearSales } from '@/lib/sales-reset';
@@ -731,6 +731,30 @@ export async function verifyWaiterShiftAction(_prev: FormState, formData: FormDa
 export async function movementAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   return run(formData, () => addMovement(staff, { kind: text(formData, 'kind'), amount: pesos(formData, 'amount'), reason: text(formData, 'reason') }), ['/app/caja'], 'Registrado.');
+}
+
+/** Cierre con faltante: «Se sacó plata para pagar algo». Sale de la caja abierta con el motivo «Pago: …». */
+export async function cashPaidOutAction(amount: number, what: string): Promise<string | null> {
+  const staff = await requireStaff();
+  try {
+    await addMovement(staff, { kind: 'out', amount, reason: what.trim() ? `Pago: ${what.trim()}` : '' });
+  } catch (error) {
+    return await messageOf(error);
+  }
+  revalidatePath('/app/caja');
+  return null;
+}
+
+/** Cierre con faltante: un cobro marcado en efectivo que fue por transferencia o datáfono (todo o una parte). */
+export async function moveCashPaymentAction(paymentId: string, method: string, amount: number): Promise<string | null> {
+  const staff = await requireStaff();
+  try {
+    await moveCashPayment(staff, paymentId, { method, amount });
+  } catch (error) {
+    return await messageOf(error);
+  }
+  revalidatePath('/app/caja');
+  return null;
 }
 
 export async function discountAction(_prev: FormState, formData: FormData): Promise<FormState> {
