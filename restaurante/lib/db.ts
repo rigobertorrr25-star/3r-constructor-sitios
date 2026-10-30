@@ -653,7 +653,7 @@ CREATE TABLE IF NOT EXISTS print_jobs (
   business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
   location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
   printer_id  UUID NOT NULL REFERENCES printers(id) ON DELETE CASCADE,
-  kind        VARCHAR(12) NOT NULL CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'ventas', 'prueba')),
+  kind        VARCHAR(12) NOT NULL CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'ventas', 'dia', 'prueba')),
   title       VARCHAR(160) NOT NULL,
   data        BYTEA NOT NULL,
   preview     TEXT NOT NULL,
@@ -668,7 +668,7 @@ CREATE TABLE IF NOT EXISTS print_jobs (
 CREATE INDEX IF NOT EXISTS print_jobs_queue ON print_jobs (location_id, status, created_at);
 -- «Ventas por categoría» sale con el cierre de caja (28 oct 2026).
 ALTER TABLE print_jobs DROP CONSTRAINT IF EXISTS print_jobs_kind_check;
-ALTER TABLE print_jobs ADD CONSTRAINT print_jobs_kind_check CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'ventas', 'prueba'));
+ALTER TABLE print_jobs ADD CONSTRAINT print_jobs_kind_check CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'ventas', 'dia', 'prueba'));
 ALTER TABLE locations ADD COLUMN IF NOT EXISTS print_token_hash VARCHAR(64);
 ALTER TABLE locations ADD COLUMN IF NOT EXISTS print_agent_seen_at TIMESTAMPTZ;
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_print_token ON locations (print_token_hash) WHERE print_token_hash IS NOT NULL;

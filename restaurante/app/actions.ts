@@ -37,7 +37,7 @@ import { allow, clientIp } from '@/lib/rate-limit';
 import { clearInventory, clearMenu, clearSales } from '@/lib/sales-reset';
 import { removeBackground, saveBackground, setFloorBackground } from '@/lib/backgrounds';
 import { removeProductPhoto, saveProductPhoto } from '@/lib/product-photos';
-import { createAgentCode, enqueueClosing, printBill, printTest, removePrinter, reprint, savePrinter } from '@/lib/printing';
+import { createAgentCode, enqueueClosing, enqueueDayClosing, printBill, printTest, removePrinter, reprint, savePrinter } from '@/lib/printing';
 import {
   AppError,
   closeTable,
@@ -1314,6 +1314,19 @@ export async function printClosingAction(_prev: FormState, formData: FormData): 
     },
     [],
     'Cierre y formulario diario enviados a la impresora de caja.',
+  );
+}
+
+/** Cuadre del día (dos cajeras al día, 30 oct 2026): los turnos del día sumados, a la impresora de caja. */
+export async function printDayAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('cash.operate');
+  return run(
+    formData,
+    async () => {
+      if (!(await enqueueDayClosing(staff, text(formData, 'date')))) throw new AppError('CONFLICT', 'Esta sede no tiene impresora de caja. Agrégala en Impresoras.');
+    },
+    [],
+    'Cuadre del día enviado a la impresora de caja.',
   );
 }
 

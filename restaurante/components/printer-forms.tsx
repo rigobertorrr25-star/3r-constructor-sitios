@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createAgentCodeAction, printBillAction, printClosingAction, printTestAction, removePrinterAction, reprintAction, savePrinterAction } from '@/app/actions';
+import { createAgentCodeAction, printBillAction, printClosingAction, printDayAction, printTestAction, removePrinterAction, reprintAction, savePrinterAction } from '@/app/actions';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Alert, CheckField, Field, Select, card, quietButton } from './ui';
@@ -251,6 +251,21 @@ export function PrintClosingButton({ shiftId }: { shiftId: string }) {
         <>
           <input type="hidden" name="shiftId" value={shiftId} />
           <SubmitButton pendingText={t('Enviando…')}>{t('Imprimir cierre')}</SubmitButton>
+        </>
+      )}
+    </ActionForm>
+  );
+}
+
+/** «Imprimir cuadre del día» (dos cajeras al día, 30 oct 2026). */
+export function PrintDayButton({ date }: { date: string }) {
+  const t = useT();
+  return (
+    <ActionForm action={printDayAction} className="flex flex-col gap-2">
+      {() => (
+        <>
+          <input type="hidden" name="date" value={date} />
+          <SubmitButton pendingText={t('Enviando…')}>{t('Imprimir cuadre del día')}</SubmitButton>
         </>
       )}
     </ActionForm>

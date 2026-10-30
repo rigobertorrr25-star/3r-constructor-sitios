@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/auth';
-import { METHOD_LABEL, METHODS, getOpenShift, listShifts, openAccounts, openShiftCashPayments, shiftSummary } from '@/lib/cash';
+import { METHOD_LABEL, METHODS, drawerLeftByLastShift, getOpenShift, listShifts, openAccounts, openShiftCashPayments, shiftSummary } from '@/lib/cash';
 import { elapsedMinutes, formatCop, formatDateTime, formatElapsed } from '@/lib/format';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { CloseShiftForm, LossForm, MovementForm, OpenShiftForm, VoidLossButton } from '@/components/cash-forms';
 import { listLosses } from '@/lib/losses';
-import { Empty, PageTitle, card } from '@/components/ui';
+import { Empty, PageTitle, card, quietButton } from '@/components/ui';
 import { getLang } from '@/lib/i18n/server';
 import { makeT, type T, type Lang } from '@/lib/i18n';
 
@@ -15,7 +15,7 @@ export default async function CashPage() {
   const staff = await requireStaff('cash.operate');
   const lang = await getLang();
   const t = makeT(lang);
-  const [shift, history] = await Promise.all([getOpenShift(staff), listShifts(staff)]);
+  const [shift, history, left] = await Promise.all([getOpenShift(staff), listShifts(staff), drawerLeftByLastShift(staff)]);
   const closed = history.filter((h) => h.closedAt);
 
   if (!shift) {
@@ -23,7 +23,14 @@ export default async function CashPage() {
       <div className="space-y-6">
         <PageTitle title={t('Caja')} text={t('Sede {location}. La caja está cerrada: ábrela con la base en efectivo para empezar a cobrar.', { location: staff.locationName })} />
         <section className={`${card} max-w-md`}>
-          <OpenShiftForm />
+          <OpenShiftForm
+            suggested={left?.amount}
+            hint={
+              left
+                ? t('Al cerrar el turno anterior ({name}, {date}) quedaron {amount} en la caja.', { name: left.closedBy, date: formatDateTime(left.closedAt, staff.timezone, lang), amount: formatCop(left.amount) })
+                : undefined
+            }
+          />
         </section>
         <ShiftHistory shifts={closed} timeZone={staff.timezone} lang={lang} />
       </div>
@@ -36,7 +43,14 @@ export default async function CashPage() {
   return (
     <div className="space-y-6">
       <AutoRefresh everyMs={15_000} />
-      <PageTitle title={t('Caja')} text={t('Abierta por {name} · {date} · base {amount}', { name: shift.openedBy, date: formatDateTime(shift.openedAt, staff.timezone, lang), amount: formatCop(shift.openingAmount) })} />
+      <PageTitle
+        title={`${t('Caja')} · ${t('Turno {n}', { n: shift.dayNumber })}`}
+        text={t('Abierta por {name} · {date} · base {amount}', { name: shift.openedBy, date: formatDateTime(shift.openedAt, staff.timezone, lang), amount: formatCop(shift.openingAmount) })}
+      >
+        <Link href={`/app/caja/dia?fecha=${shift.day}`} className={quietButton}>
+          {t('Cuadre del día')}
+        </Link>
+      </PageTitle>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={t('Ventas del turno')} value={formatCop(s.sales)} hint={s.tablesClosed === 1 ? t('1 mesa cerrada') : t('{n} mesas cerradas', { n: s.tablesClosed })} />
@@ -163,7 +177,12 @@ function ShiftHistory({ shifts, timeZone, lang }: { shifts: Awaited<ReturnType<t
   const t: T = makeT(lang);
   return (
     <section className="space-y-3">
-      <h2 className="font-display text-[19px] font-bold">{t('Cajas anteriores')}</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-[19px] font-bold">{t('Cajas anteriores')}</h2>
+        <Link href={`/app/caja/dia?fecha=${shifts[0].day}`} className={quietButton}>
+          {t('Cuadre del día')}
+        </Link>
+      </div>
       <ul className="divide-y divide-white/[0.06] overflow-hidden rounded-[22px] border border-white/[0.08] bg-card">
         {shifts.map((h) => {
           const diff = (h.countedCash ?? 0) - (h.expectedCash ?? 0);
@@ -171,7 +190,7 @@ function ShiftHistory({ shifts, timeZone, lang }: { shifts: Awaited<ReturnType<t
             <li key={h.id}>
               <Link href={`/app/caja/turno/${h.id}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-[14px] transition hover:bg-white/[0.03]">
                 <span>
-                  {formatDateTime(h.openedAt, timeZone, lang)} → {h.closedAt ? formatDateTime(h.closedAt, timeZone, lang) : ''}
+                  <strong>{t('Turno {n}', { n: h.dayNumber })}</strong> · {formatDateTime(h.openedAt, timeZone, lang)} → {h.closedAt ? formatDateTime(h.closedAt, timeZone, lang) : ''}
                   <span className="block text-[12.5px] text-muted-foreground">
                     {h.openedBy} → {h.closedBy}
                   </span>

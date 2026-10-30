@@ -7,7 +7,7 @@ import { AREA_LABEL } from '@/lib/inventory';
 import { cashCountLines } from '@/lib/cash-count';
 import { PrintClosingButton } from '@/components/printer-forms';
 import { formatCop, formatDateTime } from '@/lib/format';
-import { PageTitle, card } from '@/components/ui';
+import { PageTitle, card, quietButton } from '@/components/ui';
 import { getLang } from '@/lib/i18n/server';
 import { makeT } from '@/lib/i18n';
 
@@ -78,7 +78,11 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
       <Link href="/app/caja" className="text-[14px] text-muted-foreground hover:text-foreground">
         ← {t('Caja')}
       </Link>
-      <PageTitle title={t('Cuadre de caja')} />
+      <PageTitle title={`${t('Cuadre de caja')} · ${t('Turno {n}', { n: s.shift.dayNumber })}`}>
+        <Link href={`/app/caja/dia?fecha=${s.shift.day}`} className={quietButton}>
+          {t('Cuadre del día')}
+        </Link>
+      </PageTitle>
       {s.shift.closedAt ? (
         <div className="max-w-xl">
           <PrintClosingButton shiftId={s.shift.id} />
