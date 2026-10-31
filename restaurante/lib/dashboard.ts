@@ -47,6 +47,8 @@ export async function getDashboard(actor: Actor, range: { from: string; to: stri
   const inRange = (col: string) => `${col} >= ($2::date)::timestamp AT TIME ZONE $4 AND ${col} < ($3::date + 1)::timestamp AT TIME ZONE $4`;
   const loc = (col: string) => `($5::uuid IS NULL OR ${col} = $5)`;
 
+  // Si cocina y barra no marcan sus comandas (Azul Caribe, 31 oct 2026), no se mide su tiempo: no hay tiempos ni «comandas demoradas».
+  const trackPrep = (await query<{ trackPrep: boolean }>(`SELECT track_prep AS "trackPrep" FROM businesses WHERE id = $1`, [actor.businessId]))[0]?.trackPrep ?? true;
   const [open, cash, prep, top, voids, overDiscount, shortages, reversed, manualClose, shifts, locks, slowTickets] = await Promise.all([
     // Mesas abiertas ahora mismo y lo que llevan consumido.
     query<{ n: number; value: string; long: number }>(
@@ -233,17 +235,19 @@ export async function getDashboard(actor: Actor, range: { from: string; to: stri
     8,
     18,
   );
-  add(
-    {
-      key: 'slow',
-      title: 'Comandas de más de 25 min',
-      level: levelOf(slowTickets[0].n, 3, 8),
-      value: slowTickets[0].n ? `${slowTickets[0].n}` : 'Ninguna',
-      detail: 'Desde que el mesero envía hasta que está lista.',
-    },
-    3,
-    8,
-  );
+  if (trackPrep) {
+    add(
+      {
+        key: 'slow',
+        title: 'Comandas de más de 25 min',
+        level: levelOf(slowTickets[0].n, 3, 8),
+        value: slowTickets[0].n ? `${slowTickets[0].n}` : 'Ninguna',
+        detail: 'Desde que el mesero envía hasta que está lista.',
+      },
+      3,
+      8,
+    );
+  }
   add(
     {
       key: 'pins',
@@ -268,7 +272,7 @@ export async function getDashboard(actor: Actor, range: { from: string; to: stri
     openTables: open[0].n,
     openTablesValue: Number(open[0].value),
     expectedCash: cash[0].n ? Number(cash[0].cash) : null,
-    prep: ['kitchen', 'bar'].map((station) => {
+    prep: (trackPrep ? ['kitchen', 'bar'] : []).map((station) => {
       const row = prep.find((r) => r.station === station);
       return { station, avgMinutes: row?.avg ? Math.round(Number(row.avg)) : null, tickets: row?.n ?? 0 };
     }),

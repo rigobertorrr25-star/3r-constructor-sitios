@@ -10,18 +10,29 @@ import { AppError, audit, hasOrders, isUuid, requirePermission, type Actor } fro
 const money = formatCop;
 
 /** El dueño escoge la forma de trabajo del negocio. */
-export async function updateWorkMode(actor: Actor, input: { waitersCollect: boolean; barOnly: boolean; suggestedTip?: number }) {
+export async function updateWorkMode(actor: Actor, input: { waitersCollect: boolean; barOnly: boolean; suggestedTip?: number; trackPrep?: boolean }) {
   requirePermission(actor, 'locations.manage');
   // Propina sugerida en %; 0 = el negocio no maneja propina (no se ofrece al cobrar ni sale en la precuenta).
   const tip = input.suggestedTip ?? null;
   if (tip !== null && (!Number.isInteger(tip) || tip < 0 || tip > 30)) throw new AppError('INVALID', 'Propina sugerida: de 0 a 30 %.');
   await transaction(async (db) => {
-    await db.query(`UPDATE businesses SET waiters_collect = $2, bar_only = $3, suggested_tip = COALESCE($4, suggested_tip) WHERE id = $1`, [
+    const before = (await db.query<{ trackPrep: boolean }>(`SELECT track_prep AS "trackPrep" FROM businesses WHERE id = $1 FOR UPDATE`, [actor.businessId])).rows[0];
+    const trackPrep = input.trackPrep ?? before.trackPrep;
+    await db.query(`UPDATE businesses SET waiters_collect = $2, bar_only = $3, suggested_tip = COALESCE($4, suggested_tip), track_prep = $5 WHERE id = $1`, [
       actor.businessId,
       input.waitersCollect,
       input.barOnly,
       tip,
+      trackPrep,
     ]);
+    if (trackPrep !== before.trackPrep) {
+      await audit(db, actor, {
+        action: 'business.prep',
+        entity: 'business',
+        entityId: actor.businessId,
+        summary: trackPrep ? 'Cocina y barra marcan sus comandas en pantalla: se mide su tiempo' : 'Cocina y barra no marcan sus comandas: ya no se mide su tiempo',
+      });
+    }
     await audit(db, actor, {
       action: 'business.mode',
       entity: 'business',

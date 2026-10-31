@@ -81,6 +81,8 @@ export const en: Record<string, string> = {
   'Elige si entra o sale plata.': 'Choose whether money is coming in or going out.',
   'En caja debería haber {cash}: no alcanza para sacar {amount}.': 'The drawer should have {cash}: not enough to take out {amount}.',
   'Elige transferencia o datáfono.': 'Choose transfer or card.',
+  'Cocina y barra marcan sus comandas en pantalla: se mide su tiempo': 'Kitchen and bar mark their tickets on screen: prep time is measured',
+  'Cocina y barra no marcan sus comandas: ya no se mide su tiempo': 'Kitchen and bar don’t mark their tickets: prep time is no longer measured',
   'No encontramos ese cobro.': 'We couldn’t find that payment.',
   'Ese cobro no es de la caja abierta.': 'That payment is not from the open shift.',
   'Ese cobro ya no está en efectivo.': 'That payment is no longer cash.',

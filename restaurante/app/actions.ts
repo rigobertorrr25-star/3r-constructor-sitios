@@ -698,6 +698,7 @@ export async function updateWorkModeAction(_prev: FormState, formData: FormData)
         waitersCollect: formData.get('waitersCollect') === 'on',
         barOnly: formData.get('barOnly') === 'on',
         suggestedTip: int(formData, 'suggestedTip'),
+        trackPrep: formData.get('trackPrep') === 'on',
       }),
     ['/app', '/app/sedes', '/app/meseros', '/app/mi-cuenta'],
     'Guardado.',

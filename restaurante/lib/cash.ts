@@ -155,14 +155,14 @@ export async function lockOpenShift(db: Db, actor: Actor) {
 }
 
 /** Forma de trabajo del negocio (las opciones que prende el dueño en Sedes). */
-export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number }> {
+export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean }> {
   const row = (
-    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number }>(
-      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip" FROM businesses WHERE id = $1`,
+    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean }>(
+      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip", track_prep AS "trackPrep" FROM businesses WHERE id = $1`,
       [businessId],
     )
   )[0];
-  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10 };
+  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10, trackPrep: true };
 }
 
 /**

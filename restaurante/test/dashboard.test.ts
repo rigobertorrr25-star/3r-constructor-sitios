@@ -94,6 +94,23 @@ describe('módulo 08: tablero del dueño', { skip: url ? false : 'sin TEST_DATAB
     assert.deepEqual(d.topByStation.find((t) => t.station === 'bar')!.items, [{ name: 'Whisky doble', quantity: 2 }]);
     assert.equal(d.prep.find((p) => p.station === 'bar')!.tickets, 1);
     assert.deepEqual(d.lowStock.map((l) => l.name), ['Whisky']);
+    assert.ok(d.signals.some((x) => x.key === 'slow'));
+  });
+
+  it('si cocina y barra no marcan sus comandas, no se mide su tiempo (Azul Caribe)', async () => {
+    const { updateWorkMode } = await import('../lib/waiters');
+    const today = fin.todayIn(tz);
+    await updateWorkMode(owner, { waitersCollect: false, barOnly: false, trackPrep: false });
+    assert.equal((await cash.workMode(owner.businessId)).trackPrep, false);
+    const d = await dash.getDashboard(owner, { from: today, to: today }, tz);
+    assert.ok(!d.signals.some((x) => x.key === 'slow'), 'sin «comandas de más de 25 min»');
+    assert.deepEqual(d.prep, []);
+    assert.equal(d.score, 100 - d.signals.reduce((s, x) => s + x.points, 0));
+    // Guardar la forma de trabajo sin decir nada de esto no la cambia.
+    await updateWorkMode(owner, { waitersCollect: false, barOnly: false });
+    assert.equal((await cash.workMode(owner.businessId)).trackPrep, false);
+    await updateWorkMode(owner, { waitersCollect: false, barOnly: false, trackPrep: true });
+    assert.equal((await dash.getDashboard(owner, { from: today, to: today }, tz)).prep.length, 2);
   });
 });
 

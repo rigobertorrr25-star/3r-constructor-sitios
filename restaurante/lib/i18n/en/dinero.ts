@@ -455,6 +455,10 @@ export const en: Record<string, string> = {
   '¿Cuánto?': 'How much?',
   'Cobro corregido.': 'Payment corrected.',
   Cambiar: 'Change',
+  // Comandas sin marcar en cocina y barra (31 oct 2026)
+  'Cocina y barra marcan sus comandas en pantalla': 'Kitchen and bar mark their tickets on screen',
+  'Quítalo si las comandas le llegan a la cajera y ella avisa: así no se mide cuánto se demoran y el radar de fugas no las cuenta como demoradas.':
+    'Uncheck it if tickets go to the cashier and she tells them: then prep time is not measured and the leak radar doesn’t count them as late.',
   // Dos cuadres al día (30 oct 2026)
   'Cuadre del día': 'Daily cash summary',
   'Cada cajera cierra su turno con su cuadre; aquí se suman los turnos del día.': 'Each cashier closes her shift with its own count; here the day’s shifts are added up.',

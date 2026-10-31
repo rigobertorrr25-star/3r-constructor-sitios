@@ -191,6 +191,9 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS suggested_tip INT NOT NULL DEFAU
 -- Forma de trabajo: «cada mesero cobra sus mesas» (sin cajero) y «solo bar» (sin cocina). Las prende el dueño en Sedes.
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS waiters_collect BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS bar_only BOOLEAN NOT NULL DEFAULT FALSE;
+-- Cocina y barra marcan sus comandas en pantalla (Preparando / Listo). En Azul Caribe no (31 oct 2026): las comandas le
+-- llegan a la cajera y ella avisa; sin marcar, el radar las veía como demoradas. Apagado, no se mide su tiempo.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS track_prep BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- Turno de caja de una sede: se abre con una base en efectivo y se cierra contando la plata.
 CREATE TABLE IF NOT EXISTS cash_shifts (
