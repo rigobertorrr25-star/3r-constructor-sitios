@@ -315,6 +315,7 @@ export const en: Record<string, string> = {
   // Señales del radar (lib/dashboard.ts)
   'Anulaciones de pedidos': 'Order voids',
   'Productos anulados después de enviados.': 'Items voided after being sent.',
+  'Productos anulados después de enviados (sin contar los anulados por equivocación).': 'Items voided after being sent (not counting those voided by mistake).',
   '{n} ya se estaban preparando (se perdieron los insumos).': '{n} were already being prepared (ingredients were lost).',
   'Descuentos sobre el límite': 'Discounts over the limit',
   '{n} cuentas · {amount}': '{n} checks · {amount}',

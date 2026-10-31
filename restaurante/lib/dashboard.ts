@@ -45,6 +45,15 @@ export const STAFF_DISCOUNT = /\b(trabajador(a|es|as)?|emplead[oa]s?|personal)\b
 const STAFF_DISCOUNT_SQL = String.raw`\m(trabajador(a|es|as)?|emplead[oa]s?|personal)\M`;
 export const isStaffDiscount = (reason: string) => STAFF_DISCOUNT.test(reason);
 
+/**
+ * Anulación por equivocación (31 oct 2026, pedido de Rigoberto: «cuando diga el mesero se equivocó, que no marque en el
+ * margen; a veces se avisa hablando que no va a salir y eso le está afectando a los trabajadores con los jefes»): si el
+ * motivo dice equivocó / equivoco / equivocado / equivocación…, el radar no la cuenta.
+ */
+export const MISTAKE_VOID = /(^|[^a-záéíóúñ])equivoc/i;
+const MISTAKE_VOID_SQL = String.raw`\mequivoc`;
+export const isMistakeVoid = (reason: string) => MISTAKE_VOID.test(reason);
+
 export const radarScore = (signals: Pick<Signal, 'points'>[]) => Math.max(0, 100 - signals.reduce((s, x) => s + x.points, 0));
 
 export async function getDashboard(actor: Actor, range: { from: string; to: string; locationId?: string | null }, timeZone: string): Promise<Dashboard> {
@@ -96,7 +105,8 @@ export async function getDashboard(actor: Actor, range: { from: string; to: stri
       `SELECT count(*)::int AS n, COALESCE(sum(i.unit_price * i.quantity), 0) AS value,
               count(*) FILTER (WHERE t.status <> 'sent')::int AS prepared
          FROM order_items i JOIN station_tickets t ON t.id = i.ticket_id
-        WHERE i.business_id = $1 AND i.voided_at IS NOT NULL AND ${inRange('i.voided_at')} AND ${loc('t.location_id')}`,
+        WHERE i.business_id = $1 AND i.voided_at IS NOT NULL AND ${inRange('i.voided_at')} AND ${loc('t.location_id')}
+          AND COALESCE(i.void_reason, '') !~* '${MISTAKE_VOID_SQL}'`,
       p,
     ),
     // Cuentas cerradas cuyo descuento total pasó el límite del cajero (lo autorizó un administrador, pero se mira).
@@ -160,7 +170,9 @@ export async function getDashboard(actor: Actor, range: { from: string; to: stri
       title: 'Anulaciones de pedidos',
       level: voids[0].n === 0 ? 'ok' : levelOf(voidPct, 2, 6),
       value: voids[0].n ? `${voids[0].n} · ${money(voidValue)}` : 'Ninguna',
-      detail: voids[0].prepared ? `${voids[0].prepared} ya se estaban preparando (se perdieron los insumos).` : 'Productos anulados después de enviados.',
+      detail: voids[0].prepared
+        ? `${voids[0].prepared} ya se estaban preparando (se perdieron los insumos).`
+        : 'Productos anulados después de enviados (sin contar los anulados por equivocación).',
       link: '/app/auditoria?accion=order.void',
     },
     8,

@@ -22,6 +22,12 @@ describe('radar: descuentos al personal', () => {
     for (const r of ['Trabajador', 'descuento trabajadora', 'Empleado de cocina', 'EMPLEADOS', 'consumo del personal', 'Personal']) assert.ok(isStaffDiscount(r), r);
     for (const r of ['Amigo del dueño', 'Cumpleaños', 'personalizado', 'Cliente frecuente']) assert.ok(!isStaffDiscount(r), r);
   });
+
+  it('reconoce «se equivocó» en el motivo de una anulación', async () => {
+    const { isMistakeVoid } = await import('../lib/dashboard');
+    for (const r of ['El mesero se equivocó', 'se equivoco', 'Equivocación de mesa', 'pedido equivocado', 'SE EQUIVOCARON']) assert.ok(isMistakeVoid(r), r);
+    for (const r of ['Lo devolvió el cliente', 'Estaba frío', 'inequívoco']) assert.ok(!isMistakeVoid(r), r);
+  });
 });
 
 describe('módulo 08: tablero del dueño', { skip: url ? false : 'sin TEST_DATABASE_URL' }, () => {
@@ -140,6 +146,24 @@ describe('módulo 08: tablero del dueño', { skip: url ? false : 'sin TEST_DATAB
     await cash.applyDiscount(owner, s2, { percent: 50, reason: 'Cumpleaños' });
     await cash.pay(owner, s2, { method: 'cash', amount: 10000, clientKey: randomUUID() });
     assert.match((await disc()).value, /^2 cuentas/);
+  });
+
+  it('una anulación por equivocación no cuenta en «Anulaciones de pedidos»', async () => {
+    const today = fin.todayIn(tz);
+    const voids = async () => (await dash.getDashboard(owner, { from: today, to: today }, tz)).signals.find((x) => x.key === 'voids')!;
+    const before = await voids();
+    const cat = await orders.saveCategory(owner, { name: 'Bebidas', station: 'bar' });
+    const soda = await orders.saveProduct(owner, { categoryId: cat, name: 'Gaseosa', price: 5000 });
+    const t = await store.createTable(owner, { zone: 'Salón', number: '10', capacity: 4, shape: 'square' });
+    const s = await store.openTable(waiter, t, { guests: 1 });
+    await orders.sendOrder(waiter, s, [{ productId: soda, quantity: 1 }], randomUUID());
+    await orders.sendOrder(waiter, s, [{ productId: soda, quantity: 1 }], randomUUID());
+    const order = (await orders.getSessionOrder(owner, s))!;
+    await orders.voidItem(owner, order.rounds[0].items[0].id, 'El mesero se equivocó', false);
+    assert.deepEqual(await voids(), before);
+    // Otro motivo sí cuenta.
+    await orders.voidItem(owner, order.rounds[1].items[0].id, 'El cliente se fue', false);
+    assert.notDeepEqual((await voids()).value, before.value);
   });
 });
 
