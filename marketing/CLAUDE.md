@@ -37,6 +37,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   moda (Playfair, flashes de cámara, prendas desfilando con su precio real), enviado para aprobar. Herramientas en
   `marketing/herramientas/reels-explosivos/` (copia de la página bajada desde el workbench de Composio, porque la red de la
   sesión no abre las páginas; grabación con capturas seguidas a 1080x1920; ffmpeg y música por código).
+  **r7 de Halloween** (31 oct 2026, aprobado por Rigoberto): el león de 3R disfrazado de vampiro en una calle de Cartagena (imagen con Nano Banana 2 y animación con Kling 3.0 en OpenArt, ~195 créditos; Higgsfield quedó en 0 créditos) y después la carta real de Azul Caribe con letras explosivas. Lo que no le gustó: un video «muy básico» sin letras, el de reloj, luces que parpadean y neón, y el de «lo que da miedo» tachado con marcador.
   **Textos de las publicaciones** (27 oct 2026, pedido de Rigoberto): más llamativos, con emojis y 5 hashtags locales
   (#Cartagena … #3Rpaginas); ya cambiados de r5 a c13 en `publicaciones.json`. El reel r3 lo borró Rigoberto a propósito:
   no volver a subirlo.
