@@ -319,6 +319,7 @@ export const en: Record<string, string> = {
   'Descuentos sobre el límite': 'Discounts over the limit',
   '{n} cuentas · {amount}': '{n} checks · {amount}',
   'Cuentas con más descuento del que puede dar un cajero.': 'Checks with more discount than a cashier can give.',
+  'Cuentas con más descuento del que puede dar un cajero (sin contar los descuentos al personal).': 'Checks with more discount than a cashier can give (staff discounts not counted).',
   'Diferencias de inventario': 'Inventory differences',
   'Faltantes encontrados en los conteos físicos.': 'Shortages found in physical counts.',
   'Mesas abiertas hace más de {min} min': 'Tables open for more than {min} min',

@@ -16,6 +16,14 @@ describe('radar: cálculo', () => {
   });
 });
 
+describe('radar: descuentos al personal', () => {
+  it('reconoce trabajador, empleado y personal en el motivo', async () => {
+    const { isStaffDiscount } = await import('../lib/dashboard');
+    for (const r of ['Trabajador', 'descuento trabajadora', 'Empleado de cocina', 'EMPLEADOS', 'consumo del personal', 'Personal']) assert.ok(isStaffDiscount(r), r);
+    for (const r of ['Amigo del dueño', 'Cumpleaños', 'personalizado', 'Cliente frecuente']) assert.ok(!isStaffDiscount(r), r);
+  });
+});
+
 describe('módulo 08: tablero del dueño', { skip: url ? false : 'sin TEST_DATABASE_URL' }, () => {
   let store: typeof import('../lib/store');
   let orders: typeof import('../lib/orders');
@@ -111,6 +119,27 @@ describe('módulo 08: tablero del dueño', { skip: url ? false : 'sin TEST_DATAB
     assert.equal((await cash.workMode(owner.businessId)).trackPrep, false);
     await updateWorkMode(owner, { waitersCollect: false, barOnly: false, trackPrep: true });
     assert.equal((await dash.getDashboard(owner, { from: today, to: today }, tz)).prep.length, 2);
+  });
+
+  it('un descuento al personal no cuenta en «Descuentos sobre el límite»', async () => {
+    const today = fin.todayIn(tz);
+    const disc = async () => (await dash.getDashboard(owner, { from: today, to: today }, tz)).signals.find((x) => x.key === 'discounts')!;
+    const before = await disc();
+    // Una cuenta con 50 % «Trabajador» (por encima del límite del cajero) no sube la señal.
+    const cat = await orders.saveCategory(owner, { name: 'Cocina', station: 'kitchen' });
+    const plate = await orders.saveProduct(owner, { categoryId: cat, name: 'Almuerzo', price: 20000 });
+    const t = await store.createTable(owner, { zone: 'Salón', number: '9', capacity: 4, shape: 'square' });
+    const s = await store.openTable(waiter, t, { guests: 1 });
+    await orders.sendOrder(waiter, s, [{ productId: plate, quantity: 1 }], randomUUID());
+    await cash.applyDiscount(owner, s, { percent: 50, reason: 'Almuerzo de trabajador' });
+    await cash.pay(owner, s, { method: 'cash', amount: 10000, clientKey: randomUUID() });
+    assert.deepEqual(await disc(), before);
+    // El mismo descuento con otro motivo sí cuenta.
+    const s2 = await store.openTable(waiter, t, { guests: 1 });
+    await orders.sendOrder(waiter, s2, [{ productId: plate, quantity: 1 }], randomUUID());
+    await cash.applyDiscount(owner, s2, { percent: 50, reason: 'Cumpleaños' });
+    await cash.pay(owner, s2, { method: 'cash', amount: 10000, clientKey: randomUUID() });
+    assert.match((await disc()).value, /^2 cuentas/);
   });
 });
 
