@@ -37,6 +37,14 @@ export const levelOf = (value: number, watch: number, alert: number): Level => (
 const pointsOf = (level: Level, watch: number, alert: number) => (level === 'alert' ? alert : level === 'watch' ? watch : 0);
 
 /** Puntaje del radar: 100 menos los puntos de cada señal, nunca por debajo de 0. */
+/**
+ * Descuento al personal (31 oct 2026, pedido de Rigoberto: «no debes bajar el índice de descuento cuando diga trabajador,
+ * empleado, personal»): si el motivo nombra al personal, el radar no lo cuenta como descuento sobre el límite.
+ */
+export const STAFF_DISCOUNT = /\b(trabajador(a|es|as)?|emplead[oa]s?|personal)\b/i;
+const STAFF_DISCOUNT_SQL = String.raw`\m(trabajador(a|es|as)?|emplead[oa]s?|personal)\M`;
+export const isStaffDiscount = (reason: string) => STAFF_DISCOUNT.test(reason);
+
 export const radarScore = (signals: Pick<Signal, 'points'>[]) => Math.max(0, 100 - signals.reduce((s, x) => s + x.points, 0));
 
 export async function getDashboard(actor: Actor, range: { from: string; to: string; locationId?: string | null }, timeZone: string): Promise<Dashboard> {
@@ -47,6 +55,8 @@ export async function getDashboard(actor: Actor, range: { from: string; to: stri
   const inRange = (col: string) => `${col} >= ($2::date)::timestamp AT TIME ZONE $4 AND ${col} < ($3::date + 1)::timestamp AT TIME ZONE $4`;
   const loc = (col: string) => `($5::uuid IS NULL OR ${col} = $5)`;
 
+  // Si cocina y barra no marcan sus comandas (Azul Caribe, 31 oct 2026), no se mide su tiempo: no hay tiempos ni «comandas demoradas».
+  const trackPrep = (await query<{ trackPrep: boolean }>(`SELECT track_prep AS "trackPrep" FROM businesses WHERE id = $1`, [actor.businessId]))[0]?.trackPrep ?? true;
   const [open, cash, prep, top, voids, overDiscount, shortages, reversed, manualClose, shifts, locks, slowTickets] = await Promise.all([
     // Mesas abiertas ahora mismo y lo que llevan consumido.
     query<{ n: number; value: string; long: number }>(
@@ -90,12 +100,14 @@ export async function getDashboard(actor: Actor, range: { from: string; to: stri
       p,
     ),
     // Cuentas cerradas cuyo descuento total pasó el límite del cajero (lo autorizó un administrador, pero se mira).
+    // Los descuentos al personal no cuentan (31 oct 2026, pedido de Rigoberto): ver STAFF_DISCOUNT.
     query<{ n: number; value: string }>(
       `SELECT count(*)::int AS n, COALESCE(sum(d.total), 0) AS value FROM (
          SELECT ts.id, sum(ds.amount) AS total,
                 (SELECT COALESCE(sum(unit_price * quantity), 0) FROM order_items WHERE session_id = ts.id AND voided_at IS NULL) AS subtotal,
                 b.cashier_discount_limit AS lim
-           FROM table_sessions ts JOIN session_discounts ds ON ds.session_id = ts.id AND ds.voided_at IS NULL JOIN businesses b ON b.id = ts.business_id
+           FROM table_sessions ts JOIN session_discounts ds ON ds.session_id = ts.id AND ds.voided_at IS NULL AND ds.reason !~* '${STAFF_DISCOUNT_SQL}'
+                JOIN businesses b ON b.id = ts.business_id
           WHERE ts.business_id = $1 AND ts.status = 'closed' AND ${inRange('ts.closed_at')} AND ${loc('ts.location_id')}
           GROUP BY ts.id, b.cashier_discount_limit) d
         WHERE d.subtotal > 0 AND d.total * 100.0 / d.subtotal > d.lim`,
@@ -160,7 +172,7 @@ export async function getDashboard(actor: Actor, range: { from: string; to: stri
       title: 'Descuentos sobre el límite',
       level: levelOf(overDiscount[0].n, 1, 4),
       value: overDiscount[0].n ? `${overDiscount[0].n} cuentas · ${money(Number(overDiscount[0].value))}` : 'Ninguno',
-      detail: 'Cuentas con más descuento del que puede dar un cajero.',
+      detail: 'Cuentas con más descuento del que puede dar un cajero (sin contar los descuentos al personal).',
       link: '/app/auditoria?accion=discount.apply',
     },
     6,
@@ -233,17 +245,19 @@ export async function getDashboard(actor: Actor, range: { from: string; to: stri
     8,
     18,
   );
-  add(
-    {
-      key: 'slow',
-      title: 'Comandas de más de 25 min',
-      level: levelOf(slowTickets[0].n, 3, 8),
-      value: slowTickets[0].n ? `${slowTickets[0].n}` : 'Ninguna',
-      detail: 'Desde que el mesero envía hasta que está lista.',
-    },
-    3,
-    8,
-  );
+  if (trackPrep) {
+    add(
+      {
+        key: 'slow',
+        title: 'Comandas de más de 25 min',
+        level: levelOf(slowTickets[0].n, 3, 8),
+        value: slowTickets[0].n ? `${slowTickets[0].n}` : 'Ninguna',
+        detail: 'Desde que el mesero envía hasta que está lista.',
+      },
+      3,
+      8,
+    );
+  }
   add(
     {
       key: 'pins',
@@ -268,7 +282,7 @@ export async function getDashboard(actor: Actor, range: { from: string; to: stri
     openTables: open[0].n,
     openTablesValue: Number(open[0].value),
     expectedCash: cash[0].n ? Number(cash[0].cash) : null,
-    prep: ['kitchen', 'bar'].map((station) => {
+    prep: (trackPrep ? ['kitchen', 'bar'] : []).map((station) => {
       const row = prep.find((r) => r.station === station);
       return { station, avgMinutes: row?.avg ? Math.round(Number(row.avg)) : null, tickets: row?.n ?? 0 };
     }),

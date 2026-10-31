@@ -319,6 +319,7 @@ export const en: Record<string, string> = {
   'Descuentos sobre el límite': 'Discounts over the limit',
   '{n} cuentas · {amount}': '{n} checks · {amount}',
   'Cuentas con más descuento del que puede dar un cajero.': 'Checks with more discount than a cashier can give.',
+  'Cuentas con más descuento del que puede dar un cajero (sin contar los descuentos al personal).': 'Checks with more discount than a cashier can give (staff discounts not counted).',
   'Diferencias de inventario': 'Inventory differences',
   'Faltantes encontrados en los conteos físicos.': 'Shortages found in physical counts.',
   'Mesas abiertas hace más de {min} min': 'Tables open for more than {min} min',
@@ -455,4 +456,21 @@ export const en: Record<string, string> = {
   '¿Cuánto?': 'How much?',
   'Cobro corregido.': 'Payment corrected.',
   Cambiar: 'Change',
+  // Comandas sin marcar en cocina y barra (31 oct 2026)
+  'Cocina y barra marcan sus comandas en pantalla': 'Kitchen and bar mark their tickets on screen',
+  'Quítalo si las comandas le llegan a la cajera y ella avisa: así no se mide cuánto se demoran y el radar de fugas no las cuenta como demoradas.':
+    'Uncheck it if tickets go to the cashier and she tells them: then prep time is not measured and the leak radar doesn’t count them as late.',
+  // Dos cuadres al día (30 oct 2026)
+  'Cuadre del día': 'Daily cash summary',
+  'Cada cajera cierra su turno con su cuadre; aquí se suman los turnos del día.': 'Each cashier closes her shift with its own count; here the day’s shifts are added up.',
+  'Ese día no hubo caja.': 'There was no cash drawer that day.',
+  'Total del día': 'Day total',
+  'Ojo: 1 turno sigue abierto.': 'Note: 1 shift is still open.',
+  'Ojo: {n} turnos siguen abiertos.': 'Note: {n} shifts are still open.',
+  'La base y el efectivo esperado no se suman: la base de un turno es lo que dejó el anterior en la caja.': 'The float and expected cash are not added up: a shift’s float is what the previous one left in the drawer.',
+  'Turno {n}': 'Shift {n}',
+  'Al cerrar el turno anterior ({name}, {date}) quedaron {amount} en la caja.': 'When the previous shift closed ({name}, {date}), {amount} was left in the drawer.',
+  'Cuéntala y corrígela si no es así.': 'Count it and correct it if not.',
+  'Imprimir cuadre del día': 'Print daily summary',
+  'Cuadre del día enviado a la impresora de caja.': 'Daily summary sent to the cashier printer.',
 };

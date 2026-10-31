@@ -47,12 +47,19 @@ export type Shift = {
   safeAmount: number;
   /** Arqueo: cuántos billetes y monedas de cada uno se contaron (null si se escribió el total a mano). */
   cashCount: CashCount | null;
+  /** Día en que se abrió (AAAA-MM-DD, hora de la sede) y qué turno fue ese día: 1, 2… (dos cajeras al día, 30 oct 2026). */
+  day: string;
+  dayNumber: number;
 };
 
 const SHIFT_SELECT = `SELECT c.id, c.opened_at AS "openedAt", o.name AS "openedBy", c.opening_amount AS "openingAmount", c.closed_at AS "closedAt",
        x.name AS "closedBy", c.expected_cash AS "expectedCash", c.counted_cash AS "countedCash", c.notes,
-       c.envelope_kitchen AS "envelopeKitchen", c.envelope_bar AS "envelopeBar", c.safe_amount AS "safeAmount", c.cash_count AS "cashCount"
-  FROM cash_shifts c JOIN staff o ON o.id = c.opened_by LEFT JOIN staff x ON x.id = c.closed_by`;
+       c.envelope_kitchen AS "envelopeKitchen", c.envelope_bar AS "envelopeBar", c.safe_amount AS "safeAmount", c.cash_count AS "cashCount",
+       to_char(c.opened_at AT TIME ZONE b.timezone, 'YYYY-MM-DD') AS day,
+       (SELECT count(*)::int FROM cash_shifts y
+         WHERE y.location_id = c.location_id AND y.staff_id IS NOT DISTINCT FROM c.staff_id AND y.opened_at <= c.opened_at
+           AND (y.opened_at AT TIME ZONE b.timezone)::date = (c.opened_at AT TIME ZONE b.timezone)::date) AS "dayNumber"
+  FROM cash_shifts c JOIN businesses b ON b.id = c.business_id JOIN staff o ON o.id = c.opened_by LEFT JOIN staff x ON x.id = c.closed_by`;
 
 type ShiftRow = Omit<Shift, 'openingAmount' | 'expectedCash' | 'countedCash' | 'envelopeKitchen' | 'envelopeBar' | 'safeAmount'> & {
   openingAmount: string;
@@ -87,6 +94,37 @@ export async function listShifts(actor: Actor, limit = 15): Promise<Shift[]> {
   return rows.map(toShift);
 }
 
+/**
+ * Lo que quedó en la caja al cerrar el turno anterior de la sede (lo contado menos sobres y caja fuerte): la base que
+ * recibe la cajera del turno siguiente (dos cajeras al día, 30 oct 2026). Null si nunca se ha cerrado una caja.
+ */
+export async function drawerLeftByLastShift(actor: Actor): Promise<{ amount: number; closedBy: string; closedAt: Date } | null> {
+  requirePermission(actor, 'cash.operate');
+  const row = (
+    await query<{ amount: string; closedBy: string; closedAt: Date }>(
+      `SELECT GREATEST(0, c.counted_cash - c.envelope_kitchen - c.envelope_bar - c.safe_amount) AS amount, x.name AS "closedBy", c.closed_at AS "closedAt"
+         FROM cash_shifts c JOIN staff x ON x.id = c.closed_by
+        WHERE c.location_id = $1 AND c.business_id = $2 AND c.staff_id IS NULL AND c.closed_at IS NOT NULL
+        ORDER BY c.closed_at DESC LIMIT 1`,
+      [actor.locationId, actor.businessId],
+    )
+  )[0];
+  return row ? { amount: Number(row.amount), closedBy: row.closedBy, closedAt: row.closedAt } : null;
+}
+
+/** Los turnos de caja de la sede abiertos el día `date` (AAAA-MM-DD en la hora de la sede), en orden, con su cuadre. */
+export async function dayShifts(actor: Actor, date: string): Promise<ShiftSummary[]> {
+  requirePermission(actor, 'cash.operate');
+  const ids = await query<{ id: string }>(
+    `SELECT c.id FROM cash_shifts c JOIN businesses b ON b.id = c.business_id
+      WHERE c.location_id = $1 AND c.business_id = $2 AND c.staff_id IS NULL AND (c.opened_at AT TIME ZONE b.timezone)::date = $3::date
+      ORDER BY c.opened_at`,
+    [actor.locationId, actor.businessId, date],
+  );
+  const all = await Promise.all(ids.map((r) => loadShiftSummary(actor, r.id)));
+  return all.filter((s): s is ShiftSummary => s !== null);
+}
+
 export async function openShift(actor: Actor, openingAmount: number) {
   requirePermission(actor, 'cash.operate');
   requireAmount(openingAmount, 'Base de caja', { allowZero: true });
@@ -117,14 +155,14 @@ export async function lockOpenShift(db: Db, actor: Actor) {
 }
 
 /** Forma de trabajo del negocio (las opciones que prende el dueño en Sedes). */
-export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number }> {
+export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean }> {
   const row = (
-    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number }>(
-      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip" FROM businesses WHERE id = $1`,
+    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean }>(
+      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip", track_prep AS "trackPrep" FROM businesses WHERE id = $1`,
       [businessId],
     )
   )[0];
-  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10 };
+  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10, trackPrep: true };
 }
 
 /**

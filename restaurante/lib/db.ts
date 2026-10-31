@@ -191,6 +191,9 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS suggested_tip INT NOT NULL DEFAU
 -- Forma de trabajo: «cada mesero cobra sus mesas» (sin cajero) y «solo bar» (sin cocina). Las prende el dueño en Sedes.
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS waiters_collect BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS bar_only BOOLEAN NOT NULL DEFAULT FALSE;
+-- Cocina y barra marcan sus comandas en pantalla (Preparando / Listo). En Azul Caribe no (31 oct 2026): las comandas le
+-- llegan a la cajera y ella avisa; sin marcar, el radar las veía como demoradas. Apagado, no se mide su tiempo.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS track_prep BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- Turno de caja de una sede: se abre con una base en efectivo y se cierra contando la plata.
 CREATE TABLE IF NOT EXISTS cash_shifts (
@@ -653,7 +656,7 @@ CREATE TABLE IF NOT EXISTS print_jobs (
   business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
   location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
   printer_id  UUID NOT NULL REFERENCES printers(id) ON DELETE CASCADE,
-  kind        VARCHAR(12) NOT NULL CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'ventas', 'prueba')),
+  kind        VARCHAR(12) NOT NULL CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'ventas', 'dia', 'prueba')),
   title       VARCHAR(160) NOT NULL,
   data        BYTEA NOT NULL,
   preview     TEXT NOT NULL,
@@ -668,7 +671,7 @@ CREATE TABLE IF NOT EXISTS print_jobs (
 CREATE INDEX IF NOT EXISTS print_jobs_queue ON print_jobs (location_id, status, created_at);
 -- «Ventas por categoría» sale con el cierre de caja (28 oct 2026).
 ALTER TABLE print_jobs DROP CONSTRAINT IF EXISTS print_jobs_kind_check;
-ALTER TABLE print_jobs ADD CONSTRAINT print_jobs_kind_check CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'ventas', 'prueba'));
+ALTER TABLE print_jobs ADD CONSTRAINT print_jobs_kind_check CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'ventas', 'dia', 'prueba'));
 ALTER TABLE locations ADD COLUMN IF NOT EXISTS print_token_hash VARCHAR(64);
 ALTER TABLE locations ADD COLUMN IF NOT EXISTS print_agent_seen_at TIMESTAMPTZ;
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_print_token ON locations (print_token_hash) WHERE print_token_hash IS NOT NULL;

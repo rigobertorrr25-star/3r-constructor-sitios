@@ -176,17 +176,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               ))}
             </div>
           </section>
-          <section className={card}>
-            <h2 className="font-display text-[18px] font-bold">{t('Tiempos de preparación')}</h2>
-            <ul className="mt-3 space-y-1.5 text-[14px]">
-              {d.prep.map((p) => (
-                <li key={p.station} className="flex justify-between">
-                  <span className="text-muted-foreground">{t(p.station === 'kitchen' ? 'Cocina' : 'Barra')}</span>
-                  <span>{p.avgMinutes === null ? '—' : t('{min} min promedio · {n} comandas', { min: p.avgMinutes, n: p.tickets })}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          {/* Sin tiempos cuando cocina y barra no marcan sus comandas (Sedes → Forma de trabajo). */}
+          {d.prep.length ? (
+            <section className={card}>
+              <h2 className="font-display text-[18px] font-bold">{t('Tiempos de preparación')}</h2>
+              <ul className="mt-3 space-y-1.5 text-[14px]">
+                {d.prep.map((p) => (
+                  <li key={p.station} className="flex justify-between">
+                    <span className="text-muted-foreground">{t(p.station === 'kitchen' ? 'Cocina' : 'Barra')}</span>
+                    <span>{p.avgMinutes === null ? '—' : t('{min} min promedio · {n} comandas', { min: p.avgMinutes, n: p.tickets })}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
           {d.lowStock.length ? (
             <section className={`${card} border-warning/40`}>
               <h2 className="font-display text-[18px] font-bold">{t('Por comprar')}</h2>

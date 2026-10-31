@@ -3,13 +3,15 @@
 // local los pide con el código de la sede y los manda a cada impresora. Si la impresora falla, se reintenta y queda a la
 // vista en la pantalla de Impresoras para reimprimir.
 import { createHash, randomBytes } from 'node:crypto';
-import { getBill, METHOD_LABEL, METHODS, loadShiftSummary, suggestedTipFor, workMode } from './cash';
+import { dayShifts, getBill, METHOD_LABEL, METHODS, loadShiftSummary, suggestedTipFor, workMode } from './cash';
+import { dayTotals, shiftDifference } from './cash-day';
 import { closingInventory, dailyForm, shiftIncidents, shiftSalesByCategory, shortQuantity, sumAmounts, tipOfSales } from './closing-report';
 import { AREA_LABEL } from './inventory';
 import { cashCountLines } from './cash-count';
 import { query, transaction, type Db } from './db';
-import { anulacion, cierre, comanda, precuenta, prueba, ventasCategoria, type Ticket } from './escpos';
+import { anulacion, cierre, comanda, cuadreDia, precuenta, prueba, ventasCategoria, type Ticket } from './escpos';
 import { formatCop, formatDateTime, formatTime } from './format';
+import { todayIn } from './finance';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 
 export type Target = 'kitchen' | 'bar' | 'cashier' | 'orders';
@@ -316,9 +318,11 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
     const place = await placeInfo(db, actor);
     const counted = s.shift.countedCash ?? 0;
     const diff = counted - (s.shift.expectedCash ?? 0);
-    return enqueue(db, actor, 'cashier', 'cierre', `${waiter ? `Cierre de ${waiter}` : 'Cierre de caja'} · ${formatDateTime(s.shift.closedAt!, place.timezone)}`, (w) =>
+    // Dos cajeras al día (30 oct 2026): el cierre de la caja dice de qué turno del día es.
+    const title = waiter ? `Cierre de ${waiter}` : `Cierre de caja · Turno ${s.shift.dayNumber}`;
+    return enqueue(db, actor, 'cashier', 'cierre', `${title} · ${formatDateTime(s.shift.closedAt!, place.timezone)}`, (w) =>
       cierre(w, {
-        title: waiter ? `Cierre de ${waiter}` : undefined,
+        title,
         business: place.business,
         location: place.locations > 1 ? place.location : null,
         openedBy: s.shift.openedBy,
@@ -396,6 +400,62 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
       }
       return n;
     });
+  });
+}
+
+const cuadreResult = (diff: number) => (diff === 0 ? 'CUADRA' : diff > 0 ? `SOBRAN ${formatCop(diff)}` : `FALTAN ${formatCop(-diff)}`);
+
+/** Fecha larga para el papel: «jueves, 30 de octubre de 2026». */
+export const longDate = (date: string) =>
+  new Date(`${date}T12:00:00Z`).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+/** Cuadre del día (dos cajeras al día, 30 oct 2026): los turnos de caja del día `date` sumados, a la impresora de caja. */
+export async function enqueueDayClosing(actor: Actor, date: string) {
+  const shifts = await dayShifts(actor, date);
+  if (!shifts.length) throw new AppError('NOT_FOUND', 'Ese día no hubo caja.');
+  const totals = dayTotals(shifts);
+  const { suggestedTip } = await workMode(actor.businessId);
+  return transaction(async (db) => {
+    const place = await placeInfo(db, actor);
+    return enqueue(db, actor, 'cashier', 'dia', `Cuadre del día · ${date}`, (w) =>
+      cuadreDia(w, {
+        business: place.business,
+        location: place.locations > 1 ? place.location : null,
+        date: longDate(date),
+        turns: shifts.map((s) => {
+          const diff = shiftDifference(s);
+          return {
+            label: `Turno ${s.shift.dayNumber}`,
+            who: s.shift.closedBy && s.shift.closedBy !== s.shift.openedBy ? `${s.shift.openedBy} / ${s.shift.closedBy}` : s.shift.openedBy,
+            hours: `${formatTime(s.shift.openedAt, place.timezone)} a ${
+              !s.shift.closedAt
+                ? 'sigue abierta'
+                : todayIn(place.timezone, s.shift.closedAt) === s.shift.day
+                  ? formatTime(s.shift.closedAt, place.timezone)
+                  : formatDateTime(s.shift.closedAt, place.timezone)
+            }`,
+            opening: formatCop(s.shift.openingAmount),
+            sales: formatCop(s.sales),
+            expected: formatCop(s.shift.expectedCash ?? s.expectedCash),
+            counted: s.shift.countedCash === null ? '-' : formatCop(s.shift.countedCash),
+            result: diff === null ? 'SIGUE ABIERTA' : cuadreResult(diff),
+          };
+        }),
+        methods: METHODS.map((m) => ({ label: METHOD_LABEL[m], amount: formatCop(totals.byMethod[m].amount), count: totals.byMethod[m].count })),
+        sales: formatCop(totals.sales),
+        tipOfSales: suggestedTip > 0 ? { pct: suggestedTip, amount: formatCop(tipOfSales(totals.sales, suggestedTip)) } : null,
+        tips: formatCop(totals.tips),
+        discounts: formatCop(totals.discounts),
+        movementsIn: formatCop(totals.movementsIn),
+        movementsOut: formatCop(totals.movementsOut),
+        envelopeKitchen: formatCop(totals.envelopeKitchen),
+        envelopeBar: formatCop(totals.envelopeBar),
+        safe: formatCop(totals.safeAmount),
+        result: totals.open === totals.turns ? 'SIGUE ABIERTA' : cuadreResult(totals.difference),
+        tables: totals.tablesClosed,
+        open: totals.open,
+      }),
+    );
   });
 }
 

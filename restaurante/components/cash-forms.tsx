@@ -9,13 +9,21 @@ import { formatCop, formatTime } from '@/lib/format';
 import { DENOMINATIONS, cashCountTotal, cleanCashCount, denominationKey } from '@/lib/cash-count';
 import { useLang, useT } from './i18n';
 
-export function OpenShiftForm() {
+/** Abrir caja. `suggested`: lo que dejó en la caja el turno anterior (dos cajeras al día, 30 oct 2026). */
+export function OpenShiftForm({ suggested, hint }: { suggested?: number; hint?: string }) {
   const t = useT();
   return (
     <ActionForm action={openShiftAction}>
       {(state) => (
         <>
-          <Field label={t('Base en efectivo')} name="openingAmount" inputMode="numeric" placeholder="200000" defaultValue={state?.values?.openingAmount} hint={t('La plata con la que arranca la caja (para dar vueltas).')} />
+          <Field
+            label={t('Base en efectivo')}
+            name="openingAmount"
+            inputMode="numeric"
+            placeholder="200000"
+            defaultValue={state?.values?.openingAmount ?? (suggested !== undefined ? String(suggested) : undefined)}
+            hint={hint ? `${hint} ${t('Cuéntala y corrígela si no es así.')}` : t('La plata con la que arranca la caja (para dar vueltas).')}
+          />
           <SubmitButton pendingText={t('Abriendo…')}>{t('Abrir caja')}</SubmitButton>
         </>
       )}

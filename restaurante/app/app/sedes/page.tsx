@@ -26,7 +26,7 @@ export default async function LocationsPage() {
         <h2 className="font-display text-[18px] font-bold">{t('Forma de trabajo')}</h2>
         <p className="mt-1 text-[14.5px] text-muted-foreground">{t('Cómo se cobra y qué se prepara en tu negocio. Vale para todas las sedes.')}</p>
         <div className="mt-4">
-          <WorkModeForm waitersCollect={staff.waitersCollect} barOnly={staff.barOnly} suggestedTip={mode.suggestedTip} />
+          <WorkModeForm waitersCollect={staff.waitersCollect} barOnly={staff.barOnly} suggestedTip={mode.suggestedTip} trackPrep={mode.trackPrep} />
         </div>
       </section>
       <section className={card}>

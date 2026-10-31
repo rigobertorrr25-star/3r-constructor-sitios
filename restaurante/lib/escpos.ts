@@ -267,6 +267,59 @@ export function cierre(width: number, c: CierreInput) {
   return t.rule().blank().line('Firma: ______________________');
 }
 
+export type CuadreDiaInput = {
+  business: string;
+  location: string | null;
+  date: string;
+  turns: { label: string; who: string; hours: string; opening: string; sales: string; expected: string; counted: string; result: string }[];
+  methods: { label: string; amount: string; count: number }[];
+  sales: string;
+  tipOfSales: { pct: number; amount: string } | null;
+  tips: string;
+  discounts: string;
+  movementsIn: string;
+  movementsOut: string;
+  envelopeKitchen: string;
+  envelopeBar: string;
+  safe: string;
+  result: string;
+  tables: number;
+  open: number;
+};
+
+/** Cuadre del día (dos cajeras al día, 30 oct 2026): cada turno con su resultado y lo del día sumado. */
+export function cuadreDia(width: number, c: CuadreDiaInput) {
+  const t = new Ticket(width).line(c.business, { align: 'center', bold: true });
+  if (c.location) t.line(c.location, { align: 'center' });
+  t.line('CUADRE DEL DIA', { align: 'center', big: true }).line(c.date, { align: 'center' });
+  for (const turn of c.turns) {
+    t.rule()
+      .line(`${turn.label}: ${turn.who}`, { bold: true })
+      .line(turn.hours)
+      .row('Base', turn.opening)
+      .row('Ventas', turn.sales)
+      .row('Efectivo esperado', turn.expected)
+      .row('Efectivo contado', turn.counted)
+      .line(turn.result, { bold: true });
+  }
+  t.rule('=').line('TOTAL DEL DIA', { bold: true });
+  for (const m of c.methods) t.row(`${m.label} (${m.count})`, m.amount);
+  t.row('Ventas', c.sales, { bold: true });
+  if (c.tipOfSales) t.row(`Propina (${c.tipOfSales.pct} % de ventas)`, c.tipOfSales.amount, { bold: true });
+  t.row(c.tipOfSales ? 'Propinas cobradas' : 'Propinas', c.tips)
+    .row('Descuentos', c.discounts)
+    .row('Entradas de efectivo', c.movementsIn)
+    .row('Salidas de efectivo', c.movementsOut)
+    .row('Sobre para la cocina', c.envelopeKitchen)
+    .row('Sobre para el bar', c.envelopeBar)
+    .row('Caja fuerte', c.safe)
+    .rule()
+    .line(c.result, { align: 'center', big: true })
+    .line(`${c.tables} ${c.tables === 1 ? 'mesa cerrada' : 'mesas cerradas'}`, { align: 'center' });
+  if (c.open) t.line(c.open === 1 ? 'Ojo: 1 turno sigue abierto.' : `Ojo: ${c.open} turnos siguen abiertos.`, { align: 'center', bold: true });
+  return t.rule().blank().line('Firma: ______________________');
+}
+
 /** Lo que queda, lo que se acabó y lo que hay que comprar, cada lista por área (Barra / Cocina). */
 function inventorySection(t: Ticket, inv: NonNullable<CierreInput['inventory']>) {
   const title = (s: string) => t.rule('=').line(s, { align: 'center', bold: true });
