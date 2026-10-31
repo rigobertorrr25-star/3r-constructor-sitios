@@ -80,6 +80,7 @@ que ese sistema no defina, no uses estos patrones de fábrica:
 - Reels o videos armados como diapositivas: foto de producto en una tarjeta centrada sobre fondo de degradado, con el título debajo y la misma plantilla en cada escena (se ve genérico).
 
 - Reels con subtítulos grandes en mayúsculas, gruesos y con borde negro, que entran de a una o dos palabras con rebote (estilo TikTok de letras «gritadas»), aunque sea a pantalla completa con barridos (27 oct 2026).
+- Reels de «noche/terror»: reloj corriendo, luces que parpadean y letras de neón con borde naranja («ya se ha montado mucho», 31 oct 2026).
 
 (Esta lista crece por vueltas: cuando te diga que algo no me gusta, agrégalo aquí.)
 
