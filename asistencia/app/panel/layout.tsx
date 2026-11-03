@@ -29,7 +29,8 @@ export default async function PanelLayout({ children }: { children: ReactNode })
           </form>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-[1100px] px-4 pb-24 pt-4 sm:px-8">{children}</main>
+      <main className="mx-auto w-full max-w-[1100px] px-4 pb-10 pt-4 sm:px-8">{children}</main>
+      <footer className="mx-auto w-full max-w-[1100px] px-4 pb-10 text-[12px] text-muted-foreground sm:px-8">{t(lang, 'avatarCredit')}</footer>
     </div>
   );
 }

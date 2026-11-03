@@ -13,6 +13,17 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   el panel). Cada empleado crea su propio PIN la primera vez que escanea. En español e inglés (botón ES | EN; los jefes de
   Rigoberto son de EE. UU.): todo texto nuevo va en los dos idiomas en `asistencia/lib/i18n.ts`. Los jefes de
   cada negocio tienen acceso de solo lectura (sección "Jefes" del panel; entran con su clave en `/entrar`). Empleados cargados y tablet con QR listos (29 sep 2026).
+- Diseño (3 nov 2026, Rigoberto): versión **clara** (fondo gris muy claro, tarjetas blancas, lila 3R `#4f5ee8` de acento;
+  tokens en `app/globals.css`). Panel del negocio en pestañas (`?vista=reporte|empleados|turnos|tablet|jefes`), franja
+  "En turno ahora" y 4 números de resumen; tablet horizontal con barra de cuenta regresiva; celular con saludo según la hora.
+  En el Excel y el panel ya no aparece "corregido a mano" (27 oct 2026, Rigoberto); por dentro se sigue guardando.
+- Avatares (3 nov 2026, Rigoberto): cada empleado tiene un dibujo automático, estilo «Adventurer» de DiceBear
+  (Lisa Wischofsky, **CC BY 4.0**: el crédito va al pie del panel y del celular, no quitarlo). Sale del id,
+  `employees.avatar_variant` («Otro avatar» lo sube) y hombre/mujer: `employees.avatar_gender` ('m'/'f') o, si está
+  vacío, se adivina por el primer nombre (`lib/gender.ts`, nombres comunes de Colombia). Lo sirve `/avatar/{id}[-n]-{m|f}`
+  sin guardar imágenes; peinados cortos para hombres y largos para mujeres en `app/avatar/[seed]/route.ts`.
+- Vercel (3 nov 2026): el `ignoreCommand` publica también si no encuentra la publicación anterior (antes, cuando la
+  última publicación quedaba a más de ~10 cambios, Vercel marcaba "falló" sin compilar).
 
 ## Este proyecto
 

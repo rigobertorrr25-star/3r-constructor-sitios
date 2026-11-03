@@ -1,13 +1,13 @@
 import Image from 'next/image';
 import type { InputHTMLAttributes, ReactNode } from 'react';
 
-export const card = 'rounded-[32px] border border-white/[0.08] bg-card p-6 shadow-[var(--shadow-glass)]';
+export const card = 'rounded-[32px] border border-black/[0.1] bg-card p-6 shadow-[var(--shadow-glass)]';
 
 export const quietButton =
-  'inline-flex items-center justify-center whitespace-nowrap rounded-full border border-white/[0.1] px-4 py-2 text-[14px] transition hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]';
+  'inline-flex items-center justify-center whitespace-nowrap rounded-full border border-black/[0.12] px-4 py-2 text-[14px] transition hover:bg-black/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]';
 
 export const inputClass =
-  'w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground/70 transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
+  'w-full rounded-2xl border border-black/[0.12] bg-black/[0.04] px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground/70 transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
 
 /** El león de 3R, en círculo. */
 export function Lion({ size = 44, className = '', alt = 'León de 3R' }: { size?: number; className?: string; alt?: string }) {
@@ -17,7 +17,7 @@ export function Lion({ size = 44, className = '', alt = 'León de 3R' }: { size?
       alt={alt}
       width={size}
       height={size}
-      className={`rounded-full ring-1 ring-white/10 ${className}`}
+      className={`rounded-full ring-1 ring-black/10 ${className}`}
       priority
     />
   );
@@ -40,8 +40,8 @@ export function Field({ label, hint, id, ...input }: FieldProps) {
 
 export function CheckField({ label, hint, ...input }: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 transition hover:border-white/[0.16]">
-      <input type="checkbox" className="mt-1 size-4 accent-[#8a9bff]" {...input} />
+    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-black/[0.1] bg-black/[0.03] p-4 transition hover:border-black/[0.2]">
+      <input type="checkbox" className="mt-1 size-4 accent-[#4f5ee8]" {...input} />
       <span>
         <span className="block text-[14.5px] font-medium text-foreground">{label}</span>
         {hint ? <span className="mt-0.5 block text-[13px] text-muted-foreground">{hint}</span> : null}
@@ -56,8 +56,8 @@ export function Alert({ children, tone = 'error' }: { children: ReactNode; tone?
       role={tone === 'error' ? 'alert' : 'status'}
       className={
         tone === 'error'
-          ? 'rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-[#ffb4b5]'
-          : 'rounded-2xl border border-success/30 bg-success/10 px-4 py-3 text-sm text-[#9df0c6]'
+          ? 'rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive'
+          : 'rounded-2xl border border-success/30 bg-success/10 px-4 py-3 text-sm text-success'
       }
     >
       {children}

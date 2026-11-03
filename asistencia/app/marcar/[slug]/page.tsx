@@ -6,20 +6,34 @@ import { PunchForm } from '@/components/punch-form';
 import { Alert, Lion, card } from '@/components/ui';
 import { t, type Lang } from '@/lib/i18n';
 import { getLang } from '@/lib/lang';
+import { formatClock } from '@/lib/report';
 import { AppError, getPublicBusiness, getPunchScreen } from '@/lib/store';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: t(await getLang(), 'punchTitle') };
 }
 
+/** Saludo según la hora de Colombia. */
+function greeting(lang: Lang): string {
+  const hour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: 'America/Bogota' }).format(new Date()));
+  return t(lang, hour < 12 ? 'goodMorning' : hour < 19 ? 'goodAfternoon' : 'goodEvening');
+}
+
 function Shell({ title, lang, children }: { title: string; lang: Lang; children: ReactNode }) {
   return (
-    <main className="relative flex min-h-dvh items-center justify-center px-4 py-14" style={{ backgroundImage: 'var(--gradient-hero)' }}>
+    <main className="relative flex min-h-dvh flex-col items-center px-4 pt-16 pb-12" style={{ backgroundImage: 'var(--gradient-hero)' }}>
       <LangSwitch lang={lang} className="absolute top-4 right-4" />
-      <div className={`${card} w-full max-w-[420px]`}>
-        <h1 className="mb-6 text-center font-display text-[22px] font-bold tracking-tight text-foreground">{title}</h1>
-        {children}
-      </div>
+      <header className="mb-6 flex w-full max-w-[420px] items-center gap-4">
+        <Lion size={56} alt={t(lang, 'lionAlt')} />
+        <div className="min-w-0">
+          <h1 className="truncate font-display text-[24px] leading-tight font-bold tracking-tight text-foreground">{title}</h1>
+          <p className="text-[15px] text-muted-foreground">
+            {greeting(lang)} · <span className="tabular-nums">{formatClock(new Date(), lang)}</span>
+          </p>
+        </div>
+      </header>
+      <div className={`${card} w-full max-w-[420px]`}>{children}</div>
+      <p className="mt-6 max-w-[420px] text-center text-[11.5px] text-muted-foreground">{t(lang, 'avatarCredit')}</p>
     </main>
   );
 }

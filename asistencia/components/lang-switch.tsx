@@ -12,7 +12,7 @@ export function LangSwitch({ lang, className = '' }: { lang: Lang; className?: s
     router.refresh();
   };
   return (
-    <div role="group" aria-label={t(lang, 'switchLanguage')} className={`inline-flex rounded-full border border-white/[0.1] p-0.5 text-[13px] ${className}`}>
+    <div role="group" aria-label={t(lang, 'switchLanguage')} className={`inline-flex rounded-full border border-black/[0.12] p-0.5 text-[13px] ${className}`}>
       {LANGS.map((option) => (
         <button
           key={option}
@@ -21,7 +21,7 @@ export function LangSwitch({ lang, className = '' }: { lang: Lang; className?: s
           aria-pressed={option === lang}
           onClick={() => choose(option)}
           className={`rounded-full px-3 py-1 font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)] ${
-            option === lang ? 'bg-white/[0.1] text-foreground' : 'text-muted-foreground hover:text-foreground'
+            option === lang ? 'bg-black/[0.06] text-foreground' : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           {option.toUpperCase()}
