@@ -98,7 +98,7 @@ export function Kiosk({ secret, lang }: { secret: string; lang: Lang }) {
         </div>
       </div>
       <div className={`flex w-full flex-col items-center gap-4 min-[900px]:landscape:order-1`}>
-        <div className="w-full max-w-[420px] rounded-[32px] bg-white p-5 shadow-[var(--shadow-glow)] min-[900px]:landscape:max-w-[min(480px,72dvh)]">
+        <div className="w-full max-w-[420px] rounded-[32px] border border-black/[0.08] bg-white p-5 shadow-[var(--shadow-glass)] min-[900px]:landscape:max-w-[min(480px,72dvh)]">
           {data ? (
             <div className="aspect-square w-full [&>svg]:size-full" dangerouslySetInnerHTML={{ __html: data.svg }} aria-label={t(lang, 'tabletQrLabel')} role="img" />
           ) : (
@@ -107,7 +107,7 @@ export function Kiosk({ secret, lang }: { secret: string; lang: Lang }) {
         </div>
         {secondsLeft !== null && problem !== 'offline' ? (
           <div className="w-full max-w-[420px]" aria-hidden="true">
-            <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+            <div className="h-1.5 overflow-hidden rounded-full bg-black/[0.06]">
               <div className="h-full rounded-full bg-primary transition-[width] duration-1000 ease-linear" style={{ width: `${Math.min(100, (secondsLeft / 30) * 100)}%` }} />
             </div>
             <p className="mt-2 text-center text-[14px] tabular-nums text-muted-foreground">{t(lang, 'tabletNextCode', { s: secondsLeft })}</p>
