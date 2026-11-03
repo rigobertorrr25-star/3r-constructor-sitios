@@ -150,6 +150,7 @@ export const shiftLabel = (shift: Shift) => `${shift.start}–${shift.end}`;
 export type EmployeeTotals = {
   employeeId: string;
   name: string;
+  avatar?: string;
   days: number;
   minutes: number;
   lateCount: number;
@@ -170,6 +171,7 @@ export function totalsByEmployee(records: AttendanceRecord[], shifts: Shift[], n
       {
         employeeId: record.employeeId,
         name: record.employee.name,
+        ...(record.employee.avatar ? { avatar: record.employee.avatar } : {}),
         days: 0,
         minutes: 0,
         lateCount: 0,

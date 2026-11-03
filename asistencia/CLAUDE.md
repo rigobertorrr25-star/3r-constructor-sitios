@@ -17,6 +17,9 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   tokens en `app/globals.css`). Panel del negocio en pestañas (`?vista=reporte|empleados|turnos|tablet|jefes`), franja
   "En turno ahora" y 4 números de resumen; tablet horizontal con barra de cuenta regresiva; celular con saludo según la hora.
   En el Excel y el panel ya no aparece "corregido a mano" (27 oct 2026, Rigoberto); por dentro se sigue guardando.
+- Avatares (3 nov 2026, Rigoberto): cada empleado tiene un dibujo automático (DiceBear «Notionists», CC0) que sale de
+  su id y de `employees.avatar_variant`; lo sirve `/avatar/{id}[-n]` (sin guardar imágenes). En el panel, «Otro avatar»
+  sube el número. Se ve en el panel, el reporte, «En turno ahora» y el celular.
 - Vercel (3 nov 2026): el `ignoreCommand` publica también si no encuentra la publicación anterior (antes, cuando la
   última publicación quedaba a más de ~10 cambios, Vercel marcaba "falló" sin compilar).
 

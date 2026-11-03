@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react';
 import {
   addRecordAction,
+  changeAvatarAction,
   createBusinessAction,
   createManagerAction,
   deleteManagerAction,
@@ -61,6 +62,21 @@ export function EmployeeForm({ businessId, employee, lang }: { businessId: strin
       {state?.ok && employee ? <Alert tone="ok">{t(lang, 'changesSaved')}</Alert> : null}
       {state?.ok && !employee ? <Alert tone="ok">{t(lang, 'employeeAdded')}</Alert> : null}
       <SubmitButton pendingText={t(lang, 'saving')}>{employee ? t(lang, 'saveChanges') : t(lang, 'addEmployee')}</SubmitButton>
+    </form>
+  );
+}
+
+/** Cambia el dibujo del empleado por otro, por si no le gustó el que le tocó. */
+export function ChangeAvatarButton({ businessId, employee, lang }: { businessId: string; employee: AttendanceEmployee; lang: Lang }) {
+  return (
+    <form action={changeAvatarAction}>
+      <input type="hidden" name="businessId" value={businessId} />
+      <input type="hidden" name="employeeId" value={employee.id} />
+      <button type="submit" className={`${quietButton} gap-2`}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- dibujo SVG propio */}
+        <img src={employee.avatar} alt="" width={20} height={20} className="size-5 rounded-full" />
+        {t(lang, 'changeAvatar')}
+      </button>
     </form>
   );
 }

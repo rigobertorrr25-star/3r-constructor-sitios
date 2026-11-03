@@ -5,10 +5,11 @@ import { currentCode, isValidCode, newKioskSecret, pinHash, CODE_WINDOW_MS } fro
 import { query, transaction } from './db';
 import { hashPassword, verifyPassword } from './passwords';
 import { t, type MessageKey, type Vars } from './i18n';
+import { avatarSrc } from './avatar';
 import { FORGOTTEN_MS as FORGOTTEN_HOURS_MS, type Shift } from './report';
 
 /** `hasPin` false = el empleado todavía no creó su PIN (lo crea la primera vez que escanea). */
-export type AttendanceEmployee = { id: string; name: string; isActive: boolean; hasPin: boolean };
+export type AttendanceEmployee = { id: string; name: string; isActive: boolean; hasPin: boolean; avatar: string };
 
 export type AttendanceBusinessSummary = { id: string; name: string; slug: string; isActive: boolean; employees: number };
 
@@ -30,7 +31,8 @@ export type AttendanceRecord = {
   clockIn: string;
   clockOut: string | null;
   editedAt: string | null;
-  employee: { name: string };
+  /** `avatar`: dirección del dibujo del empleado (no la traen los datos de prueba). */
+  employee: { name: string; avatar?: string };
 };
 
 export type PunchResult = { employeeName: string; type: 'in' | 'out'; at: string; workedMinutes: number | null; pinCreated: boolean };
@@ -140,11 +142,14 @@ function checkCode(business: PublicBusiness, code: string, now: Date) {
 export async function getPunchScreen(slug: string, code: string, now = new Date()) {
   const business = await activeBusiness(slug);
   checkCode(business, code, now);
-  const employees = await query<{ id: string; name: string; has_pin: boolean }>(
-    'SELECT id, name, pin_hash IS NOT NULL AS has_pin FROM employees WHERE business_id = $1 AND is_active ORDER BY name',
+  const employees = await query<{ id: string; name: string; has_pin: boolean; avatar_variant: number }>(
+    'SELECT id, name, pin_hash IS NOT NULL AS has_pin, avatar_variant FROM employees WHERE business_id = $1 AND is_active ORDER BY name',
     [business.id],
   );
-  return { name: business.name, employees: employees.map((e) => ({ id: e.id, name: e.name, hasPin: e.has_pin })) };
+  return {
+    name: business.name,
+    employees: employees.map((e) => ({ id: e.id, name: e.name, hasPin: e.has_pin, avatar: avatarSrc(e.id, e.avatar_variant) })),
+  };
 }
 
 export async function getPublicBusiness(slug: string): Promise<{ name: string } | null> {
@@ -238,8 +243,8 @@ export async function getBusiness(id: string): Promise<AttendanceBusiness | null
     [id],
   );
   if (!business) return null;
-  const employees = await query<{ id: string; name: string; is_active: boolean; has_pin: boolean }>(
-    'SELECT id, name, is_active, pin_hash IS NOT NULL AS has_pin FROM employees WHERE business_id = $1 ORDER BY is_active DESC, name',
+  const employees = await query<{ id: string; name: string; is_active: boolean; has_pin: boolean; avatar_variant: number }>(
+    'SELECT id, name, is_active, pin_hash IS NOT NULL AS has_pin, avatar_variant FROM employees WHERE business_id = $1 ORDER BY is_active DESC, name',
     [id],
   );
   return {
@@ -249,7 +254,7 @@ export async function getBusiness(id: string): Promise<AttendanceBusiness | null
     kioskSecret: business.kiosk_secret,
     isActive: business.is_active,
     shifts: business.shifts,
-    employees: employees.map((e) => ({ id: e.id, name: e.name, isActive: e.is_active, hasPin: e.has_pin })),
+    employees: employees.map((e) => ({ id: e.id, name: e.name, isActive: e.is_active, hasPin: e.has_pin, avatar: avatarSrc(e.id, e.avatar_variant) })),
   };
 }
 
@@ -305,6 +310,16 @@ export async function updateEmployee(businessId: string, employeeId: string, inp
   if (rows.length === 0) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
 }
 
+/** "Otro avatar": cambia el dibujo del empleado por uno nuevo. */
+export async function changeAvatar(businessId: string, employeeId: string) {
+  if (!isUuid(businessId) || !isUuid(employeeId)) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
+  const rows = await query('UPDATE employees SET avatar_variant = avatar_variant + 1 WHERE id = $1 AND business_id = $2 RETURNING id', [
+    employeeId,
+    businessId,
+  ]);
+  if (rows.length === 0) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
+}
+
 /** Para un PIN olvidado: el empleado crea uno nuevo la próxima vez que escanee. */
 export async function resetPin(businessId: string, employeeId: string) {
   if (!isUuid(businessId) || !isUuid(employeeId)) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
@@ -322,6 +337,7 @@ type RecordRow = {
   clock_out: Date | null;
   edited_at: Date | null;
   name: string;
+  avatar_variant: number;
 };
 
 const toRecord = (r: RecordRow): AttendanceRecord => ({
@@ -330,7 +346,7 @@ const toRecord = (r: RecordRow): AttendanceRecord => ({
   clockIn: r.clock_in.toISOString(),
   clockOut: r.clock_out?.toISOString() ?? null,
   editedAt: r.edited_at?.toISOString() ?? null,
-  employee: { name: r.name },
+  employee: { name: r.name, avatar: avatarSrc(r.employee_id, r.avatar_variant) },
 });
 
 /** Inicio del día AAAA-MM-DD en Colombia (UTC-5, sin horario de verano). */
@@ -347,7 +363,7 @@ export async function listRecords(businessId: string, fromDay: string, toDay: st
     throw new AppError('INVALID', 'errRangeMax', { max: MAX_RANGE_DAYS });
   }
   const rows = await query<RecordRow>(
-    `SELECT r.id, r.employee_id, r.clock_in, r.clock_out, r.edited_at, e.name
+    `SELECT r.id, r.employee_id, r.clock_in, r.clock_out, r.edited_at, e.name, e.avatar_variant
        FROM records r JOIN employees e ON e.id = r.employee_id
       WHERE r.business_id = $1 AND r.clock_in >= $2 AND r.clock_in < $3
       ORDER BY r.clock_in`,
