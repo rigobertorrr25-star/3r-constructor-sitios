@@ -6,10 +6,27 @@ import { query, transaction } from './db';
 import { hashPassword, verifyPassword } from './passwords';
 import { t, type MessageKey, type Vars } from './i18n';
 import { avatarSrc } from './avatar';
+import { guessGender, type Gender } from './gender';
 import { FORGOTTEN_MS as FORGOTTEN_HOURS_MS, type Shift } from './report';
 
+type AvatarCols = { avatar_variant: number; avatar_gender: string | null };
+
+const genderOf = (name: string, cols: AvatarCols): Gender =>
+  cols.avatar_gender === 'm' || cols.avatar_gender === 'f' ? cols.avatar_gender : guessGender(name);
+
+const avatarOf = (id: string, name: string, cols: AvatarCols) => avatarSrc(id, cols.avatar_variant, genderOf(name, cols));
+
 /** `hasPin` false = el empleado todavía no creó su PIN (lo crea la primera vez que escanea). */
-export type AttendanceEmployee = { id: string; name: string; isActive: boolean; hasPin: boolean; avatar: string };
+/** `gender`: el del dibujo; `genderSet` false = se adivinó por el nombre. */
+export type AttendanceEmployee = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  hasPin: boolean;
+  avatar: string;
+  gender: Gender;
+  genderSet: boolean;
+};
 
 export type AttendanceBusinessSummary = { id: string; name: string; slug: string; isActive: boolean; employees: number };
 
@@ -142,13 +159,13 @@ function checkCode(business: PublicBusiness, code: string, now: Date) {
 export async function getPunchScreen(slug: string, code: string, now = new Date()) {
   const business = await activeBusiness(slug);
   checkCode(business, code, now);
-  const employees = await query<{ id: string; name: string; has_pin: boolean; avatar_variant: number }>(
-    'SELECT id, name, pin_hash IS NOT NULL AS has_pin, avatar_variant FROM employees WHERE business_id = $1 AND is_active ORDER BY name',
+  const employees = await query<{ id: string; name: string; has_pin: boolean } & AvatarCols>(
+    'SELECT id, name, pin_hash IS NOT NULL AS has_pin, avatar_variant, avatar_gender FROM employees WHERE business_id = $1 AND is_active ORDER BY name',
     [business.id],
   );
   return {
     name: business.name,
-    employees: employees.map((e) => ({ id: e.id, name: e.name, hasPin: e.has_pin, avatar: avatarSrc(e.id, e.avatar_variant) })),
+    employees: employees.map((e) => ({ id: e.id, name: e.name, hasPin: e.has_pin, avatar: avatarOf(e.id, e.name, e) })),
   };
 }
 
@@ -243,8 +260,8 @@ export async function getBusiness(id: string): Promise<AttendanceBusiness | null
     [id],
   );
   if (!business) return null;
-  const employees = await query<{ id: string; name: string; is_active: boolean; has_pin: boolean; avatar_variant: number }>(
-    'SELECT id, name, is_active, pin_hash IS NOT NULL AS has_pin, avatar_variant FROM employees WHERE business_id = $1 ORDER BY is_active DESC, name',
+  const employees = await query<{ id: string; name: string; is_active: boolean; has_pin: boolean } & AvatarCols>(
+    'SELECT id, name, is_active, pin_hash IS NOT NULL AS has_pin, avatar_variant, avatar_gender FROM employees WHERE business_id = $1 ORDER BY is_active DESC, name',
     [id],
   );
   return {
@@ -254,7 +271,15 @@ export async function getBusiness(id: string): Promise<AttendanceBusiness | null
     kioskSecret: business.kiosk_secret,
     isActive: business.is_active,
     shifts: business.shifts,
-    employees: employees.map((e) => ({ id: e.id, name: e.name, isActive: e.is_active, hasPin: e.has_pin, avatar: avatarSrc(e.id, e.avatar_variant) })),
+    employees: employees.map((e) => ({
+      id: e.id,
+      name: e.name,
+      isActive: e.is_active,
+      hasPin: e.has_pin,
+      avatar: avatarOf(e.id, e.name, e),
+      gender: genderOf(e.name, e),
+      genderSet: e.avatar_gender === 'm' || e.avatar_gender === 'f',
+    })),
   };
 }
 
@@ -320,6 +345,14 @@ export async function changeAvatar(businessId: string, employeeId: string) {
   if (rows.length === 0) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
 }
 
+/** Hombre o mujer para el dibujo del avatar; vacío = volver a adivinarlo por el nombre. */
+export async function setAvatarGender(businessId: string, employeeId: string, gender: string) {
+  if (!isUuid(businessId) || !isUuid(employeeId)) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
+  const value = gender === 'm' || gender === 'f' ? gender : null;
+  const rows = await query('UPDATE employees SET avatar_gender = $1 WHERE id = $2 AND business_id = $3 RETURNING id', [value, employeeId, businessId]);
+  if (rows.length === 0) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
+}
+
 /** Para un PIN olvidado: el empleado crea uno nuevo la próxima vez que escanee. */
 export async function resetPin(businessId: string, employeeId: string) {
   if (!isUuid(businessId) || !isUuid(employeeId)) throw new AppError('NOT_FOUND', 'errEmployeeNotFound');
@@ -337,8 +370,7 @@ type RecordRow = {
   clock_out: Date | null;
   edited_at: Date | null;
   name: string;
-  avatar_variant: number;
-};
+} & AvatarCols;
 
 const toRecord = (r: RecordRow): AttendanceRecord => ({
   id: r.id,
@@ -346,7 +378,7 @@ const toRecord = (r: RecordRow): AttendanceRecord => ({
   clockIn: r.clock_in.toISOString(),
   clockOut: r.clock_out?.toISOString() ?? null,
   editedAt: r.edited_at?.toISOString() ?? null,
-  employee: { name: r.name, avatar: avatarSrc(r.employee_id, r.avatar_variant) },
+  employee: { name: r.name, avatar: avatarOf(r.employee_id, r.name, r) },
 });
 
 /** Inicio del día AAAA-MM-DD en Colombia (UTC-5, sin horario de verano). */
@@ -363,7 +395,7 @@ export async function listRecords(businessId: string, fromDay: string, toDay: st
     throw new AppError('INVALID', 'errRangeMax', { max: MAX_RANGE_DAYS });
   }
   const rows = await query<RecordRow>(
-    `SELECT r.id, r.employee_id, r.clock_in, r.clock_out, r.edited_at, e.name, e.avatar_variant
+    `SELECT r.id, r.employee_id, r.clock_in, r.clock_out, r.edited_at, e.name, e.avatar_variant, e.avatar_gender
        FROM records r JOIN employees e ON e.id = r.employee_id
       WHERE r.business_id = $1 AND r.clock_in >= $2 AND r.clock_in < $3
       ORDER BY r.clock_in`,

@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react';
 import {
   addRecordAction,
   changeAvatarAction,
+  setAvatarGenderAction,
   createBusinessAction,
   createManagerAction,
   deleteManagerAction,
@@ -66,18 +67,40 @@ export function EmployeeForm({ businessId, employee, lang }: { businessId: strin
   );
 }
 
-/** Cambia el dibujo del empleado por otro, por si no le gustó el que le tocó. */
-export function ChangeAvatarButton({ businessId, employee, lang }: { businessId: string; employee: AttendanceEmployee; lang: Lang }) {
+/** El dibujo del empleado: hombre o mujer (si se adivinó mal por el nombre) y "Otro avatar" por si no le gustó. */
+export function AvatarControls({ businessId, employee, lang }: { businessId: string; employee: AttendanceEmployee; lang: Lang }) {
+  const option = (gender: 'm' | 'f', label: string) => (
+    <button
+      type="submit"
+      name="gender"
+      value={gender}
+      aria-pressed={employee.gender === gender}
+      className={`rounded-full px-3 py-1.5 text-[13px] font-medium transition ${
+        employee.gender === gender ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+      }`}
+    >
+      {label}
+    </button>
+  );
   return (
-    <form action={changeAvatarAction}>
-      <input type="hidden" name="businessId" value={businessId} />
-      <input type="hidden" name="employeeId" value={employee.id} />
-      <button type="submit" className={`${quietButton} gap-2`}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- dibujo SVG propio */}
-        <img src={employee.avatar} alt="" width={20} height={20} className="size-5 rounded-full" />
-        {t(lang, 'changeAvatar')}
-      </button>
-    </form>
+    <div className="flex flex-wrap items-center gap-3">
+      {/* eslint-disable-next-line @next/next/no-img-element -- dibujo SVG propio */}
+      <img src={employee.avatar} alt="" width={56} height={56} className="size-14 rounded-full ring-1 ring-black/[0.06]" />
+      <form action={setAvatarGenderAction} className="inline-flex rounded-full border border-black/[0.12] p-0.5">
+        <input type="hidden" name="businessId" value={businessId} />
+        <input type="hidden" name="employeeId" value={employee.id} />
+        {option('m', t(lang, 'avatarMale'))}
+        {option('f', t(lang, 'avatarFemale'))}
+      </form>
+      <form action={changeAvatarAction}>
+        <input type="hidden" name="businessId" value={businessId} />
+        <input type="hidden" name="employeeId" value={employee.id} />
+        <button type="submit" className={quietButton}>
+          {t(lang, 'changeAvatar')}
+        </button>
+      </form>
+      {employee.genderSet ? null : <span className="text-[12.5px] text-muted-foreground">{t(lang, 'avatarGuessed')}</span>}
+    </div>
   );
 }
 

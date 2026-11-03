@@ -33,6 +33,7 @@ function Shell({ title, lang, children }: { title: string; lang: Lang; children:
         </div>
       </header>
       <div className={`${card} w-full max-w-[420px]`}>{children}</div>
+      <p className="mt-6 max-w-[420px] text-center text-[11.5px] text-muted-foreground">{t(lang, 'avatarCredit')}</p>
     </main>
   );
 }

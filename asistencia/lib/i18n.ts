@@ -245,6 +245,10 @@ const es = {
   goodEvening: 'Buenas noches',
   tabletNextCode: 'Código nuevo en {s} s',
   changeAvatar: 'Otro avatar',
+  avatarMale: 'Hombre',
+  avatarFemale: 'Mujer',
+  avatarGuessed: 'Adivinado por el nombre',
+  avatarCredit: 'Avatares: «Adventurer» de Lisa Wischofsky (CC BY 4.0), vía DiceBear.',
 };
 
 export type MessageKey = keyof typeof es;
@@ -468,6 +472,10 @@ const en: Record<MessageKey, string> = {
   goodEvening: 'Good evening',
   tabletNextCode: 'New code in {s}s',
   changeAvatar: 'New avatar',
+  avatarMale: 'Man',
+  avatarFemale: 'Woman',
+  avatarGuessed: 'Guessed from the name',
+  avatarCredit: 'Avatars: “Adventurer” by Lisa Wischofsky (CC BY 4.0), via DiceBear.',
 };
 
 const messages: Record<Lang, Record<MessageKey, string>> = { es, en };
