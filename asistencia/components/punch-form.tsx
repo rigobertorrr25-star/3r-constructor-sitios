@@ -18,7 +18,7 @@ const initials = (name: string) =>
     .join('');
 
 const pinClass =
-  'mx-auto block w-48 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-center font-display text-[36px] tracking-[0.5em] text-foreground transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
+  'mx-auto block w-48 rounded-2xl border border-black/[0.12] bg-black/[0.04] px-4 py-4 text-center font-display text-[36px] tracking-[0.5em] text-foreground transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
 
 function PinInput({ id, name, label, autoFocus }: { id: string; name: string; label: string; autoFocus?: boolean }) {
   return (
@@ -94,7 +94,7 @@ export function PunchForm({ slug, code, employees, lang }: { slug: string; code:
           <p className="text-[16px] text-muted-foreground">{t(lang, 'youWorked', { time: formatMinutes(result.workedMinutes) })}</p>
         ) : null}
         {result.pinCreated ? (
-          <p className="rounded-2xl bg-success/10 px-4 py-3 text-[14px] text-[#9df0c6]">{t(lang, 'pinSavedNote')}</p>
+          <p className="rounded-2xl bg-success/10 px-4 py-3 text-[14px] text-success">{t(lang, 'pinSavedNote')}</p>
         ) : null}
         <p className="pt-2 text-[14px] text-muted-foreground">{t(lang, 'closePage')}</p>
       </div>
@@ -124,7 +124,7 @@ export function PunchForm({ slug, code, employees, lang }: { slug: string; code:
               <button
                 type="button"
                 onClick={() => choose(employee.id)}
-                className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3 text-left text-[16px] text-foreground transition hover:border-primary/50 hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+                className="flex w-full items-center gap-3 rounded-2xl border border-black/[0.1] bg-black/[0.03] px-3 py-3 text-left text-[16px] text-foreground transition hover:border-primary/50 hover:bg-black/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
               >
                 <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[14px] font-semibold text-primary">
                   {initials(employee.name)}
@@ -159,7 +159,7 @@ export function PunchForm({ slug, code, employees, lang }: { slug: string; code:
 
       {creating ? (
         <>
-          <p className="rounded-2xl bg-white/[0.04] px-4 py-3 text-center text-[14px] text-muted-foreground">
+          <p className="rounded-2xl bg-black/[0.04] px-4 py-3 text-center text-[14px] text-muted-foreground">
             {t(lang, 'firstTimeNote')}
           </p>
           <PinInput id="pin" name="pin" label={t(lang, 'createPin')} autoFocus />

@@ -2,31 +2,31 @@
 
 /* Tokens de la marca 3R (design/REFERENCIA-LOVABLE.md), los mismos de la tienda. */
 :root {
-  --surface-0: #000103;
-  --surface-1: #04080d;
-  --surface-2: #0a131a;
+  /* Versión clara (3 nov 2026, pedido de Rigoberto): fondo gris muy claro, tarjetas blancas, lila 3R como acento. */
+  --surface-0: #f3f4f8;
+  --surface-1: #ffffff;
+  --surface-2: #eceef4;
   --background: var(--surface-0);
-  --foreground: #f2f6f8;
+  --foreground: #11142a;
   --card: var(--surface-1);
-  --primary: #8a9bff;
-  --primary-foreground: #060815;
-  --secondary: #ff86db;
-  --accent: #d6b0ff;
-  --muted: #171b22;
-  --muted-foreground: #a5abb5;
-  --destructive: #f94144;
-  --success: #5ee0a0;
-  --warning: #f7cb58;
-  --border: #ffffff0f;
-  --ring: #8a9bff8c;
+  --primary: #4f5ee8;
+  --primary-foreground: #ffffff;
+  --secondary: #d9468f;
+  --accent: #7c5cf0;
+  --muted: #eceef4;
+  --muted-foreground: #5d6375;
+  --destructive: #d42f2f;
+  --success: #12855b;
+  --warning: #b45d07;
+  --border: #11142a14;
+  --ring: #4f5ee873;
   --radius: 16px;
 
   --gradient-hero:
-    radial-gradient(ellipse 60% 50% at 85% -10%, #8a9bff38, transparent 60%),
-    radial-gradient(ellipse 50% 50% at -10% 110%, #ff86db29, transparent 60%),
-    radial-gradient(ellipse 40% 40% at 50% 110%, #d6b0ff1a, transparent 70%);
-  --shadow-glass: inset 0 1px 0 0 #ffffff0d, 0 0 0 1px #ffffff0a, 0 24px 60px -24px #000c;
-  --shadow-glow: 0 0 40px -6px #8a9bff66;
+    radial-gradient(ellipse 60% 50% at 85% -10%, #8a9bff2e, transparent 60%),
+    radial-gradient(ellipse 50% 50% at -10% 110%, #ff86db1f, transparent 60%);
+  --shadow-glass: 0 1px 2px #11142a0d, 0 16px 40px -20px #1b1f3a2e;
+  --shadow-glow: 0 10px 28px -10px #4f5ee880;
   --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -50,7 +50,7 @@
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {

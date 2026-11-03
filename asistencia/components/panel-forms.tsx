@@ -110,7 +110,7 @@ export function KioskLink({ url, businessId, lang }: { url: string; businessId: 
   const [copied, setCopied] = useState(false);
   return (
     <div className="space-y-3">
-      <p className="break-all rounded-2xl bg-white/[0.04] px-4 py-3 text-[14px] text-foreground">{url}</p>
+      <p className="break-all rounded-2xl bg-black/[0.04] px-4 py-3 text-[14px] text-foreground">{url}</p>
       <div className="flex flex-wrap gap-2">
         <a href={url} target="_blank" rel="noopener noreferrer" className={quietButton}>
           {t(lang, 'openTablet')}
@@ -153,7 +153,7 @@ export function RecordEditor({ businessId, record, lang }: { businessId: string;
   return (
     <details className="mt-2">
       <summary className="cursor-pointer text-[13px] text-primary hover:underline">{record.clockOut ? t(lang, 'fix') : t(lang, 'addExit')}</summary>
-      <form action={action} className="mt-3 space-y-3 rounded-2xl bg-white/[0.03] p-4">
+      <form action={action} className="mt-3 space-y-3 rounded-2xl bg-black/[0.03] p-4">
         <input type="hidden" name="businessId" value={businessId} />
         <input type="hidden" name="recordId" value={record.id} />
         <div className="grid gap-3 sm:grid-cols-2">
@@ -179,7 +179,7 @@ export function RecordEditor({ businessId, record, lang }: { businessId: string;
       >
         <input type="hidden" name="businessId" value={businessId} />
         <input type="hidden" name="recordId" value={record.id} />
-        <button type="submit" className="text-[13px] text-muted-foreground transition hover:text-[#ffb4b5]">
+        <button type="submit" className="text-[13px] text-muted-foreground transition hover:text-destructive">
           {t(lang, 'deleteRecord')}
         </button>
       </form>
@@ -221,7 +221,7 @@ export function DeleteManagerButton({ businessId, manager, lang }: { businessId:
     >
       <input type="hidden" name="businessId" value={businessId} />
       <input type="hidden" name="managerId" value={manager.id} />
-      <button type="submit" className="text-[13px] text-muted-foreground transition hover:text-[#ffb4b5]">
+      <button type="submit" className="text-[13px] text-muted-foreground transition hover:text-destructive">
         {t(lang, 'deleteManager')}
       </button>
     </form>
@@ -233,7 +233,7 @@ export function AddRecordForm({ businessId, employees, lang }: { businessId: str
   const [state, action] = useActionState(addRecordAction, undefined);
   const v = state?.values;
   return (
-    <details className="mt-4 rounded-2xl border border-white/[0.08] p-4" open={Boolean(state?.error)}>
+    <details className="mt-4 rounded-2xl border border-black/[0.1] p-4" open={Boolean(state?.error)}>
       <summary className="cursor-pointer text-[14px] font-medium text-primary">{t(lang, 'addRecord')}</summary>
       <form key={`add-${state?.ok ?? 0}-${state?.error ?? ''}`} action={action} className="mt-4 space-y-3">
         <p className="text-[13px] text-muted-foreground">{t(lang, 'addRecordIntro')}</p>
@@ -247,13 +247,13 @@ export function AddRecordForm({ businessId, employees, lang }: { businessId: str
             name="employeeId"
             required
             defaultValue={v?.employeeId ?? ''}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[15px] text-foreground focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+            className="w-full rounded-2xl border border-black/[0.12] bg-black/[0.04] px-4 py-3 text-[15px] text-foreground focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
           >
-            <option value="" disabled className="bg-[#0a131a]">
+            <option value="" disabled className="bg-white">
               —
             </option>
             {employees.map((employee) => (
-              <option key={employee.id} value={employee.id} className="bg-[#0a131a]">
+              <option key={employee.id} value={employee.id} className="bg-white">
                 {employee.name}
               </option>
             ))}

@@ -35,8 +35,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const sectionTitle = 'font-display text-[22px] font-semibold text-foreground';
-const subCard = 'rounded-3xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-5';
-const navButton = 'rounded-full border border-white/[0.1] px-4 py-2 transition hover:bg-white/[0.06]';
+const subCard = 'rounded-3xl border border-black/[0.08] bg-black/[0.02] p-4 sm:p-5';
+const navButton = 'rounded-full border border-black/[0.12] px-4 py-2 transition hover:bg-black/[0.06]';
 
 const TABS = ['reporte', 'empleados', 'turnos', 'tablet', 'jefes'] as const;
 type Tab = (typeof TABS)[number];
@@ -62,9 +62,9 @@ function Avatar({ name, live = false }: { name: string; live?: boolean }) {
 }
 
 function Stat({ label, value, tone = 'default' }: { label: string; value: string; tone?: 'default' | 'warning' | 'danger' }) {
-  const color = tone === 'warning' ? 'text-warning' : tone === 'danger' ? 'text-[#ffb4b5]' : 'text-foreground';
+  const color = tone === 'warning' ? 'text-warning' : tone === 'danger' ? 'text-destructive' : 'text-foreground';
   return (
-    <div className="rounded-3xl border border-white/[0.06] bg-white/[0.02] px-5 py-4">
+    <div className="rounded-3xl border border-black/[0.08] bg-black/[0.02] px-5 py-4">
       <p className="text-[13px] text-muted-foreground">{label}</p>
       <p className={`mt-1 font-display text-[20px] font-semibold tabular-nums sm:text-[26px] ${color}`}>{value}</p>
     </div>
@@ -73,7 +73,7 @@ function Stat({ label, value, tone = 'default' }: { label: string; value: string
 const th = 'px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-wide text-muted-foreground';
 const td = 'px-4 py-3 text-[14px] text-foreground';
 const dateInput =
-  'rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[14px] text-foreground [color-scheme:dark] focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
+  'rounded-2xl border border-black/[0.12] bg-black/[0.04] px-3 py-2 text-[14px] text-foreground [color-scheme:light] focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
 
 export default async function AttendanceBusinessPage({
   params,
@@ -154,7 +154,7 @@ export default async function AttendanceBusinessPage({
       {/* En turno ahora */}
       <section className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-3xl border border-success/20 bg-success/[0.05] px-5 py-4">
         <h2 className="flex items-center gap-2 text-[14px] font-semibold text-foreground">
-          <span className="size-2 rounded-full bg-success shadow-[0_0_12px_#5ee0a0]" aria-hidden="true" />
+          <span className="size-2 rounded-full bg-success shadow-[0_0_10px_#12855b80]" aria-hidden="true" />
           {t(lang, 'workingNowTitle')} · {openNow.length}
         </h2>
         {openNow.length === 0 ? (
@@ -162,7 +162,7 @@ export default async function AttendanceBusinessPage({
         ) : (
           <ul className="flex flex-wrap gap-2">
             {openNow.map((record) => (
-              <li key={record.id} className="flex items-center gap-2 rounded-full bg-white/[0.04] py-1 pr-3 pl-1 text-[13.5px]">
+              <li key={record.id} className="flex items-center gap-2 rounded-full bg-black/[0.04] py-1 pr-3 pl-1 text-[13.5px]">
                 <Avatar name={record.employee.name} live />
                 <span className="text-foreground">{record.employee.name}</span>
                 <span className="text-muted-foreground">{t(lang, 'workingNowSince', { time: formatClock(new Date(record.clockIn), lang) })}</span>
@@ -173,14 +173,14 @@ export default async function AttendanceBusinessPage({
       </section>
 
       {isAdmin ? (
-        <nav aria-label={business.name} className="mt-6 flex flex-wrap gap-1 rounded-3xl border border-white/[0.06] bg-white/[0.02] p-1">
+        <nav aria-label={business.name} className="mt-6 flex flex-wrap gap-1 rounded-3xl border border-black/[0.08] bg-black/[0.02] p-1">
           {TABS.map((key) => (
             <Link
               key={key}
               href={tabHref(key)}
               aria-current={tab === key ? 'page' : undefined}
               className={`rounded-full px-3 py-2 text-[14px] font-medium transition sm:px-4 ${
-                tab === key ? 'bg-white/[0.1] text-foreground' : 'text-muted-foreground hover:text-foreground'
+                tab === key ? 'bg-black/[0.06] text-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {tabLabels[key]}
@@ -220,7 +220,7 @@ export default async function AttendanceBusinessPage({
 
             <details className="mt-4">
               <summary className="cursor-pointer text-[14px] text-primary hover:underline">{t(lang, 'chooseDates')}</summary>
-              <form method="get" className="mt-3 flex flex-wrap items-end gap-3 rounded-2xl bg-white/[0.03] p-4">
+              <form method="get" className="mt-3 flex flex-wrap items-end gap-3 rounded-2xl bg-black/[0.03] p-4">
                 <label className="space-y-1.5">
                   <span className="block text-[13px] font-medium text-foreground">{t(lang, 'rangeFrom')}</span>
                   <input type="date" name="desde" defaultValue={from} required className={dateInput} />
@@ -229,7 +229,7 @@ export default async function AttendanceBusinessPage({
                   <span className="block text-[13px] font-medium text-foreground">{t(lang, 'rangeTo')}</span>
                   <input type="date" name="hasta" defaultValue={to} min={from} required className={dateInput} />
                 </label>
-                <button type="submit" className="rounded-full border border-white/[0.12] px-5 py-2.5 text-[14px] transition hover:bg-white/[0.06]">
+                <button type="submit" className="rounded-full border border-black/[0.14] px-5 py-2.5 text-[14px] transition hover:bg-black/[0.06]">
                   {t(lang, 'showRange')}
                 </button>
                 <p className="w-full text-[12.5px] text-muted-foreground">{t(lang, 'rangeHint')}</p>
@@ -252,9 +252,9 @@ export default async function AttendanceBusinessPage({
             ) : (
               <>
                 <h3 className="mt-8 font-display text-[18px] font-semibold text-foreground">{t(lang, 'totals')}</h3>
-                <div className="mt-3 overflow-x-auto rounded-3xl border border-white/[0.06]">
+                <div className="mt-3 overflow-x-auto rounded-3xl border border-black/[0.08]">
                   <table className="w-full min-w-[640px] border-collapse">
-                    <thead className="bg-white/[0.03]">
+                    <thead className="bg-black/[0.03]">
                       <tr>
                         <th className={th}>{t(lang, 'colEmployee')}</th>
                         <th className={th}>{t(lang, 'colDays')}</th>
@@ -266,7 +266,7 @@ export default async function AttendanceBusinessPage({
                     </thead>
                     <tbody>
                       {totals.map((row) => (
-                        <tr key={row.employeeId} className="border-t border-white/[0.05]">
+                        <tr key={row.employeeId} className="border-t border-black/[0.08]">
                           <td className={td}>
                             <span className="flex items-center gap-3">
                               <Avatar name={row.name} />
@@ -284,7 +284,7 @@ export default async function AttendanceBusinessPage({
                             {row.lateCount ? t(lang, 'lateTotal', { count: row.lateCount, time: formatMinutes(row.lateMinutes) }) : '—'}
                           </td>
                           <td className={`${td} ${row.earlyExitCount ? 'text-warning' : 'text-muted-foreground'}`}>{row.earlyExitCount || '—'}</td>
-                          <td className={`${td} ${row.missingExit ? 'text-[#ffb4b5]' : 'text-muted-foreground'}`}>{row.missingExit || '—'}</td>
+                          <td className={`${td} ${row.missingExit ? 'text-destructive' : 'text-muted-foreground'}`}>{row.missingExit || '—'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -304,7 +304,7 @@ export default async function AttendanceBusinessPage({
                           {dayRecords.length === 1 ? t(lang, 'dayWorkdaysOne') : t(lang, 'dayWorkdays', { n: dayRecords.length })}
                         </span>
                       </div>
-                      <ul className="mt-3 divide-y divide-white/[0.05]">
+                      <ul className="mt-3 divide-y divide-black/[0.08]">
                         {dayRecords.map((record) => {
                           const worked = workedMinutes(record);
                           const ongoing = ongoingMinutes(record, now);
@@ -324,14 +324,14 @@ export default async function AttendanceBusinessPage({
                                     ) : ongoing !== null ? (
                                       <span className="text-success">{t(lang, 'workingNow', { time: formatMinutes(ongoing) })}</span>
                                     ) : (
-                                      <span className="text-[#ffb4b5]">{t(lang, 'noExit')}</span>
+                                      <span className="text-destructive">{t(lang, 'noExit')}</span>
                                     )}
                                     {worked !== null ? <span className="font-medium text-foreground"> · {formatMinutes(worked)}</span> : null}
                                   </span>
                                 </div>
                                 <div className="mt-1.5 flex flex-wrap gap-1.5 text-[12.5px]">
                                   {shift ? (
-                                    <span className="rounded-full bg-white/[0.05] px-2.5 py-0.5 text-muted-foreground">{t(lang, 'shiftLabel', { shift: shiftLabel(shift) })}</span>
+                                    <span className="rounded-full bg-black/[0.05] px-2.5 py-0.5 text-muted-foreground">{t(lang, 'shiftLabel', { shift: shiftLabel(shift) })}</span>
                                   ) : null}
                                   {late ? (
                                     <span className="rounded-full bg-warning/10 px-2.5 py-0.5 text-warning">{t(lang, 'arrivedLate', { time: formatMinutes(late) })}</span>
@@ -364,7 +364,7 @@ export default async function AttendanceBusinessPage({
               <ul className="space-y-2 lg:order-1">
                 {[...active, ...inactive].map((employee) => (
                   <li key={employee.id}>
-                    <details className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3">
+                    <details className="rounded-2xl border border-black/[0.08] bg-black/[0.02] p-3">
                       <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2">
                         <span className="flex items-center gap-3">
                           <Avatar name={employee.name} />
@@ -373,7 +373,7 @@ export default async function AttendanceBusinessPage({
                           </span>
                         </span>
                         <span
-                          className={`rounded-full px-2.5 py-0.5 text-[12.5px] ${employee.hasPin ? 'bg-white/[0.05] text-muted-foreground' : 'bg-warning/10 text-warning'}`}
+                          className={`rounded-full px-2.5 py-0.5 text-[12.5px] ${employee.hasPin ? 'bg-black/[0.05] text-muted-foreground' : 'bg-warning/10 text-warning'}`}
                         >
                           {employee.hasPin ? t(lang, 'pinCreated') : t(lang, 'pinMissing')}
                         </span>
@@ -425,7 +425,7 @@ export default async function AttendanceBusinessPage({
               <ul className="space-y-2">
                 {managers.length === 0 ? <li className="text-[14px] text-muted-foreground">{t(lang, 'noManagers')}</li> : null}
                 {managers.map((manager) => (
-                  <li key={manager.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-3 py-3">
+                  <li key={manager.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-black/[0.08] bg-black/[0.02] px-3 py-3">
                     <span className="flex items-center gap-3">
                       <Avatar name={manager.name} />
                       <span className="text-[15px] font-medium text-foreground">{manager.name}</span>
