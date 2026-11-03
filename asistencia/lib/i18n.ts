@@ -244,6 +244,7 @@ const es = {
   goodAfternoon: 'Buenas tardes',
   goodEvening: 'Buenas noches',
   tabletNextCode: 'Código nuevo en {s} s',
+  changeAvatar: 'Otro avatar',
 };
 
 export type MessageKey = keyof typeof es;
@@ -466,6 +467,7 @@ const en: Record<MessageKey, string> = {
   goodAfternoon: 'Good afternoon',
   goodEvening: 'Good evening',
   tabletNextCode: 'New code in {s}s',
+  changeAvatar: 'New avatar',
 };
 
 const messages: Record<Lang, Record<MessageKey, string>> = { es, en };

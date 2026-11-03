@@ -7,15 +7,8 @@ import { formatClock, formatMinutes } from '@/lib/report';
 import { Alert, Lion } from './ui';
 import { SubmitButton } from './submit-button';
 
-type Employee = { id: string; name: string; hasPin: boolean };
+type Employee = { id: string; name: string; hasPin: boolean; avatar: string };
 
-const initials = (name: string) =>
-  name
-    .split(/[\s,]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('');
 
 const pinClass =
   'mx-auto block w-48 rounded-2xl border border-black/[0.12] bg-black/[0.04] px-4 py-4 text-center font-display text-[36px] tracking-[0.5em] text-foreground transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
@@ -74,10 +67,16 @@ export function PunchForm({ slug, code, employees, lang }: { slug: string; code:
   const result = state?.result;
   if (result) {
     const isIn = result.type === 'in';
+    const marked = employees.find((e) => e.id === selectedId);
     return (
       <div className="rise space-y-4 text-center" role="status">
         <div className="relative mx-auto w-fit">
-          <Lion size={96} alt={t(lang, 'lionAlt')} />
+          {marked ? (
+            // eslint-disable-next-line @next/next/no-img-element -- dibujo SVG propio
+            <img src={marked.avatar} alt="" width={96} height={96} className="size-24 rounded-full ring-1 ring-black/[0.06]" />
+          ) : (
+            <Lion size={96} alt={t(lang, 'lionAlt')} />
+          )}
           <span
             className={`absolute -right-1 -bottom-1 flex size-9 items-center justify-center rounded-full text-[18px] font-bold ring-4 ring-card ${isIn ? 'bg-success text-primary-foreground' : 'bg-primary text-primary-foreground'}`}
             aria-hidden="true"
@@ -126,9 +125,8 @@ export function PunchForm({ slug, code, employees, lang }: { slug: string; code:
                 onClick={() => choose(employee.id)}
                 className="flex w-full items-center gap-3 rounded-2xl border border-black/[0.1] bg-black/[0.03] px-3 py-3 text-left text-[16px] text-foreground transition hover:border-primary/50 hover:bg-black/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
               >
-                <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[14px] font-semibold text-primary">
-                  {initials(employee.name)}
-                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element -- dibujo SVG propio */}
+                <img src={employee.avatar} alt="" width={44} height={44} className="size-11 shrink-0 rounded-full ring-1 ring-black/[0.06]" />
                 <span className="flex-1">{employee.name}</span>
                 <span aria-hidden="true" className="text-muted-foreground">›</span>
               </button>
@@ -148,9 +146,8 @@ export function PunchForm({ slug, code, employees, lang }: { slug: string; code:
       {creating ? <input type="hidden" name="creating" value="1" /> : null}
 
       <div className="flex flex-col items-center text-center">
-        <span aria-hidden="true" className="mb-3 flex size-16 items-center justify-center rounded-full bg-primary/15 font-display text-[22px] font-semibold text-primary">
-          {initials(selected.name)}
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element -- dibujo SVG propio */}
+        <img src={selected.avatar} alt="" width={96} height={96} className="mb-3 size-24 rounded-full ring-1 ring-black/[0.06]" />
         <p className="font-display text-[20px] font-semibold text-foreground">{selected.name}</p>
         <button type="button" onClick={() => choose(null)} className="mt-1 text-[14px] text-primary hover:underline">
           {t(lang, 'notMe')}

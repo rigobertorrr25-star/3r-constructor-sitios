@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { AddRecordForm, DeleteManagerButton, EmployeeForm, KioskLink, ManagerForm, RecordEditor, ResetPinButton, ShiftsForm } from '@/components/panel-forms';
+import { AddRecordForm, ChangeAvatarButton, DeleteManagerButton, EmployeeForm, KioskLink, ManagerForm, RecordEditor, ResetPinButton, ShiftsForm } from '@/components/panel-forms';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { card } from '@/components/ui';
 import { canView, requireViewer } from '@/lib/auth';
@@ -50,11 +50,16 @@ const initials = (name: string) =>
     .map((part) => part[0]?.toUpperCase())
     .join('');
 
-function Avatar({ name, live = false }: { name: string; live?: boolean }) {
+function Avatar({ name, src, live = false, size = 'size-9' }: { name: string; src?: string; live?: boolean; size?: string }) {
+  const ring = live ? 'ring-2 ring-success/70' : 'ring-1 ring-black/[0.06]';
+  if (src) {
+    // eslint-disable-next-line @next/next/no-img-element -- dibujo SVG propio, ya en caché
+    return <img src={src} alt="" width={36} height={36} loading="lazy" className={`${size} shrink-0 rounded-full ${ring}`} />;
+  }
   return (
     <span
       aria-hidden="true"
-      className={`relative flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[13px] font-semibold text-primary ${live ? 'ring-2 ring-success/60' : ''}`}
+      className={`relative flex ${size} shrink-0 items-center justify-center rounded-full bg-primary/15 text-[13px] font-semibold text-primary ${live ? 'ring-2 ring-success/60' : ''}`}
     >
       {initials(name)}
     </span>
@@ -163,7 +168,7 @@ export default async function AttendanceBusinessPage({
           <ul className="flex flex-wrap gap-2">
             {openNow.map((record) => (
               <li key={record.id} className="flex items-center gap-2 rounded-full bg-black/[0.04] py-1 pr-3 pl-1 text-[13.5px]">
-                <Avatar name={record.employee.name} live />
+                <Avatar name={record.employee.name} src={record.employee.avatar} live />
                 <span className="text-foreground">{record.employee.name}</span>
                 <span className="text-muted-foreground">{t(lang, 'workingNowSince', { time: formatClock(new Date(record.clockIn), lang) })}</span>
               </li>
@@ -269,7 +274,7 @@ export default async function AttendanceBusinessPage({
                         <tr key={row.employeeId} className="border-t border-black/[0.08]">
                           <td className={td}>
                             <span className="flex items-center gap-3">
-                              <Avatar name={row.name} />
+                              <Avatar name={row.name} src={row.avatar} />
                               {row.name}
                             </span>
                           </td>
@@ -313,7 +318,7 @@ export default async function AttendanceBusinessPage({
                           const early = minutesEarlyExit(record, business.shifts);
                           return (
                             <li key={record.id} className="flex gap-3 py-3">
-                              <Avatar name={record.employee.name} live={ongoing !== null} />
+                              <Avatar name={record.employee.name} src={record.employee.avatar} live={ongoing !== null} size="size-10" />
                               <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                                   <span className="text-[15px] font-medium text-foreground">{record.employee.name}</span>
@@ -367,7 +372,7 @@ export default async function AttendanceBusinessPage({
                     <details className="rounded-2xl border border-black/[0.08] bg-black/[0.02] p-3">
                       <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2">
                         <span className="flex items-center gap-3">
-                          <Avatar name={employee.name} />
+                          <Avatar name={employee.name} src={employee.avatar} size="size-11" />
                           <span className={`text-[15px] font-medium ${employee.isActive ? 'text-foreground' : 'text-muted-foreground line-through'}`}>
                             {employee.name}
                           </span>
@@ -380,7 +385,10 @@ export default async function AttendanceBusinessPage({
                       </summary>
                       <div className="mt-4 space-y-4 px-1 pb-1">
                         <EmployeeForm businessId={business.id} employee={employee} lang={lang} />
-                        {employee.hasPin ? <ResetPinButton businessId={business.id} employee={employee} lang={lang} /> : null}
+                        <div className="flex flex-wrap gap-2">
+                          <ChangeAvatarButton businessId={business.id} employee={employee} lang={lang} />
+                          {employee.hasPin ? <ResetPinButton businessId={business.id} employee={employee} lang={lang} /> : null}
+                        </div>
                       </div>
                     </details>
                   </li>
