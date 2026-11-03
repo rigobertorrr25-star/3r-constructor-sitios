@@ -9,6 +9,14 @@ import { SubmitButton } from './submit-button';
 
 type Employee = { id: string; name: string; hasPin: boolean };
 
+const initials = (name: string) =>
+  name
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+
 const pinClass =
   'mx-auto block w-48 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-center font-display text-[36px] tracking-[0.5em] text-foreground transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
 
@@ -109,16 +117,20 @@ export function PunchForm({ slug, code, employees, lang }: { slug: string; code:
     }
     return (
       <div className="space-y-4">
-        <p className="text-center text-[17px] font-medium text-foreground">{t(lang, 'tapYourName')}</p>
+        <p className="text-[17px] font-medium text-foreground">{t(lang, 'tapYourName')}</p>
         <ul className="grid gap-2">
           {employees.map((employee) => (
             <li key={employee.id}>
               <button
                 type="button"
                 onClick={() => choose(employee.id)}
-                className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 text-left text-[16px] text-foreground transition hover:border-primary/50 hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+                className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3 text-left text-[16px] text-foreground transition hover:border-primary/50 hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
               >
-                {employee.name}
+                <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[14px] font-semibold text-primary">
+                  {initials(employee.name)}
+                </span>
+                <span className="flex-1">{employee.name}</span>
+                <span aria-hidden="true" className="text-muted-foreground">›</span>
               </button>
             </li>
           ))}
@@ -135,7 +147,10 @@ export function PunchForm({ slug, code, employees, lang }: { slug: string; code:
       <input type="hidden" name="employeeId" value={selected.id} />
       {creating ? <input type="hidden" name="creating" value="1" /> : null}
 
-      <div className="text-center">
+      <div className="flex flex-col items-center text-center">
+        <span aria-hidden="true" className="mb-3 flex size-16 items-center justify-center rounded-full bg-primary/15 font-display text-[22px] font-semibold text-primary">
+          {initials(selected.name)}
+        </span>
         <p className="font-display text-[20px] font-semibold text-foreground">{selected.name}</p>
         <button type="button" onClick={() => choose(null)} className="mt-1 text-[14px] text-primary hover:underline">
           {t(lang, 'notMe')}
