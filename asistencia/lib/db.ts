@@ -31,6 +31,8 @@ ALTER TABLE employees ADD COLUMN IF NOT EXISTS failed_pins INT NOT NULL DEFAULT 
 ALTER TABLE employees ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ;
 -- Avatar dibujado: sale del id del empleado y de este número (sube con "Otro avatar" en el panel).
 ALTER TABLE employees ADD COLUMN IF NOT EXISTS avatar_variant INT NOT NULL DEFAULT 0;
+-- Hombre ('m') o mujer ('f') para el dibujo; vacío = se adivina por el nombre.
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS avatar_gender CHAR(1);
 
 -- Turnos del negocio, en hora de Colombia: [{"start":"08:00","end":"15:00"}, …]. El turno de cada jornada
 -- se deduce de la hora de llegada (y de salida, si la hay); no se asigna por empleado.

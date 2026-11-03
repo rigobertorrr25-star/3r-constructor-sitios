@@ -20,6 +20,7 @@ import {
   punch,
   resetPin,
   changeAvatar,
+  setAvatarGender,
   rotateKiosk,
   updateEmployee,
   updateRecord,
@@ -142,6 +143,13 @@ export async function changeAvatarAction(formData: FormData) {
   await requireAdmin();
   const businessId = text(formData, 'businessId');
   await changeAvatar(businessId, text(formData, 'employeeId'));
+  revalidatePath(`/panel/${businessId}`);
+}
+
+export async function setAvatarGenderAction(formData: FormData) {
+  await requireAdmin();
+  const businessId = text(formData, 'businessId');
+  await setAvatarGender(businessId, text(formData, 'employeeId'), text(formData, 'gender'));
   revalidatePath(`/panel/${businessId}`);
 }
 

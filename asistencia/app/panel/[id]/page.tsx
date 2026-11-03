@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { AddRecordForm, ChangeAvatarButton, DeleteManagerButton, EmployeeForm, KioskLink, ManagerForm, RecordEditor, ResetPinButton, ShiftsForm } from '@/components/panel-forms';
+import { AddRecordForm, AvatarControls, DeleteManagerButton, EmployeeForm, KioskLink, ManagerForm, RecordEditor, ResetPinButton, ShiftsForm } from '@/components/panel-forms';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { card } from '@/components/ui';
 import { canView, requireViewer } from '@/lib/auth';
@@ -384,11 +384,9 @@ export default async function AttendanceBusinessPage({
                         </span>
                       </summary>
                       <div className="mt-4 space-y-4 px-1 pb-1">
+                        <AvatarControls businessId={business.id} employee={employee} lang={lang} />
                         <EmployeeForm businessId={business.id} employee={employee} lang={lang} />
-                        <div className="flex flex-wrap gap-2">
-                          <ChangeAvatarButton businessId={business.id} employee={employee} lang={lang} />
-                          {employee.hasPin ? <ResetPinButton businessId={business.id} employee={employee} lang={lang} /> : null}
-                        </div>
+                        {employee.hasPin ? <ResetPinButton businessId={business.id} employee={employee} lang={lang} /> : null}
                       </div>
                     </details>
                   </li>
