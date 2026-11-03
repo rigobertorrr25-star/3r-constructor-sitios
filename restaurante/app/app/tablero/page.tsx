@@ -6,7 +6,8 @@ import { getDashboard, isValidScope, type Level } from '@/lib/dashboard';
 import { workMode } from '@/lib/cash';
 import { todayIn } from '@/lib/finance';
 import { formatCop } from '@/lib/format';
-import { periodRange } from '@/lib/periods';
+import { customRange, periodRange, shortDate } from '@/lib/periods';
+import { DateRangeForm } from '@/components/date-range';
 import { listLocations } from '@/lib/store';
 import { formatQuantity, type Unit } from '@/lib/units';
 import { AutoRefresh } from '@/components/auto-refresh';
@@ -30,14 +31,16 @@ const LEVEL: Record<Level, { label: string; icon: string; cls: string }> = {
   alert: { label: 'Alerta', icon: '▲', cls: 'bg-destructive/15 text-[#ffb4b5]' },
 };
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ periodo?: string; sede?: string }> }) {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ periodo?: string; sede?: string; desde?: string; hasta?: string }> }) {
   const staff = await requireStaff('finance.view');
   const sp = await searchParams;
   const lang = await getLang();
   const t = makeT(lang);
-  const period = PERIODS.some((p) => p.key === sp.periodo) ? sp.periodo! : 'hoy';
+  // «Desde / Hasta» (3 nov 2026): si se escogieron las dos fechas, mandan sobre los botones de periodo.
+  const picked = customRange(sp.desde, sp.hasta);
+  const period = picked ? 'rango' : PERIODS.some((p) => p.key === sp.periodo) ? sp.periodo! : 'hoy';
   const today = todayIn(staff.timezone);
-  const range = periodRange(period, today);
+  const range = picked ?? periodRange(period, today);
   const isOwner = staff.role === 'owner';
   const locations = isOwner && staff.locationCount > 1 ? await listLocations(staff.businessId, { activeOnly: true }) : [];
   const sede = isOwner && isValidScope(sp.sede) ? (sp.sede ?? (staff.locationCount > 1 ? 'all' : staff.locationId)) : staff.locationId;
@@ -49,7 +52,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   // Días del periodo, para el promedio de propina por día.
   const days = Math.round((Date.parse(range.to) - Date.parse(range.from)) / 86_400_000) + 1;
   const scoreLevel: Level = d.score >= 85 ? 'ok' : d.score >= 60 ? 'watch' : 'alert';
-  const link = (patch: Record<string, string>) => `/app/tablero?${new URLSearchParams({ periodo: period, ...(isOwner && sede ? { sede } : {}), ...patch })}`;
+  const link = (patch: Record<string, string>) =>
+    `/app/tablero?${new URLSearchParams({ ...('periodo' in patch ? {} : picked ? { desde: range.from, hasta: range.to } : { periodo: period }), ...(isOwner && sede ? { sede } : {}), ...patch })}`;
+  const rangeLabel = picked ? (range.from === range.to ? shortDate(range.from, lang) : t('{from} a {to}', { from: shortDate(range.from, lang), to: shortDate(range.to, lang) })) : null;
   const dateLabel = new Date(`${today}T12:00:00Z`).toLocaleDateString(lang === 'en' ? 'en-US' : 'es-CO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 
   return (
@@ -57,7 +62,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <AutoRefresh everyMs={60_000} />
       <PageTitle
         title={t('Control total')}
-        text={`${dateLabel.charAt(0).toUpperCase()}${dateLabel.slice(1)} · ${sede === 'all' ? t('Todas las sedes') : (locations.find((l) => l.id === sede)?.name ?? staff.locationName)}`}
+        text={`${rangeLabel ?? `${dateLabel.charAt(0).toUpperCase()}${dateLabel.slice(1)}`} · ${sede === 'all' ? t('Todas las sedes') : (locations.find((l) => l.id === sede)?.name ?? staff.locationName)}`}
       />
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map((p) => (
@@ -73,6 +78,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             ))
           : null}
       </div>
+      <DateRangeForm action="/app/tablero" from={range.from} to={range.to} keep={isOwner && sede ? { sede } : {}} active={Boolean(picked)} t={t} />
 
       {range.from === range.to ? (
         <Suspense fallback={<BriefSkeleton lang={lang} />}>
@@ -80,7 +86,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </Suspense>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         <Kpi label={t('Ventas')} value={formatCop(st.sales)} hint={t('{n} mesas cobradas · ticket {amount}', { n: st.tables, amount: formatCop(st.averageTicket) })} accent="#5ee0a0" />
         <Kpi
           label={t('Propinas')}
@@ -92,6 +98,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             .filter(Boolean)
             .join(' · ')}
           accent="#ffc861"
+        />
+        <Kpi
+          label={t('Gastos')}
+          value={formatCop(st.expensesTotal)}
+          hint={st.sales ? t('{pct} % de las ventas', { pct: Math.round((st.expensesTotal / st.sales) * 100) }) : t('Facturas y gastos anotados')}
+          accent="#ff8a65"
         />
         <Kpi
           label={t('Costo de productos')}
@@ -109,7 +121,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               : t('{n} mesas abiertas · {amount} por cobrar', { n: d.openTables, amount: formatCop(d.openTablesValue) })
           }
           accent="#d6b0ff"
-          className="col-span-2 sm:col-span-1"
         />
       </div>
 
