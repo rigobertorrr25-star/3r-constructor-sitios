@@ -31,7 +31,7 @@ import { createReservation, requestReservation, seatReservation, updatePublicSet
 import { addExpense, payExpense, voidExpense, type PurchaseLine } from '@/lib/finance';
 import { addLoss, voidLoss } from '@/lib/losses';
 import { itemsForPurchase, listItems, registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
-import { addMovement, applyDiscount, closeShift, moveCashPayment, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
+import { addMovement, applyDiscount, closeShift, closeZeroBalance, moveCashPayment, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { clearInventory, clearMenu, clearSales } from '@/lib/sales-reset';
@@ -758,6 +758,13 @@ export async function moveCashPaymentAction(paymentId: string, method: string, a
   return null;
 }
 
+/** Cierra una mesa que quedó en $0 y abierta (p. ej. con 100 % de descuento antes del 3 nov 2026). */
+export async function closeZeroAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const sessionId = text(formData, 'sessionId');
+  return run(formData, () => closeZeroBalance(staff, sessionId), [`/app/caja/mesa/${sessionId}`, '/app/caja', '/app'], 'Mesa cerrada.');
+}
+
 export async function discountAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   const sessionId = text(formData, 'sessionId');
@@ -766,7 +773,7 @@ export async function discountAction(_prev: FormState, formData: FormData): Prom
   return run(
     formData,
     () => applyDiscount(staff, sessionId, { percent: kind === 'percent' ? value : null, amount: kind === 'amount' ? value : null, reason: text(formData, 'reason') }),
-    [`/app/caja/mesa/${sessionId}`, '/app/caja'],
+    [`/app/caja/mesa/${sessionId}`, '/app/caja', '/app'],
     'Descuento aplicado.',
   );
 }
