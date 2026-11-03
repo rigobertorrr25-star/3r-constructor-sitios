@@ -125,7 +125,9 @@ describe('módulo 04: caja y pagos', { skip: url ? false : 'sin TEST_DATABASE_UR
     const s3 = (await store.listTables(waiter)).find((t) => t.id === t3)!.session!.id;
     await assert.rejects(store.closeTable(owner, s3, 'Se fueron'), { code: 'CONFLICT' });
     await cash.applyDiscount(owner, s3, { percent: 90, reason: 'Cortesía de la casa' });
-    await store.closeTable(owner, s3, 'Cortesía total');
+    // Con el 10 % que ya tenía queda en $0: desde el 3 nov 2026 se cierra sola, sin cerrarla a mano.
+    assert.equal((await cash.getCheckout(owner, s3))!.session.status, 'closed');
+    await assert.rejects(store.closeTable(owner, s3, 'Cortesía total'), { code: 'NOT_FOUND' });
   });
 
   it('entradas y salidas, y el cierre de caja con su diferencia', async () => {

@@ -461,6 +461,9 @@ export const en: Record<string, string> = {
   'Cocina y barra marcan sus comandas en pantalla': 'Kitchen and bar mark their tickets on screen',
   'Quítalo si las comandas le llegan a la cajera y ella avisa: así no se mide cuánto se demoran y el radar de fugas no las cuenta como demoradas.':
     'Uncheck it if tickets go to the cashier and she tells them: then prep time is not measured and the leak radar doesn’t count them as late.',
+  // Mesa en $0 que quedaba abierta (3 nov 2026)
+  'La cuenta quedó en $0 y la mesa sigue abierta.': 'The check is at $0 and the table is still open.',
+  'Cerrar mesa (cuenta en $0)': 'Close table (check at $0)',
   // Ventas y gastos de una fecha a otra (3 nov 2026)
   Gastos: 'Expenses',
   'Facturas y gastos anotados': 'Recorded invoices and expenses',

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, useTransition } from 'react';
-import { discountAction, payAction, reversePaymentAction, voidDiscountAction } from '@/app/actions';
+import { closeZeroAction, discountAction, payAction, reversePaymentAction, voidDiscountAction } from '@/app/actions';
 import type { Checkout, Method } from '@/lib/cash';
 import { formatCop, formatTime } from '@/lib/format';
 import { isNetworkError, retryDelay } from '@/lib/offline';
@@ -251,6 +251,19 @@ export function CheckoutScreen({
                 )}
               </ActionForm>
             </details>
+          ) : null}
+
+          {/* Cuenta en $0 que quedó abierta (100 % de descuento antes del 3 nov 2026): se cierra de un toque. */}
+          {!closed && c.balance <= 0 && c.subtotal > 0 && canDiscount ? (
+            <ActionForm action={closeZeroAction} className="mt-6 space-y-2 rounded-2xl border border-warning/50 bg-warning/[0.05] px-4 py-3">
+              {() => (
+                <>
+                  <input type="hidden" name="sessionId" value={c.session.id} />
+                  <p className="text-[14px]">{t('La cuenta quedó en $0 y la mesa sigue abierta.')}</p>
+                  <SubmitButton pendingText={t('Cerrando…')}>{t('Cerrar mesa (cuenta en $0)')}</SubmitButton>
+                </>
+              )}
+            </ActionForm>
           ) : null}
         </section>
 

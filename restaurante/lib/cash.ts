@@ -490,7 +490,27 @@ export async function applyDiscount(actor: Actor, sessionId: string, input: { pe
       reason,
       data: { sessionId, amount, percentOfBill: totalPct },
     });
+    // Si el descuento deja la cuenta en $0 (cortesía del 100 %, p. ej. un jefe; 3 nov 2026) no queda nada por cobrar y
+    // ningún pago la cerraría: se cierra aquí, como cuando el último pago deja el saldo en cero.
+    if (amount === checkout.balance) await closeZeroInTx(db, actor, sessionId, session.number);
     return res.rows[0].id;
+  });
+}
+
+async function closeZeroInTx(db: Db, actor: Actor, sessionId: string, number: string) {
+  await db.query(`UPDATE table_sessions SET status = 'closed', closed_at = now(), closed_by = $2 WHERE id = $1`, [sessionId, actor.id]);
+  await audit(db, actor, { action: 'table.close', entity: 'table_session', entityId: sessionId, summary: `Cerró la mesa ${number}: la cuenta quedó en $0` });
+}
+
+/** Cierra una mesa que ya quedó en $0 y abierta (las de antes del 3 nov 2026, o si algo quedó a medias). */
+export async function closeZeroBalance(actor: Actor, sessionId: string) {
+  requirePermission(actor, 'cash.operate');
+  await transaction(async (db) => {
+    const session = await lockSessionForCash(db, actor, sessionId);
+    if (session.status === 'closed') throw new AppError('CONFLICT', 'Esa mesa ya se cerró.');
+    const checkout = (await loadCheckout(db, actor, sessionId))!;
+    if (checkout.balance > 0) throw new AppError('CONFLICT', `La mesa ${session.number} tiene saldo por pagar: se cierra cobrando.`);
+    await closeZeroInTx(db, actor, sessionId, session.number);
   });
 }
 
