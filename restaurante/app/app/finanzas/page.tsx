@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { requireStaff } from '@/lib/auth';
 import { EXPENSE_LABEL, getStatement, listExpenses, todayIn } from '@/lib/finance';
 import { formatCop } from '@/lib/format';
-import { PERIODS, periodRange } from '@/lib/periods';
+import { PERIODS, customRange, periodRange, shortDate } from '@/lib/periods';
+import { DateRangeForm } from '@/components/date-range';
 import { listLocations } from '@/lib/store';
 import { ExpenseForm, ExpenseRow } from '@/components/finance-forms';
 import { SalesByDay } from '@/components/sales-chart';
@@ -13,7 +14,6 @@ import { makeT, tr } from '@/lib/i18n';
 export const dynamic = 'force-dynamic';
 
 const METHOD: Record<string, string> = { cash: 'Efectivo', card: 'Datáfono', transfer: 'Transferencia' };
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default async function FinancePage({ searchParams }: { searchParams: Promise<{ periodo?: string; desde?: string; hasta?: string; sede?: string }> }) {
   const staff = await requireStaff('finance.view');
@@ -21,9 +21,10 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
   const lang = await getLang();
   const t = makeT(lang);
   const today = todayIn(staff.timezone);
-  const custom = sp.desde && sp.hasta && DATE.test(sp.desde) && DATE.test(sp.hasta);
+  const picked = customRange(sp.desde, sp.hasta);
+  const custom = Boolean(picked);
   const period = custom ? 'rango' : (sp.periodo ?? 'mes');
-  const range = custom ? { from: sp.desde!, to: sp.hasta! } : periodRange(period, today);
+  const range = picked ?? periodRange(period, today);
   const isOwner = staff.role === 'owner';
   const locations = isOwner && staff.locationCount > 1 ? await listLocations(staff.businessId) : [];
   const sede = isOwner ? (sp.sede ?? (staff.locationCount > 1 ? 'all' : staff.locationId)) : staff.locationId;
@@ -56,12 +57,7 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
             {t(p.label)}
           </Link>
         ))}
-        <form action="/app/finanzas" className="flex flex-wrap items-center gap-1.5">
-          {isOwner && sede ? <input type="hidden" name="sede" value={sede} /> : null}
-          <input type="date" name="desde" defaultValue={range.from} aria-label={t('Desde')} className="rounded-full border border-white/[0.1] bg-transparent px-3 py-1.5 text-[14px] [color-scheme:dark]" />
-          <input type="date" name="hasta" defaultValue={range.to} aria-label={t('Hasta')} className="rounded-full border border-white/[0.1] bg-transparent px-3 py-1.5 text-[14px] [color-scheme:dark]" />
-          <button className="rounded-full border border-white/[0.1] px-3 py-1.5 text-[14px] text-muted-foreground hover:text-foreground">{t('Ver')}</button>
-        </form>
+        <DateRangeForm action="/app/finanzas" from={range.from} to={range.to} keep={isOwner && sede ? { sede } : {}} active={custom} t={t} />
       </div>
       {locations.length ? (
         <div className="flex flex-wrap gap-1.5">
@@ -97,7 +93,7 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
             <section className={card}>
               <h2 className="font-display text-[18px] font-bold">{t('Estado de resultados')}</h2>
               <p className="text-[13px] text-muted-foreground">
-                {range.from === range.to ? range.from : t('{from} a {to}', { from: range.from, to: range.to })}
+                {range.from === range.to ? shortDate(range.from, lang) : t('{from} a {to}', { from: shortDate(range.from, lang), to: shortDate(range.to, lang) })}
               </p>
               <dl className="mt-4 space-y-1.5 text-[14.5px]">
                 <Line label={t('Ventas (cobrado)')} value={st.sales} strong />

@@ -31,3 +31,18 @@ export function periodRange(key: string, today: string): { from: string; to: str
       return { from: today, to: today };
   }
 }
+
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Rango escogido a mano («Desde / Hasta», pedido de Rigoberto el 3 nov 2026: «las ventas de una fecha a otra, igual que
+ * los gastos»). Null si falta una fecha o no es válida; si vienen al revés, se ordenan.
+ */
+export function customRange(desde?: string, hasta?: string): { from: string; to: string } | null {
+  if (!desde || !hasta || !DATE.test(desde) || !DATE.test(hasta) || Number.isNaN(Date.parse(desde)) || Number.isNaN(Date.parse(hasta))) return null;
+  return desde <= hasta ? { from: desde, to: hasta } : { from: hasta, to: desde };
+}
+
+/** «27 oct 2026» para mostrar una fecha AAAA-MM-DD. */
+export const shortDate = (date: string, lang: 'es' | 'en' = 'es') =>
+  new Date(`${date}T12:00:00Z`).toLocaleDateString(lang === 'en' ? 'en-US' : 'es-CO', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
