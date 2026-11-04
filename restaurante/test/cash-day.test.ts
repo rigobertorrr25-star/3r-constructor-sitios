@@ -114,5 +114,21 @@ describe('dos turnos de caja al día', { skip: url ? false : 'sin TEST_DATABASE_
     for (const s of ['CUADRE DEL DIA', 'Turno 1: Ana', 'Turno 2: Lina', 'CUADRA', 'FALTAN $5.000', 'TOTAL DEL DIA', 'Caja fuerte $50.000']) assert.ok(dia.includes(s), s);
     assert.ok(jobs.find((j) => j.kind === 'cierre')!.preview.includes('TURNO 2'));
     await assert.rejects(printing.enqueueDayClosing(lina, '2020-01-01'), { code: 'NOT_FOUND' });
+
+    // El cierre completo del día en PDF (4 nov 2026): los dos turnos juntos.
+    const report = await import('../lib/day-report');
+    const who = { ...lina, businessName: 'Prueba', locationName: 'Centro', timezone: 'America/Bogota' };
+    const r = (await report.dayReport(who, today))!;
+    assert.equal(r.shifts.length, 2);
+    assert.deepEqual(r.categories.map((c) => [c.category, c.quantity, c.total]), [['Platos', 4, 100000]], 'los dos turnos sumados');
+    assert.deepEqual(r.categories[0].products, [{ name: 'Hamburguesa', quantity: 4, total: 100000 }]);
+    assert.equal(r.tables.length, 2);
+    assert.deepEqual(r.form.withoutInvoice.map((x) => x.amount), [5000]);
+    const pdf = await report.dayReportPdf(r);
+    assert.equal(Buffer.from(pdf.slice(0, 5)).toString(), '%PDF-');
+    const { PDFDocument } = await import('pdf-lib');
+    assert.ok((await PDFDocument.load(pdf)).getPageCount() >= 1);
+    assert.equal(await report.dayReport(who, '2020-01-01'), null);
+    await assert.rejects(report.dayReport({ ...waiter, businessName: '', locationName: '', timezone: 'America/Bogota' }, today), { code: 'FORBIDDEN' });
   });
 });

@@ -79,9 +79,14 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
         ← {t('Caja')}
       </Link>
       <PageTitle title={`${t('Cuadre de caja')} · ${t('Turno {n}', { n: s.shift.dayNumber })}`}>
-        <Link href={`/app/caja/dia?fecha=${s.shift.day}`} className={quietButton}>
-          {t('Cuadre del día')}
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <a href={`/app/caja/dia/pdf?fecha=${s.shift.day}`} download className={quietButton}>
+            {t('Descargar cierre del día (PDF)')}
+          </a>
+          <Link href={`/app/caja/dia?fecha=${s.shift.day}`} className={quietButton}>
+            {t('Cuadre del día')}
+          </Link>
+        </div>
       </PageTitle>
       {s.shift.closedAt ? (
         <div className="max-w-xl">

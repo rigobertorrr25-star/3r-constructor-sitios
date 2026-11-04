@@ -479,5 +479,7 @@ export const en: Record<string, string> = {
   'Al cerrar el turno anterior ({name}, {date}) quedaron {amount} en la caja.': 'When the previous shift closed ({name}, {date}), {amount} was left in the drawer.',
   'Cuéntala y corrígela si no es así.': 'Count it and correct it if not.',
   'Imprimir cuadre del día': 'Print daily summary',
+  'Descargar cierre (PDF)': 'Download closing (PDF)',
+  'Descargar cierre del día (PDF)': 'Download day closing (PDF)',
   'Cuadre del día enviado a la impresora de caja.': 'Daily summary sent to the cashier printer.',
 };
