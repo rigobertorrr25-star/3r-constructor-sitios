@@ -480,6 +480,14 @@ export const en: Record<string, string> = {
   'Cuéntala y corrígela si no es así.': 'Count it and correct it if not.',
   'Imprimir cuadre del día': 'Print daily summary',
   'Descargar cierre (PDF)': 'Download closing (PDF)',
+  // Estado de la IA (4 nov 2026)
+  'Lectura con IA': 'AI reading',
+  'Funciona: la llave de la IA está bien puesta.': 'Working: the AI key is set correctly.',
+  'La llave de la IA no sirve (vencida o mal copiada). Pon una nueva en Vercel.': 'The AI key does not work (expired or miscopied). Put a new one in Vercel.',
+  'No hay llave de la IA en este sistema.': 'There is no AI key in this system.',
+  'No se pudo revisar ahora. Vuelve a abrir esta página en un rato.': 'Could not check right now. Open this page again in a while.',
+  'La usan las facturas con foto, el inventario con foto, la carta desde PDF y el resumen del Tablero. Sin ella, todo lo demás funciona igual.':
+    'Used by invoice photos, inventory photos, menu from PDF and the Dashboard summary. Without it, everything else works the same.',
   // Corregir un cierre (4 nov 2026)
   'Cierre corregido': 'Closing corrected',
   'por {name} el {date}: {reason}': 'by {name} on {date}: {reason}',
