@@ -7,7 +7,7 @@ import { hashPassword, verifyPassword } from './passwords';
 import { t, type MessageKey, type Vars } from './i18n';
 import { avatarSrc } from './avatar';
 import { guessGender, type Gender } from './gender';
-import { FORGOTTEN_MS as FORGOTTEN_HOURS_MS, type Shift } from './report';
+import { FORGOTTEN_MS as FORGOTTEN_HOURS_MS, punchMood, type PunchMood, type Shift } from './report';
 
 type AvatarCols = { avatar_variant: number; avatar_gender: string | null };
 
@@ -52,7 +52,15 @@ export type AttendanceRecord = {
   employee: { name: string; avatar?: string };
 };
 
-export type PunchResult = { employeeName: string; type: 'in' | 'out'; at: string; workedMinutes: number | null; pinCreated: boolean };
+/** `mood`: si llegó tarde, temprano o a tiempo (o cómo salió), para el mensaje del celular; null si no hay turnos. */
+export type PunchResult = {
+  employeeName: string;
+  type: 'in' | 'out';
+  at: string;
+  workedMinutes: number | null;
+  pinCreated: boolean;
+  mood: { mood: PunchMood; minutes: number } | null;
+};
 
 /**
  * Error para mostrar en pantalla: `code` decide qué ofrecer, `key` y `vars` dan el texto en el idioma de
@@ -138,10 +146,10 @@ export async function getKiosk(secret: string) {
   return { name: business.name, slug: business.slug, windowMs: CODE_WINDOW_MS, ...currentCode(business.kiosk_secret, business.slug) };
 }
 
-type PublicBusiness = { id: string; name: string; slug: string; kiosk_secret: string };
+type PublicBusiness = { id: string; name: string; slug: string; kiosk_secret: string; shifts: Shift[] };
 
 async function activeBusiness(slug: string): Promise<PublicBusiness> {
-  const [business] = await query<PublicBusiness>('SELECT id, name, slug, kiosk_secret FROM businesses WHERE slug = $1 AND is_active', [slug]);
+  const [business] = await query<PublicBusiness>('SELECT id, name, slug, kiosk_secret, shifts FROM businesses WHERE slug = $1 AND is_active', [slug]);
   if (!business) throw new AppError('NOT_FOUND', 'errBusinessMissing');
   return business;
 }
@@ -230,13 +238,27 @@ export async function punch(slug: string, code: string, employeeId: string, pin:
     if (last && !last.clock_out && elapsed(last.clock_in) < FORGOTTEN_MS) {
       if (elapsed(last.clock_in) < DOUBLE_SCAN_MS) return new AppError('DOUBLE_SCAN', 'errDoubleIn');
       await client.query('UPDATE records SET clock_out = $1 WHERE id = $2', [now, last.id]);
-      return { employeeName: employee.name, type: 'out', at: now.toISOString(), workedMinutes: Math.round(elapsed(last.clock_in) / MINUTE), pinCreated };
+      return {
+        employeeName: employee.name,
+        type: 'out',
+        at: now.toISOString(),
+        workedMinutes: Math.round(elapsed(last.clock_in) / MINUTE),
+        pinCreated,
+        mood: punchMood({ clockIn: last.clock_in.toISOString(), clockOut: now.toISOString() }, business.shifts),
+      };
     }
     if (last?.clock_out && elapsed(last.clock_out) < DOUBLE_SCAN_MS) {
       return new AppError('DOUBLE_SCAN', 'errDoubleOut');
     }
     await client.query('INSERT INTO records (business_id, employee_id, clock_in) VALUES ($1, $2, $3)', [business.id, employee.id, now]);
-    return { employeeName: employee.name, type: 'in', at: now.toISOString(), workedMinutes: null, pinCreated };
+    return {
+      employeeName: employee.name,
+      type: 'in',
+      at: now.toISOString(),
+      workedMinutes: null,
+      pinCreated,
+      mood: punchMood({ clockIn: now.toISOString(), clockOut: null }, business.shifts),
+    };
   });
   if (outcome instanceof AppError) throw outcome;
   return outcome;

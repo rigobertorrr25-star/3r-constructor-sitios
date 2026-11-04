@@ -25,6 +25,12 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   `employees.avatar_variant` («Otro avatar» lo sube) y hombre/mujer: `employees.avatar_gender` ('m'/'f') o, si está
   vacío, se adivina por el primer nombre (`lib/gender.ts`, nombres comunes de Colombia). Lo sirve `/avatar/{id}[-n]-{m|f}`
   sin guardar imágenes; peinados cortos para hombres y largos para mujeres en `app/avatar/[seed]/route.ts`.
+- Marcar en el celular (4 nov 2026, Rigoberto, video de referencia «OTP Verification V2»): el PIN va en 4 cuadritos
+  (un solo campo invisible por debajo; el que sigue se ilumina en coral `#ff6b4a`), se marca solo al completar los 4,
+  mientras verifica los cuadros se juntan en uno que gira y al terminar aparece un cuadro verde con chulito y brillo
+  verde (clases `pin-*`, `success-*` en `app/globals.css`). Mensaje chistoso según la hora (`punchMood` en
+  `lib/report.ts`): llegó tarde / temprano / a tiempo, o salió antes / con tiempo extra (+30 min) / a tiempo; varios
+  textos por caso (`mood*` en `lib/i18n.ts`, se elige uno al azar).
 - Vercel (3 nov 2026): el `ignoreCommand` publica también si no encuentra la publicación anterior (antes, cuando la
   última publicación quedaba a más de ~10 cambios, Vercel marcaba "falló" sin compilar).
 
