@@ -1065,7 +1065,7 @@ export async function readReceiptAction(_prev: FormState, formData: FormData): P
 
 export async function voidExpenseAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
-  return run(formData, () => voidExpense(staff, text(formData, 'expenseId'), text(formData, 'reason')), ['/app/finanzas', '/app/caja'], 'Gasto anulado.');
+  return run(formData, () => voidExpense(staff, text(formData, 'expenseId'), text(formData, 'reason')), ['/app/finanzas', '/app/caja', '/app/facturas'], 'Factura anulada.');
 }
 
 // ───────── reservas ─────────

@@ -5,6 +5,7 @@ import { formatCop } from './format';
 import { query, transaction } from './db';
 import { UNITS, purchaseInTx, type Unit } from './inventory';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
+import { can } from './permissions';
 
 export const EXPENSE_CATEGORIES = ['rent', 'payroll', 'utilities', 'suppliers', 'packaging', 'maintenance', 'marketing', 'taxes', 'other'] as const;
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
@@ -87,6 +88,7 @@ export type Expense = {
   hasPhoto: boolean;
   /** Día en que se registró en el sistema (hora de la sede); solo en la lista de facturas de compra. */
   createdOn?: string;
+  createdById?: string;
 };
 
 /** Un producto de la factura de compra que entra al inventario: a un insumo que ya existe o a uno nuevo. Cantidad en la unidad del insumo. */
@@ -244,37 +246,83 @@ export async function addExpense(
 
 /** Anula un gasto mal registrado. Si salió de la caja, la plata se devuelve a la caja con una entrada. */
 export async function voidExpense(actor: Actor, expenseId: string, reason: string) {
-  requirePermission(actor, 'finance.view');
+  // El dueño y el administrador anulan cualquiera; la cajera, las facturas que ella registró (5 nov 2026, pedido de
+  // Rigoberto: «crea un botón de eliminar factura»). No se borra: queda como «Anulado» con su motivo.
+  const anyExpense = can(actor.role, 'finance.view');
+  if (!anyExpense) requirePermission(actor, 'expenses.add');
   const why = requireText(reason, 'Motivo', 3, 200);
   if (!isUuid(expenseId)) throw new AppError('NOT_FOUND', 'No encontramos ese gasto.');
   await transaction(async (db) => {
-    const e = (
-      await db.query<{ id: string; amount: string; description: string; voided: boolean; locationId: string; movementId: string | null }>(
-        `SELECT id, amount, description, (voided_at IS NOT NULL) AS voided, location_id AS "locationId", cash_movement_id AS "movementId"
-           FROM expenses WHERE id = $1 AND business_id = $2 FOR UPDATE`,
-        [expenseId, actor.businessId],
-      )
-    ).rows[0];
+    type Row = { id: string; amount: string; description: string; voided: boolean; locationId: string; movementId: string | null; createdBy: string; kind: string };
+    const lock = async (id: string) =>
+      (
+        await db.query<Row>(
+          `SELECT id, amount, description, (voided_at IS NOT NULL) AS voided, location_id AS "locationId", cash_movement_id AS "movementId",
+                  created_by AS "createdBy", kind
+             FROM expenses WHERE id = $1 AND business_id = $2 FOR UPDATE`,
+          [id, actor.businessId],
+        )
+      ).rows[0];
+    const e = await lock(expenseId);
     if (!e || (actor.role !== 'owner' && e.locationId !== actor.locationId)) throw new AppError('NOT_FOUND', 'No encontramos ese gasto.');
+    if (!anyExpense && e.createdBy !== actor.id) throw new AppError('FORBIDDEN', 'Solo puedes eliminar las facturas que tú registraste. Pídeselo al administrador.');
     if (e.voided) throw new AppError('CONFLICT', 'Ese gasto ya estaba anulado.');
-    if (e.movementId) {
+    // Las bolsas de una factura de insumos se guardaron aparte, en el mismo momento: se anulan con ella.
+    const siblings =
+      e.kind === 'supplies'
+        ? (
+            await db.query<{ id: string }>(
+              `SELECT x.id FROM expenses x JOIN expenses e ON e.id = $1
+                WHERE x.business_id = e.business_id AND x.location_id = e.location_id AND x.created_by = e.created_by AND x.created_at = e.created_at
+                  AND x.category = 'packaging' AND x.id <> e.id AND x.voided_at IS NULL AND x.description LIKE 'Bolsas de la factura:%'`,
+              [e.id],
+            )
+          ).rows
+        : [];
+    const all = [e, ...(await Promise.all(siblings.map((x) => lock(x.id))))];
+    for (const x of all) {
+      if (!x.movementId) continue;
       const shift = (
         await db.query<{ id: string; closed: boolean }>(
           `SELECT c.id, (c.closed_at IS NOT NULL) AS closed FROM cash_movements m JOIN cash_shifts c ON c.id = m.shift_id WHERE m.id = $1`,
-          [e.movementId],
+          [x.movementId],
         )
       ).rows[0];
       if (shift.closed) throw new AppError('CONFLICT', 'Ese gasto salió de una caja que ya se cerró: registra una entrada en la caja actual si devolvieron la plata.');
       await db.query(`INSERT INTO cash_movements (business_id, shift_id, kind, amount, reason, created_by) VALUES ($1, $2, 'in', $3, $4, $5)`, [
         actor.businessId,
         shift.id,
-        Number(e.amount),
-        `Anulación del gasto: ${e.description}`.slice(0, 200),
+        Number(x.amount),
+        `Anulación del gasto: ${x.description}`.slice(0, 200),
         actor.id,
       ]);
     }
-    await db.query(`UPDATE expenses SET voided_at = now(), voided_by = $2, void_reason = $3 WHERE id = $1`, [expenseId, actor.id, why]);
-    await audit(db, actor, { action: 'expense.void', entity: 'expense', entityId: expenseId, summary: `Anuló un gasto de ${money(Number(e.amount))}: ${e.description}`, reason: why });
+    // Lo que la factura sumó al inventario sale otra vez (las compras se guardaron en la misma transacción que el gasto).
+    let stockLines = 0;
+    if (e.kind === 'supplies') {
+      const moves = await db.query<{ itemId: string; quantity: string; unitCost: string }>(
+        `SELECT m.item_id AS "itemId", m.quantity, m.unit_cost AS "unitCost" FROM inventory_movements m JOIN expenses e ON e.id = $1
+          WHERE m.business_id = e.business_id AND m.location_id = e.location_id AND m.created_by = e.created_by AND m.created_at = e.created_at AND m.kind = 'purchase'`,
+        [e.id],
+      );
+      for (const m of moves.rows) {
+        await db.query(
+          `INSERT INTO inventory_movements (business_id, location_id, item_id, kind, quantity, unit_cost, reason, created_by) VALUES ($1, $2, $3, 'adjust', $4, $5, $6, $7)`,
+          [actor.businessId, e.locationId, m.itemId, -Number(m.quantity), Number(m.unitCost), `Factura anulada: ${e.description}`.slice(0, 200), actor.id],
+        );
+      }
+      stockLines = moves.rows.length;
+    }
+    for (const x of all) {
+      await db.query(`UPDATE expenses SET voided_at = now(), voided_by = $2, void_reason = $3 WHERE id = $1`, [x.id, actor.id, why]);
+    }
+    await audit(db, actor, {
+      action: 'expense.void',
+      entity: 'expense',
+      entityId: expenseId,
+      summary: `Anuló un gasto de ${money(Number(e.amount))}: ${e.description}${siblings.length ? ' (y sus bolsas)' : ''}${stockLines ? `; ${stockLines} productos salieron del inventario` : ''}`,
+      reason: why,
+    });
   });
 }
 
@@ -307,7 +355,7 @@ export async function listPurchaseInvoices(actor: Actor, range: { from: string; 
             e.paid_from AS "paidFrom", e.invoice_number AS "invoiceNumber", to_char(e.due_on, 'YYYY-MM-DD') AS "dueOn",
             s.name AS "createdBy", l.name AS "locationName", (e.voided_at IS NOT NULL) AS voided, e.void_reason AS "voidReason",
             EXISTS (SELECT 1 FROM expense_photos f WHERE f.expense_id = e.id) AS "hasPhoto",
-            to_char(e.created_at AT TIME ZONE b.timezone, 'YYYY-MM-DD') AS "createdOn"
+            to_char(e.created_at AT TIME ZONE b.timezone, 'YYYY-MM-DD') AS "createdOn", e.created_by AS "createdById"
        FROM expenses e JOIN staff s ON s.id = e.created_by JOIN locations l ON l.id = e.location_id JOIN businesses b ON b.id = e.business_id
       -- La fecha de la factura la lee la IA de la foto: una factura de ayer registrada hoy también sale en «Hoy»
       -- (5 nov 2026, Rigoberto: «la última factura guarda pero no me aparece en las facturas»).
