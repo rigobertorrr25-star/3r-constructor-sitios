@@ -226,6 +226,8 @@ export type CierreInput = {
   notes: string | null;
   /** Arqueo: cuántos billetes y monedas de cada uno se contaron (vacío si se escribió el total a mano). */
   cashCount?: { label: string; quantity: number; total: string }[];
+  /** Si el cierre se corrigió después: quién, cuándo y por qué (4 nov 2026). */
+  correction?: string | null;
   /** Propina del día: el % de «Propina sugerida» sobre lo vendido. Sin ella (0 %), no sale. */
   tipOfSales?: { pct: number; amount: string } | null;
   /** Cómo queda el inventario de la sede (solo en el cierre de la caja, no en el de un mesero). */
@@ -262,6 +264,7 @@ export function cierre(width: number, c: CierreInput) {
   }
   t.line(c.result, { align: 'center', big: true })
     .line(`${c.tables} ${c.tables === 1 ? 'mesa cerrada' : 'mesas cerradas'}`, { align: 'center' });
+  if (c.correction) t.line(`CORREGIDO ${c.correction}`, { bold: true });
   if (c.notes) t.line(`Nota: ${c.notes}`);
   if (c.inventory) inventorySection(t, c.inventory);
   return t.rule().blank().line('Firma: ______________________');

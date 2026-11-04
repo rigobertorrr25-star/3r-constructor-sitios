@@ -14,3 +14,11 @@ describe('rango de fechas escogido a mano', () => {
     assert.equal(customRange('2026-13-40', '2026-10-15'), null);
   });
 });
+
+describe('texto del PDF del cierre', () => {
+  it('cambia lo que las letras del PDF no traen y deja las tildes', async () => {
+    const { pdfSafe } = await import('../lib/day-report');
+    assert.equal(pdfSafe('−$5.000 → «Ñandú» · café'), '-$5.000 -> «Ñandú» · café');
+    assert.equal(pdfSafe('Mojito 🍹 x2'), 'Mojito  x2');
+  });
+});

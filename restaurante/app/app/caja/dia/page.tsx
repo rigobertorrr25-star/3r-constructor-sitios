@@ -48,7 +48,15 @@ export default async function DayClosingPage({ searchParams }: { searchParams: P
         ← {t('Caja')}
       </Link>
       <PageTitle title={t('Cuadre del día')} text={t('Cada cajera cierra su turno con su cuadre; aquí se suman los turnos del día.')}>
-        {shifts.length ? <PrintDayButton date={day} /> : null}
+        {shifts.length ? (
+          <div className="flex flex-wrap items-start gap-2">
+            {/* El cierre completo del día, para guardar o mandar (4 nov 2026). */}
+            <a href={`/app/caja/dia/pdf?fecha=${day}`} download className={quietButton}>
+              {t('Descargar cierre (PDF)')}
+            </a>
+            <PrintDayButton date={day} />
+          </div>
+        ) : null}
       </PageTitle>
 
       <div className="flex flex-wrap items-center gap-1.5">

@@ -479,5 +479,19 @@ export const en: Record<string, string> = {
   'Al cerrar el turno anterior ({name}, {date}) quedaron {amount} en la caja.': 'When the previous shift closed ({name}, {date}), {amount} was left in the drawer.',
   'Cuéntala y corrígela si no es así.': 'Count it and correct it if not.',
   'Imprimir cuadre del día': 'Print daily summary',
+  'Descargar cierre (PDF)': 'Download closing (PDF)',
+  // Corregir un cierre (4 nov 2026)
+  'Cierre corregido': 'Closing corrected',
+  'por {name} el {date}: {reason}': 'by {name} on {date}: {reason}',
+  'Lo que decía antes queda en la auditoría.': 'What it said before is kept in the audit log.',
+  'Corregir este cierre': 'Correct this closing',
+  'Si se cerró por error o faltó contar plata: escribe lo que de verdad había. Lo esperado no cambia; queda quién corrigió, el motivo y lo que decía antes.':
+    'If it was closed by mistake or some cash was not counted: enter what was really there. Expected cash does not change; who corrected it, the reason and the previous values are kept.',
+  'Efectivo contado (corregido)': 'Counted cash (corrected)',
+  'Escribe todo el efectivo que había, o haz el arqueo de nuevo.': 'Enter all the cash there was, or redo the bill and coin count.',
+  'Motivo de la corrección': 'Reason for the correction',
+  'Faltó contar el efectivo del cajón de abajo…': 'The cash in the bottom drawer was not counted…',
+  'Guardar corrección': 'Save correction',
+  'Descargar cierre del día (PDF)': 'Download day closing (PDF)',
   'Cuadre del día enviado a la impresora de caja.': 'Daily summary sent to the cashier printer.',
 };
