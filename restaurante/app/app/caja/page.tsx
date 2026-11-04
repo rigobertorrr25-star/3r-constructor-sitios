@@ -54,18 +54,7 @@ export default async function CashPage() {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={t('Ventas del turno')} value={formatCop(s.sales)} hint={s.tablesClosed === 1 ? t('1 mesa cerrada') : t('{n} mesas cerradas', { n: s.tablesClosed })} />
-        <Stat label={t('Efectivo esperado en caja')} value={formatCop(s.expectedCash)} hint={
-            // Con los números, para que se vea de dónde sale (5 nov 2026: Rigoberto no entendía un esperado de 205.000).
-            [
-              `${t('Base')} ${formatCop(s.shift.openingAmount)}`,
-              `+ ${t('efectivo')} ${formatCop(s.byMethod.cash.amount)}`,
-              s.byMethod.cash.tip ? `+ ${t('propinas')} ${formatCop(s.byMethod.cash.tip)}` : '',
-              s.movementsIn ? `+ ${t('entradas')} ${formatCop(s.movementsIn)}` : '',
-              s.movementsOut ? `− ${t('salidas')} ${formatCop(s.movementsOut)}` : '',
-            ]
-              .filter(Boolean)
-              .join(' ')
-          }
+        <Stat label={t('Efectivo esperado en caja')} value={formatCop(s.expectedCash)} hint={t('Mira abajo de dónde sale')}
           strong
         />
         <Stat label={t('Propinas')} value={formatCop(s.tips)} />
@@ -79,6 +68,33 @@ export default async function CashPage() {
           />
         ))}
       </div>
+
+      {/* Renglón por renglón (5 nov 2026, Rigoberto: «en efectivo esperado siento que está muy enredado»). */}
+      <section className={`${card} max-w-md`}>
+        <h2 className="font-display text-[16px] font-bold">{t('¿De dónde sale el efectivo esperado?')}</h2>
+        <dl className="mt-2 space-y-1 text-[14.5px]">
+          {(
+            [
+              [t('Base con que se abrió'), s.shift.openingAmount, ''],
+              [t('Cobrado en efectivo (con propina)'), s.byMethod.cash.amount + s.byMethod.cash.tip, '+'],
+              [t('Entró a la caja'), s.movementsIn, '+'],
+              [t('Salió de la caja (pagos y facturas)'), s.movementsOut, '−'],
+            ] as [string, number, string][]
+          )
+            .filter(([, v, sign]) => v > 0 || sign !== '+' && sign !== '−')
+            .map(([label, v, sign]) => (
+              <div key={label} className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">{label}</dt>
+                <dd className={sign === '−' ? 'text-warning' : ''}>{sign ? `${sign} ` : ''}{formatCop(v)}</dd>
+              </div>
+            ))}
+          <div className="flex justify-between gap-3 border-t border-white/[0.08] pt-1.5 font-bold">
+            <dt>{t('Debe haber en la caja')}</dt>
+            <dd>{formatCop(s.expectedCash)}</dd>
+          </div>
+        </dl>
+        {s.movementsIn || s.movementsOut ? <p className="mt-2 text-[12.5px] text-muted-foreground">{t('El detalle de cada entrada y salida está abajo, en «Entradas y salidas de efectivo».')}</p> : null}
+      </section>
 
       <section className="space-y-3">
         <h2 className="font-display text-[19px] font-bold">{t('Cuentas por cobrar')}</h2>
