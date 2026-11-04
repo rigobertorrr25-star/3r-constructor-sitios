@@ -480,6 +480,7 @@ export const en: Record<string, string> = {
   'Cuéntala y corrígela si no es así.': 'Count it and correct it if not.',
   'Imprimir cuadre del día': 'Print daily summary',
   'Descargar cierre (PDF)': 'Download closing (PDF)',
+  'No pudimos leer esta factura. Toma la foto otra vez o llena el gasto a mano.': 'We couldn’t read this invoice. Take the photo again or fill in the expense by hand.',
   // Estado de la IA (4 nov 2026)
   'Lectura con IA': 'AI reading',
   'Funciona: la llave de la IA está bien puesta.': 'Working: the AI key is set correctly.',
