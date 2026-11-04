@@ -309,7 +309,12 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
     ),
     query<{ id: string; kind: 'in' | 'out'; amount: string; reason: string; createdBy: string; createdAt: Date }>(
       `SELECT m.id, m.kind, m.amount, m.reason, s.name AS "createdBy", m.created_at AS "createdAt"
-         FROM cash_movements m JOIN staff s ON s.id = m.created_by WHERE m.shift_id = $1 ORDER BY m.created_at`,
+         FROM cash_movements m JOIN staff s ON s.id = m.created_by WHERE m.shift_id = $1
+          -- Una factura eliminada no salió de la caja: su salida y la entrada que la devolvió se cancelan y no se muestran
+          -- (5 nov 2026, Rigoberto: «me aparece que salió de caja 127.000 y esa plata no salió»). El esperado es el mismo.
+          AND NOT EXISTS (SELECT 1 FROM expenses e WHERE e.cash_movement_id = m.id AND e.voided_at IS NOT NULL)
+          AND NOT (m.kind = 'in' AND m.reason LIKE 'Anulación del gasto:%')
+        ORDER BY m.created_at`,
       [shiftId],
     ),
   ]);
