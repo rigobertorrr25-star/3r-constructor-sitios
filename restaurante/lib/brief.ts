@@ -163,3 +163,20 @@ export async function getBrief(actor: Actor, input: { day: string; locationId: s
 }
 
 export const aiConfigured = () => Boolean(process.env.ANTHROPIC_API_KEY);
+
+/**
+ * ¿Sirve la llave de la IA? (4 nov 2026: la llave RESTAURANTE-CONTROL se venció y Rigoberto puso una nueva). Pregunta a
+ * Anthropic la lista de modelos, que no gasta saldo. «missing» sin llave, «invalid» si Anthropic la rechaza, «error» si no
+ * se pudo saber (internet, Anthropic caído).
+ */
+export async function aiStatus(): Promise<'ok' | 'missing' | 'invalid' | 'error'> {
+  if (!process.env.ANTHROPIC_API_KEY) return 'missing';
+  try {
+    await new Anthropic({ timeout: 8000, maxRetries: 0 }).models.list({ limit: 1 });
+    return 'ok';
+  } catch (error) {
+    if (error instanceof Anthropic.AuthenticationError || error instanceof Anthropic.PermissionDeniedError) return 'invalid';
+    console.error('No se pudo revisar la llave de la IA:', error instanceof Error ? error.message : error);
+    return 'error';
+  }
+}

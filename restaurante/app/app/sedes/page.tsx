@@ -7,12 +7,13 @@ import { backgroundUrl } from '@/lib/background-url';
 import { getT } from '@/lib/i18n/server';
 import { WorkModeForm } from '@/components/waiter-forms';
 import { workMode } from '@/lib/cash';
+import { aiStatus } from '@/lib/brief';
 
 export const dynamic = 'force-dynamic';
 
 export default async function LocationsPage() {
   const staff = await requireStaff('locations.manage');
-  const [locations, mode] = await Promise.all([listLocations(staff.businessId), workMode(staff.businessId)]);
+  const [locations, mode, ai] = await Promise.all([listLocations(staff.businessId), workMode(staff.businessId), aiStatus()]);
   const t = await getT();
   return (
     <div className="space-y-6">
@@ -28,6 +29,20 @@ export default async function LocationsPage() {
         <div className="mt-4">
           <WorkModeForm waitersCollect={staff.waitersCollect} barOnly={staff.barOnly} suggestedTip={mode.suggestedTip} trackPrep={mode.trackPrep} />
         </div>
+      </section>
+      {/* ¿Funciona la IA? Facturas con foto, inventario con foto, carta desde PDF y el resumen del Tablero la usan. */}
+      <section className={`${card} ${ai === 'ok' ? 'border-success/40' : 'border-warning/50'}`}>
+        <h2 className="font-display text-[18px] font-bold">{t('Lectura con IA')}</h2>
+        <p className={`mt-1 text-[15px] font-semibold ${ai === 'ok' ? 'text-success' : 'text-warning'}`}>
+          {ai === 'ok'
+            ? t('Funciona: la llave de la IA está bien puesta.')
+            : ai === 'invalid'
+              ? t('La llave de la IA no sirve (vencida o mal copiada). Pon una nueva en Vercel.')
+              : ai === 'missing'
+                ? t('No hay llave de la IA en este sistema.')
+                : t('No se pudo revisar ahora. Vuelve a abrir esta página en un rato.')}
+        </p>
+        <p className="mt-1 text-[13.5px] text-muted-foreground">{t('La usan las facturas con foto, el inventario con foto, la carta desde PDF y el resumen del Tablero. Sin ella, todo lo demás funciona igual.')}</p>
       </section>
       <section className={card}>
         <h2 className="font-display text-[18px] font-bold">{t('Fondo del restaurante')}</h2>
