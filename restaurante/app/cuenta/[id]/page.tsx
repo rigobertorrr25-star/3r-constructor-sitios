@@ -19,6 +19,7 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
   const t = makeT(lang);
   // Propina sugerida sobre el consumo; si ya abonaron una parte, se sugiere sobre lo que falta.
   const tip = Math.round((bill.balance * bill.suggestedTipPercent) / 100 / 100) * 100;
+  const paidTip = Math.round((bill.total * bill.suggestedTipPercent) / 100 / 100) * 100;
   return (
     <div className="relative min-h-screen bg-white">
       <div className="absolute right-4 top-4 rounded-full bg-neutral-900 print:hidden">
@@ -90,7 +91,22 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
             ) : null}
           </>
         ) : (
-          <p className="pt-1 text-center font-semibold">{bill.tips ? t('Cuenta pagada · propina {amount}', { amount: formatCop(bill.tips) }) : t('Cuenta pagada')}</p>
+          <>
+            {/* Ya cobrada, el 10 % también sale en el papel (5 nov 2026, pedido de Rigoberto). */}
+            {bill.tips > 0 || bill.suggestedTipPercent > 0 ? (
+              <>
+                <div className="flex justify-between pt-1">
+                  <dt>{bill.tips > 0 ? t('Propina / servicio') : t('Propina sugerida ({n} %)', { n: bill.suggestedTipPercent })}</dt>
+                  <dd>{formatCop(bill.tips > 0 ? bill.tips : paidTip)}</dd>
+                </div>
+                <div className="flex justify-between font-semibold">
+                  <dt>{bill.tips > 0 ? t('Total pagado') : t('Total con propina')}</dt>
+                  <dd>{formatCop(bill.total + (bill.tips > 0 ? bill.tips : paidTip))}</dd>
+                </div>
+              </>
+            ) : null}
+            <p className="pt-1 text-center font-semibold">{t('Cuenta pagada')}</p>
+          </>
         )}
       </dl>
       {bill.suggestedTipPercent > 0 ? <p className="mt-3 text-center text-[11.5px]">{t('La propina es voluntaria. Puedes pedir que se quite o se cambie.')}</p> : null}

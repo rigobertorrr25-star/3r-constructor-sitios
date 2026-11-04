@@ -191,7 +191,7 @@ export async function readReceiptWithAi(actor: Actor, file: ReadFile, inventoryN
     {
       type: 'text',
       text: `Es la foto de una factura o recibo de compra de un restaurante o bar de Colombia. Léela y responde solo con este JSON, sin texto alrededor:
-{"proveedor": "nombre del negocio que vendió o null", "numero_factura": "número o código de la factura o recibo, tal como aparece, o null", "total": valor total pagado en pesos como número entero sin puntos o null, "fecha": "AAAA-MM-DD" o null, "tipo": uno de ${JSON.stringify(RECEIPT_CATEGORIES)}, "descripcion": "frase corta en español de Colombia que diga qué se compró", "productos": [{"nombre": "...", "cantidad": número, "unidad": "und" | "g" | "ml", "total": valor de esa línea en pesos como número entero o null}], "bolsas": valor en pesos de las bolsas o empaques que cobraron en la factura, como número entero, o 0}
+{"proveedor": "nombre del negocio que vendió o null", "numero_factura": "número o código de la factura o recibo, tal como aparece, o null", "total": valor total pagado en pesos como número entero sin puntos o null, "fecha": "AAAA-MM-DD" o null (en Colombia la fecha se escribe día/mes/año: 04/11/2026 es el 4 de noviembre de 2026), "tipo": uno de ${JSON.stringify(RECEIPT_CATEGORIES)}, "descripcion": "frase corta en español de Colombia que diga qué se compró", "productos": [{"nombre": "...", "cantidad": número, "unidad": "und" | "g" | "ml", "total": valor de esa línea en pesos como número entero o null}], "bolsas": valor en pesos de las bolsas o empaques que cobraron en la factura, como número entero, o 0}
 Tipos: suppliers = insumos, comida, bebidas, licores, desechables o aseo para el negocio; payroll = pagos a personas por su trabajo; rent = arriendo; utilities = luz, agua, gas, internet, teléfono; maintenance = arreglos, repuestos, mantenimiento; marketing = publicidad; taxes = impuestos; other = lo demás.
 La descripción: máximo 160 caracteres, sin el valor ni la fecha, nombrando lo principal que se compró, por ejemplo «Compra de 10 kg de limón, 5 kg de tomate y 2 bultos de hielo». Si es una factura de servicio público, di cuál y de qué mes.
 Productos: una entrada por cada cosa comprada que el negocio guarda en su inventario (comida, bebidas, licores, desechables, aseo). No pongas servicios, domicilio, propina ni impuestos sueltos. Las bolsas (bolsa plástica, bolsa de papel, impuesto a la bolsa) no van en productos: suma su valor en "bolsas". La cantidad va en gramos (g), mililitros (ml) o unidades (und): 2 kg = 2000 g, 1,5 l = 1500 ml, una caja de 24 cervezas = 24 und, 3 botellas de aguardiente = 3 und, 2 bultos de hielo = 2 und. El nombre, corto y claro como lo llamaría el restaurante, sin códigos ni presentaciones raras (por ejemplo «Club Colombia», «Limón», «Aguardiente Antioqueño»).${
@@ -241,7 +241,9 @@ export function receiptReading(text: string): ReceiptReading | null {
   const description = clean(raw.descripcion, 200);
   if (description.length < 3) return null;
   const total = typeof raw.total === 'number' ? raw.total : Number(String(raw.total ?? '').replace(/[^\d]/g, ''));
-  const date = typeof raw.fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.fecha) ? raw.fecha : null;
+  // Una fecha en el futuro es una mala lectura (mes y día al revés): mejor la de hoy, que la cajera ve y corrige.
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+  const date = typeof raw.fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.fecha) && raw.fecha <= tomorrow ? raw.fecha : null;
   const category = typeof raw.tipo === 'string' && RECEIPT_CATEGORIES.includes(raw.tipo) ? raw.tipo : 'other';
   const lines: ReceiptLine[] = [];
   const rawBags = typeof raw.bolsas === 'number' ? raw.bolsas : Number(String(raw.bolsas ?? '').replace(/[^\d]/g, ''));

@@ -85,6 +85,8 @@ export type Expense = {
   voided: boolean;
   voidReason: string | null;
   hasPhoto: boolean;
+  /** Día en que se registró en el sistema (hora de la sede); solo en la lista de facturas de compra. */
+  createdOn?: string;
 };
 
 /** Un producto de la factura de compra que entra al inventario: a un insumo que ya existe o a uno nuevo. Cantidad en la unidad del insumo. */
@@ -304,10 +306,14 @@ export async function listPurchaseInvoices(actor: Actor, range: { from: string; 
     `SELECT e.id, e.kind, e.category, e.description, e.supplier, e.amount, to_char(e.spent_on, 'YYYY-MM-DD') AS "spentOn", e.paid_from_cash AS "paidFromCash",
             e.paid_from AS "paidFrom", e.invoice_number AS "invoiceNumber", to_char(e.due_on, 'YYYY-MM-DD') AS "dueOn",
             s.name AS "createdBy", l.name AS "locationName", (e.voided_at IS NOT NULL) AS voided, e.void_reason AS "voidReason",
-            EXISTS (SELECT 1 FROM expense_photos f WHERE f.expense_id = e.id) AS "hasPhoto"
-       FROM expenses e JOIN staff s ON s.id = e.created_by JOIN locations l ON l.id = e.location_id
-      WHERE e.business_id = $1 AND e.location_id = $2 AND e.spent_on BETWEEN $3 AND $4
-      ORDER BY e.spent_on DESC, e.created_at DESC
+            EXISTS (SELECT 1 FROM expense_photos f WHERE f.expense_id = e.id) AS "hasPhoto",
+            to_char(e.created_at AT TIME ZONE b.timezone, 'YYYY-MM-DD') AS "createdOn"
+       FROM expenses e JOIN staff s ON s.id = e.created_by JOIN locations l ON l.id = e.location_id JOIN businesses b ON b.id = e.business_id
+      -- La fecha de la factura la lee la IA de la foto: una factura de ayer registrada hoy también sale en «Hoy»
+      -- (5 nov 2026, Rigoberto: «la última factura guarda pero no me aparece en las facturas»).
+      WHERE e.business_id = $1 AND e.location_id = $2
+        AND (e.spent_on BETWEEN $3 AND $4 OR (e.created_at AT TIME ZONE b.timezone)::date BETWEEN $3 AND $4)
+      ORDER BY e.created_at DESC
       LIMIT 200`,
     [actor.businessId, actor.locationId, range.from, range.to],
   );

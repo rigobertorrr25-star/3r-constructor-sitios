@@ -166,7 +166,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                       {e.description}
                     </span>
                     <span className="block text-[12.5px] text-muted-foreground">
-                      {[e.spentOn, t(EXPENSE_LABEL[e.category]), e.supplier, e.createdBy, e.invoiceNumber ? t('Factura {n}', { n: e.invoiceNumber }) : null, e.paidFrom === null ? t('por pagar') : e.paidFrom ? t(PAID_FROM_LABEL[e.paidFrom]) : null, e.voided ? t('Anulado') : null].filter(Boolean).join(' · ')}
+                      {[e.createdOn && e.createdOn !== e.spentOn ? t('Fecha de la factura {date} · registrada {created}', { date: e.spentOn, created: e.createdOn }) : e.spentOn, t(EXPENSE_LABEL[e.category]), e.supplier, e.createdBy, e.invoiceNumber ? t('Factura {n}', { n: e.invoiceNumber }) : null, e.paidFrom === null ? t('por pagar') : e.paidFrom ? t(PAID_FROM_LABEL[e.paidFrom]) : null, e.voided ? t('Anulado') : null].filter(Boolean).join(' · ')}
                     </span>
                   </span>
                   <span className="font-semibold">{formatCop(e.amount)}</span>

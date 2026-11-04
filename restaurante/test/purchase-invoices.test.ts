@@ -118,6 +118,12 @@ describe('facturas de compra con foto', { skip: url ? false : 'sin TEST_DATABASE
     assert.ok(listed.some((e) => e.description === 'Cerveza y limones' && e.kind === 'supplies'));
     await assert.rejects(fin.addExpense(cashier, { ...base, kind: 'expense', lines: [{ itemId: beer, quantity: 1, total: 4000 }] }), { code: 'INVALID' });
     await assert.rejects(fin.addExpense(cashier, { ...base, kind: 'otro' }), { code: 'INVALID' });
+    // Una factura con fecha de otro día registrada hoy también sale en «Hoy» (5 nov 2026).
+    const old = await fin.addExpense(cashier, { kind: 'expense', category: 'other', description: 'Factura vieja', amount: 1000, spentOn: '2026-01-15' });
+    const today2 = (await fin.listPurchaseInvoices(cashier, { from: today, to: today })).find((e) => e.id === old)!;
+    assert.equal(today2.spentOn, '2026-01-15');
+    assert.equal(today2.createdOn, today);
+    assert.ok((await fin.listPurchaseInvoices(cashier, { from: '2026-01-15', to: '2026-01-15' })).some((e) => e.id === old));
   });
 
   it('separa insumos y gastos, y las bolsas quedan como gasto aparte (también en la caja)', async () => {

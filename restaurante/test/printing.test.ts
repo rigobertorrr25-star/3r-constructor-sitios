@@ -146,6 +146,11 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     assert.equal(bill.length, 1);
     assert.equal(bill[0].printerId, cashP);
     assert.ok(bill[0].preview.includes('PRECUENTA · Mesa 7') && bill[0].preview.includes('$90.000'), bill[0].preview);
+    assert.ok(bill[0].preview.includes('Propina sugerida (10 %)') && bill[0].preview.includes('$99.000'), bill[0].preview);
+    // Ya cobrada, el 10 % sigue saliendo en el papel (5 nov 2026).
+    const paid = { balance: 0, total: 85000, suggestedTipPercent: 10 };
+    assert.deepEqual(printing.billTip({ ...paid, tips: 0 }, 0), { label: 'Propina sugerida (10 %)', amount: '$8.500', totalLabel: 'Total con propina', withTip: '$93.500' });
+    assert.deepEqual(printing.billTip({ ...paid, tips: 8500 }, 0), { label: 'Propina / servicio', amount: '$8.500', totalLabel: 'Total pagado', withTip: '$93.500' });
   });
 
   it('el programa del local pide los trabajos con su código y avisa si salieron', async () => {
