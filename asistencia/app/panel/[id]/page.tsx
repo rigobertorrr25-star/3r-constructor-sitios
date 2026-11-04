@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AddRecordForm, AvatarControls, DeleteManagerButton, EmployeeForm, KioskLink, ManagerForm, RecordEditor, ResetPinButton, ShiftsForm } from '@/components/panel-forms';
 import { AutoRefresh } from '@/components/auto-refresh';
-import { card } from '@/components/ui';
+import { card, darkButton, glassDark, quietButton } from '@/components/ui';
+import { AlarmClock, BarChart3, CalendarCheck, Clock3, DoorOpen, Download, QrCode, ShieldCheck, Users, type LucideIcon } from 'lucide-react';
 import { canView, requireViewer } from '@/lib/auth';
-import { t } from '@/lib/i18n';
+import { locale, t } from '@/lib/i18n';
 import { getLang } from '@/lib/lang';
 import {
   LATE_GRACE_MIN,
@@ -25,6 +26,7 @@ import {
   totalsByEmployee,
   weekOf,
   bogotaDay,
+  greetingKey,
   workedMinutes,
 } from '@/lib/report';
 import { getBusiness, listManagers, listRecords, type AttendanceRecord } from '@/lib/store';
@@ -35,8 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const sectionTitle = 'font-display text-[22px] font-semibold text-foreground';
-const subCard = 'rounded-3xl border border-black/[0.08] bg-black/[0.02] p-4 sm:p-5';
-const navButton = 'rounded-full border border-black/[0.12] px-4 py-2 transition hover:bg-black/[0.06]';
+const subCard = 'rounded-3xl border border-white/70 bg-white/45 p-4 sm:p-5';
 
 const TABS = ['reporte', 'empleados', 'turnos', 'tablet', 'jefes'] as const;
 type Tab = (typeof TABS)[number];
@@ -66,19 +67,23 @@ function Avatar({ name, src, live = false, size = 'size-9' }: { name: string; sr
   );
 }
 
-function Stat({ label, value, tone = 'default' }: { label: string; value: string; tone?: 'default' | 'warning' | 'danger' }) {
+function Stat({ icon: Icon, label, value, tone = 'default' }: { icon: LucideIcon; label: string; value: string; tone?: 'default' | 'warning' | 'danger' }) {
   const color = tone === 'warning' ? 'text-warning' : tone === 'danger' ? 'text-destructive' : 'text-foreground';
   return (
-    <div className="rounded-3xl border border-black/[0.08] bg-black/[0.02] px-5 py-4">
-      <p className="text-[13px] text-muted-foreground">{label}</p>
-      <p className={`mt-1 font-display text-[20px] font-semibold tabular-nums sm:text-[26px] ${color}`}>{value}</p>
+    <div className={`${card} lift !p-5`}>
+      <span className="flex size-9 items-center justify-center rounded-full bg-white/80 text-foreground shadow-sm">
+        <Icon className="size-[18px]" aria-hidden="true" />
+      </span>
+      <p className={`mt-4 font-display text-[22px] leading-none font-bold whitespace-nowrap tabular-nums sm:text-[26px] ${color}`}>{value}</p>
+      <p className="mt-2 text-[13px] font-medium text-foreground/75">{label}</p>
     </div>
   );
 }
+
 const th = 'px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-wide text-muted-foreground';
 const td = 'px-4 py-3 text-[14px] text-foreground';
 const dateInput =
-  'rounded-2xl border border-black/[0.12] bg-black/[0.04] px-3 py-2 text-[14px] text-foreground [color-scheme:light] focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
+  'rounded-2xl border border-white/70 bg-white/70 px-3 py-2 text-[14px] text-foreground [color-scheme:light] focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
 
 export default async function AttendanceBusinessPage({
   params,
@@ -135,9 +140,33 @@ export default async function AttendanceBusinessPage({
     { minutes: 0, late: 0, early: 0, missing: 0 },
   );
 
-  const tabLabels: Record<Tab, string> = {
+
+  const greeting = t(lang, greetingKey(new Date(now)));
+  const todayLabel = formatDay(today, lang);
+
+  // Horas por día (solo jornadas con salida) y puntualidad, para las dos gráficas del reporte.
+  const dayList: string[] = [];
+  for (let day = from; day <= to; day = addDays(day, 1)) dayList.push(day);
+  const minutesByDay = new Map<string, number>();
+  let withShift = 0;
+  let lateArrivals = 0;
+  for (const record of records) {
+    const day = bogotaDay(new Date(record.clockIn));
+    const worked = workedMinutes(record);
+    if (worked !== null) minutesByDay.set(day, (minutesByDay.get(day) ?? 0) + worked);
+    if (inferShift(record, business.shifts)) {
+      withShift += 1;
+      if (minutesLate(record, business.shifts)) lateArrivals += 1;
+    }
+  }
+  const barDay = new Intl.DateTimeFormat(locale(lang), { weekday: 'short', day: 'numeric', timeZone: 'America/Bogota' });
+  const maxDayMinutes = Math.max(60, ...dayList.map((day) => minutesByDay.get(day) ?? 0));
+  const onTimePct = withShift ? Math.round(((withShift - lateArrivals) / withShift) * 100) : null;
+
+  const navIcons: Record<Tab, typeof BarChart3> = { reporte: BarChart3, empleados: Users, turnos: Clock3, tablet: QrCode, jefes: ShieldCheck };
+  const navLabels: Record<Tab, string> = {
     reporte: t(lang, 'reportTitle'),
-    empleados: `${t(lang, 'employees')} · ${active.length}`,
+    empleados: t(lang, 'employees'),
     turnos: t(lang, 'shifts'),
     tablet: t(lang, 'tabTablet'),
     jefes: t(lang, 'managers'),
@@ -145,107 +174,207 @@ export default async function AttendanceBusinessPage({
 
   return (
     <>
-      {isAdmin ? (
-        <Link href="/panel" className="text-[14px] text-muted-foreground transition hover:text-foreground">
-          {t(lang, 'backToBusinesses')}
-        </Link>
-      ) : (
-        <p className="text-[14px] text-muted-foreground">{t(lang, 'managerGreeting', { name: viewer.name })}</p>
-      )}
-      <h1 className="mt-2 font-display text-[32px] font-bold tracking-tight text-foreground">{business.name}</h1>
-
       <AutoRefresh />
-
-      {/* En turno ahora */}
-      <section className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-3xl border border-success/20 bg-success/[0.05] px-5 py-4">
-        <h2 className="flex items-center gap-2 text-[14px] font-semibold text-foreground">
-          <span className="size-2 rounded-full bg-success shadow-[0_0_10px_#12855b80]" aria-hidden="true" />
-          {t(lang, 'workingNowTitle')} · {openNow.length}
-        </h2>
-        {openNow.length === 0 ? (
-          <p className="text-[14px] text-muted-foreground">{t(lang, 'nobodyWorking')}</p>
-        ) : (
-          <ul className="flex flex-wrap gap-2">
-            {openNow.map((record) => (
-              <li key={record.id} className="flex items-center gap-2 rounded-full bg-black/[0.04] py-1 pr-3 pl-1 text-[13.5px]">
-                <Avatar name={record.employee.name} src={record.employee.avatar} live />
-                <span className="text-foreground">{record.employee.name}</span>
-                <span className="text-muted-foreground">{t(lang, 'workingNowSince', { time: formatClock(new Date(record.clockIn), lang) })}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {isAdmin ? (
-        <nav aria-label={business.name} className="mt-6 flex flex-wrap gap-1 rounded-3xl border border-black/[0.08] bg-black/[0.02] p-1">
-          {TABS.map((key) => (
-            <Link
-              key={key}
-              href={tabHref(key)}
-              aria-current={tab === key ? 'page' : undefined}
-              className={`rounded-full px-3 py-2 text-[14px] font-medium transition sm:px-4 ${
-                tab === key ? 'bg-black/[0.06] text-foreground' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tabLabels[key]}
+      <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)]">
+        {/* Menú lateral (en computador) */}
+        <aside className={`${glassDark} hidden h-fit flex-col gap-1 p-3 lg:sticky lg:top-4 lg:flex`}>
+          {isAdmin ? (
+            <Link href="/panel" className="mb-1 rounded-xl px-3 py-2 text-[13px] text-white/60 transition hover:bg-white/10 hover:text-white">
+              {t(lang, 'backToBusinesses')}
             </Link>
-          ))}
-        </nav>
-      ) : null}
+          ) : null}
+          <p className="px-3 pt-1 text-[11px] font-semibold tracking-[0.12em] text-white/45 uppercase">{t(lang, 'navBusiness')}</p>
+          <div className="flex items-center gap-3 rounded-2xl px-3 py-2">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-white/15 font-display text-[15px] font-bold">{business.name.trim()[0]?.toUpperCase()}</span>
+            <span className="min-w-0 truncate text-[14px] font-semibold">{business.name}</span>
+          </div>
+          <p className="mt-2 px-3 pt-1 text-[11px] font-semibold tracking-[0.12em] text-white/45 uppercase">{t(lang, 'navSection')}</p>
+          <nav aria-label={business.name} className="flex flex-col gap-1">
+            {(isAdmin ? TABS : (['reporte'] as const)).map((key) => {
+              const Icon = navIcons[key];
+              return (
+                <Link
+                  key={key}
+                  href={tabHref(key)}
+                  aria-current={tab === key ? 'page' : undefined}
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] transition ${
+                    tab === key ? 'bg-[#1aa3d9] font-medium text-white shadow-[0_8px_20px_-8px_#1aa3d9]' : 'text-white/80 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <Icon className="size-[18px]" aria-hidden="true" />
+                  <span className="flex-1">{navLabels[key]}</span>
+                  {key === 'empleados' ? (
+                    <span className="rounded-full bg-white/15 px-2 py-0.5 text-[11.5px] tabular-nums">{active.length}</span>
+                  ) : null}
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.06] p-3">
+            <p className="flex items-center justify-between text-[12.5px] text-white/80">
+              <span>{t(lang, 'workingNowTitle')}</span>
+              <span className="tabular-nums text-white/60">{t(lang, 'activeNowOf', { n: openNow.length, total: active.length })}</span>
+            </p>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/15">
+              <div className="h-full rounded-full bg-[#5ee0c0]" style={{ width: `${active.length ? Math.round((openNow.length / active.length) * 100) : 0}%` }} />
+            </div>
+          </div>
+        </aside>
 
-      <div className="mt-6">
+        {/* Panel principal de vidrio */}
+        <div className="min-w-0 rounded-[32px] border border-white/40 bg-white/25 p-3 shadow-[var(--shadow-glass)] backdrop-blur-2xl sm:p-7">
+          {isAdmin ? (
+            <Link href="/panel" className="text-[13px] text-foreground/70 transition hover:text-foreground lg:hidden">
+              {t(lang, 'backToBusinesses')}
+            </Link>
+          ) : null}
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h1 className="font-display text-[30px] leading-tight font-bold tracking-tight text-foreground sm:text-[34px]">
+                {viewer.role === 'manager' ? t(lang, 'greetingName', { greeting, name: viewer.name }) : greeting}
+              </h1>
+              <p className="mt-1 text-[14px] text-foreground/70 first-letter:uppercase">
+                {business.name} · {t(lang, 'greetingSub', { date: todayLabel, n: openNow.length })}
+              </p>
+            </div>
+            {tab === 'reporte' ? (
+              <a href={`/panel/${id}/excel?from=${from}&to=${to}&lang=${lang}`} download className={darkButton}>
+                <Download className="size-4" aria-hidden="true" />
+                {t(lang, 'downloadExcel')}
+              </a>
+            ) : null}
+          </div>
+
+          {/* Pestañas (en celular y tablet) */}
+          {isAdmin ? (
+            <nav aria-label={business.name} className="mt-5 flex gap-1 overflow-x-auto rounded-full border border-white/60 bg-white/40 p-1 lg:hidden">
+              {TABS.map((key) => (
+                <Link
+                  key={key}
+                  href={tabHref(key)}
+                  aria-current={tab === key ? 'page' : undefined}
+                  className={`shrink-0 rounded-full px-3.5 py-2 text-[13.5px] font-medium transition ${
+                    tab === key ? 'bg-[var(--ink)] text-white' : 'text-foreground/70 hover:text-foreground'
+                  }`}
+                >
+                  {navLabels[key]}
+                </Link>
+              ))}
+            </nav>
+          ) : null}
+
+          {/* En turno ahora */}
+          <section className={`${card} mt-5 flex flex-wrap items-center gap-x-4 gap-y-3 !p-4`}>
+            <h2 className="flex items-center gap-2 text-[14px] font-semibold text-foreground">
+              <span className="size-2 rounded-full bg-success shadow-[0_0_10px_#0f7a5580]" aria-hidden="true" />
+              {t(lang, 'workingNowTitle')} · {openNow.length}
+            </h2>
+            {openNow.length === 0 ? (
+              <p className="text-[14px] text-muted-foreground">{t(lang, 'nobodyWorking')}</p>
+            ) : (
+              <ul className="flex flex-wrap gap-2">
+                {openNow.map((record) => (
+                  <li key={record.id} className="flex items-center gap-2 rounded-full bg-white/60 py-1 pr-3 pl-1 text-[13.5px]">
+                    <Avatar name={record.employee.name} src={record.employee.avatar} live />
+                    <span className="text-foreground">{record.employee.name}</span>
+                    <span className="text-muted-foreground">{t(lang, 'workingNowSince', { time: formatClock(new Date(record.clockIn), lang) })}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+      <div className="mt-5">
         {tab === 'reporte' ? (
-          <section className={card}>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className={sectionTitle}>
+          <section className="space-y-5">
+            <div className={`${card} flex flex-wrap items-center justify-between gap-3 !p-4`}>
+              <h2 className="font-display text-[19px] font-semibold text-foreground">
                 {formatShortDay(from, lang)} – {formatShortDay(to, lang)}
               </h2>
               <div className="flex flex-wrap items-center gap-2 text-[14px]">
-                <Link href={range(addDays(from, -7))} className={navButton}>
+                <Link href={range(addDays(from, -7))} className={quietButton}>
                   {t(lang, 'previousWeek')}
                 </Link>
                 {from !== thisWeek.from ? (
-                  <Link href={range(thisWeek.from)} className={navButton}>
+                  <Link href={range(thisWeek.from)} className={quietButton}>
                     {t(lang, 'thisWeek')}
                   </Link>
                 ) : null}
-                <Link href={range(addDays(from, 7))} className={navButton}>
+                <Link href={range(addDays(from, 7))} className={quietButton}>
                   {t(lang, 'nextWeek')}
                 </Link>
-                <a
-                  href={`/panel/${id}/excel?from=${from}&to=${to}&lang=${lang}`}
-                  download
-                  className="rounded-full bg-primary px-4 py-2 font-medium text-primary-foreground transition hover:shadow-[var(--shadow-glow)]"
-                >
-                  {t(lang, 'downloadExcel')}
-                </a>
               </div>
+              <details className="w-full">
+                <summary className="cursor-pointer text-[14px] text-primary hover:underline">{t(lang, 'chooseDates')}</summary>
+                <form method="get" className="mt-3 flex flex-wrap items-end gap-3 rounded-2xl bg-white/50 p-4">
+                  <label className="space-y-1.5">
+                    <span className="block text-[13px] font-medium text-foreground">{t(lang, 'rangeFrom')}</span>
+                    <input type="date" name="desde" defaultValue={from} required className={dateInput} />
+                  </label>
+                  <label className="space-y-1.5">
+                    <span className="block text-[13px] font-medium text-foreground">{t(lang, 'rangeTo')}</span>
+                    <input type="date" name="hasta" defaultValue={to} min={from} required className={dateInput} />
+                  </label>
+                  <button type="submit" className={darkButton}>
+                    {t(lang, 'showRange')}
+                  </button>
+                  <p className="w-full text-[12.5px] text-muted-foreground">{t(lang, 'rangeHint')}</p>
+                </form>
+              </details>
             </div>
 
-            <details className="mt-4">
-              <summary className="cursor-pointer text-[14px] text-primary hover:underline">{t(lang, 'chooseDates')}</summary>
-              <form method="get" className="mt-3 flex flex-wrap items-end gap-3 rounded-2xl bg-black/[0.03] p-4">
-                <label className="space-y-1.5">
-                  <span className="block text-[13px] font-medium text-foreground">{t(lang, 'rangeFrom')}</span>
-                  <input type="date" name="desde" defaultValue={from} required className={dateInput} />
-                </label>
-                <label className="space-y-1.5">
-                  <span className="block text-[13px] font-medium text-foreground">{t(lang, 'rangeTo')}</span>
-                  <input type="date" name="hasta" defaultValue={to} min={from} required className={dateInput} />
-                </label>
-                <button type="submit" className="rounded-full border border-black/[0.14] px-5 py-2.5 text-[14px] transition hover:bg-black/[0.06]">
-                  {t(lang, 'showRange')}
-                </button>
-                <p className="w-full text-[12.5px] text-muted-foreground">{t(lang, 'rangeHint')}</p>
-              </form>
-            </details>
+            <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+              <Stat icon={Clock3} label={t(lang, 'statHours')} value={formatMinutes(sum.minutes)} />
+              <Stat icon={CalendarCheck} label={t(lang, 'statWorkdays')} value={String(records.length)} />
+              <Stat icon={AlarmClock} label={t(lang, 'statLate')} value={String(sum.late)} tone={sum.late ? 'warning' : 'default'} />
+              <Stat icon={DoorOpen} label={t(lang, 'statMissingExit')} value={String(sum.missing)} tone={sum.missing ? 'danger' : 'default'} />
+            </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <Stat label={t(lang, 'statHours')} value={formatMinutes(sum.minutes)} />
-              <Stat label={t(lang, 'statWorkdays')} value={String(records.length)} />
-              <Stat label={t(lang, 'statLate')} value={String(sum.late)} tone={sum.late ? 'warning' : 'default'} />
-              <Stat label={t(lang, 'statMissingExit')} value={String(sum.missing)} tone={sum.missing ? 'danger' : 'default'} />
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <div className={`${card} lift`}>
+                <h3 className="text-[15px] font-semibold text-foreground">{t(lang, 'hoursByDay')}</h3>
+                <p className="text-[12.5px] text-muted-foreground">{t(lang, 'hoursByDaySub')}</p>
+                <div className="mt-5 flex h-48 items-end gap-1.5 sm:gap-3" role="img" aria-label={t(lang, 'hoursByDay')}>
+                  {dayList.map((day) => {
+                    const minutes = minutesByDay.get(day) ?? 0;
+                    const isToday = day === today;
+                    return (
+                      <div key={day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
+                        {minutes && dayList.length <= 14 ? (
+                          <span className="text-[11px] font-semibold whitespace-nowrap tabular-nums text-foreground/80">{Math.round(minutes / 60)} h</span>
+                        ) : null}
+                        <div
+                          title={`${formatShortDay(day, lang)}: ${formatMinutes(minutes)}`}
+                          className={`w-full max-w-[44px] rounded-t-xl rounded-b-md ${isToday ? 'bg-[#1aa3d9]' : 'bg-[#1aa3d9]/45'}`}
+                          style={{ height: `${Math.max(3, (minutes / maxDayMinutes) * 100)}%` }}
+                        />
+                        <span className="text-[11px] whitespace-nowrap text-muted-foreground">{dayList.length <= 14 ? barDay.format(new Date(`${day}T12:00:00-05:00`)) : day.slice(8)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className={`${card} lift`}>
+                <h3 className="text-[15px] font-semibold text-foreground">{t(lang, 'punctuality')}</h3>
+                <p className="text-[12.5px] text-muted-foreground">{t(lang, 'punctualitySub')}</p>
+                <div className="mt-5 flex flex-col items-center">
+                  <div
+                    className="relative flex size-40 items-center justify-center rounded-full"
+                    style={{ background: `conic-gradient(#1aa3d9 ${(onTimePct ?? 0) * 3.6}deg, #ffffff99 0deg)` }}
+                    role="img"
+                    aria-label={`${t(lang, 'punctuality')}: ${onTimePct ?? 0}%`}
+                  >
+                    <div className="flex size-[124px] flex-col items-center justify-center rounded-full bg-white/85">
+                      <span className="font-display text-[30px] font-bold tabular-nums text-foreground">{onTimePct === null ? '—' : `${onTimePct}%`}</span>
+                      <span className="text-[12px] text-muted-foreground">{t(lang, 'onTime')}</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 grid w-full grid-cols-2 gap-2 text-center text-[13px]">
+                    <span className="rounded-2xl bg-white/60 px-2 py-2 text-foreground">{t(lang, 'onTimeCount', { n: withShift - lateArrivals })}</span>
+                    <span className="rounded-2xl bg-white/60 px-2 py-2 text-warning">{t(lang, 'lateCount', { n: lateArrivals })}</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {isAdmin && business.employees.length ? (
@@ -253,13 +382,14 @@ export default async function AttendanceBusinessPage({
             ) : null}
 
             {records.length === 0 ? (
-              <p className="mt-5 text-[15px] text-muted-foreground">{t(lang, 'noRecords')}</p>
+              <p className={`${card} text-[15px] text-muted-foreground`}>{t(lang, 'noRecords')}</p>
             ) : (
               <>
-                <h3 className="mt-8 font-display text-[18px] font-semibold text-foreground">{t(lang, 'totals')}</h3>
-                <div className="mt-3 overflow-x-auto rounded-3xl border border-black/[0.08]">
+                <div className={card}>
+                <h3 className="font-display text-[18px] font-semibold text-foreground">{t(lang, 'totals')}</h3>
+                <div className="mt-3 overflow-x-auto rounded-3xl border border-white/70 bg-white/40">
                   <table className="w-full min-w-[640px] border-collapse">
-                    <thead className="bg-black/[0.03]">
+                    <thead className="bg-white/50">
                       <tr>
                         <th className={th}>{t(lang, 'colEmployee')}</th>
                         <th className={th}>{t(lang, 'colDays')}</th>
@@ -271,7 +401,7 @@ export default async function AttendanceBusinessPage({
                     </thead>
                     <tbody>
                       {totals.map((row) => (
-                        <tr key={row.employeeId} className="border-t border-black/[0.08]">
+                        <tr key={row.employeeId} className="border-t border-white/70">
                           <td className={td}>
                             <span className="flex items-center gap-3">
                               <Avatar name={row.name} src={row.avatar} />
@@ -299,17 +429,18 @@ export default async function AttendanceBusinessPage({
                   {t(lang, 'reportNote', { grace: LATE_GRACE_MIN })} {t(lang, 'autoRefresh')}
                   {business.shifts.length ? ` ${t(lang, 'shiftsReadOnly')}: ${business.shifts.map(shiftLabel).join(' · ')}.` : ''}
                 </p>
+                </div>
 
-                <div className="mt-8 space-y-4">
+                <div className="space-y-4">
                   {days.map(({ day, records: dayRecords }) => (
-                    <div key={day} className={subCard}>
+                    <div key={day} className={card}>
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
                         <h3 className="font-display text-[17px] font-semibold first-letter:uppercase text-foreground">{formatDay(day, lang)}</h3>
                         <span className="text-[13px] text-muted-foreground">
                           {dayRecords.length === 1 ? t(lang, 'dayWorkdaysOne') : t(lang, 'dayWorkdays', { n: dayRecords.length })}
                         </span>
                       </div>
-                      <ul className="mt-3 divide-y divide-black/[0.08]">
+                      <ul className="mt-3 divide-y divide-white/70">
                         {dayRecords.map((record) => {
                           const worked = workedMinutes(record);
                           const ongoing = ongoingMinutes(record, now);
@@ -336,7 +467,7 @@ export default async function AttendanceBusinessPage({
                                 </div>
                                 <div className="mt-1.5 flex flex-wrap gap-1.5 text-[12.5px]">
                                   {shift ? (
-                                    <span className="rounded-full bg-black/[0.05] px-2.5 py-0.5 text-muted-foreground">{t(lang, 'shiftLabel', { shift: shiftLabel(shift) })}</span>
+                                    <span className="rounded-full bg-white/70 px-2.5 py-0.5 text-muted-foreground">{t(lang, 'shiftLabel', { shift: shiftLabel(shift) })}</span>
                                   ) : null}
                                   {late ? (
                                     <span className="rounded-full bg-warning/10 px-2.5 py-0.5 text-warning">{t(lang, 'arrivedLate', { time: formatMinutes(late) })}</span>
@@ -369,7 +500,7 @@ export default async function AttendanceBusinessPage({
               <ul className="space-y-2 lg:order-1">
                 {[...active, ...inactive].map((employee) => (
                   <li key={employee.id}>
-                    <details className="rounded-2xl border border-black/[0.08] bg-black/[0.02] p-3">
+                    <details className="rounded-2xl border border-white/70 bg-white/45 p-3">
                       <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2">
                         <span className="flex items-center gap-3">
                           <Avatar name={employee.name} src={employee.avatar} size="size-11" />
@@ -378,7 +509,7 @@ export default async function AttendanceBusinessPage({
                           </span>
                         </span>
                         <span
-                          className={`rounded-full px-2.5 py-0.5 text-[12.5px] ${employee.hasPin ? 'bg-black/[0.05] text-muted-foreground' : 'bg-warning/10 text-warning'}`}
+                          className={`rounded-full px-2.5 py-0.5 text-[12.5px] ${employee.hasPin ? 'bg-white/70 text-muted-foreground' : 'bg-warning/10 text-warning'}`}
                         >
                           {employee.hasPin ? t(lang, 'pinCreated') : t(lang, 'pinMissing')}
                         </span>
@@ -431,7 +562,7 @@ export default async function AttendanceBusinessPage({
               <ul className="space-y-2">
                 {managers.length === 0 ? <li className="text-[14px] text-muted-foreground">{t(lang, 'noManagers')}</li> : null}
                 {managers.map((manager) => (
-                  <li key={manager.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-black/[0.08] bg-black/[0.02] px-3 py-3">
+                  <li key={manager.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/70 bg-white/45 px-3 py-3">
                     <span className="flex items-center gap-3">
                       <Avatar name={manager.name} />
                       <span className="text-[15px] font-medium text-foreground">{manager.name}</span>
@@ -447,6 +578,8 @@ export default async function AttendanceBusinessPage({
             </div>
           </section>
         ) : null}
+      </div>
+        </div>
       </div>
     </>
   );

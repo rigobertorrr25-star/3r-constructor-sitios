@@ -22,19 +22,19 @@ export default async function PanelPage() {
 
   return (
     <>
-      <h1 className="font-display text-[32px] font-bold tracking-tight text-foreground">{t(lang, 'businesses')}</h1>
-      <p className="mt-1 max-w-2xl text-[15px] text-muted-foreground">{t(lang, 'businessesIntro')}</p>
+      <h1 className="font-display text-[32px] font-bold tracking-tight text-white">{t(lang, 'businesses')}</h1>
+      <p className="mt-1 max-w-2xl text-[15px] text-white/70">{t(lang, 'businessesIntro')}</p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {businesses.map((business) => (
           <Link
             key={business.id}
             href={`/panel/${business.id}`}
-            className={`${card} group flex items-center gap-4 transition hover:border-primary/40`}
+            className={`${card} lift group flex items-center gap-4`}
           >
             <span
               aria-hidden="true"
-              className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/15 font-display text-[18px] font-bold text-primary"
+              className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--ink)] font-display text-[18px] font-bold text-white"
             >
               {business.name.trim()[0]?.toUpperCase()}
             </span>

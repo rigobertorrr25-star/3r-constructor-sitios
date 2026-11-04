@@ -86,7 +86,7 @@ export function AvatarControls({ businessId, employee, lang }: { businessId: str
     <div className="flex flex-wrap items-center gap-3">
       {/* eslint-disable-next-line @next/next/no-img-element -- dibujo SVG propio */}
       <img src={employee.avatar} alt="" width={56} height={56} className="size-14 rounded-full ring-1 ring-black/[0.06]" />
-      <form action={setAvatarGenderAction} className="inline-flex rounded-full border border-black/[0.12] p-0.5">
+      <form action={setAvatarGenderAction} className="inline-flex rounded-full border border-white/70 p-0.5">
         <input type="hidden" name="businessId" value={businessId} />
         <input type="hidden" name="employeeId" value={employee.id} />
         {option('m', t(lang, 'avatarMale'))}
@@ -149,7 +149,7 @@ export function KioskLink({ url, businessId, lang }: { url: string; businessId: 
   const [copied, setCopied] = useState(false);
   return (
     <div className="space-y-3">
-      <p className="break-all rounded-2xl bg-black/[0.04] px-4 py-3 text-[14px] text-foreground">{url}</p>
+      <p className="break-all rounded-2xl bg-white/50 px-4 py-3 text-[14px] text-foreground">{url}</p>
       <div className="flex flex-wrap gap-2">
         <a href={url} target="_blank" rel="noopener noreferrer" className={quietButton}>
           {t(lang, 'openTablet')}
@@ -192,7 +192,7 @@ export function RecordEditor({ businessId, record, lang }: { businessId: string;
   return (
     <details className="mt-2">
       <summary className="cursor-pointer text-[13px] text-primary hover:underline">{record.clockOut ? t(lang, 'fix') : t(lang, 'addExit')}</summary>
-      <form action={action} className="mt-3 space-y-3 rounded-2xl bg-black/[0.03] p-4">
+      <form action={action} className="mt-3 space-y-3 rounded-2xl bg-white/50 p-4">
         <input type="hidden" name="businessId" value={businessId} />
         <input type="hidden" name="recordId" value={record.id} />
         <div className="grid gap-3 sm:grid-cols-2">
@@ -272,7 +272,7 @@ export function AddRecordForm({ businessId, employees, lang }: { businessId: str
   const [state, action] = useActionState(addRecordAction, undefined);
   const v = state?.values;
   return (
-    <details className="mt-4 rounded-2xl border border-black/[0.1] p-4" open={Boolean(state?.error)}>
+    <details className="rounded-[28px] border border-white/60 bg-white/55 p-5 shadow-[var(--shadow-glass)] backdrop-blur-xl" open={Boolean(state?.error)}>
       <summary className="cursor-pointer text-[14px] font-medium text-primary">{t(lang, 'addRecord')}</summary>
       <form key={`add-${state?.ok ?? 0}-${state?.error ?? ''}`} action={action} className="mt-4 space-y-3">
         <p className="text-[13px] text-muted-foreground">{t(lang, 'addRecordIntro')}</p>
@@ -286,7 +286,7 @@ export function AddRecordForm({ businessId, employees, lang }: { businessId: str
             name="employeeId"
             required
             defaultValue={v?.employeeId ?? ''}
-            className="w-full rounded-2xl border border-black/[0.12] bg-black/[0.04] px-4 py-3 text-[15px] text-foreground focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+            className="w-full rounded-2xl border border-white/70 bg-white/50 px-4 py-3 text-[15px] text-foreground focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
           >
             <option value="" disabled className="bg-white">
               —

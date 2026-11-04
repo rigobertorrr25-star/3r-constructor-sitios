@@ -10,7 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t(lang, 'appName'), description: t(lang, 'appDescription'), robots: { index: false, follow: false } };
 }
 
-export const viewport: Viewport = { themeColor: '#f3f4f8' };
+export const viewport: Viewport = { themeColor: '#0d2c44' };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const lang = await getLang();

@@ -11,7 +11,7 @@ type Employee = { id: string; name: string; hasPin: boolean; avatar: string };
 
 
 const pinClass =
-  'mx-auto block w-48 rounded-2xl border border-black/[0.12] bg-black/[0.04] px-4 py-4 text-center font-display text-[36px] tracking-[0.5em] text-foreground transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
+  'mx-auto block w-48 rounded-2xl border border-white/70 bg-white/50 px-4 py-4 text-center font-display text-[36px] tracking-[0.5em] text-foreground transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
 
 function PinInput({ id, name, label, autoFocus }: { id: string; name: string; label: string; autoFocus?: boolean }) {
   return (
@@ -123,7 +123,7 @@ export function PunchForm({ slug, code, employees, lang }: { slug: string; code:
               <button
                 type="button"
                 onClick={() => choose(employee.id)}
-                className="flex w-full items-center gap-3 rounded-2xl border border-black/[0.1] bg-black/[0.03] px-3 py-3 text-left text-[16px] text-foreground transition hover:border-primary/50 hover:bg-black/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+                className="flex w-full items-center gap-3 rounded-2xl border border-white/70 bg-white/50 px-3 py-3 text-left text-[16px] text-foreground transition hover:border-primary/50 hover:bg-white/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- dibujo SVG propio */}
                 <img src={employee.avatar} alt="" width={44} height={44} className="size-11 shrink-0 rounded-full ring-1 ring-black/[0.06]" />
@@ -156,7 +156,7 @@ export function PunchForm({ slug, code, employees, lang }: { slug: string; code:
 
       {creating ? (
         <>
-          <p className="rounded-2xl bg-black/[0.04] px-4 py-3 text-center text-[14px] text-muted-foreground">
+          <p className="rounded-2xl bg-white/50 px-4 py-3 text-center text-[14px] text-muted-foreground">
             {t(lang, 'firstTimeNote')}
           </p>
           <PinInput id="pin" name="pin" label={t(lang, 'createPin')} autoFocus />

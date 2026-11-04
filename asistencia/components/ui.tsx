@@ -1,13 +1,25 @@
 import Image from 'next/image';
 import type { InputHTMLAttributes, ReactNode } from 'react';
 
-export const card = 'rounded-[32px] border border-black/[0.1] bg-card p-6 shadow-[var(--shadow-glass)]';
+/** Tarjeta de vidrio claro (letras oscuras). */
+export const card = 'rounded-[28px] border border-white/60 bg-white/55 p-4 shadow-[var(--shadow-glass)] backdrop-blur-xl sm:p-6';
+
+/** Vidrio oscuro para lo que va directo sobre el fondo azul (menú lateral, barra de arriba). */
+export const glassDark = 'rounded-[24px] border border-white/15 bg-white/[0.08] text-white backdrop-blur-xl';
+
+/** Botón oscuro, el principal de cada pantalla. */
+export const darkButton =
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[var(--ink)] px-4 py-2 text-[14px] font-medium text-white transition hover:shadow-[var(--shadow-glow)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]';
+
+/** Botón de vidrio sobre el fondo azul. */
+export const onDarkButton =
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[14px] text-white transition hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60';
 
 export const quietButton =
-  'inline-flex items-center justify-center whitespace-nowrap rounded-full border border-black/[0.12] px-4 py-2 text-[14px] transition hover:bg-black/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]';
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/70 bg-white/50 px-4 py-2 text-[14px] text-foreground transition hover:bg-white/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]';
 
 export const inputClass =
-  'w-full rounded-2xl border border-black/[0.12] bg-black/[0.04] px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground/70 transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
+  'w-full rounded-2xl border border-white/70 bg-white/70 px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground/70 transition focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]';
 
 /** El león de 3R, en círculo. */
 export function Lion({ size = 44, className = '', alt = 'León de 3R' }: { size?: number; className?: string; alt?: string }) {
@@ -40,7 +52,7 @@ export function Field({ label, hint, id, ...input }: FieldProps) {
 
 export function CheckField({ label, hint, ...input }: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-black/[0.1] bg-black/[0.03] p-4 transition hover:border-black/[0.2]">
+    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/70 bg-white/50 p-4 transition hover:bg-white/70">
       <input type="checkbox" className="mt-1 size-4 accent-[#4f5ee8]" {...input} />
       <span>
         <span className="block text-[14.5px] font-medium text-foreground">{label}</span>

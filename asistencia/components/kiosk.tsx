@@ -77,7 +77,7 @@ export function Kiosk({ secret, lang }: { secret: string; lang: Lang }) {
 
   if (problem === 'invalid') {
     return (
-      <p className="max-w-md text-center text-[18px] text-muted-foreground">
+      <p className="max-w-md text-center text-[18px] text-white/80">
         {t(lang, 'tabletInvalid')}
       </p>
     );
@@ -87,7 +87,7 @@ export function Kiosk({ secret, lang }: { secret: string; lang: Lang }) {
 
   // Acostada (horizontal), la tablet muestra el QR a la izquierda y el nombre y la hora a la derecha.
   return (
-    <div className={`flex w-full max-w-[560px] flex-col items-center gap-6 text-center min-[900px]:landscape:grid min-[900px]:landscape:max-w-[1100px] min-[900px]:landscape:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] min-[900px]:landscape:items-center min-[900px]:landscape:gap-14 min-[900px]:landscape:text-left`}>
+    <div className={`flex w-full max-w-[560px] flex-col items-center gap-6 rounded-[36px] border border-white/50 bg-white/40 p-6 text-center shadow-[var(--shadow-glass)] backdrop-blur-2xl sm:p-10 min-[900px]:landscape:grid min-[900px]:landscape:max-w-[1100px] min-[900px]:landscape:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] min-[900px]:landscape:items-center min-[900px]:landscape:gap-14 min-[900px]:landscape:text-left`}>
       <div className={`flex w-full flex-col items-center gap-3 min-[900px]:landscape:order-2 min-[900px]:landscape:items-start`}>
         <Lion size={72} alt={t(lang, 'lionAlt')} />
         <p className="font-display text-[clamp(28px,5vw,48px)] leading-tight font-bold tracking-tight text-foreground">{data?.name ?? '\u00a0'}</p>
@@ -107,7 +107,7 @@ export function Kiosk({ secret, lang }: { secret: string; lang: Lang }) {
         </div>
         {secondsLeft !== null && problem !== 'offline' ? (
           <div className="w-full max-w-[420px]" aria-hidden="true">
-            <div className="h-1.5 overflow-hidden rounded-full bg-black/[0.06]">
+            <div className="h-1.5 overflow-hidden rounded-full bg-white/50">
               <div className="h-full rounded-full bg-primary transition-[width] duration-1000 ease-linear" style={{ width: `${Math.min(100, (secondsLeft / 30) * 100)}%` }} />
             </div>
             <p className="mt-2 text-center text-[14px] tabular-nums text-muted-foreground">{t(lang, 'tabletNextCode', { s: secondsLeft })}</p>
