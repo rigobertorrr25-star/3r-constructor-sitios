@@ -222,6 +222,8 @@ describe('facturas de compra con foto', { skip: url ? false : 'sin TEST_DATABASE
     await assert.rejects(fin.voidExpense(cashier, id, ''), { code: 'INVALID' });
     await fin.voidExpense(cashier, id, 'Registrada dos veces');
     assert.equal(await expected(), before, 'los 47.000 y los 1.000 de bolsas vuelven');
+    const sum = (await cash.shiftSummary(cashier, (await cash.getOpenShift(cashier))!.id))!;
+    assert.ok(!sum.movements.some((m) => /Hielo para la noche/.test(m.reason)), 'la factura eliminada no sale ni como salida ni como entrada');
     assert.equal(await stock(), 0);
     const list = await fin.listPurchaseInvoices(cashier, { from: today, to: today });
     assert.equal(list.find((e) => e.id === id)!.voided, true);
