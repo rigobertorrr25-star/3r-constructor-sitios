@@ -242,3 +242,9 @@ export function recordsCsv(records: AttendanceRecord[], shifts: Shift[], lang: L
   });
   return '\uFEFF' + [header, ...rows].map((row) => row.map((cell) => csvCell(cell, sep)).join(sep)).join('\r\n') + '\r\n';
 }
+
+/** Saludo según la hora de Colombia. */
+export function greetingKey(date: Date): 'goodMorning' | 'goodAfternoon' | 'goodEvening' {
+  const hour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: 'America/Bogota' }).format(date));
+  return hour < 12 ? 'goodMorning' : hour < 19 ? 'goodAfternoon' : 'goodEvening';
+}

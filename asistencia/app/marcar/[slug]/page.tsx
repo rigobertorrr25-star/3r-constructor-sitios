@@ -6,17 +6,11 @@ import { PunchForm } from '@/components/punch-form';
 import { Alert, Lion, card } from '@/components/ui';
 import { t, type Lang } from '@/lib/i18n';
 import { getLang } from '@/lib/lang';
-import { formatClock } from '@/lib/report';
+import { formatClock, greetingKey } from '@/lib/report';
 import { AppError, getPublicBusiness, getPunchScreen } from '@/lib/store';
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: t(await getLang(), 'punchTitle') };
-}
-
-/** Saludo según la hora de Colombia. */
-function greeting(lang: Lang): string {
-  const hour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: 'America/Bogota' }).format(new Date()));
-  return t(lang, hour < 12 ? 'goodMorning' : hour < 19 ? 'goodAfternoon' : 'goodEvening');
 }
 
 function Shell({ title, lang, children }: { title: string; lang: Lang; children: ReactNode }) {
@@ -26,14 +20,14 @@ function Shell({ title, lang, children }: { title: string; lang: Lang; children:
       <header className="mb-6 flex w-full max-w-[420px] items-center gap-4">
         <Lion size={56} alt={t(lang, 'lionAlt')} />
         <div className="min-w-0">
-          <h1 className="truncate font-display text-[24px] leading-tight font-bold tracking-tight text-foreground">{title}</h1>
-          <p className="text-[15px] text-muted-foreground">
-            {greeting(lang)} · <span className="tabular-nums">{formatClock(new Date(), lang)}</span>
+          <h1 className="truncate font-display text-[24px] leading-tight font-bold tracking-tight text-white">{title}</h1>
+          <p className="text-[15px] text-white/70">
+            {t(lang, greetingKey(new Date()))} · <span className="tabular-nums">{formatClock(new Date(), lang)}</span>
           </p>
         </div>
       </header>
       <div className={`${card} w-full max-w-[420px]`}>{children}</div>
-      <p className="mt-6 max-w-[420px] text-center text-[11.5px] text-muted-foreground">{t(lang, 'avatarCredit')}</p>
+      <p className="mt-6 max-w-[420px] text-center text-[11.5px] text-white/55">{t(lang, 'avatarCredit')}</p>
     </main>
   );
 }
