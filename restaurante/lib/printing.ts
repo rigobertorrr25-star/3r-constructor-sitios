@@ -9,7 +9,7 @@ import { closingInventory, dailyForm, shiftIncidents, shiftSalesByCategory, shor
 import { AREA_LABEL } from './inventory';
 import { cashCountLines } from './cash-count';
 import { query, transaction, type Db } from './db';
-import { anulacion, cierre, comanda, cuadreDia, precuenta, prueba, ventasCategoria, type Ticket } from './escpos';
+import { anulacion, cierre, comanda, cuadreDia, precuenta, prueba, ventasCategoria, type PrecuentaInput, type Ticket } from './escpos';
 import { formatCop, formatDateTime, formatTime } from './format';
 import { todayIn } from './finance';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
@@ -270,6 +270,13 @@ export async function enqueueVoid(db: Db, who: Who & Pick<Actor, 'name'>, itemId
 }
 
 /** Precuenta a la impresora de caja. */
+export function billTip(bill: { balance: number; total: number; tips: number; suggestedTipPercent: number }, onBalance: number): PrecuentaInput['tip'] {
+  if (bill.balance > 0) return { label: `Propina sugerida (${bill.suggestedTipPercent} %)`, amount: formatCop(onBalance), totalLabel: 'Total con propina', withTip: formatCop(bill.balance + onBalance) };
+  if (bill.tips > 0) return { label: 'Propina / servicio', amount: formatCop(bill.tips), totalLabel: 'Total pagado', withTip: formatCop(bill.total + bill.tips) };
+  const tip = suggestedTipFor(bill.total, bill.suggestedTipPercent);
+  return { label: `Propina sugerida (${bill.suggestedTipPercent} %)`, amount: formatCop(tip), totalLabel: 'Total con propina', withTip: formatCop(bill.total + tip) };
+}
+
 export async function printBill(actor: Actor, sessionId: string) {
   requirePermission(actor, 'tables.bill');
   const bill = await getBill(actor, sessionId);
@@ -291,7 +298,9 @@ export async function printBill(actor: Actor, sessionId: string) {
         total: formatCop(bill.total),
         paid: bill.paid ? formatCop(bill.paid) : null,
         balance: bill.paid && bill.balance > 0 ? formatCop(bill.balance) : null,
-        tip: bill.balance > 0 && bill.suggestedTipPercent > 0 ? { percent: bill.suggestedTipPercent, amount: formatCop(tip), withTip: formatCop(bill.balance + tip) } : null,
+        // El 10 % sale siempre en el papel (5 nov 2026, Rigoberto: «imprimí la factura y no aparece el valor de servicio»):
+        // antes de cobrar, sobre lo que falta; ya cobrada, la propina que se marcó o, si no se marcó, la sugerida del total.
+        tip: bill.suggestedTipPercent > 0 || bill.tips > 0 ? billTip(bill, tip) : null,
       }),
     );
     if (!n) throw new AppError('CONFLICT', 'Esta sede no tiene impresora de caja. Agrégala en Impresoras.');

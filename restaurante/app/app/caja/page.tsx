@@ -54,7 +54,20 @@ export default async function CashPage() {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={t('Ventas del turno')} value={formatCop(s.sales)} hint={s.tablesClosed === 1 ? t('1 mesa cerrada') : t('{n} mesas cerradas', { n: s.tablesClosed })} />
-        <Stat label={t('Efectivo esperado en caja')} value={formatCop(s.expectedCash)} hint={t('Base + efectivo + entradas − salidas')} strong />
+        <Stat label={t('Efectivo esperado en caja')} value={formatCop(s.expectedCash)} hint={
+            // Con los números, para que se vea de dónde sale (5 nov 2026: Rigoberto no entendía un esperado de 205.000).
+            [
+              `${t('Base')} ${formatCop(s.shift.openingAmount)}`,
+              `+ ${t('efectivo')} ${formatCop(s.byMethod.cash.amount)}`,
+              s.byMethod.cash.tip ? `+ ${t('propinas')} ${formatCop(s.byMethod.cash.tip)}` : '',
+              s.movementsIn ? `+ ${t('entradas')} ${formatCop(s.movementsIn)}` : '',
+              s.movementsOut ? `− ${t('salidas')} ${formatCop(s.movementsOut)}` : '',
+            ]
+              .filter(Boolean)
+              .join(' ')
+          }
+          strong
+        />
         <Stat label={t('Propinas')} value={formatCop(s.tips)} />
         <Stat label={t('Descuentos')} value={formatCop(s.discounts)} hint={s.reversed ? t('Pagos reversados: {amount}', { amount: formatCop(s.reversed) }) : undefined} />
         {METHODS.map((m) => (

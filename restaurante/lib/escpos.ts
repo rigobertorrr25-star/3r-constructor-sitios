@@ -182,7 +182,7 @@ export type PrecuentaInput = {
   total: string;
   paid: string | null;
   balance: string | null;
-  tip: { percent: number; amount: string; withTip: string } | null;
+  tip: { label: string; amount: string; totalLabel: string; withTip: string } | null;
 };
 
 export function precuenta(width: number, p: PrecuentaInput) {
@@ -198,7 +198,7 @@ export function precuenta(width: number, p: PrecuentaInput) {
   t.row('TOTAL', p.total, { bold: true });
   if (p.paid) t.row('Abonado', p.paid);
   if (p.balance) t.row('Falta por pagar', p.balance, { bold: true });
-  if (p.tip) t.row(`Propina sugerida (${p.tip.percent} %)`, p.tip.amount).row('Total con propina', p.tip.withTip, { bold: true });
+  if (p.tip) t.row(p.tip.label, p.tip.amount).row(p.tip.totalLabel, p.tip.withTip, { bold: true });
   return t.rule().line('La propina es voluntaria.', { align: 'center' }).line('Este documento no es una factura.', { align: 'center' });
 }
 
