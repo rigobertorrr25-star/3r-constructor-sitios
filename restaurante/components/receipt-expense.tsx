@@ -83,7 +83,14 @@ export function ReceiptExpense({ today, items }: { today: string; items: StockIt
     const data = new FormData();
     data.set('foto', new File([blob], 'factura.jpg', { type: 'image/jpeg' }));
     startReading(async () => {
-      const result = await readReceiptAction(undefined, data);
+      let result: FormState;
+      try {
+        result = await readReceiptAction(undefined, data);
+      } catch {
+        // Si la lectura se corta (internet, el servidor tardó demasiado), que se vea y se pueda intentar otra vez.
+        setReadState({ error: t('No pudimos leer esta factura. Toma la foto otra vez o llena el gasto a mano.') });
+        return;
+      }
       setReadState(result);
       const v = result?.values;
       if (v) {

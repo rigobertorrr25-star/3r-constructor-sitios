@@ -14,6 +14,8 @@ import { getLang } from '@/lib/i18n/server';
 import { makeT, tr } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
+// Leer una factura con IA puede tardar más de 10 segundos (5 nov 2026: la segunda foto no cargaba).
+export const maxDuration = 60;
 
 export default async function InvoicesPage({ searchParams }: { searchParams: Promise<{ periodo?: string; compras?: string }> }) {
   const staff = await requireStaff('invoices.manage');
