@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { addLossAction, cashPaidOutAction, closeShiftAction, moveCashPaymentAction, movementAction, openShiftAction, voidLossAction } from '@/app/actions';
+import { addLossAction, cashPaidOutAction, closeShiftAction, correctClosingAction, moveCashPaymentAction, movementAction, openShiftAction, voidLossAction } from '@/app/actions';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Field, Select, TextArea, inputClass, quietButton } from './ui';
@@ -211,6 +211,124 @@ function ShortageHelper({ payments, timeZone }: { payments: CashPaymentRow[]; ti
   );
 }
 
+/** Arqueo: cuántos billetes y monedas hay de cada uno (cierre y corrección de un cierre). */
+function CashCountGrid({
+  counts,
+  setCounts,
+  total,
+  idPrefix = 'count',
+  open = true,
+}: {
+  counts: Record<string, string>;
+  setCounts: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  total: number;
+  idPrefix?: string;
+  open?: boolean;
+}) {
+  const t = useT();
+  return (
+    <details open={open} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-3">
+      <summary className="cursor-pointer text-[15px] font-semibold">{t('Arqueo de billetes y monedas')}</summary>
+      <p className="mt-1 text-[13px] text-muted-foreground">{t('Escribe cuántos hay de cada uno; el efectivo contado se suma solo.')}</p>
+      {(['bill', 'coin'] as const).map((kind) => (
+        <div key={kind} className="mt-3">
+          <p className="text-[13px] font-semibold text-muted-foreground">{kind === 'bill' ? t('Billetes') : t('Monedas')}</p>
+          <div className="mt-1.5 space-y-1.5">
+            {DENOMINATIONS.filter((d) => d.kind === kind).map((d) => {
+              const key = denominationKey(d);
+              const qty = Number(counts[key] || 0);
+              return (
+                <div key={key} className="grid grid-cols-[96px_1fr_auto] items-center gap-2 text-[14px]">
+                  <label htmlFor={`${idPrefix}-${key}`}>{formatCop(d.value)}</label>
+                  <input
+                    id={`${idPrefix}-${key}`}
+                    className={`${inputClass} py-1.5`}
+                    inputMode="numeric"
+                    placeholder="0"
+                    value={counts[key] ?? ''}
+                    onChange={(e) => setCounts((c) => ({ ...c, [key]: e.target.value.replace(/[^\d]/g, '') }))}
+                    aria-label={t('Cuántos de {amount}', { amount: formatCop(d.value) })}
+                  />
+                  <span className="min-w-[88px] text-right text-muted-foreground">{qty ? formatCop(qty * d.value) : ''}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      <p className="mt-3 flex justify-between border-t border-white/[0.06] pt-2 text-[15px] font-semibold">
+        <span>{t('Total del arqueo')}</span>
+        <span>{formatCop(total)}</span>
+      </p>
+    </details>
+  );
+}
+
+/**
+ * Corregir un cierre ya hecho (4 nov 2026: una cajera cerró sin contar toda la plata). Dueño y administrador, con motivo.
+ * Lo esperado no cambia; se corrige lo contado (a mano o con un arqueo nuevo) y cómo se repartió.
+ */
+export function CorrectClosingForm({
+  shiftId,
+  expected,
+  current,
+}: {
+  shiftId: string;
+  expected: number;
+  current: { counted: number; envelopeKitchen: number; envelopeBar: number; safeAmount: number };
+}) {
+  const t = useT();
+  const [counts, setCounts] = useState<Record<string, string>>({});
+  const [manual, setManual] = useState(String(current.counted));
+  const count = cleanCashCount(counts);
+  const total = cashCountTotal(count);
+  const counted = count ? String(total) : manual;
+  const diff = counted !== '' ? Number(counted.replace(/[^\d]/g, '')) - expected : null;
+  return (
+    <ActionForm action={correctClosingAction} className="mt-4 space-y-3">
+      {(state) => (
+        <>
+          <input type="hidden" name="shiftId" value={shiftId} />
+          <CashCountGrid counts={counts} setCounts={setCounts} total={total} idPrefix="fix" open={false} />
+          <input type="hidden" name="cashCount" value={count ? JSON.stringify(count) : ''} />
+          <Field
+            id="fix-countedCash"
+            label={t('Efectivo contado (corregido)')}
+            name="countedCash"
+            inputMode="numeric"
+            required
+            readOnly={Boolean(count)}
+            value={counted || (state?.values?.countedCash ?? '')}
+            onChange={(e) => setManual(e.target.value)}
+            hint={count ? t('Sale del arqueo.') : t('Escribe todo el efectivo que había, o haz el arqueo de nuevo.')}
+          />
+          {diff !== null ? (
+            <p className={`text-[14px] font-semibold ${diff === 0 ? 'text-success' : 'text-warning'}`}>
+              {diff === 0 ? t('Cuadra') : diff > 0 ? t('Sobran {amount}', { amount: formatCop(diff) }) : t('Faltan {amount}', { amount: formatCop(-diff) })}
+            </p>
+          ) : null}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field id="fix-envelopeKitchen" label={t('Sobre para la cocina')} name="envelopeKitchen" inputMode="numeric" defaultValue={state?.values?.envelopeKitchen ?? String(current.envelopeKitchen)} />
+            <Field id="fix-envelopeBar" label={t('Sobre para el bar')} name="envelopeBar" inputMode="numeric" defaultValue={state?.values?.envelopeBar ?? String(current.envelopeBar)} />
+            <Field id="fix-safeAmount" label={t('Caja fuerte')} name="safeAmount" inputMode="numeric" defaultValue={state?.values?.safeAmount ?? String(current.safeAmount)} />
+          </div>
+          <Field
+            id="fix-reason"
+            label={t('Motivo de la corrección')}
+            name="reason"
+            required
+            minLength={3}
+            maxLength={300}
+            placeholder={t('Faltó contar el efectivo del cajón de abajo…')}
+            defaultValue={state?.values?.reason}
+          />
+          <SubmitButton pendingText={t('Guardando…')}>{t('Guardar corrección')}</SubmitButton>
+        </>
+      )}
+    </ActionForm>
+  );
+}
+
 export function CloseShiftForm({ expected, cashPayments = [], timeZone = 'America/Bogota' }: { expected?: number; cashPayments?: CashPaymentRow[]; timeZone?: string }) {
   const t = useT();
   // Arqueo (28 oct 2026): cuántos billetes y monedas de cada uno; si se llena, el efectivo contado es su suma.
@@ -224,40 +342,7 @@ export function CloseShiftForm({ expected, cashPayments = [], timeZone = 'Americ
     <ActionForm action={closeShiftAction}>
       {(state) => (
         <>
-          <details open className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-3">
-            <summary className="cursor-pointer text-[15px] font-semibold">{t('Arqueo de billetes y monedas')}</summary>
-            <p className="mt-1 text-[13px] text-muted-foreground">{t('Escribe cuántos hay de cada uno; el efectivo contado se suma solo.')}</p>
-            {(['bill', 'coin'] as const).map((kind) => (
-              <div key={kind} className="mt-3">
-                <p className="text-[13px] font-semibold text-muted-foreground">{kind === 'bill' ? t('Billetes') : t('Monedas')}</p>
-                <div className="mt-1.5 space-y-1.5">
-                  {DENOMINATIONS.filter((d) => d.kind === kind).map((d) => {
-                    const key = denominationKey(d);
-                    const qty = Number(counts[key] || 0);
-                    return (
-                      <div key={key} className="grid grid-cols-[96px_1fr_auto] items-center gap-2 text-[14px]">
-                        <label htmlFor={`count-${key}`}>{formatCop(d.value)}</label>
-                        <input
-                          id={`count-${key}`}
-                          className={`${inputClass} py-1.5`}
-                          inputMode="numeric"
-                          placeholder="0"
-                          value={counts[key] ?? ''}
-                          onChange={(e) => setCounts((c) => ({ ...c, [key]: e.target.value.replace(/[^\d]/g, '') }))}
-                          aria-label={t('Cuántos de {amount}', { amount: formatCop(d.value) })}
-                        />
-                        <span className="min-w-[88px] text-right text-muted-foreground">{qty ? formatCop(qty * d.value) : ''}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-            <p className="mt-3 flex justify-between border-t border-white/[0.06] pt-2 text-[15px] font-semibold">
-              <span>{t('Total del arqueo')}</span>
-              <span>{formatCop(total)}</span>
-            </p>
-          </details>
+          <CashCountGrid counts={counts} setCounts={setCounts} total={total} />
           <input type="hidden" name="cashCount" value={count ? JSON.stringify(count) : ''} />
           <Field
             label={t('Efectivo contado')}

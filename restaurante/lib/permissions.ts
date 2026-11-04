@@ -54,7 +54,8 @@ export type Permission =
   | 'invoices.manage'
   | 'printers.manage'
   | 'waiters.verify'
-  | 'sales.view';
+  | 'sales.view'
+  | 'cash.correct';
 
 const GRANTS: Record<Permission, Role[]> = {
   'tables.view': ['owner', 'manager', 'cashier', 'service', 'waiter'],
@@ -100,6 +101,8 @@ const GRANTS: Record<Permission, Role[]> = {
   'waiters.verify': ['owner', 'manager'],
   // Mesas del día: lo cobrado, lo por cobrar y la propina. También la jefe de servicio (28 oct 2026, pedido de Rigoberto), que no cobra.
   'sales.view': ['owner', 'manager', 'cashier', 'service'],
+  // Corregir un cierre de caja ya hecho (4 nov 2026: una cajera cerró sin contar toda la plata). Siempre con motivo.
+  'cash.correct': ['owner', 'manager'],
 };
 
 export const can = (role: Role, permission: Permission) => GRANTS[permission].includes(role);

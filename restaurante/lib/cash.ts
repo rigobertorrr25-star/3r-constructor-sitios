@@ -50,6 +50,10 @@ export type Shift = {
   /** Día en que se abrió (AAAA-MM-DD, hora de la sede) y qué turno fue ese día: 1, 2… (dos cajeras al día, 30 oct 2026). */
   day: string;
   dayNumber: number;
+  /** Si el dueño o el administrador corrigió el cierre después (4 nov 2026). */
+  correctedBy: string | null;
+  correctedAt: Date | null;
+  correctionReason: string | null;
 };
 
 const SHIFT_SELECT = `SELECT c.id, c.opened_at AS "openedAt", o.name AS "openedBy", c.opening_amount AS "openingAmount", c.closed_at AS "closedAt",
@@ -58,8 +62,10 @@ const SHIFT_SELECT = `SELECT c.id, c.opened_at AS "openedAt", o.name AS "openedB
        to_char(c.opened_at AT TIME ZONE b.timezone, 'YYYY-MM-DD') AS day,
        (SELECT count(*)::int FROM cash_shifts y
          WHERE y.location_id = c.location_id AND y.staff_id IS NOT DISTINCT FROM c.staff_id AND y.opened_at <= c.opened_at
-           AND (y.opened_at AT TIME ZONE b.timezone)::date = (c.opened_at AT TIME ZONE b.timezone)::date) AS "dayNumber"
-  FROM cash_shifts c JOIN businesses b ON b.id = c.business_id JOIN staff o ON o.id = c.opened_by LEFT JOIN staff x ON x.id = c.closed_by`;
+           AND (y.opened_at AT TIME ZONE b.timezone)::date = (c.opened_at AT TIME ZONE b.timezone)::date) AS "dayNumber",
+       z.name AS "correctedBy", c.corrected_at AS "correctedAt", c.correction_reason AS "correctionReason"
+  FROM cash_shifts c JOIN businesses b ON b.id = c.business_id JOIN staff o ON o.id = c.opened_by LEFT JOIN staff x ON x.id = c.closed_by
+  LEFT JOIN staff z ON z.id = c.corrected_by`;
 
 type ShiftRow = Omit<Shift, 'openingAmount' | 'expectedCash' | 'countedCash' | 'envelopeKitchen' | 'envelopeBar' | 'safeAmount'> & {
   openingAmount: string;
@@ -326,6 +332,62 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
     tablesClosed: extra[0].tables,
     movements: moves,
   };
+}
+
+/**
+ * Corrige un cierre ya hecho (4 nov 2026, pedido de Rigoberto: «una empleada mandó un cierre por error y le faltó dinero
+ * por ingresar»). Solo dueño o administrador, siempre con motivo. Lo esperado no cambia (sale de las ventas); cambia lo
+ * contado y cómo se repartió. Si no se escribe un arqueo nuevo, el anterior se quita (ya no sumaría lo contado).
+ */
+export async function correctClosing(
+  actor: Actor,
+  shiftId: string,
+  input: { countedCash: number; reason: string; envelopeKitchen?: number; envelopeBar?: number; safeAmount?: number; cashCount?: unknown },
+) {
+  requirePermission(actor, 'cash.correct');
+  if (!isUuid(shiftId)) throw new AppError('NOT_FOUND', 'No encontramos ese cierre.');
+  const why = requireText(input.reason, 'Motivo de la corrección', 3, 300);
+  requireAmount(input.countedCash, 'Efectivo contado', { allowZero: true });
+  const envelopeKitchen = input.envelopeKitchen ?? 0;
+  const envelopeBar = input.envelopeBar ?? 0;
+  const safeAmount = input.safeAmount ?? 0;
+  requireAmount(envelopeKitchen, 'Sobre para la cocina', { allowZero: true });
+  requireAmount(envelopeBar, 'Sobre para el bar', { allowZero: true });
+  requireAmount(safeAmount, 'Caja fuerte', { allowZero: true });
+  const cashCount = cleanCashCount(input.cashCount);
+  if (cashCount && cashCountTotal(cashCount) !== input.countedCash)
+    throw new AppError('INVALID', `El arqueo suma ${money(cashCountTotal(cashCount))} y el efectivo contado dice ${money(input.countedCash)}: revísalos.`);
+  if (envelopeKitchen + envelopeBar + safeAmount > input.countedCash)
+    throw new AppError('INVALID', `Los sobres y la caja fuerte suman ${money(envelopeKitchen + envelopeBar + safeAmount)}: es más de lo contado (${money(input.countedCash)}).`);
+  await transaction(async (db) => {
+    const before = (
+      await db.query<{ closedAt: Date | null; expected: string; counted: string; kitchen: string; bar: string; safe: string }>(
+        `SELECT closed_at AS "closedAt", expected_cash AS expected, counted_cash AS counted, envelope_kitchen AS kitchen, envelope_bar AS bar, safe_amount AS safe
+           FROM cash_shifts WHERE id = $1 AND location_id = $2 AND business_id = $3 FOR UPDATE`,
+        [shiftId, actor.locationId, actor.businessId],
+      )
+    ).rows[0];
+    if (!before) throw new AppError('NOT_FOUND', 'No encontramos ese cierre.');
+    if (!before.closedAt) throw new AppError('CONFLICT', 'Esa caja sigue abierta: se corrige al cerrarla.');
+    await db.query(
+      `UPDATE cash_shifts SET counted_cash = $2, envelope_kitchen = $3, envelope_bar = $4, safe_amount = $5, cash_count = $6,
+              corrected_by = $7, corrected_at = now(), correction_reason = $8 WHERE id = $1`,
+      [shiftId, input.countedCash, envelopeKitchen, envelopeBar, safeAmount, cashCount ? JSON.stringify(cashCount) : null, actor.id, why],
+    );
+    const expected = Number(before.expected);
+    const diff = input.countedCash - expected;
+    await audit(db, actor, {
+      action: 'cash.correct',
+      entity: 'cash_shift',
+      entityId: shiftId,
+      summary: `Corrigió un cierre de caja: contado ${money(Number(before.counted))} → ${money(input.countedCash)}${diff === 0 ? ' (cuadra)' : diff > 0 ? ` (sobran ${money(diff)})` : ` (faltan ${money(-diff)})`}`,
+      reason: why,
+      data: {
+        before: { counted: Number(before.counted), envelopeKitchen: Number(before.kitchen), envelopeBar: Number(before.bar), safeAmount: Number(before.safe) },
+        after: { counted: input.countedCash, envelopeKitchen, envelopeBar, safeAmount },
+      },
+    });
+  });
 }
 
 /** Cierra la caja: se cuenta la plata y queda la diferencia contra lo esperado. */

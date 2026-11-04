@@ -6,6 +6,8 @@ import { closingInventory, dailyForm, shiftIncidents, shiftSalesByCategory, shor
 import { AREA_LABEL } from '@/lib/inventory';
 import { cashCountLines } from '@/lib/cash-count';
 import { PrintClosingButton } from '@/components/printer-forms';
+import { CorrectClosingForm } from '@/components/cash-forms';
+import { can } from '@/lib/permissions';
 import { formatCop, formatDateTime } from '@/lib/format';
 import { PageTitle, card, quietButton } from '@/components/ui';
 import { getLang } from '@/lib/i18n/server';
@@ -94,6 +96,13 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
           <p className="mt-1.5 text-[13px] text-muted-foreground">{t('Salen dos papeles en la impresora de caja: el cierre (cuadre, propina e inventario) y el formulario diario (ventas, salidas, facturas por pagar, pérdidas, totales y comentarios).')}</p>
         </div>
       ) : null}
+      {sh.correctedAt ? (
+        <p className={`${card} max-w-xl border-warning/50 text-[14px]`}>
+          <strong>{t('Cierre corregido')}</strong> ·{' '}
+          {t('por {name} el {date}: {reason}', { name: sh.correctedBy ?? '', date: formatDateTime(sh.correctedAt, staff.timezone, lang), reason: sh.correctionReason ?? '' })}
+          <span className="block text-[12.5px] text-muted-foreground">{t('Lo que decía antes queda en la auditoría.')}</span>
+        </p>
+      ) : null}
       <dl className={`${card} max-w-xl divide-y divide-white/[0.06] p-0`}>
         {rows.map(([k, v]) => (
           <div key={k} className="flex justify-between gap-4 px-5 py-2.5 text-[14.5px]">
@@ -102,6 +111,21 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
           </div>
         ))}
       </dl>
+
+      {/* Corregir el cierre (4 nov 2026): si la cajera cerró sin contar toda la plata. Dueño y administrador. */}
+      {sh.closedAt && sh.countedCash !== null && can(staff.role, 'cash.correct') ? (
+        <details className={`${card} max-w-xl`}>
+          <summary className="cursor-pointer font-display text-[17px] font-bold">{t('Corregir este cierre')}</summary>
+          <p className="mt-1 text-[13.5px] text-muted-foreground">
+            {t('Si se cerró por error o faltó contar plata: escribe lo que de verdad había. Lo esperado no cambia; queda quién corrigió, el motivo y lo que decía antes.')}
+          </p>
+          <CorrectClosingForm
+            shiftId={sh.id}
+            expected={sh.expectedCash ?? s.expectedCash}
+            current={{ counted: sh.countedCash, envelopeKitchen: sh.envelopeKitchen, envelopeBar: sh.envelopeBar, safeAmount: sh.safeAmount }}
+          />
+        </details>
+      ) : null}
 
       {cashCountLines(sh.cashCount).length ? (
         <section className={`${card} max-w-xl`}>

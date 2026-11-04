@@ -345,6 +345,7 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
           total: formatCop(x.total),
         })),
         result: diff === 0 ? 'CUADRA' : diff > 0 ? `SOBRAN ${formatCop(diff)}` : `FALTAN ${formatCop(-diff)}`,
+        correction: s.shift.correctedAt ? `por ${s.shift.correctedBy} el ${formatDateTime(s.shift.correctedAt, place.timezone)}: ${s.shift.correctionReason}` : null,
         tables: s.tablesClosed,
         // Las observaciones de la caja van al final de «Ventas por categoría»; el cierre de un mesero las trae aquí.
         notes: waiter ? s.shift.notes : null,

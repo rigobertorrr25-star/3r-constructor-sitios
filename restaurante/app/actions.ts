@@ -31,7 +31,7 @@ import { createReservation, requestReservation, seatReservation, updatePublicSet
 import { addExpense, payExpense, voidExpense, type PurchaseLine } from '@/lib/finance';
 import { addLoss, voidLoss } from '@/lib/losses';
 import { itemsForPurchase, listItems, registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
-import { addMovement, applyDiscount, closeShift, closeZeroBalance, moveCashPayment, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
+import { addMovement, applyDiscount, closeShift, closeZeroBalance, correctClosing, moveCashPayment, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
 import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { clearInventory, clearMenu, clearSales } from '@/lib/sales-reset';
@@ -657,6 +657,33 @@ export async function openShiftAction(_prev: FormState, formData: FormData): Pro
 }
 
 /** Cierra la caja y lleva al cuadre de ese turno (esperado, contado y diferencia). */
+/** Corregir un cierre ya hecho (dueño o administrador, con motivo). */
+export async function correctClosingAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const shiftId = text(formData, 'shiftId');
+  const optional = (name: string) => (text(formData, name) ? pesos(formData, name) : 0);
+  return run(
+    formData,
+    () =>
+      correctClosing(staff, shiftId, {
+        countedCash: pesos(formData, 'countedCash'),
+        reason: text(formData, 'reason'),
+        envelopeKitchen: optional('envelopeKitchen'),
+        envelopeBar: optional('envelopeBar'),
+        safeAmount: optional('safeAmount'),
+        cashCount: (() => {
+          try {
+            return JSON.parse(text(formData, 'cashCount') || 'null');
+          } catch {
+            return null;
+          }
+        })(),
+      }),
+    [`/app/caja/turno/${shiftId}`, '/app/caja', '/app/caja/dia'],
+    'Cierre corregido.',
+  );
+}
+
 export async function closeShiftAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   let shiftId = '';

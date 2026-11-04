@@ -131,4 +131,27 @@ describe('dos turnos de caja al día', { skip: url ? false : 'sin TEST_DATABASE_
     assert.equal(await report.dayReport(who, '2020-01-01'), null);
     await assert.rejects(report.dayReport({ ...waiter, businessName: '', locationName: '', timezone: 'America/Bogota' }, today), { code: 'FORBIDDEN' });
   });
+
+  it('el dueño corrige un cierre en el que faltó contar plata; la cajera no puede', async () => {
+    const today = finance.todayIn('America/Bogota');
+    const [, second] = await cash.dayShifts(lina, today);
+    assert.equal(day.shiftDifference(second), -5000);
+    await assert.rejects(cash.correctClosing(lina, second.shift.id, { countedCash: 120000, reason: 'Faltó contar' }), { code: 'FORBIDDEN' });
+    await assert.rejects(cash.correctClosing(owner, second.shift.id, { countedCash: 120000, reason: '' }), { code: 'INVALID' }, 'siempre con motivo');
+    await assert.rejects(cash.correctClosing(owner, second.shift.id, { countedCash: 120000, reason: 'Faltó contar', safeAmount: 130000 }), { code: 'INVALID' });
+    await assert.rejects(cash.correctClosing(owner, second.shift.id, { countedCash: 120000, reason: 'Faltó contar', cashCount: { b100000: 1 } }), { code: 'INVALID' });
+    await cash.correctClosing(owner, second.shift.id, { countedCash: 120000, reason: 'Faltó contar el cajón de abajo', cashCount: { b100000: 1, b20000: 1 } });
+    const after = (await cash.shiftSummary(owner, second.shift.id))!;
+    assert.equal(after.shift.countedCash, 120000);
+    assert.equal(day.shiftDifference(after), 0, 'ahora cuadra (lo esperado no cambió)');
+    assert.equal(after.shift.correctedBy, 'Dueña');
+    assert.equal(after.shift.correctionReason, 'Faltó contar el cajón de abajo');
+    assert.deepEqual(after.shift.cashCount, { b100000: 1, b20000: 1 });
+    const audit = await store.listAudit(owner, { action: 'cash.correct' });
+    assert.match(audit[0].summary, /\$115\.000 → \$120\.000 \(cuadra\)/);
+    // Una caja abierta no se corrige.
+    await cash.openShift(ana, 0);
+    const open = (await cash.getOpenShift(ana))!;
+    await assert.rejects(cash.correctClosing(owner, open.id, { countedCash: 0, reason: 'Prueba' }), { code: 'CONFLICT' });
+  });
 });
