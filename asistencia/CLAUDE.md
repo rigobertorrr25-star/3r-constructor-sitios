@@ -13,15 +13,24 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   el panel). Cada empleado crea su propio PIN la primera vez que escanea. En español e inglés (botón ES | EN; los jefes de
   Rigoberto son de EE. UU.): todo texto nuevo va en los dos idiomas en `asistencia/lib/i18n.ts`. Los jefes de
   cada negocio tienen acceso de solo lectura (sección "Jefes" del panel; entran con su clave en `/entrar`). Empleados cargados y tablet con QR listos (29 sep 2026).
-- Diseño (3 nov 2026, Rigoberto): versión **clara** (fondo gris muy claro, tarjetas blancas, lila 3R `#4f5ee8` de acento;
-  tokens en `app/globals.css`). Panel del negocio en pestañas (`?vista=reporte|empleados|turnos|tablet|jefes`), franja
-  "En turno ahora" y 4 números de resumen; tablet horizontal con barra de cuenta regresiva; celular con saludo según la hora.
+- Diseño (4 nov 2026, Rigoberto, con un video de referencia «Admin Dashboard V2»): estilo **vidrio**: fondo azul
+  petróleo con brillos (`--gradient-page`, en `body::before`), tarjetas de vidrio claro con letras oscuras (`card` en
+  `components/ui.tsx`), vidrio oscuro para la barra de arriba y el menú lateral (`glassDark`), botón principal oscuro
+  (`darkButton`), íconos `lucide-react` y tarjetas que suben al pasar el mouse (`.lift`). Panel del negocio: menú lateral
+  (en celular, pestañas) con `?vista=reporte|empleados|turnos|tablet|jefes`, saludo según la hora, «En turno ahora»,
+  4 tarjetas con ícono, gráfica de horas por día y anillo de puntualidad. Antes (3 nov) fue una versión clara y antes oscura.
   En el Excel y el panel ya no aparece "corregido a mano" (27 oct 2026, Rigoberto); por dentro se sigue guardando.
 - Avatares (3 nov 2026, Rigoberto): cada empleado tiene un dibujo automático, estilo «Adventurer» de DiceBear
   (Lisa Wischofsky, **CC BY 4.0**: el crédito va al pie del panel y del celular, no quitarlo). Sale del id,
   `employees.avatar_variant` («Otro avatar» lo sube) y hombre/mujer: `employees.avatar_gender` ('m'/'f') o, si está
   vacío, se adivina por el primer nombre (`lib/gender.ts`, nombres comunes de Colombia). Lo sirve `/avatar/{id}[-n]-{m|f}`
   sin guardar imágenes; peinados cortos para hombres y largos para mujeres en `app/avatar/[seed]/route.ts`.
+- Marcar en el celular (4 nov 2026, Rigoberto, video de referencia «OTP Verification V2»): el PIN va en 4 cuadritos
+  (un solo campo invisible por debajo; el que sigue se ilumina en coral `#ff6b4a`), se marca solo al completar los 4,
+  mientras verifica los cuadros se juntan en uno que gira y al terminar aparece un cuadro verde con chulito y brillo
+  verde (clases `pin-*`, `success-*` en `app/globals.css`). Mensaje chistoso según la hora (`punchMood` en
+  `lib/report.ts`): llegó tarde / temprano / a tiempo, o salió antes / con tiempo extra (+30 min) / a tiempo; varios
+  textos por caso (`mood*` en `lib/i18n.ts`, se elige uno al azar).
 - Vercel (3 nov 2026): el `ignoreCommand` publica también si no encuentra la publicación anterior (antes, cuando la
   última publicación quedaba a más de ~10 cambios, Vercel marcaba "falló" sin compilar).
 

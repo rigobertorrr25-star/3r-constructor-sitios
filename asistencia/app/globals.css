@@ -2,31 +2,36 @@
 
 /* Tokens de la marca 3R (design/REFERENCIA-LOVABLE.md), los mismos de la tienda. */
 :root {
-  /* Versión clara (3 nov 2026, pedido de Rigoberto): fondo gris muy claro, tarjetas blancas, lila 3R como acento. */
-  --surface-0: #f3f4f8;
-  --surface-1: #ffffff;
-  --surface-2: #eceef4;
+  /* Estilo vidrio (4 nov 2026, pedido de Rigoberto con un video de referencia): fondo azul petróleo con brillos,
+     tarjetas de vidrio claro con letras oscuras y menú lateral translúcido. */
+  --surface-0: #0d2c44;
+  --surface-1: #ffffff8c;
+  --surface-2: #ffffff66;
   --background: var(--surface-0);
-  --foreground: #11142a;
+  --foreground: #0f1b2d;
   --card: var(--surface-1);
-  --primary: #4f5ee8;
+  --primary: #0b78b0;
   --primary-foreground: #ffffff;
   --secondary: #d9468f;
-  --accent: #7c5cf0;
-  --muted: #eceef4;
-  --muted-foreground: #5d6375;
-  --destructive: #d42f2f;
-  --success: #12855b;
-  --warning: #b45d07;
-  --border: #11142a14;
-  --ring: #4f5ee873;
+  --accent: #1aa3d9;
+  --muted: #ffffff59;
+  --muted-foreground: #475569;
+  --destructive: #c62828;
+  --success: #0f7a55;
+  --warning: #a85400;
+  --border: #ffffff80;
+  --ring: #1aa3d980;
   --radius: 16px;
+  --ink: #0f1b2d;
 
-  --gradient-hero:
-    radial-gradient(ellipse 60% 50% at 85% -10%, #8a9bff2e, transparent 60%),
-    radial-gradient(ellipse 50% 50% at -10% 110%, #ff86db1f, transparent 60%);
-  --shadow-glass: 0 1px 2px #11142a0d, 0 16px 40px -20px #1b1f3a2e;
-  --shadow-glow: 0 10px 28px -10px #4f5ee880;
+  --gradient-hero: linear-gradient(transparent, transparent);
+  --gradient-page:
+    radial-gradient(1100px 700px at 12% -10%, #2a8fb066, transparent 60%),
+    radial-gradient(900px 600px at 100% 0%, #3b6fd455, transparent 60%),
+    radial-gradient(900px 700px at 75% 110%, #19b6a840, transparent 60%),
+    linear-gradient(160deg, #0a1f33 0%, #0f3a57 48%, #155c76 100%);
+  --shadow-glass: inset 0 1px 0 0 #ffffffb3, 0 1px 2px #0a1f330f, 0 24px 48px -24px #0a1f3366;
+  --shadow-glow: 0 12px 30px -12px #0a1f3399;
   --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -60,6 +65,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* El fondo azul queda quieto detrás de todo (también en celulares, donde background-attachment: fixed no sirve). */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--gradient-page);
+}
+
 /* Entrada suave de la confirmación; se desactiva si el usuario prefiere menos movimiento. */
 @keyframes rise {
   from {
@@ -76,7 +90,158 @@ body {
   animation: rise 600ms var(--ease-emphasized) both;
 }
 
+/* Las tarjetas suben un poco al pasar el mouse, como en la referencia. */
+.lift {
+  transition: transform 300ms var(--ease-emphasized), box-shadow 300ms var(--ease-emphasized);
+}
+.lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-glass), 0 28px 50px -24px #0a1f3380;
+}
+
+/* ───── PIN del celular: cuadritos, verificación y confirmación (como el video de referencia) ───── */
+.pin-box {
+  position: relative;
+  display: flex;
+  width: 58px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  border: 2px solid #ffffffb3;
+  background: #ffffff8c;
+  box-shadow: inset 0 1px 0 #ffffffcc;
+  transition: border-color 200ms, box-shadow 200ms, transform 350ms var(--ease-emphasized), opacity 350ms;
+}
+.pin-box-active {
+  border-color: #ff6b4a;
+  box-shadow: 0 0 0 4px #ff6b4a26;
+}
+.pin-box-filled {
+  border-color: #0f1b2d33;
+}
+/* Al completar los 4, el borde se enciende uno tras otro. */
+.pin-box-done {
+  animation: pin-trace 300ms var(--ease-emphasized) both;
+  animation-delay: calc(var(--i) * 70ms);
+}
+/* Mientras verifica, los cuadros se juntan en el centro y desaparecen. */
+.pin-box-merge {
+  transform: translateX(calc((1.5 - var(--i)) * 70px)) scale(0.85);
+  opacity: 0;
+}
+.pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--ink);
+  animation: pop-in 220ms var(--ease-emphasized) both;
+}
+.pin-caret {
+  width: 2px;
+  height: 26px;
+  border-radius: 2px;
+  background: #ff6b4a;
+  animation: blink 1s steps(1) infinite;
+}
+.pin-spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  border: 2.5px solid #ff6b4a;
+  background: #0f1b2d;
+  animation: spin-morph 900ms var(--ease-emphasized) infinite, fade-in 250ms 200ms both;
+}
+.pin-shake {
+  animation: shake 420ms ease both;
+}
+.success-glow {
+  background:
+    radial-gradient(circle at 50% 18%, #22c55e8c, transparent 58%),
+    linear-gradient(180deg, #22c55e33, #22c55e0d 70%);
+  animation: fade-in 600ms ease both;
+}
+.success-badge {
+  display: flex;
+  width: 76px;
+  height: 76px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  border: 2.5px solid #22c55e;
+  background: #0f1b2d;
+  color: #ffffff;
+  box-shadow: 0 0 34px #22c55e80;
+  animation: badge-in 520ms var(--ease-emphasized) both;
+}
+.check-draw {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: draw 420ms 300ms ease-out forwards;
+}
+.mood-pop {
+  animation: pop-in 450ms 650ms var(--ease-emphasized) both;
+}
+@keyframes pin-trace {
+  0% { border-color: #0f1b2d33; }
+  60% { border-color: #ff6b4a; box-shadow: 0 0 0 5px #ff6b4a33; }
+  100% { border-color: #ff6b4a; box-shadow: 0 0 0 0 #ff6b4a00; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+@keyframes spin-morph {
+  0% { transform: rotate(0deg); border-radius: 18px; }
+  50% { transform: rotate(135deg); border-radius: 28px; }
+  100% { transform: rotate(270deg); border-radius: 18px; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(9px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(4px); }
+}
+@keyframes badge-in {
+  0% { opacity: 0; transform: scale(0.5) rotate(-25deg); border-color: #ff6b4a; box-shadow: none; }
+  60% { opacity: 1; transform: scale(1.08) rotate(6deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .pin-box-done,
+  .pin-dot,
+  .pin-caret,
+  .pin-spinner,
+  .pin-shake,
+  .success-glow,
+  .success-badge,
+  .mood-pop {
+    animation: none;
+  }
+  .check-draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .lift,
+  .lift:hover {
+    transition: none;
+    transform: none;
+  }
   .rise {
     animation: none;
   }
