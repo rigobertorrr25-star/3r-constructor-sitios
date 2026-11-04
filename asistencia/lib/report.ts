@@ -145,6 +145,35 @@ export function minutesEarlyExit(record: Pick<AttendanceRecord, 'clockIn' | 'clo
   return early > grace ? early : null;
 }
 
+/** Cómo le fue con la hora al marcar, para el mensaje de la pantalla del celular. */
+export type PunchMood = 'late' | 'early' | 'onTime' | 'leftEarly' | 'overtime' | 'onTimeOut';
+
+/** Minutos que se quedó de más para contar como "horas extra" en el mensaje. */
+export const OVERTIME_MIN = 30;
+
+/**
+ * Llegada: tarde (más de la gracia), temprano (más de la gracia antes) o a tiempo. Salida: antes, con tiempo
+ * extra o a tiempo. Null si el negocio no tiene turnos. `minutes` siempre positivo.
+ */
+export function punchMood(
+  record: Pick<AttendanceRecord, 'clockIn' | 'clockOut'>,
+  shifts: Shift[],
+  grace = LATE_GRACE_MIN,
+): { mood: PunchMood; minutes: number } | null {
+  const shift = inferShift(record, shifts);
+  if (!shift) return null;
+  if (!record.clockOut) {
+    const diff = clockDiff(minuteOfDay(record.clockIn), toMinutes(shift.start));
+    if (diff > grace) return { mood: 'late', minutes: diff };
+    if (diff < -grace) return { mood: 'early', minutes: -diff };
+    return { mood: 'onTime', minutes: 0 };
+  }
+  const diff = clockDiff(minuteOfDay(record.clockOut), toMinutes(shift.end));
+  if (diff < -grace) return { mood: 'leftEarly', minutes: -diff };
+  if (diff > OVERTIME_MIN) return { mood: 'overtime', minutes: diff };
+  return { mood: 'onTimeOut', minutes: 0 };
+}
+
 export const shiftLabel = (shift: Shift) => `${shift.start}–${shift.end}`;
 
 export type EmployeeTotals = {
