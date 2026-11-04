@@ -141,6 +141,11 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
   `tiendas/negro-nuevo/PLAN.md`. No es de 3R ni de un cliente: no enlazar desde 3rpaginas.com. **Publicada el 21 oct 2026** en
   https://3r-constructor-sitios-negro-nuevo.vercel.app (proyecto aparte de Vercel, Root Directory `tiendas/negro-nuevo`;
   entró a `main` con el PR #46).
+- **Llévalo** (4 nov 2026, pedido de Rigoberto: «20 productos con mejor rendimiento»): tienda de dropshipping con 20 productos de
+  Dropi en `tiendas/llevalo/` (categorías, un pedido por producto contra entrega por WhatsApp 573107907194; costos y ganancia en
+  `tiendas/llevalo/PRODUCTOS.md`). Fotos enlazadas del CDN de Dropi (desde la sesión no cargan; en el navegador sí), salvo el
+  restaurador (`img/5417.jpg`). No enlazar desde 3rpaginas.com. Falta publicarla (proyecto aparte de Vercel, Root Directory
+  `tiendas/llevalo`). Kit de Marketplace de Negro Nuevo en `tiendas/negro-nuevo/marketing/`.
 - 3R Burgers: página de muestra a la venta, sin dueño (16 oct 2026). Rigoberto pidió ayuda para conseguir comprador.
 - **ZENOVA** (18 oct 2026): cliente nuevo, tienda de ropa deportiva para mujer. Página estática en `clientes/zenova/`
   (estructura del estilo que mandó el cliente, HNST Studio, con Raleway + Poppins; desde el 19 oct 2026 **solo negro y
