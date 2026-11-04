@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { requireStaff } from '@/lib/auth';
 import { EXPENSE_KIND_LABEL, EXPENSE_LABEL, PAID_FROM_LABEL, listPurchaseInvoices, pendingExpenses, todayIn, type ExpenseKind } from '@/lib/finance';
 import { PayExpenseForm } from '@/components/paid-from-fields';
+import { DeletePurchaseButton } from '@/components/finance-forms';
 import { formatCop, formatDateTime } from '@/lib/format';
 import { DOC_TYPES, INVOICE_STATUS, TAX_KINDS, getFiscal, listInvoices } from '@/lib/invoices';
 import { can } from '@/lib/permissions';
@@ -149,7 +150,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           ) : (
             <ul className="divide-y divide-white/[0.06] overflow-hidden rounded-[22px] border border-white/[0.08] bg-card">
               {shownPurchases.map((e) => (
-                <li key={e.id} className={`flex items-center gap-3 px-4 py-3 text-[14px] ${e.voided ? 'opacity-50' : ''}`}>
+                <li key={e.id} className={`flex flex-wrap items-center gap-3 px-4 py-3 text-[14px] ${e.voided ? 'opacity-50' : ''}`}>
                   {e.hasPhoto ? (
                     <a href={`/app/facturas/compra/${e.id}`} target="_blank" rel="noreferrer" className="size-14 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]" aria-label={t('Ver la foto de la factura')}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -170,6 +171,9 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                     </span>
                   </span>
                   <span className="font-semibold">{formatCop(e.amount)}</span>
+                  {!e.voided && (can(staff.role, 'finance.view') || e.createdById === staff.id) ? (
+                    <DeletePurchaseButton id={e.id} supplies={e.kind === 'supplies'} fromCash={e.paidFrom === 'cash'} />
+                  ) : null}
                 </li>
               ))}
             </ul>

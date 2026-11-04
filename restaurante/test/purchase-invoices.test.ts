@@ -202,4 +202,31 @@ describe('facturas de compra con foto', { skip: url ? false : 'sin TEST_DATABASE
     const paid = (await fin.listPurchaseInvoices(cashier, { from: today, to: today })).find((e) => e.id === unpaid)!;
     assert.equal(paid.paidFrom, 'bar');
   });
+
+  it('eliminar factura: la plata vuelve a la caja, el inventario sale y las bolsas se anulan con ella (5 nov 2026)', async () => {
+    const inv = await import('../lib/inventory');
+    const ice = await inv.saveItem(owner, { name: 'Hielo', unit: 'und', minStock: 0 });
+    const stock = async () => (await inv.listItems(owner)).find((i) => i.id === ice)!.stock;
+    const expected = async () => (await cash.shiftSummary(cashier, (await cash.getOpenShift(cashier))!.id))!.expectedCash;
+    const before = await expected();
+    const id = await fin.addExpense(cashier, {
+      kind: 'supplies', category: 'suppliers', description: 'Hielo para la noche', amount: 48000, bags: 1000, spentOn: today, paidFromCash: true,
+      lines: [{ itemId: ice, quantity: 10, total: 47000 }],
+    });
+    assert.equal(await expected(), before - 48000);
+    assert.equal(await stock(), 10);
+    // Solo quien la registró (o el dueño/administrador); el mesero no.
+    const byOwner = await fin.addExpense(owner, { kind: 'expense', category: 'other', description: 'De la dueña', amount: 1000, spentOn: today });
+    await assert.rejects(fin.voidExpense(cashier, byOwner, 'Error'), { code: 'FORBIDDEN' });
+    await assert.rejects(fin.voidExpense(waiter, id, 'Error'), { code: 'FORBIDDEN' });
+    await assert.rejects(fin.voidExpense(cashier, id, ''), { code: 'INVALID' });
+    await fin.voidExpense(cashier, id, 'Registrada dos veces');
+    assert.equal(await expected(), before, 'los 47.000 y los 1.000 de bolsas vuelven');
+    assert.equal(await stock(), 0);
+    const list = await fin.listPurchaseInvoices(cashier, { from: today, to: today });
+    assert.equal(list.find((e) => e.id === id)!.voided, true);
+    assert.equal(list.find((e) => e.description === 'Bolsas de la factura: Hielo para la noche')!.voided, true);
+    await assert.rejects(fin.voidExpense(cashier, id, 'Otra vez'), { code: 'CONFLICT' });
+    await fin.voidExpense(owner, byOwner, 'Prueba');
+  });
 });

@@ -136,3 +136,40 @@ export function ExpenseRow({ expense: e, showLocation }: { expense: Row; showLoc
     </li>
   );
 }
+
+/** «Eliminar factura» en la lista de Facturas (5 nov 2026, pedido de Rigoberto). No se borra: queda anulada con su motivo. */
+export function DeletePurchaseButton({ id, supplies, fromCash }: { id: string; supplies: boolean; fromCash: boolean }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" className="text-[13px] text-muted-foreground hover:text-[#ffb4b5]" onClick={() => setOpen(!open)}>
+        {open ? t('Cancelar') : t('Eliminar')}
+      </button>
+      {open ? (
+        <ActionForm action={voidExpenseAction} onOk={() => setOpen(false)} className="flex basis-full flex-wrap items-end gap-2 pl-[68px]">
+          {() => (
+            <>
+              <input type="hidden" name="expenseId" value={id} />
+              <p className="basis-full text-[12.5px] text-muted-foreground">
+                {[
+                  t('La factura queda anulada (se ve tachada) y deja de contar en los gastos.'),
+                  fromCash ? t('La plata vuelve a la caja.') : '',
+                  supplies ? t('Lo que entró al inventario con ella sale otra vez.') : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              </p>
+              <div className="min-w-[200px] flex-1">
+                <Field label={t('Motivo')} name="reason" required minLength={3} maxLength={200} placeholder={t('Registrado dos veces…')} />
+              </div>
+              <SubmitButton tone="danger" pendingText={t('Anulando…')}>
+                {t('Eliminar factura')}
+              </SubmitButton>
+            </>
+          )}
+        </ActionForm>
+      ) : null}
+    </>
+  );
+}
