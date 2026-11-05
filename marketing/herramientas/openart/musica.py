@@ -64,6 +64,32 @@ elif estilo == 'plastilina':
             add(t, tone(1800, 0.05, 80, 0.15))  # bloque de madera
         b += 1
         t += beat
+elif estilo == 'carnaval':
+    # tambora y llamador al estilo cumbia, con una flauta de millo sencilla
+    beat = 60 / 100
+    mel = [784.0, 880.0, 784.0, 659.3, 698.5, 784.0, 659.3, 587.3]
+    t, b = 0.0, 0
+    while t < DUR:
+        add(t, tone(70, 0.3, 12, 0.5))                       # tambora
+        add(t + beat / 2, noise(0.12, 25, 0.25))             # llamador
+        add(t + beat * 0.75, noise(0.05, 70, 0.12))          # guache
+        add(t + beat * 0.25, noise(0.05, 70, 0.10))
+        add(t, tone(mel[b % len(mel)], beat * 0.9, 4, 0.16, ((1, 1.0), (2, 0.3), (3, 0.1))))
+        b += 1
+        t += beat
+elif estilo == 'navidad':
+    beat = 60 / 96
+    mel = [659.3, 659.3, 659.3, 0, 659.3, 659.3, 659.3, 0, 659.3, 784.0, 523.3, 587.3, 659.3, 0, 0, 0]
+    t, b = 0.0, 0
+    while t < DUR:
+        f = mel[b % len(mel)]
+        if f:
+            add(t, tone(f, 1.2, 3.0, 0.22, ((1, 1.0), (2.76, 0.25), (5.4, 0.08))))
+        if b % 2 == 0:
+            add(t, noise(0.15, 30, 0.06))                    # cascabeles
+            add(t, tone(130.8 if (b // 8) % 2 == 0 else 98.0, 0.6, 4, 0.18))
+        b += 1
+        t += beat / 2
 else:  # dibujo: cajita musical
     beat = 60 / 100
     mel = [1046.5, 1318.5, 1568.0, 1318.5, 1174.7, 1396.9, 1760.0, 1568.0]
