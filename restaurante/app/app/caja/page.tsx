@@ -76,7 +76,9 @@ export default async function CashPage() {
           {(
             [
               [t('Base con que se abrió'), s.shift.openingAmount, ''],
-              [t('Cobrado en efectivo (con propina)'), s.byMethod.cash.amount + s.byMethod.cash.tip, '+'],
+              // La propina se entrega a los meseros: la de efectivo no entra y la de datáfono/transferencia sale de la caja.
+              [t('Cobrado en efectivo (sin propina)'), s.byMethod.cash.amount, '+'],
+              [t('Propina de datáfono y transferencia (se entrega de la caja)'), s.byMethod.card.tip + s.byMethod.transfer.tip, '−'],
               [t('Entró a la caja'), s.movementsIn, '+'],
               [t('Salió de la caja (pagos y facturas)'), s.movementsOut, '−'],
             ] as [string, number, string][]
@@ -93,6 +95,7 @@ export default async function CashPage() {
             <dd>{formatCop(s.expectedCash)}</dd>
           </div>
         </dl>
+        {s.tips ? <p className="mt-2 text-[12.5px] text-muted-foreground">{t('La propina cobrada ({amount}) se entrega a los meseros: no queda en la caja.', { amount: formatCop(s.tips) })}</p> : null}
         {s.movementsIn || s.movementsOut ? <p className="mt-2 text-[12.5px] text-muted-foreground">{t('El detalle de cada entrada y salida está abajo, en «Entradas y salidas de efectivo».')}</p> : null}
       </section>
 

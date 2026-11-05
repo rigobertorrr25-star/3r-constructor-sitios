@@ -78,7 +78,7 @@ export async function getDashboard(actor: Actor, range: { from: string; to: stri
     // Efectivo esperado en las cajas abiertas.
     query<{ cash: string | null; n: number }>(
       `SELECT count(*)::int AS n, sum(c.opening_amount
-              + (SELECT COALESCE(sum(amount + tip), 0) FROM payments WHERE shift_id = c.id AND method = 'cash' AND reversed_at IS NULL)
+              + (SELECT COALESCE(sum(CASE WHEN method = 'cash' THEN amount ELSE -tip END), 0) FROM payments WHERE shift_id = c.id AND reversed_at IS NULL)
               + (SELECT COALESCE(sum(CASE WHEN kind = 'in' THEN amount ELSE -amount END), 0) FROM cash_movements WHERE shift_id = c.id)) AS cash
          FROM cash_shifts c WHERE c.business_id = $1 AND c.closed_at IS NULL AND ($2::uuid IS NULL OR c.location_id = $2)`,
       [actor.businessId, scope],

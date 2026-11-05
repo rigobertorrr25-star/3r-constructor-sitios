@@ -84,7 +84,8 @@ describe('dos turnos de caja al día', { skip: url ? false : 'sin TEST_DATABASE_
     const today = finance.todayIn('America/Bogota');
     let shifts = await cash.dayShifts(lina, today);
     assert.equal(day.dayTotals(shifts).open, 1, 'el turno 2 sigue abierto');
-    await cash.closeShift(lina, 115000, 'Faltaron 5.000');
+    // Esperado: 100.000 + 25.000 en efectivo − 2.500 de propina del datáfono (se entrega de la caja) − 5.000 = 117.500.
+    await cash.closeShift(lina, 112500, 'Faltaron 5.000');
 
     shifts = await cash.dayShifts(lina, today);
     assert.deepEqual(shifts.map((s) => [s.shift.dayNumber, s.shift.openedBy, day.shiftDifference(s)]), [
@@ -148,15 +149,15 @@ describe('dos turnos de caja al día', { skip: url ? false : 'sin TEST_DATABASE_
     await assert.rejects(cash.correctClosing(owner, second.shift.id, { countedCash: 120000, reason: '' }), { code: 'INVALID' }, 'siempre con motivo');
     await assert.rejects(cash.correctClosing(owner, second.shift.id, { countedCash: 120000, reason: 'Faltó contar', safeAmount: 130000 }), { code: 'INVALID' });
     await assert.rejects(cash.correctClosing(owner, second.shift.id, { countedCash: 120000, reason: 'Faltó contar', cashCount: { b100000: 1 } }), { code: 'INVALID' });
-    await cash.correctClosing(owner, second.shift.id, { countedCash: 120000, reason: 'Faltó contar el cajón de abajo', cashCount: { b100000: 1, b20000: 1 } });
+    await cash.correctClosing(owner, second.shift.id, { countedCash: 117500, reason: 'Faltó contar el cajón de abajo', cashCount: { b100000: 1, b10000: 1, b5000: 1, b2000: 1, c500: 1 } });
     const after = (await cash.shiftSummary(owner, second.shift.id))!;
-    assert.equal(after.shift.countedCash, 120000);
+    assert.equal(after.shift.countedCash, 117500);
     assert.equal(day.shiftDifference(after), 0, 'ahora cuadra (lo esperado no cambió)');
     assert.equal(after.shift.correctedBy, 'Dueña');
     assert.equal(after.shift.correctionReason, 'Faltó contar el cajón de abajo');
-    assert.deepEqual(after.shift.cashCount, { b100000: 1, b20000: 1 });
+    assert.deepEqual(after.shift.cashCount, { b100000: 1, b10000: 1, b5000: 1, b2000: 1, c500: 1 });
     const audit = await store.listAudit(owner, { action: 'cash.correct' });
-    assert.match(audit[0].summary, /\$115\.000 → \$120\.000 \(cuadra\)/);
+    assert.match(audit[0].summary, /\$112\.500 → \$117\.500 \(cuadra\)/);
     // Una caja abierta no se corrige.
     await cash.openShift(ana, 0);
     const open = (await cash.getOpenShift(ana))!;
