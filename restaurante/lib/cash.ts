@@ -254,12 +254,12 @@ export async function addMovement(actor: Actor, input: { kind: string; amount: n
   });
 }
 
-/** Efectivo que debería haber: base + ventas y propinas en efectivo + entradas − salidas. */
+/** Efectivo que debería haber: base + ventas en efectivo − propinas por datáfono o transferencia (se pagan de la caja) + entradas − salidas. */
 async function expectedCash(db: Db, shiftId: string, opening: number) {
   const row = (
     await db.query<{ sales: string; moves: string }>(
       `SELECT
-         (SELECT COALESCE(sum(amount + tip), 0) FROM payments WHERE shift_id = $1 AND method = 'cash' AND reversed_at IS NULL) AS sales,
+         (SELECT COALESCE(sum(CASE WHEN method = 'cash' THEN amount ELSE -tip END), 0) FROM payments WHERE shift_id = $1 AND reversed_at IS NULL) AS sales,
          (SELECT COALESCE(sum(CASE WHEN kind = 'in' THEN amount ELSE -amount END), 0) FROM cash_movements WHERE shift_id = $1) AS moves`,
       [shiftId],
     )
@@ -333,7 +333,9 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
     reversed: Number(extra[0].reversed),
     movementsIn,
     movementsOut,
-    expectedCash: shift.openingAmount + byMethod.cash.amount + byMethod.cash.tip + movementsIn - movementsOut,
+    // La propina se les entrega a los meseros de la caja: toda la cobrada (en efectivo, datáfono o transferencia) se
+    // descuenta de lo esperado (5 nov 2026, pedido de Rigoberto).
+    expectedCash: shift.openingAmount + byMethod.cash.amount - (byMethod.card.tip + byMethod.transfer.tip) + movementsIn - movementsOut,
     tablesClosed: extra[0].tables,
     movements: moves,
   };
