@@ -138,7 +138,16 @@
   .wall-head .brand { display: inline-flex; align-items: baseline; gap: 6px; }
   .wall-head .brand small { font-family: "Archivo", sans-serif; font-weight: 700; font-size: .78rem; background: var(--accent); color: var(--accent-ink); padding: 1px 6px; border-radius: 4px; }
   .intro { text-align: center; padding: 18px 16px 0; display: grid; justify-items: center; gap: 8px; }
-  .intro h1 { font-size: clamp(2rem, 9vw, 3.4rem); line-height: 1; }
+  .intro .lockup { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: .85rem; color: #333; background: #fff; padding: 4px 12px 4px 4px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .intro .lockup b { font-family: "Archivo Black", sans-serif; font-weight: 400; background: #111; color: var(--accent); border-radius: 5px; padding: 2px 8px; font-size: .9rem; }
+  .headline { margin: 4px 0 0; display: grid; justify-items: center; font-family: "Archivo Black", sans-serif; font-weight: 400; letter-spacing: -0.02em; line-height: .98; }
+  .headline .l1, .headline .l2 { font-size: clamp(1.7rem, 7.6vw, 3rem); color: #111; }
+  .headline .rot { display: block; height: 1.08em; overflow: hidden; white-space: nowrap; font-size: clamp(2.4rem, 11vw, 4.4rem); color: var(--cta); }
+  .headline .rot span { display: inline-block; animation: wordIn .55s cubic-bezier(.2,.9,.25,1) both; }
+  @keyframes wordIn { from { transform: translateY(100%); opacity: 0; } to { transform: none; opacity: 1; } }
+  .headline .l3 { font-size: clamp(1.7rem, 7.6vw, 3rem); margin-top: 6px; }
+  .headline mark { background: linear-gradient(transparent 52%, var(--accent) 52%, var(--accent) 92%, transparent 92%); color: #111; padding: 0 .1em; }
+  @media (prefers-reduced-motion: reduce) { .headline .rot span { animation: none; } }
   .intro .sub { color: #333; font-size: 1rem; max-width: 34ch; }
   .intro .trust { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
   .intro .trust li { background: #fff; border-radius: 6px; padding: 5px 9px; font-size: .78rem; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
@@ -192,9 +201,13 @@
     <a class="wa" id="wa-top" href="#" target="_blank" rel="noopener">WhatsApp 310 790 7194</a>
   </div>
   <div class="intro">
-    <h1>Tienda online 3R</h1>
-    <p class="sub">Lo pides hoy y lo pagas cuando te llega. <b>Envío gratis a toda Colombia.</b></p>
-    <ul class="trust"><li>Pagas en efectivo al recibir</li><li>Envío gratis</li><li>Te confirmamos por WhatsApp</li></ul>
+    <h1 class="headline">
+      <span class="l1">Lo mejor para tu</span>
+      <span class="rot" aria-live="off"><span id="rot">casa</span></span>
+      <span class="l2">llega a tu puerta.</span>
+      <span class="l3"><mark>Pagas al recibirlo.</mark></span>
+    </h1>
+    <ul class="trust"><li>Envío gratis a toda Colombia</li><li>Efectivo al recibir</li><li>Te confirmamos por WhatsApp</li></ul>
   </div>
   <p class="wall-hint">Desliza para ver más productos</p>
   <div class="show" id="show">
@@ -501,6 +514,17 @@
   });
   addEventListener("resize", place);
   buildShow();
+  // Palabra que cambia en el título
+  (() => {
+    const words = ["casa", "moto", "cocina", "carro", "mascota", "Navidad"];
+    let k = 0;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    setInterval(() => {
+      k = (k + 1) % words.length;
+      const old = document.getElementById("rot"), n = document.createElement("span");
+      n.id = "rot"; n.textContent = words[k]; old.replaceWith(n);
+    }, 2200);
+  })();
 
   // Imágenes para publicar (tomar captura de cada tarjeta)
   function renderPromo() {

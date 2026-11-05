@@ -22,6 +22,9 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   «Pedir» y precio en rojo-naranja `#e8380d` (acción, oferta, alto contraste con la pared gris); verde neón para confianza
   (franja, «Más vendido», «Tienda online»). Mensajes: «Pagas cuando te llega», «Envío gratis», «Te confirmamos por WhatsApp
   antes de enviar», «Pide con tiempo para Navidad». No inventar reseñas, escasez ni descuentos falsos.
+- **Título del inicio** (5 nov 2026, Rigoberto pidió uno mejor y con mejor diseño): «Lo mejor para tu [palabra] llega a tu puerta.
+  Pagas al recibirlo.». La palabra cambia sola cada 2,2 s (casa, moto, cocina, carro, mascota, Navidad) en rojo-naranja; «Pagas al
+  recibirlo» va resaltado en verde. Debajo, tres recuadros con ✓ (envío gratis, efectivo al recibir, confirmación por WhatsApp).
 - Sin réplicas de marcas, suplementos ni aparatos médicos. Fotos enlazadas del CDN de Dropi (desde la sesión no cargan; en
   el navegador sí), salvo el restaurador (`img/5417.jpg`).
 - **Publicación: Cloudflare, no Vercel** (5 nov 2026, pedido de Rigoberto), igual que ZENOVA: proyecto `llevalo`, rama
