@@ -23,6 +23,7 @@
     --ok: #25d366;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html { scroll-behavior: smooth; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 "Archivo", system-ui, sans-serif; }
   img { max-width: 100%; display: block; }
@@ -67,6 +68,7 @@
   .card .body { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
   .card h3 { font-size: .98rem; font-weight: 700; }
   .card .desc { color: var(--muted); font-size: .88rem; }
+  .card .top { align-self: flex-start; background: #fff4ee; color: var(--accent); font-weight: 700; font-size: .75rem; padding: 2px 8px; border-radius: 6px; }
   .card .price { font-family: "Archivo Black", sans-serif; font-size: 1.25rem; margin-top: auto; }
   .card .btn { width: 100%; padding: 11px 12px; font-size: .95rem; }
 
@@ -159,6 +161,7 @@
       <p style="font-weight:600;font-size:.92rem;margin-bottom:6px">Cantidad</p>
       <div class="qty" id="qty"></div>
     </div>
+    <label id="size-wrap" hidden>Tamaño <select name="size" id="size"></select></label>
     <label id="color-wrap" hidden>Color <select name="color" id="color"></select></label>
     <div class="row two">
       <label>Nombre <input name="nombre" autocomplete="given-name" required></label>
@@ -198,6 +201,8 @@
   ];
   // dropi: id del producto en Dropi (para crear el pedido)
   const PRODUCTS = [
+    { dropi: 1411936, cat: "belleza", top: true, name: "Luces LED para espejo de maquillaje", desc: "Bombillos LED que se pegan alrededor de cualquier espejo, como en un camerino.", price: 45900, img: IMG + "1411936/1730219504imagen_2024-10-29_113116103.png" },
+    { dropi: 375183, cat: "hogar", top: true, name: "Espejo redondo de pared (luna)", desc: "Espejo grande para la sala, la entrada o el baño.", price: 270000, sizes: [{ name: "70 cm", price: 270000, ref: 2508514 }, { name: "90 cm", price: 370000, ref: 2508515 }], img: IMG + "375183/1781792061IMG_2729.jpg" },
     { dropi: 5417, cat: "moto", name: "Restaurador de partes negras 250 ml", desc: "Devuelve el negro a plásticos opacos de moto y carro.", price: 49900, img: "img/5417.jpg" },
     { dropi: 2155730, cat: "moto", name: "Hidrolavadora 6 chorros + mini aspiradora", desc: "Lava la moto o el carro y aspira por dentro.", price: 109900, img: IMG + "2155730/1779374038Hidrolavadora%206%20chorros%20mas%20Aspiradora.jpg" },
     { dropi: 1947192, cat: "moto", name: "Compresor de aire inalámbrico", desc: "Infla llantas de moto, carro y bicicleta donde estés.", price: 99900, img: IMG + "1947192/175936901671.webp" },
@@ -223,6 +228,8 @@
   const cop = (n) => "$" + n.toLocaleString("es-CO");
   const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   let cat = "todo", current = null, qty = 1;
+  const size = () => current.sizes[Number(document.getElementById("size").value) || 0];
+  const unit = () => (current.sizes ? size().price : current.price);
 
   function noImg(img) {
     const box = img.parentElement;
@@ -238,9 +245,10 @@
       <article class="card">
         <div class="ph"><img src="${p.img}" alt="${esc(p.name)}" loading="lazy" onerror="noImg(this)"></div>
         <div class="body">
+          ${p.top ? '<span class="top">Más vendido</span>' : ""}
           <h3>${esc(p.name)}</h3>
           <p class="desc">${esc(p.desc)}</p>
-          <p class="price">${cop(p.price)}</p>
+          <p class="price">${p.sizes ? "Desde " : ""}${cop(p.price)}</p>
           <button class="btn btn-main" type="button" data-pedir="${p.dropi}">Pedir · pagas al recibir</button>
         </div>
       </article>`).join("");
@@ -248,14 +256,17 @@
   function renderQty() {
     document.getElementById("qty").innerHTML = [1, 2, 3].map((n) =>
       `<button type="button" data-qty="${n}" aria-pressed="${n === qty}">${n}</button>`).join("");
-    document.getElementById("d-total").textContent = cop(current.price * qty);
+    document.getElementById("d-total").textContent = cop(unit() * qty);
   }
   function openSheet(p) {
     current = p; qty = 1;
     const img = document.getElementById("d-img");
     img.style.visibility = ""; img.src = p.img; img.alt = p.name;
     document.getElementById("d-name").textContent = p.name;
-    document.getElementById("d-desc").textContent = cop(p.price) + " c/u · envío incluido";
+    const sw = document.getElementById("size-wrap"), ss = document.getElementById("size");
+    sw.hidden = !p.sizes;
+    ss.innerHTML = (p.sizes || []).map((z, i) => `<option value="${i}">${z.name} · ${cop(z.price)}</option>`).join("");
+    document.getElementById("d-desc").textContent = (p.sizes ? "Desde " : "") + cop(p.price) + " c/u · envío incluido";
     const cw = document.getElementById("color-wrap"), cs = document.getElementById("color");
     cw.hidden = !p.colors;
     cs.innerHTML = (p.colors || []).map((c) => `<option>${c}</option>`).join("");
@@ -273,6 +284,7 @@
     else if (t.id === "close") document.getElementById("dlg").close();
   });
 
+  document.getElementById("size").addEventListener("change", () => renderQty());
   document.getElementById("form").addEventListener("submit", (e) => {
     e.preventDefault();
     const f = new FormData(e.target);
@@ -286,18 +298,19 @@
       "Hola, quiero hacer este pedido (pago contra entrega):",
       "",
       `Producto: ${current.name}`,
-      current.colors ? `Color: ${v("color")}` : "",
+      current.sizes ? `Tamaño: ${size().name}` : null,
+      current.colors ? `Color: ${v("color")}` : null,
       `Cantidad: ${qty}`,
-      `Total: ${cop(current.price * qty)}`,
-      `Ref.: ${current.dropi}`,
+      `Total: ${cop(unit() * qty)}`,
+      `Ref.: ${current.dropi}${current.sizes ? " / " + size().ref : ""}`,
       "",
       `Nombre: ${v("nombre")} ${v("apellido")}`,
       `Celular: ${phone}`,
       `Departamento: ${v("departamento")}`,
       `Ciudad: ${v("ciudad")}`,
       `Dirección: ${v("direccion")}`,
-      v("barrio") ? `Barrio / referencia: ${v("barrio")}` : "",
-    ].filter((l, i, a) => l !== "" || (a[i - 1] !== "" && i > 0)).join("\n");
+      v("barrio") ? `Barrio / referencia: ${v("barrio")}` : null,
+    ].filter((l) => l !== null).join("\n");
     window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
   });
 
