@@ -134,8 +134,8 @@ describe('dos turnos de caja al día', { skip: url ? false : 'sin TEST_DATABASE_
     const book = new ExcelJS.Workbook();
     await book.xlsx.load((await dayReportXlsx(r)) as never);
     assert.deepEqual(book.worksheets.map((w) => w.name), ['Resumen', 'Turnos', 'Ventas por producto', 'Mesas cobradas', 'Gastos', 'Por pagar', 'Pérdidas', 'Descuentos']);
-    assert.equal(book.getWorksheet('Turnos')!.rowCount, 5, 'título, vacío, encabezado y dos turnos');
-    assert.equal(book.getWorksheet('Ventas por producto')!.getCell('D4').value, 100000);
+    assert.deepEqual([book.getWorksheet('Turnos')!.getCell('B4').value, book.getWorksheet('Turnos')!.getCell('C4').value], ['Turno 1', 'Turno 2'], 'una columna por turno');
+    assert.equal(book.getWorksheet('Ventas por producto')!.getCell('D5').value, 100000);
     assert.equal(await report.dayReport(who, '2020-01-01'), null);
     await assert.rejects(report.dayReport({ ...waiter, businessName: '', locationName: '', timezone: 'America/Bogota' }, today), { code: 'FORBIDDEN' });
   });
