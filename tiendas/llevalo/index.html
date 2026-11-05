@@ -17,8 +17,11 @@
     --line: #e5e7eb;
     --text: #111827;
     --muted: #6b7280;
-    --accent: #ff4d00;
-    --accent-ink: #ffffff;
+    --accent: #39ff14;
+    --accent-ink: #0b0b0b;
+    --accent-soft: #eaffe4;
+    --accent-text: #138a00;
+    --wall: #ececec;
     --dark: #111827;
     --ok: #25d366;
   }
@@ -68,7 +71,7 @@
   .card .body { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
   .card h3 { font-size: .98rem; font-weight: 700; }
   .card .desc { color: var(--muted); font-size: .88rem; }
-  .card .top { align-self: flex-start; background: #fff4ee; color: var(--accent); font-weight: 700; font-size: .75rem; padding: 2px 8px; border-radius: 6px; }
+  .card .top { align-self: flex-start; background: var(--accent-soft); color: var(--accent-text); font-weight: 700; font-size: .75rem; padding: 2px 8px; border-radius: 6px; }
   .card .price { font-family: "Archivo Black", sans-serif; font-size: 1.25rem; margin-top: auto; }
   .card .btn { width: 100%; padding: 11px 12px; font-size: .95rem; }
 
@@ -93,9 +96,9 @@
   input:focus, select:focus { outline: 2px solid var(--accent); border-color: transparent; }
   .qty { display: flex; gap: 8px; }
   .qty button { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: #fff; font: 700 1rem "Archivo"; cursor: pointer; }
-  .qty button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: #fff4ee; }
+  .qty button[aria-pressed="true"] { border-color: var(--accent-text); color: var(--accent-text); background: var(--accent-soft); }
   .total { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--line); padding-top: 10px; }
-  .total b { font-family: "Archivo Black", sans-serif; font-size: 1.4rem; color: var(--accent); }
+  .total b { font-family: "Archivo Black", sans-serif; font-size: 1.4rem; color: var(--accent-text); }
   .note { color: var(--muted); font-size: .85rem; }
   .err { color: #dc2626; font-size: .9rem; min-height: 1.2em; }
 
@@ -106,13 +109,13 @@
   body.promo > *:not(#promo):not(script) { display: none !important; }
   body.promo #promo { display: grid; gap: 24px; justify-items: center; }
   .promo-help { max-width: 560px; background: #fff; border-radius: 10px; padding: 14px 16px; font-size: .95rem; }
-  .promo-help a { color: var(--accent); font-weight: 700; }
+  .promo-help a { color: var(--accent-text); font-weight: 700; }
   .pc { width: min(560px, 100%); aspect-ratio: 1; background: var(--dark); color: #fff; border-radius: 0; overflow: hidden; display: grid; grid-template-rows: auto 1fr auto; font-family: "Archivo", sans-serif; }
   .pc.story { aspect-ratio: 9 / 16; }
   .pc .pc-top { display: flex; justify-content: space-between; align-items: center; padding: 4% 5% 2%; }
   .pc .pc-brand { font-family: "Archivo Black", sans-serif; font-size: clamp(1rem, 4.5vw, 1.6rem); }
   .pc .pc-brand span { color: var(--accent); }
-  .pc .pc-badge { background: var(--accent); color: #fff; font-weight: 700; font-size: clamp(.7rem, 2.8vw, .95rem); padding: 4px 10px; border-radius: 6px; }
+  .pc .pc-badge { background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: clamp(.7rem, 2.8vw, .95rem); padding: 4px 10px; border-radius: 6px; }
   .pc .pc-mid { display: grid; grid-template-columns: 1fr 1fr; gap: 4%; padding: 0 5%; align-items: center; min-height: 0; }
   .pc.story .pc-mid { grid-template-columns: 1fr; grid-template-rows: auto auto; align-content: center; gap: 5%; padding-bottom: 5%; }
   .pc .pc-photo { position: relative; background: #fff; border-radius: 12px; aspect-ratio: 1; overflow: hidden; }
@@ -123,32 +126,84 @@
   .pc .pc-desc { color: #d1d5db; font-size: clamp(.8rem, 3.2vw, 1.1rem); margin-top: 8px; }
   .pc .pc-price { font-family: "Archivo Black", sans-serif; color: var(--accent); font-size: clamp(1.6rem, 8vw, 3rem); margin-top: 10px; line-height: 1; }
   .pc .pc-price small { display: block; color: #fff; font-family: "Archivo", sans-serif; font-weight: 600; font-size: clamp(.75rem, 3vw, 1rem); margin-bottom: 4px; }
-  .pc .pc-band { background: var(--accent); color: #fff; font-weight: 700; text-align: center; padding: 3.5% 4%; font-size: clamp(.8rem, 3.6vw, 1.25rem); }
+  .pc .pc-band { background: var(--accent); color: var(--accent-ink); font-weight: 700; text-align: center; padding: 3.5% 4%; font-size: clamp(.8rem, 3.6vw, 1.25rem); }
   .pc .pc-band span { display: block; font-weight: 600; font-size: .8em; opacity: .95; margin-top: 2px; }
+
+  /* Pared con productos colgados (estilo pedido por Rigoberto, 5 nov 2026) */
+  .wall { position: relative; background: radial-gradient(120% 90% at 50% 30%, #f7f7f7 0%, var(--wall) 60%, #dedede 100%); overflow: hidden; }
+  .wall-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 0; }
+  .wall-head .brand { font-size: 1.15rem; }
+  .wall-head .brand span { color: var(--accent-ink); background: var(--accent); padding: 0 4px; border-radius: 4px; }
+  .wall-head .wa { font-size: .85rem; }
+  .wall-hint { text-align: center; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: #555; margin: 6px 0 0; }
+  .rack { overflow-x: auto; scroll-snap-type: x proximity; padding: 26px 0 26px; scrollbar-width: none; transition: filter .35s, opacity .35s; }
+  .rack::-webkit-scrollbar { display: none; }
+  .rack-track { display: flex; gap: 6px; padding: 0 24px; width: max-content; position: relative; }
+  .rack-track::before { content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 6px; border-radius: 3px; background: linear-gradient(#f5f5f5, #9a9a9a 55%, #cfcfcf); box-shadow: 0 2px 3px rgba(0,0,0,.18); }
+  .hang { flex: none; width: 132px; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: inherit; }
+  .hang svg { width: 44px; height: 34px; margin-top: 2px; position: relative; z-index: 2; }
+  .hang .pic { position: relative; width: 124px; height: 170px; margin-top: -4px; transition: margin .25s; }
+  .hang:hover .pic, .hang:focus-visible .pic { margin-top: 0; }
+  .hang img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+  .hang .noimg { position: absolute; inset: 20px 0 auto; font-size: .8rem; font-weight: 700; text-align: center; color: #444; padding: 8px; background: #fff; border-radius: 6px; mix-blend-mode: normal; }
+  .hang .lbl { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-top: 8px; max-width: 124px; text-align: center; line-height: 1.2; }
+  .hang .lbl b { display: block; font-family: "Archivo Black", sans-serif; font-weight: 400; font-size: .85rem; margin-top: 2px; }
+  .wall.focusing { min-height: 600px; }
+  .wall.focusing .wall-head .wa { visibility: hidden; }
+  .wall.focusing .rack { filter: blur(6px); opacity: .3; pointer-events: none; }
+  .wall.focusing .wall-hint { visibility: hidden; }
+  .focus { position: absolute; inset: 70px 0 24px; display: none; grid-template-columns: 1fr; justify-items: center; align-content: center; gap: 8px; padding: 0 16px; }
+  .wall.focusing .focus { display: grid; }
+  .focus .stage { position: relative; display: flex; align-items: flex-start; gap: 10px; animation: pop .35s cubic-bezier(.2,.8,.2,1); }
+  @keyframes pop { from { opacity: 0; margin-top: 24px; } to { opacity: 1; margin-top: 0; } }
+  .focus .big { position: relative; width: min(58vw, 290px); height: min(58vw, 290px); }
+  .focus .big img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+  .focus .big .noimg { position: absolute; inset: 40% 0 auto; text-align: center; font-weight: 700; }
+  .tags { display: flex; flex-direction: column; gap: 10px; padding-top: 18px; }
+  .tag { position: relative; min-width: 64px; padding: 14px 8px 8px; border-radius: 4px; background: #111; color: #fff; font: 700 .72rem "Archivo", sans-serif; text-align: center; border: 0; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,.15); transform: rotate(-4deg); }
+  .tag:nth-child(even) { transform: rotate(3deg); }
+  .tag::before { content: ""; position: absolute; top: 5px; left: 50%; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--wall); }
+  .tag.price { background: var(--accent); color: var(--accent-ink); cursor: default; font-size: .8rem; }
+  .tag.opt[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tag.c-rosado { background: #f4a6c6; color: #111; } .tag.c-azul { background: #3b82f6; } .tag.c-verde { background: #22c55e; color: #111; }
+  .focus h2 { font-family: "Archivo Black", sans-serif; font-size: clamp(1rem, 4.4vw, 1.4rem); text-transform: uppercase; text-align: center; letter-spacing: .01em; margin-top: 4px; }
+  .focus .fdesc { color: #555; font-size: .9rem; text-align: center; max-width: 36ch; }
+  .focus .fprice { font-family: "Archivo Black", sans-serif; font-size: 1.5rem; }
+  .focus .btn { padding: 12px 22px; }
+  .focus .x, .focus .nav-btn { position: absolute; top: -8px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.15); font-size: 1.3rem; cursor: pointer; }
+  .focus .x { right: 12px; top: -52px; }
+  .focus .nav-btn { top: 30%; }
+  .focus .prev { left: 6px; } .focus .next { right: 6px; }
+  .ticker { position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; background: var(--accent); color: var(--accent-ink); overflow: hidden; white-space: nowrap; font: 800 .78rem "Archivo", sans-serif; letter-spacing: .08em; text-transform: uppercase; padding: 7px 0; }
+  .ticker span { display: inline-block; padding-left: 100%; animation: run 22s linear infinite; }
+  @keyframes run { to { transform: translateX(-100%); } }
+  @media (prefers-reduced-motion: reduce) { .ticker span { animation: none; padding-left: 16px; } .focus .stage { animation: none; } }
+  .wa-float { bottom: 44px !important; }
+  footer { padding-bottom: 70px; }
+  .all-head { display: flex; justify-content: space-between; align-items: baseline; margin: 28px 0 14px; }
+  .steps-line { display: grid; gap: 8px; margin: 0 0 18px; color: var(--muted); font-size: .92rem; }
+  @media (min-width: 700px) { .steps-line { grid-template-columns: repeat(3, 1fr); } .hang { width: 150px; } .hang .pic { width: 142px; height: 200px; } }
 </style>
 </head>
 <body>
 
-<div class="top">Pagas <b>en efectivo</b> cuando te llega · Envío a toda Colombia</div>
-
-<div class="wrap">
-  <header class="nav">
+<section class="wall" id="wall">
+  <div class="wall-head">
     <a class="brand" href="#">LLÉVA<span>LO</span></a>
     <a class="wa" id="wa-top" href="#" target="_blank" rel="noopener">WhatsApp 310 790 7194</a>
-  </header>
-
-  <div class="hero">
-    <div>
-      <h1>Lo pides hoy. <span>Lo pagas cuando te llega.</span></h1>
-      <p>Productos para la moto, el carro, la cocina y la casa, y regalos para diciembre. Sin pagar nada por adelantado.</p>
-    </div>
-    <div class="steps">
-      <div><b>1.</b> Escoge tu producto y toca «Pedir».</div>
-      <div><b>2.</b> Te confirmamos por WhatsApp.</div>
-      <div><b>3.</b> Pagas en efectivo al recibir.</div>
-    </div>
   </div>
+  <p class="wall-hint">Toca un producto · pagas cuando te llega</p>
+  <div class="rack" id="rack"><div class="rack-track" id="rack-track"></div></div>
+  <div class="focus" id="focus" aria-live="polite"></div>
+</section>
 
+<div class="wrap">
+  <div class="all-head"><h2>Todos los productos</h2></div>
+  <div class="steps-line">
+    <div><b>1.</b> Escoge tu producto y toca «Pedir».</div>
+    <div><b>2.</b> Te confirmamos por WhatsApp.</div>
+    <div><b>3.</b> Pagas en efectivo al recibir.</div>
+  </div>
   <div class="chips" id="chips" role="toolbar" aria-label="Categorías"></div>
   <div class="grid" id="grid"></div>
 </div>
@@ -174,6 +229,8 @@
 <a class="wa-float" id="wa" href="#" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
   <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.5 1 2.7.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.6-.3Z"/></svg>
 </a>
+
+<div class="ticker" aria-hidden="true"><span>Pagas cuando te llega · Envío a toda Colombia · Regalos de diciembre · Pedidos por WhatsApp 310 790 7194 · Pagas cuando te llega · Envío a toda Colombia · Regalos de diciembre ·</span></div>
 
 <div id="promo"></div>
 
@@ -345,6 +402,64 @@
   document.getElementById("wa").href = hello;
   document.getElementById("wa-top").href = hello;
   renderChips(); renderGrid();
+
+  // Pared con productos colgados y vista de cerca
+  const HANGER = '<svg viewBox="0 0 44 34" aria-hidden="true"><path d="M22 2c3 0 5 2 5 4.5S24 10 22 11v4" fill="none" stroke="#2b2b2b" stroke-width="2" stroke-linecap="round"/><path d="M22 15 3 29c-1.5 1-1 3 1 3h36c2 0 2.5-2 1-3L22 15Z" fill="none" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/></svg>';
+  let fi = -1, fopt = 0;
+  function renderRack() {
+    document.getElementById("rack-track").innerHTML = PRODUCTS.map((p, i) => `
+      <button class="hang" type="button" data-focus="${i}" aria-label="${esc(p.name)}">
+        ${HANGER}
+        <div class="pic"><img src="${p.img}" alt="${esc(p.name)}" loading="lazy" onerror="noImg(this)"></div>
+        <span class="lbl">${esc(p.name)}<b>${p.sizes ? "Desde " : ""}${cop(p.price)}</b></span>
+      </button>`).join("");
+  }
+  function renderFocus() {
+    const p = PRODUCTS[fi];
+    const opts = p.sizes ? p.sizes.map((z) => z.name) : (p.colors || []);
+    const price = p.sizes ? p.sizes[fopt].price : p.price;
+    document.getElementById("focus").innerHTML = `
+      <button class="x" type="button" data-unfocus aria-label="Cerrar">×</button>
+      <button class="nav-btn prev" type="button" data-step="-1" aria-label="Anterior">‹</button>
+      <button class="nav-btn next" type="button" data-step="1" aria-label="Siguiente">›</button>
+      <div class="stage">
+        <div class="big"><img src="${p.img}" alt="${esc(p.name)}" onerror="noImg(this)"></div>
+        <div class="tags">
+          <span class="tag price">${cop(price)}</span>
+          ${opts.map((o, i) => `<button class="tag opt c-${o.toLowerCase().replace(/[^a-z]/g, "")}" type="button" data-opt="${i}" aria-pressed="${i === fopt}">${esc(o)}</button>`).join("")}
+        </div>
+      </div>
+      <h2>${esc(p.name)}</h2>
+      <p class="fdesc">${esc(p.desc)} Envío incluido.</p>
+      <button class="btn btn-main" type="button" data-order="${fi}">Pedir · pagas al recibir</button>`;
+  }
+  function focusOn(i) {
+    fi = (i + PRODUCTS.length) % PRODUCTS.length; fopt = 0;
+    renderFocus();
+    document.getElementById("wall").classList.add("focusing");
+  }
+  function unfocus() { fi = -1; document.getElementById("wall").classList.remove("focusing"); }
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-focus],[data-unfocus],[data-step],[data-opt],[data-order]");
+    if (!t) return;
+    if (t.dataset.focus !== undefined) focusOn(Number(t.dataset.focus));
+    else if (t.dataset.unfocus !== undefined) unfocus();
+    else if (t.dataset.step) focusOn(fi + Number(t.dataset.step));
+    else if (t.dataset.opt) { fopt = Number(t.dataset.opt); renderFocus(); }
+    else if (t.dataset.order !== undefined) {
+      const p = PRODUCTS[Number(t.dataset.order)];
+      openSheet(p);
+      if (p.sizes) { document.getElementById("size").value = String(fopt); renderQty(); }
+      if (p.colors) document.getElementById("color").value = p.colors[fopt];
+    }
+  });
+  document.addEventListener("keydown", (e) => {
+    if (fi < 0 || document.getElementById("dlg").open) return;
+    if (e.key === "Escape") unfocus();
+    if (e.key === "ArrowRight") focusOn(fi + 1);
+    if (e.key === "ArrowLeft") focusOn(fi - 1);
+  });
+  renderRack();
 
   // Imágenes para publicar (tomar captura de cada tarjeta)
   function renderPromo() {
