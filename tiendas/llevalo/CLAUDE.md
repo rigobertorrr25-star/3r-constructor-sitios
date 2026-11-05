@@ -1,4 +1,4 @@
-# Llévalo — tienda de dropshipping de Rigoberto (Dropi)
+# Tienda online 3R (antes «Llévalo») — dropshipping de Rigoberto con Dropi
 
 Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un cliente: no enlazar desde 3rpaginas.com.
 
@@ -17,6 +17,11 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   color o tamaño (se pueden tocar) y «Pedir · pagas al recibir». Al tocar, deslizar o usar las flechas, se detiene 7 s y
   luego sigue rodando. Rigoberto pidió quitar los ganchos («no son ropa») y que los productos «vayan rodando». Franja verde
   neón abajo con texto que corre. Debajo sigue la lista completa con categorías. Acento: verde neón `#39ff14` con texto oscuro.
+- **Marca y ventas** (5 nov 2026, pedido de Rigoberto): se llama **«Tienda online 3R»** (inicio con ese título; la carpeta y el
+  proyecto de Cloudflare siguen como `llevalo`). Precios **no redondos** (tipo $42.300, todos en `PRODUCTOS.md`). Colores: botón
+  «Pedir» y precio en rojo-naranja `#e8380d` (acción, oferta, alto contraste con la pared gris); verde neón para confianza
+  (franja, «Más vendido», «Tienda online»). Mensajes: «Pagas cuando te llega», «Envío gratis», «Te confirmamos por WhatsApp
+  antes de enviar», «Pide con tiempo para Navidad». No inventar reseñas, escasez ni descuentos falsos.
 - Sin réplicas de marcas, suplementos ni aparatos médicos. Fotos enlazadas del CDN de Dropi (desde la sesión no cargan; en
   el navegador sí), salvo el restaurador (`img/5417.jpg`).
 - **Publicación: Cloudflare, no Vercel** (5 nov 2026, pedido de Rigoberto), igual que ZENOVA: proyecto `llevalo`, rama
