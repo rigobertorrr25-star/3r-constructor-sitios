@@ -252,7 +252,6 @@ export function cierre(width: number, c: CierreInput) {
   if (c.tipOfSales) t.row(`Propina (${c.tipOfSales.pct} % de ventas)`, c.tipOfSales.amount, { bold: true });
   t.row(c.tipOfSales ? 'Propinas cobradas' : 'Propinas', c.tips)
     .row('Descuentos', c.discounts)
-    .row('Anulaciones', c.voids)
     .row('Entradas de efectivo', c.movementsIn)
     .row('Salidas de efectivo', c.movementsOut)
     .rule()

@@ -246,7 +246,7 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
       '4. FACTURAS POR PAGAR', 'Dislicores $500.000', 'vence: 2026-11-15',
       '5. PÉRDIDAS DEL DÍA', 'Se rompió un vaso $6.000', 'Merma de Papa (Se dañó)',
       'Total salidas de dinero $28.000', 'Total en caja $40.000', 'Sobre para la cocina $30.000', 'Sobre para el bar $20.000', 'Caja fuerte $50.000',
-      'COMENTARIOS', 'Se rompió un vaso en la mesa 3', 'Anulaciones y devoluciones:', '1 x Cerveza · mesa 9: Se cayó la cerveza', 'Firma',
+      'COMENTARIOS', 'Se rompió un vaso en la mesa 3', 'Firma',
     ])
       assert.ok(salesText.includes(s), s);
     const closing = (await jobs()).filter((j) => j.kind === 'cierre');
@@ -256,14 +256,10 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     for (const s of ['Arqueo:', 'Billetes de $100.000 x 1', 'Billetes de $10.000 x 3', 'Monedas de $1.000 x 3', 'Monedas de $500 x 4']) assert.ok(paper.includes(s), s);
     assert.ok(!paper.includes('Monedas de $200'), 'lo que no se contó no sale');
     for (const s of ['CIERRE DE CAJA', 'Efectivo (1)', '$60.000', 'CUADRA']) assert.ok(paper.includes(s), s);
-    for (const s of ['Propina (10 % de ventas)', '$6.000', 'Propinas cobradas', 'INVENTARIO QUE QUEDA', 'SE ACABÓ', 'POR COMPRAR PARA MAÑANA', 'hay 500 g · mínimo 2 kg'])
-      assert.ok(paper.includes(s), s);
-    const after = (title: string) => paper.slice(paper.indexOf(title));
-    assert.match(after('INVENTARIO QUE QUEDA'), /COCINA\n.*Papa\s+9 kg/);
-    assert.match(after('SE ACABÓ'), /- Hielo/);
-    assert.match(after('POR COMPRAR PARA MAÑANA'), /Limón\s+1,5 kg/);
-    assert.match(after('POR COMPRAR PARA MAÑANA'), /Hielo\s+3 und/);
-    assert.doesNotMatch(after('POR COMPRAR PARA MAÑANA'), /Papa/, 'la papa quedó sobre el mínimo');
+    for (const s of ['Propina (10 % de ventas)', '$6.000', 'Propinas cobradas']) assert.ok(paper.includes(s), s);
+    // Sin inventario ni anulaciones en el papel (5 nov 2026, pedido de Rigoberto).
+    for (const s of ['INVENTARIO QUE QUEDA', 'SE ACABÓ', 'POR COMPRAR PARA MAÑANA', 'Anulaciones']) assert.ok(!paper.includes(s), s);
+    assert.ok(!salesText.includes('Anulaciones y devoluciones'));
   });
 
   it('la caja puede sacar copia de cada pedido: todo junto, con el mesero, y sin repetir papel en la misma impresora', async () => {
