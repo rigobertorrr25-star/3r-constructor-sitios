@@ -229,6 +229,9 @@
     .bar { max-width: 1180px; margin: 0 auto; padding: 16px 24px; }
   }
   .cap { width: min(560px, 100%); background: #fff; border-radius: 10px; padding: 12px; display: grid; gap: 10px; margin-top: -12px; }
+  .cap-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cap-btns .btn:only-child { grid-column: 1 / -1; }
+  .btn.dl { background: #111; color: #fff; }
   .cap pre { margin: 0; white-space: pre-wrap; font: 500 .92rem/1.45 "Archivo", sans-serif; color: #111; }
 </style>
 </head>
@@ -602,7 +605,7 @@
           </div>
         </div>
         <div class="pc-band">Pagas cuando te llega · Envío gratis<span>WhatsApp 310 790 7194</span></div>
-      </div>${p.cap ? `<div class="cap"><pre id="cap${i}">${esc(p.cap)}</pre><button class="btn btn-main" type="button" data-copy="cap${i}">Copiar texto</button></div>` : ""}`).join("");
+      </div><div class="cap">${p.cap ? `<pre id="cap${i}">${esc(p.cap)}</pre>` : ""}<div class="cap-btns"><button class="btn dl" type="button" data-dl="${p.dropi}">Descargar imagen</button>${p.cap ? `<button class="btn btn-main" type="button" data-copy="cap${i}">Copiar texto</button>` : ""}</div></div>`).join("");
     scrollTo(0, 0);
   }
   window.addEventListener("hashchange", () => {
@@ -615,6 +618,65 @@
     const txt = document.getElementById(b.dataset.copy).textContent;
     try { await navigator.clipboard.writeText(txt); } catch { const r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.copy)); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy"); }
     b.textContent = "¡Copiado!"; setTimeout(() => (b.textContent = "Copiar texto"), 1800);
+  });
+  // Descargar la tarjeta como imagen (las fotos de Dropi permiten usarse en canvas)
+  function loadImg(src) {
+    return new Promise((ok) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => ok(im); im.onerror = () => ok(null); im.src = src; });
+  }
+  function wrap(ctx, text, x, y, maxW, lh, maxLines) {
+    const words = text.split(" "); let line = "", lines = [];
+    for (const w of words) { const t = line ? line + " " + w : w; if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }
+    if (line) lines.push(line);
+    lines = lines.slice(0, maxLines);
+    lines.forEach((l, i) => ctx.fillText(l, x, y + i * lh));
+    return y + lines.length * lh;
+  }
+  function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  async function drawCard(p, story) {
+    await document.fonts.ready;
+    const W = 1080, H = story ? 1920 : 1080, c = document.createElement("canvas"); c.width = W; c.height = H;
+    const x = c.getContext("2d"), G = "#39ff14", BG = "#111827", band = story ? 210 : 170;
+    x.fillStyle = BG; x.fillRect(0, 0, W, H);
+    x.textBaseline = "top";
+    x.font = '64px "Archivo Black"'; x.fillStyle = "#fff"; x.fillText("3R", 70, 60);
+    const w3 = x.measureText("3R ").width; x.font = '800 40px Archivo'; x.fillStyle = G; x.fillText("MARKET", 70 + w3, 80);
+    if (p.top) { x.font = '800 34px Archivo'; const t = "Más vendido", tw = x.measureText(t).width + 40; rr(x, W - 70 - tw, 62, tw, 60, 12); x.fill(); x.fillStyle = "#0b0b0b"; x.fillText(t, W - 70 - tw + 20, 74); }
+    const ps = story ? W - 140 : 460, px = 70, py = story ? 200 : (H - band - ps) / 2 + 40;
+    x.fillStyle = "#fff"; rr(x, px, py, ps, ps, 28); x.fill();
+    const im = await loadImg(p.img);
+    if (im) { const s = Math.min((ps * 0.9) / im.width, (ps * 0.9) / im.height), iw = im.width * s, ih = im.height * s; x.drawImage(im, px + (ps - iw) / 2, py + (ps - ih) / 2, iw, ih); }
+    if (p.refPhoto) { x.font = '600 26px Archivo'; const t = "Imagen de referencia", tw = x.measureText(t).width + 24; x.fillStyle = "rgba(0,0,0,.72)"; rr(x, px + 16, py + ps - 58, tw, 42, 8); x.fill(); x.fillStyle = "#fff"; x.fillText(t, px + 28, py + ps - 50); }
+    let tx = story ? 70 : px + ps + 50, ty = story ? py + ps + 70 : py + 10, tw = story ? W - 140 : W - tx - 60;
+    x.fillStyle = "#fff"; x.font = (story ? 84 : 62) + 'px "Archivo Black"';
+    ty = wrap(x, p.name, tx, ty, tw, story ? 92 : 68, 4) + 20;
+    x.fillStyle = "#d1d5db"; x.font = '500 ' + (story ? 40 : 32) + 'px Archivo';
+    ty = wrap(x, p.desc, tx, ty, tw, story ? 54 : 44, 3) + 26;
+    if (p.sizes) { x.fillStyle = "#fff"; x.font = '700 ' + (story ? 38 : 30) + 'px Archivo'; x.fillText(p.sizes.map((z) => z.name + ": " + cop(z.price)).join("  ·  "), tx, ty); ty += story ? 60 : 46; }
+    x.fillStyle = G; x.font = (story ? 120 : 92) + 'px "Archivo Black"'; x.fillText((p.sizes ? "Desde " : "") + cop(p.price), tx, ty, tw);
+    x.fillStyle = G; x.fillRect(0, H - band, W, band);
+    x.fillStyle = "#0b0b0b"; x.textAlign = "center";
+    x.font = '800 ' + (story ? 52 : 44) + 'px Archivo'; x.fillText("Pagas cuando te llega · Envío gratis", W / 2, H - band + (story ? 44 : 34));
+    x.font = '700 ' + (story ? 38 : 32) + 'px Archivo'; x.fillText("WhatsApp 310 790 7194", W / 2, H - band + (story ? 120 : 100));
+    return c;
+  }
+  document.addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-dl]"); if (!b) return;
+    const p = PRODUCTS.find((q) => String(q.dropi) === b.dataset.dl), story = location.hash === "#historias";
+    b.textContent = "Preparando…";
+    try {
+      const c = await drawCard(p, story);
+      const blob = await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.92));
+      const name = "3r-market-" + p.name.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + (story ? "-historia" : "") + ".jpg";
+      const file = new File([blob], name, { type: "image/jpeg" });
+      if (navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia("(pointer: coarse)").matches) {
+        await navigator.share({ files: [file], title: p.name }).catch(() => {});
+      } else {
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      }
+      b.textContent = "¡Lista!";
+    } catch (err) { b.textContent = "No se pudo, toma captura"; }
+    setTimeout(() => (b.textContent = "Descargar imagen"), 2500);
   });
 </script>
 </body>
