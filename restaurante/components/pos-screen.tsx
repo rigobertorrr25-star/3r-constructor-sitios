@@ -8,17 +8,19 @@ import { isNetworkError, retryDelay } from '@/lib/offline';
 import type { MenuCategory, MenuProduct, OrderItemView } from '@/lib/orders';
 import { productPhotoUrl } from '@/lib/product-photo-url';
 import { STATION_LABEL } from '@/lib/stations';
+import { describeChoices, isFixed, type OptionGroup } from '@/lib/product-options';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { useNow } from './table-board';
-import { Alert, Empty, Field, card, inputClass, primaryButton, quietButton } from './ui';
+import { Alert, CheckField, Empty, Field, card, inputClass, primaryButton, quietButton } from './ui';
 import { PrintBillButton } from './printer-forms';
 import { useLang, useT, useTr } from './i18n';
 
 type Item = Omit<OrderItemView, 'voidedAt'> & { voidedAt: string | null };
 type Round = { id: string; number: number; sentAt: string; sentBy: string; items: Item[] };
 type Session = { id: string; tableNumber: string; zone: string; status: string; guests: number; openedAt: string; openedBy: string };
-type Line = { key: string; productId: string; name: string; price: number; quantity: number; notes: string };
+/** `choices`: lo escogido de cada grupo de opciones del plato (PROMO ALMUERZO), si las tiene. */
+type Line = { key: string; productId: string; name: string; price: number; quantity: number; notes: string; choices?: string[][] };
 
 const TICKET_LABEL: Record<string, string> = { sent: 'Enviado', preparing: 'Preparando', ready: 'Listo', delivered: 'Entregado' };
 const TICKET_STYLE: Record<string, string> = {
@@ -74,7 +76,6 @@ export function PosScreen({
   canVoid,
   canCharge,
   waitersCollect = false,
-  stock = {},
   timeZone,
   printBill = false,
 }: {
@@ -87,8 +88,6 @@ export function PosScreen({
   canCharge: boolean;
   /** Bar sin cajero: el mesero cobra; no hay a quién «pedirle la cuenta». */
   waitersCollect?: boolean;
-  /** Cuántas quedan de cada producto según el inventario (solo los que tienen inventario cargado). */
-  stock?: Record<string, number>;
   timeZone: string;
   /** La sede tiene impresora de caja: la precuenta se imprime allá. */
   printBill?: boolean;
@@ -116,18 +115,22 @@ export function PosScreen({
     return products.filter((p) => p.categoryId === current);
   }, [products, categories, category, search]);
 
-  // Lo que ya está en el carrito cuenta contra lo que queda.
-  const inCart = (productId: string) => lines.filter((l) => l.productId === productId).reduce((s, l) => s + l.quantity, 0);
-  const left = (productId: string) => (stock[productId] === undefined ? Infinity : stock[productId] - inCart(productId));
-
-  const add = (p: MenuProduct) => {
+  const [picking, setPicking] = useState<MenuProduct | null>(null);
+  const add = (p: MenuProduct, choices?: string[][]) => {
     // Con un pedido pendiente de enviar, el carrito no cambia (se reintenta tal cual, sin duplicar).
-    if (queued || left(p.id) <= 0) return;
+    if (queued) return;
+    // Un plato que se arma (PROMO ALMUERZO) primero pide escoger sus opciones.
+    if (p.optionGroups?.some((g) => !isFixed(g)) && !choices) {
+      setPicking(p);
+      return;
+    }
+    const picked = p.optionGroups?.length ? (choices ?? p.optionGroups.map((g) => [g.options[0]])) : undefined;
+    const sameChoices = (l: Line) => JSON.stringify(l.choices ?? null) === JSON.stringify(picked ?? null);
     setSent(null);
     setLines((prev) => {
-      const plain = prev.find((l) => l.productId === p.id && !l.notes);
+      const plain = prev.find((l) => l.productId === p.id && !l.notes && sameChoices(l));
       if (plain) return prev.map((l) => (l === plain ? { ...l, quantity: Math.min(99, l.quantity + 1) } : l));
-      return [...prev, { key: newKey(), productId: p.id, name: p.name, price: p.price, quantity: 1, notes: '' }];
+      return [...prev, { key: newKey(), productId: p.id, name: p.name, price: p.price, quantity: 1, notes: '', choices: picked }];
     });
   };
   const change = (key: string, patch: Partial<Line>) =>
@@ -136,9 +139,7 @@ export function PosScreen({
       prev
         .map((l) => {
           if (l.key !== key) return l;
-          // No deja pedir más de lo que queda en el inventario.
-          const room = stock[l.productId] === undefined ? 99 : stock[l.productId] - (inCart(l.productId) - l.quantity);
-          return { ...l, ...patch, quantity: Math.min(patch.quantity ?? l.quantity, Math.max(room, 0)) };
+          return { ...l, ...patch, quantity: Math.min(patch.quantity ?? l.quantity, 99) };
         })
         .filter((l) => l.quantity > 0),
     );
@@ -149,7 +150,7 @@ export function PosScreen({
     try {
       const result = await sendOrderAction(
         session.id,
-        lines.map((l) => ({ productId: l.productId, quantity: l.quantity, notes: l.notes })),
+        lines.map((l) => ({ productId: l.productId, quantity: l.quantity, notes: l.notes, choices: l.choices })),
         clientKey,
       );
       if (result.error) {
@@ -186,6 +187,16 @@ export function PosScreen({
 
   return (
     <div className="space-y-5">
+      {picking ? (
+        <OptionPicker
+          product={picking}
+          onCancel={() => setPicking(null)}
+          onDone={(choices) => {
+            add(picking, choices);
+            setPicking(null);
+          }}
+        />
+      ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link href="/app" className="text-[14px] text-muted-foreground hover:text-foreground">
@@ -246,13 +257,11 @@ export function PosScreen({
           ) : (
             <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
               {shown.map((p) => {
-                const known = stock[p.id];
-                const out = known !== undefined && known <= 0;
                 return (
                 <li key={p.id}>
                   <button
                     type="button"
-                    disabled={!p.isAvailable || out || closed || left(p.id) <= 0}
+                    disabled={!p.isAvailable || closed}
                     onClick={() => add(p)}
                     className="flex h-full min-h-[92px] w-full flex-col justify-between rounded-2xl border border-white/[0.08] bg-card p-3.5 text-left transition hover:border-primary/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
                   >
@@ -261,12 +270,8 @@ export function PosScreen({
                       <span className="text-[15px] font-medium leading-snug">{(lang === 'en' && p.nameEn) || p.name}</span>
                     </span>
                     <span className="mt-2 flex items-center justify-between text-[13.5px]">
-                      <span className="text-muted-foreground">{p.isAvailable && !out ? formatCop(p.price) : t('Agotado')}</span>
-                      {known !== undefined && !out ? (
-                        <span className={`text-[12px] ${known <= 5 ? 'font-semibold text-warning' : 'text-muted-foreground/80'}`}>{t('Quedan {n}', { n: known })}</span>
-                      ) : (
-                        <span className="text-[11.5px] text-muted-foreground/70">{t(STATION_LABEL[p.station])}</span>
-                      )}
+                      <span className="text-muted-foreground">{p.isAvailable ? formatCop(p.price) : t('Agotado')}</span>
+                      <span className="text-[11.5px] text-muted-foreground/70">{t(STATION_LABEL[p.station])}</span>
                     </span>
                   </button>
                 </li>
@@ -278,13 +283,24 @@ export function PosScreen({
 
         <aside className="space-y-4 lg:sticky lg:top-[132px] lg:self-start">
           <div className={card}>
-            <h2 className="font-display text-[18px] font-bold">{t('Pedido nuevo')}</h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-display text-[18px] font-bold">{t('Pedido nuevo')}</h2>
+              {lines.length > 1 && !queued ? (
+                <button
+                  type="button"
+                  className="text-[13px] text-muted-foreground hover:text-[#ffb4b5]"
+                  onClick={() => window.confirm(t('¿Borrar todo lo que no se ha enviado?')) && setLines([])}
+                >
+                  {t('Borrar todo')}
+                </button>
+              ) : null}
+            </div>
             {lines.length === 0 ? (
               <p className="mt-3 text-[14px] text-muted-foreground">{sent ? t('Ronda {n} enviada. Toca productos para pedir más.', { n: sent }) : t('Toca los productos para agregarlos.')}</p>
             ) : (
               <ul className="mt-3 space-y-3">
                 {lines.map((l) => (
-                  <CartRow key={l.key} line={l} onChange={(patch) => change(l.key, patch)} />
+                  <CartRow key={l.key} line={l} groups={products.find((p) => p.id === l.productId)?.optionGroups ?? null} onChange={(patch) => change(l.key, patch)} />
                 ))}
               </ul>
             )}
@@ -357,7 +373,75 @@ export function PosScreen({
   );
 }
 
-function CartRow({ line, onChange }: { line: Line; onChange: (patch: Partial<Line>) => void }) {
+/** Para armar un plato (PROMO ALMUERZO): el mesero escoge de cada grupo; lo que va siempre solo se muestra. */
+function OptionPicker({ product, onCancel, onDone }: { product: MenuProduct; onCancel: () => void; onDone: (choices: string[][]) => void }) {
+  const t = useT();
+  const groups = product.optionGroups ?? [];
+  const [picks, setPicks] = useState<string[][]>(() => groups.map((g) => (isFixed(g) ? [g.options[0]] : [])));
+  const ready = groups.every((g, i) => picks[i].length === g.choose);
+  const toggle = (i: number, option: string) =>
+    setPicks((prev) =>
+      prev.map((list, j) => {
+        if (j !== i) return list;
+        if (list.includes(option)) return list.filter((o) => o !== option);
+        // Si se escoge una sola, tocar otra la cambia; si son varias, no deja pasar del número.
+        if (groups[i].choose === 1) return [option];
+        return list.length < groups[i].choose ? [...list, option] : list;
+      }),
+    );
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 sm:items-center" role="dialog" aria-modal="true" aria-label={product.name}>
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[22px] border border-white/[0.1] bg-card p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-display text-[19px] font-bold">{product.name}</h2>
+          <span className="text-[15px]">{formatCop(product.price)}</span>
+        </div>
+        <div className="mt-4 space-y-4">
+          {groups.map((g, i) =>
+            isFixed(g) ? (
+              <p key={g.name} className="text-[14px] text-muted-foreground">
+                {t('Incluye: {name}', { name: g.options[0] })}
+              </p>
+            ) : (
+              <fieldset key={g.name}>
+                <legend className="text-[14.5px] font-semibold">
+                  {g.name}{' '}
+                  <span className="font-normal text-muted-foreground">{g.choose === 1 ? t('(escoge 1)') : t('(escoge {n})', { n: g.choose })}</span>
+                </legend>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {g.options.map((o) => {
+                    const on = picks[i].includes(o);
+                    return (
+                      <button
+                        key={o}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => toggle(i, o)}
+                        className={`min-h-[48px] rounded-2xl border px-3 py-2 text-left text-[14.5px] transition ${on ? 'border-primary bg-primary/15 font-semibold' : 'border-white/[0.1] hover:border-white/25'}`}
+                      >
+                        {o}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            ),
+          )}
+        </div>
+        <div className="mt-5 flex gap-2">
+          <button type="button" className={quietButton} onClick={onCancel}>
+            {t('Cancelar')}
+          </button>
+          <button type="button" className={`${primaryButton} flex-1`} disabled={!ready} onClick={() => onDone(picks)}>
+            {ready ? t('Agregar al pedido') : t('Escoge las opciones')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CartRow({ line, groups, onChange }: { line: Line; groups: OptionGroup[] | null; onChange: (patch: Partial<Line>) => void }) {
   const [noting, setNoting] = useState(Boolean(line.notes));
   const t = useT();
   return (
@@ -366,6 +450,7 @@ function CartRow({ line, onChange }: { line: Line; onChange: (patch: Partial<Lin
         <span className="text-[14.5px] font-medium">{line.name}</span>
         <span className="text-[14px]">{formatCop(line.price * line.quantity)}</span>
       </div>
+      {groups?.length && line.choices ? <p className="mt-1 text-[13px] text-muted-foreground">{describeChoices(groups, line.choices)}</p> : null}
       <div className="mt-2 flex items-center gap-2">
         <button type="button" className={`${quietButton} size-9 p-0 text-[18px]`} onClick={() => onChange({ quantity: line.quantity - 1 })} aria-label={t('Quitar un {name}', { name: line.name })}>
           −
@@ -381,6 +466,15 @@ function CartRow({ line, onChange }: { line: Line; onChange: (patch: Partial<Lin
             + {t('Nota')}
           </button>
         ) : null}
+        {/* Si se tocó por error: se quita del pedido (todavía no se ha enviado, no queda rastro). */}
+        <button
+          type="button"
+          className={`${noting ? 'ml-auto' : 'ml-4'} py-1 text-[13px] text-muted-foreground hover:text-[#ffb4b5]`}
+          onClick={() => onChange({ quantity: 0 })}
+          aria-label={t('Quitar {name} del pedido', { name: line.name })}
+        >
+          {t('Quitar')}
+        </button>
       </div>
       {noting ? (
         <input
@@ -434,6 +528,15 @@ function SentRow({ item, sessionId, canVoid }: { item: Item; sessionId: string; 
               <input type="hidden" name="sessionId" value={sessionId} />
               <div className="min-w-[220px] flex-1">
                 <Field label={t('Motivo de la anulación')} name="reason" required minLength={3} maxLength={300} placeholder={t('Se equivocó el mesero, cliente cambió…')} />
+              </div>
+              <input type="hidden" name="preparedChoice" value="1" />
+              <div className="w-full">
+                <CheckField
+                  name="prepared"
+                  label={t('Ya se había preparado')}
+                  hint={t('Si no se alcanzó a hacer, déjalo sin marcar: sus insumos vuelven al inventario.')}
+                  defaultChecked={false}
+                />
               </div>
               <SubmitButton tone="danger" pendingText={t('Anulando…')}>
                 {t('Anular')}

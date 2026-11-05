@@ -3,15 +3,20 @@
 // local los pide con el código de la sede y los manda a cada impresora. Si la impresora falla, se reintenta y queda a la
 // vista en la pantalla de Impresoras para reimprimir.
 import { createHash, randomBytes } from 'node:crypto';
-import { getBill, METHOD_LABEL, METHODS, loadShiftSummary, suggestedTipFor } from './cash';
+import { dayShifts, getBill, METHOD_LABEL, METHODS, loadShiftSummary, suggestedTipFor, workMode } from './cash';
+import { dayTotals, shiftDifference } from './cash-day';
+import { closingInventory, dailyForm, shiftIncidents, shiftSalesByCategory, shortQuantity, sumAmounts, tipOfSales } from './closing-report';
+import { AREA_LABEL } from './inventory';
+import { cashCountLines } from './cash-count';
 import { query, transaction, type Db } from './db';
-import { anulacion, cierre, comanda, precuenta, prueba, type Ticket } from './escpos';
+import { anulacion, cierre, comanda, cuadreDia, precuenta, prueba, ventasCategoria, type PrecuentaInput, type Ticket } from './escpos';
 import { formatCop, formatDateTime, formatTime } from './format';
+import { todayIn } from './finance';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 
-export type Target = 'kitchen' | 'bar' | 'cashier';
-export const TARGET_LABEL: Record<Target, string> = { kitchen: 'Cocina', bar: 'Barra', cashier: 'Caja' };
-const TARGET_COLUMN: Record<Target, string> = { kitchen: 'prints_kitchen', bar: 'prints_bar', cashier: 'prints_cashier' };
+export type Target = 'kitchen' | 'bar' | 'cashier' | 'orders';
+export const TARGET_LABEL: Record<Target, string> = { kitchen: 'Cocina', bar: 'Barra', cashier: 'Caja', orders: 'Copia de pedidos' };
+const TARGET_COLUMN: Record<Target, string> = { kitchen: 'prints_kitchen', bar: 'prints_bar', cashier: 'prints_cashier', orders: 'prints_orders' };
 
 export const PAPER = [
   { width: 48, label: '80 mm' },
@@ -32,15 +37,18 @@ export type Printer = {
   printsKitchen: boolean;
   printsBar: boolean;
   printsCashier: boolean;
+  printsOrders: boolean;
   copies: number;
   isActive: boolean;
 };
 
 const PRINTER_SELECT = `SELECT id, name, host, port, width, prints_kitchen AS "printsKitchen", prints_bar AS "printsBar",
-  prints_cashier AS "printsCashier", copies, is_active AS "isActive" FROM printers`;
+  prints_cashier AS "printsCashier", prints_orders AS "printsOrders", copies, is_active AS "isActive" FROM printers`;
 
-export const printerTargets = (p: Pick<Printer, 'printsKitchen' | 'printsBar' | 'printsCashier'>) =>
-  (['kitchen', 'bar', 'cashier'] as Target[]).filter((t) => (t === 'kitchen' ? p.printsKitchen : t === 'bar' ? p.printsBar : p.printsCashier));
+export const printerTargets = (p: Pick<Printer, 'printsKitchen' | 'printsBar' | 'printsCashier' | 'printsOrders'>) =>
+  (['kitchen', 'bar', 'cashier', 'orders'] as Target[]).filter((t) =>
+    t === 'kitchen' ? p.printsKitchen : t === 'bar' ? p.printsBar : t === 'cashier' ? p.printsCashier : p.printsOrders,
+  );
 
 export async function listPrinters(actor: Actor): Promise<Printer[]> {
   requirePermission(actor, 'printers.manage');
@@ -57,6 +65,12 @@ export async function hasPrinter(actor: Pick<Actor, 'businessId' | 'locationId'>
 }
 
 const HOST = /^[a-zA-Z0-9]([a-zA-Z0-9.-]{0,98}[a-zA-Z0-9])?$/;
+/** Impresora conectada por cable USB al computador del programa: se guarda como «usb:» + su nombre en Windows. */
+export const USB_PREFIX = 'usb:';
+const USB_NAME = /^[\p{L}\p{N} ._\-()#&+,]{2,90}$/u;
+export const isUsb = (host: string) => host.toLowerCase().startsWith(USB_PREFIX);
+/** Cómo se muestra dónde está la impresora: «USB · nombre» o «IP:puerto». */
+export const printerAddress = (p: { host: string; port: number }) => (isUsb(p.host) ? `USB · ${p.host.slice(USB_PREFIX.length)}` : `${p.host}:${p.port}`);
 
 export type PrinterInput = {
   name: string;
@@ -66,6 +80,7 @@ export type PrinterInput = {
   printsKitchen: boolean;
   printsBar: boolean;
   printsCashier: boolean;
+  printsOrders: boolean;
   copies: number;
   isActive: boolean;
 };
@@ -73,26 +88,36 @@ export type PrinterInput = {
 function cleanPrinter(input: PrinterInput) {
   const name = input.name.replace(/\s+/g, ' ').trim();
   if (name.length < 2 || name.length > 60) throw new AppError('INVALID', 'Nombre: entre 2 y 60 letras (por ejemplo «Cocina»).');
-  const host = input.host.trim();
-  if (!HOST.test(host)) throw new AppError('INVALID', 'Escribe la dirección IP de la impresora, por ejemplo 192.168.1.50.');
-  if (!Number.isInteger(input.port) || input.port < 1 || input.port > 65535) throw new AppError('INVALID', 'Puerto no válido (casi siempre es 9100).');
+  let host = input.host.trim();
+  let port = input.port;
+  if (isUsb(host)) {
+    const usbName = host.slice(USB_PREFIX.length).replace(/\s+/g, ' ').trim();
+    if (!USB_NAME.test(usbName)) {
+      throw new AppError('INVALID', 'Escribe el nombre de la impresora tal como sale en Windows (el programa de impresión lo muestra al prenderse).');
+    }
+    host = USB_PREFIX + usbName;
+    port = 9100;
+  } else {
+    if (!HOST.test(host)) throw new AppError('INVALID', 'Escribe la dirección IP de la impresora, por ejemplo 192.168.1.50.');
+    if (!Number.isInteger(port) || port < 1 || port > 65535) throw new AppError('INVALID', 'Puerto no válido (casi siempre es 9100).');
+  }
   if (!PAPER.some((p) => p.width === input.width)) throw new AppError('INVALID', 'Escoge el ancho del papel.');
   if (!Number.isInteger(input.copies) || input.copies < 1 || input.copies > 3) throw new AppError('INVALID', 'Copias: de 1 a 3.');
-  return { ...input, name, host };
+  return { ...input, name, host, port };
 }
 
 export async function savePrinter(actor: Actor, id: string | null, input: PrinterInput) {
   requirePermission(actor, 'printers.manage');
   const p = cleanPrinter(input);
-  const values = [p.name, p.host, p.port, p.width, p.printsKitchen, p.printsBar, p.printsCashier, p.copies, p.isActive];
+  const values = [p.name, p.host, p.port, p.width, p.printsKitchen, p.printsBar, p.printsCashier, p.copies, p.isActive, p.printsOrders];
   return transaction(async (db) => {
     let printerId: string;
     if (id) {
       if (!isUuid(id)) throw new AppError('NOT_FOUND', 'No encontramos esa impresora.');
       const res = await db.query<{ id: string }>(
         `UPDATE printers SET name = $1, host = $2, port = $3, width = $4, prints_kitchen = $5, prints_bar = $6, prints_cashier = $7,
-                copies = $8, is_active = $9
-          WHERE id = $10 AND location_id = $11 AND business_id = $12 RETURNING id`,
+                copies = $8, is_active = $9, prints_orders = $10
+          WHERE id = $11 AND location_id = $12 AND business_id = $13 RETURNING id`,
         [...values, id, actor.locationId, actor.businessId],
       );
       if (!res.rows[0]) throw new AppError('NOT_FOUND', 'No encontramos esa impresora.');
@@ -102,8 +127,8 @@ export async function savePrinter(actor: Actor, id: string | null, input: Printe
       if (count >= 20) throw new AppError('CONFLICT', 'Máximo 20 impresoras por sede.');
       printerId = (
         await db.query<{ id: string }>(
-          `INSERT INTO printers (name, host, port, width, prints_kitchen, prints_bar, prints_cashier, copies, is_active, business_id, location_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+          `INSERT INTO printers (name, host, port, width, prints_kitchen, prints_bar, prints_cashier, copies, is_active, prints_orders, business_id, location_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
           [...values, actor.businessId, actor.locationId],
         )
       ).rows[0].id;
@@ -113,7 +138,7 @@ export async function savePrinter(actor: Actor, id: string | null, input: Printe
       action: id ? 'printer.update' : 'printer.create',
       entity: 'printer',
       entityId: printerId,
-      summary: `${id ? 'Cambió' : 'Agregó'} la impresora ${p.name} (${p.host}:${p.port}, imprime: ${jobs}${p.isActive ? '' : ', apagada'})`,
+      summary: `${id ? 'Cambió' : 'Agregó'} la impresora ${p.name} (${printerAddress(p)}, imprime: ${jobs}${p.isActive ? '' : ', apagada'})`,
     });
     return printerId;
   });
@@ -148,12 +173,16 @@ async function placeInfo(db: Db, who: Who) {
   ).rows[0];
 }
 
-/** Deja un trabajo por cada impresora activa que imprime `target`. Devuelve cuántas impresoras lo recibieron. */
-async function enqueue(db: Db, who: Who, target: Target, kind: string, title: string, build: (width: number) => Ticket, printerId?: string) {
+/**
+ * Deja un trabajo por cada impresora activa que imprime `target`. Devuelve cuántas impresoras lo recibieron.
+ * `skipOrders`: las que sacan copia de cada pedido ya reciben todo junto; no se les repite el papel de la estación.
+ */
+async function enqueue(db: Db, who: Who, target: Target, kind: string, title: string, build: (width: number) => Ticket, printerId?: string, skipOrders = false) {
   const printers = (
     await db.query<{ id: string; width: number; copies: number }>(
       `SELECT id, width, copies FROM printers
-        WHERE location_id = $1 AND business_id = $2 AND is_active AND ${printerId ? 'id = $3' : TARGET_COLUMN[target]}`,
+        WHERE location_id = $1 AND business_id = $2 AND is_active AND ${printerId ? 'id = $3' : TARGET_COLUMN[target]}
+          ${skipOrders && !printerId ? 'AND NOT prints_orders' : ''}`,
       printerId ? [who.locationId, who.businessId, printerId] : [who.locationId, who.businessId],
     )
   ).rows;
@@ -185,18 +214,39 @@ export async function enqueueRound(db: Db, who: Who & Pick<Actor, 'name'>, round
     const items = rows.filter((r) => r.station === station);
     if (!items.length) continue;
     const first = items[0];
-    sent += await enqueue(db, who, station, 'comanda', `Mesa ${first.table} · ${TARGET_LABEL[station]} · Ronda ${first.round}`, (w) =>
-      comanda(w, {
-        station,
-        table: first.table,
-        zone: first.zone,
-        round: first.round,
-        sentBy: who.name,
-        time: formatTime(first.sentAt, place.timezone),
-        items: items.map((i) => ({ quantity: i.quantity, name: i.name, notes: i.notes })),
-      }),
+    sent += await enqueue(
+      db,
+      who,
+      station,
+      'comanda',
+      `Mesa ${first.table} · ${TARGET_LABEL[station]} · Ronda ${first.round}`,
+      (w) =>
+        comanda(w, {
+          station,
+          table: first.table,
+          zone: first.zone,
+          round: first.round,
+          sentBy: who.name,
+          time: formatTime(first.sentAt, place.timezone),
+          items: items.map((i) => ({ quantity: i.quantity, name: i.name, notes: i.notes })),
+        }),
+      undefined,
+      true,
     );
   }
+  // Copia de todo el pedido (por ejemplo en la caja): un solo papel con lo de cocina y lo de barra.
+  const first = rows[0];
+  sent += await enqueue(db, who, 'orders', 'comanda', `Mesa ${first.table} · Pedido · Ronda ${first.round}`, (w) =>
+    comanda(w, {
+      station: 'all',
+      table: first.table,
+      zone: first.zone,
+      round: first.round,
+      sentBy: who.name,
+      time: formatTime(first.sentAt, place.timezone),
+      items: rows.map((i) => ({ quantity: i.quantity, name: i.name, notes: i.notes })),
+    }),
+  );
   return sent;
 }
 
@@ -212,12 +262,21 @@ export async function enqueueVoid(db: Db, who: Who & Pick<Actor, 'name'>, itemId
   ).rows[0];
   if (!item || item.status === 'delivered') return 0;
   const place = await placeInfo(db, who);
-  return enqueue(db, who, item.station, 'anulacion', `ANULADO · Mesa ${item.table} · ${item.quantity} x ${item.name}`, (w) =>
-    anulacion(w, { station: item.station, table: item.table, quantity: item.quantity, name: item.name, reason, by: who.name, time: formatTime(new Date(), place.timezone) }),
-  );
+  const title = `ANULADO · Mesa ${item.table} · ${item.quantity} x ${item.name}`;
+  const build = (w: number) =>
+    anulacion(w, { station: item.station, table: item.table, quantity: item.quantity, name: item.name, reason, by: who.name, time: formatTime(new Date(), place.timezone) });
+  // A la estación, y a las que sacan copia de cada pedido (sin repetir el papel si es la misma impresora).
+  return (await enqueue(db, who, item.station, 'anulacion', title, build, undefined, true)) + (await enqueue(db, who, 'orders', 'anulacion', title, build));
 }
 
 /** Precuenta a la impresora de caja. */
+export function billTip(bill: { balance: number; total: number; tips: number; suggestedTipPercent: number }, onBalance: number): PrecuentaInput['tip'] {
+  if (bill.balance > 0) return { label: `Propina sugerida (${bill.suggestedTipPercent} %)`, amount: formatCop(onBalance), totalLabel: 'Total con propina', withTip: formatCop(bill.balance + onBalance) };
+  if (bill.tips > 0) return { label: 'Propina / servicio', amount: formatCop(bill.tips), totalLabel: 'Total pagado', withTip: formatCop(bill.total + bill.tips) };
+  const tip = suggestedTipFor(bill.total, bill.suggestedTipPercent);
+  return { label: `Propina sugerida (${bill.suggestedTipPercent} %)`, amount: formatCop(tip), totalLabel: 'Total con propina', withTip: formatCop(bill.total + tip) };
+}
+
 export async function printBill(actor: Actor, sessionId: string) {
   requirePermission(actor, 'tables.bill');
   const bill = await getBill(actor, sessionId);
@@ -239,7 +298,9 @@ export async function printBill(actor: Actor, sessionId: string) {
         total: formatCop(bill.total),
         paid: bill.paid ? formatCop(bill.paid) : null,
         balance: bill.paid && bill.balance > 0 ? formatCop(bill.balance) : null,
-        tip: bill.balance > 0 && bill.suggestedTipPercent > 0 ? { percent: bill.suggestedTipPercent, amount: formatCop(tip), withTip: formatCop(bill.balance + tip) } : null,
+        // El 10 % sale siempre en el papel (5 nov 2026, Rigoberto: «imprimí la factura y no aparece el valor de servicio»):
+        // antes de cobrar, sobre lo que falta; ya cobrada, la propina que se marcó o, si no se marcó, la sugerida del total.
+        tip: bill.suggestedTipPercent > 0 || bill.tips > 0 ? billTip(bill, tip) : null,
       }),
     );
     if (!n) throw new AppError('CONFLICT', 'Esta sede no tiene impresora de caja. Agrégala en Impresoras.');
@@ -251,13 +312,26 @@ export async function printBill(actor: Actor, sessionId: string) {
 export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: string) {
   const s = await loadShiftSummary(actor, shiftId);
   if (!s || !s.shift.closedAt) return 0;
+  const { suggestedTip } = await workMode(actor.businessId);
+  // El inventario va en el cierre de la caja; el cierre de un mesero (DELIRIUM) es solo su plata.
+  const inv = waiter ? null : await closingInventory(actor);
+  // Y aparte, el papel de ventas por categoría con las observaciones del día.
+  const [byCategory, incidents, form] = waiter
+    ? [null, null, null]
+    : await Promise.all([
+        shiftSalesByCategory(actor, shiftId),
+        shiftIncidents(actor, s.shift.openedAt, s.shift.closedAt),
+        dailyForm(actor, shiftId, s.shift.openedAt, s.shift.closedAt),
+      ]);
   return transaction(async (db) => {
     const place = await placeInfo(db, actor);
     const counted = s.shift.countedCash ?? 0;
     const diff = counted - (s.shift.expectedCash ?? 0);
-    return enqueue(db, actor, 'cashier', 'cierre', `${waiter ? `Cierre de ${waiter}` : 'Cierre de caja'} · ${formatDateTime(s.shift.closedAt!, place.timezone)}`, (w) =>
+    // Dos cajeras al día (30 oct 2026): el cierre de la caja dice de qué turno del día es.
+    const title = waiter ? `Cierre de ${waiter}` : `Cierre de caja · Turno ${s.shift.dayNumber}`;
+    return enqueue(db, actor, 'cashier', 'cierre', `${title} · ${formatDateTime(s.shift.closedAt!, place.timezone)}`, (w) =>
       cierre(w, {
-        title: waiter ? `Cierre de ${waiter}` : undefined,
+        title,
         business: place.business,
         location: place.locations > 1 ? place.location : null,
         openedBy: s.shift.openedBy,
@@ -274,9 +348,122 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
         movementsOut: formatCop(s.movementsOut),
         expected: formatCop(s.shift.expectedCash ?? 0),
         counted: formatCop(counted),
+        cashCount: cashCountLines(s.shift.cashCount).map((x) => ({
+          label: `${x.kind === 'bill' ? 'Billetes' : 'Monedas'} de ${formatCop(x.value)}`,
+          quantity: x.quantity,
+          total: formatCop(x.total),
+        })),
         result: diff === 0 ? 'CUADRA' : diff > 0 ? `SOBRAN ${formatCop(diff)}` : `FALTAN ${formatCop(-diff)}`,
+        correction: s.shift.correctedAt ? `por ${s.shift.correctedBy} el ${formatDateTime(s.shift.correctedAt, place.timezone)}: ${s.shift.correctionReason}` : null,
         tables: s.tablesClosed,
-        notes: s.shift.notes,
+        // Las observaciones de la caja van al final de «Ventas por categoría»; el cierre de un mesero las trae aquí.
+        notes: waiter ? s.shift.notes : null,
+        tipOfSales: suggestedTip > 0 ? { pct: suggestedTip, amount: formatCop(tipOfSales(s.sales, suggestedTip)) } : null,
+        inventory: inv && {
+          remaining: inv.remaining.map((i) => ({ area: AREA_LABEL[i.area], name: i.name, qty: shortQuantity(i.stock, i.unit, i.bottleSize) })),
+          out: inv.out.map((i) => ({ area: AREA_LABEL[i.area], name: i.name })),
+          toBuy: inv.toBuy.map((i) => ({
+            area: AREA_LABEL[i.area],
+            name: i.name,
+            qty: shortQuantity(i.buy, i.unit, i.bottleSize),
+            detail: `hay ${shortQuantity(i.stock, i.unit, i.bottleSize)} · mínimo ${shortQuantity(i.minStock, i.unit, i.bottleSize)}`,
+          })),
+          hasMinimums: inv.hasMinimums,
+        },
+      }),
+    ).then(async (n) => {
+      if (byCategory && incidents && form) {
+        const closedAt = formatDateTime(s.shift.closedAt!, place.timezone);
+        const sh = s.shift;
+        const out = sumAmounts(form.withInvoice) + sumAmounts(form.withoutInvoice);
+        await enqueue(db, actor, 'cashier', 'ventas', `Formulario diario · ${closedAt}`, (w) =>
+          ventasCategoria(w, {
+            business: place.business,
+            location: place.locations > 1 ? place.location : null,
+            date: closedAt,
+            employee: sh.closedBy ?? '',
+            categories: byCategory.map((c) => ({ ...c, total: formatCop(c.total), products: c.products.map((p) => ({ ...p, total: formatCop(p.total) })) })),
+            total: formatCop(byCategory.reduce((sum, c) => sum + c.total, 0)),
+            withInvoice: form.withInvoice.map((x) => ({ ...x, amount: formatCop(x.amount) })),
+            withInvoiceTotal: formatCop(sumAmounts(form.withInvoice)),
+            withoutInvoice: form.withoutInvoice.map((x) => ({ ...x, amount: formatCop(x.amount) })),
+            withoutInvoiceTotal: formatCop(sumAmounts(form.withoutInvoice)),
+            toPay: form.toPay.map((x) => ({ ...x, amount: formatCop(x.amount), dueOn: x.dueOn ?? 'sin fecha' })),
+            toPayTotal: formatCop(sumAmounts(form.toPay)),
+            losses: form.losses.map((x) => ({ ...x, amount: formatCop(x.amount) })),
+            lossesTotal: formatCop(sumAmounts(form.losses)),
+            totals: {
+              sales: formatCop(s.sales),
+              out: formatCop(out),
+              losses: formatCop(sumAmounts(form.losses)),
+              inCash: formatCop(Math.max(0, (sh.countedCash ?? 0) - sh.envelopeKitchen - sh.envelopeBar - sh.safeAmount)),
+              kitchen: formatCop(sh.envelopeKitchen),
+              bar: formatCop(sh.envelopeBar),
+              safe: formatCop(sh.safeAmount),
+            },
+            notes: s.shift.notes,
+            voids: incidents.voids.map((v) => `${v.quantity} x ${v.name} · mesa ${v.table}${v.reason ? `: ${v.reason}` : ''}${v.by ? ` (${v.by})` : ''}`),
+            discounts: incidents.discounts.map((d) => `Mesa ${d.table} · ${formatCop(d.amount)}: ${d.reason}${d.by ? ` (${d.by})` : ''}`),
+            closedUnpaid: incidents.closedUnpaid.map((c) => `${c.summary}: ${c.reason}${c.by ? ` (${c.by})` : ''}`),
+          }),
+        );
+      }
+      return n;
+    });
+  });
+}
+
+const cuadreResult = (diff: number) => (diff === 0 ? 'CUADRA' : diff > 0 ? `SOBRAN ${formatCop(diff)}` : `FALTAN ${formatCop(-diff)}`);
+
+/** Fecha larga para el papel: «jueves, 30 de octubre de 2026». */
+export const longDate = (date: string) =>
+  new Date(`${date}T12:00:00Z`).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+/** Cuadre del día (dos cajeras al día, 30 oct 2026): los turnos de caja del día `date` sumados, a la impresora de caja. */
+export async function enqueueDayClosing(actor: Actor, date: string) {
+  const shifts = await dayShifts(actor, date);
+  if (!shifts.length) throw new AppError('NOT_FOUND', 'Ese día no hubo caja.');
+  const totals = dayTotals(shifts);
+  const { suggestedTip } = await workMode(actor.businessId);
+  return transaction(async (db) => {
+    const place = await placeInfo(db, actor);
+    return enqueue(db, actor, 'cashier', 'dia', `Cuadre del día · ${date}`, (w) =>
+      cuadreDia(w, {
+        business: place.business,
+        location: place.locations > 1 ? place.location : null,
+        date: longDate(date),
+        turns: shifts.map((s) => {
+          const diff = shiftDifference(s);
+          return {
+            label: `Turno ${s.shift.dayNumber}`,
+            who: s.shift.closedBy && s.shift.closedBy !== s.shift.openedBy ? `${s.shift.openedBy} / ${s.shift.closedBy}` : s.shift.openedBy,
+            hours: `${formatTime(s.shift.openedAt, place.timezone)} a ${
+              !s.shift.closedAt
+                ? 'sigue abierta'
+                : todayIn(place.timezone, s.shift.closedAt) === s.shift.day
+                  ? formatTime(s.shift.closedAt, place.timezone)
+                  : formatDateTime(s.shift.closedAt, place.timezone)
+            }`,
+            opening: formatCop(s.shift.openingAmount),
+            sales: formatCop(s.sales),
+            expected: formatCop(s.shift.expectedCash ?? s.expectedCash),
+            counted: s.shift.countedCash === null ? '-' : formatCop(s.shift.countedCash),
+            result: diff === null ? 'SIGUE ABIERTA' : cuadreResult(diff),
+          };
+        }),
+        methods: METHODS.map((m) => ({ label: METHOD_LABEL[m], amount: formatCop(totals.byMethod[m].amount), count: totals.byMethod[m].count })),
+        sales: formatCop(totals.sales),
+        tipOfSales: suggestedTip > 0 ? { pct: suggestedTip, amount: formatCop(tipOfSales(totals.sales, suggestedTip)) } : null,
+        tips: formatCop(totals.tips),
+        discounts: formatCop(totals.discounts),
+        movementsIn: formatCop(totals.movementsIn),
+        movementsOut: formatCop(totals.movementsOut),
+        envelopeKitchen: formatCop(totals.envelopeKitchen),
+        envelopeBar: formatCop(totals.envelopeBar),
+        safe: formatCop(totals.safeAmount),
+        result: totals.open === totals.turns ? 'SIGUE ABIERTA' : cuadreResult(totals.difference),
+        tables: totals.tablesClosed,
+        open: totals.open,
       }),
     );
   });
@@ -290,7 +477,7 @@ export async function printTest(actor: Actor, printerId: string) {
     if (!p) throw new AppError('NOT_FOUND', 'No encontramos esa impresora.');
     const place = await placeInfo(db, actor);
     await enqueue(db, actor, 'cashier', 'prueba', `Prueba · ${p.name}`, (w) =>
-      prueba(w, { business: place.business, printer: p.name, address: `${p.host}:${p.port}`, time: formatDateTime(new Date(), place.timezone), jobs: printerTargets(p).map((t) => TARGET_LABEL[t]) }),
+      prueba(w, { business: place.business, printer: p.name, address: printerAddress(p), time: formatDateTime(new Date(), place.timezone), jobs: printerTargets(p).map((t) => TARGET_LABEL[t]) }),
       p.id,
     );
   });

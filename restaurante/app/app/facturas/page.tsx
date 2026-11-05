@@ -1,31 +1,79 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/auth';
-import { todayIn } from '@/lib/finance';
+import { EXPENSE_KIND_LABEL, EXPENSE_LABEL, PAID_FROM_LABEL, listPurchaseInvoices, pendingExpenses, todayIn, type ExpenseKind } from '@/lib/finance';
+import { PayExpenseForm } from '@/components/paid-from-fields';
+import { DeletePurchaseButton } from '@/components/finance-forms';
 import { formatCop, formatDateTime } from '@/lib/format';
 import { DOC_TYPES, INVOICE_STATUS, TAX_KINDS, getFiscal, listInvoices } from '@/lib/invoices';
 import { can } from '@/lib/permissions';
 import { PERIODS, periodRange } from '@/lib/periods';
 import { FiscalForm, InvoiceCustomer } from '@/components/invoice-forms';
+import { ReceiptExpense } from '@/components/receipt-expense';
+import { itemsForPurchase } from '@/lib/inventory';
 import { Empty, PageTitle, card, quietButton } from '@/components/ui';
 import { getLang } from '@/lib/i18n/server';
 import { makeT, tr } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
+// Leer una factura con IA puede tardar más de 10 segundos (5 nov 2026: la segunda foto no cargaba).
+export const maxDuration = 60;
 
-export default async function InvoicesPage({ searchParams }: { searchParams: Promise<{ periodo?: string }> }) {
+export default async function InvoicesPage({ searchParams }: { searchParams: Promise<{ periodo?: string; compras?: string }> }) {
   const staff = await requireStaff('invoices.manage');
-  const { periodo } = await searchParams;
+  const { periodo, compras } = await searchParams;
   const lang = await getLang();
   const t = makeT(lang);
   const period = PERIODS.some((p) => p.key === periodo) ? periodo! : 'hoy';
-  const range = periodRange(period, todayIn(staff.timezone));
-  const [fiscal, invoices] = await Promise.all([getFiscal(staff.businessId), listInvoices(staff, range, staff.timezone)]);
+  const today = todayIn(staff.timezone);
+  const range = periodRange(period, today);
+  const addsExpenses = can(staff.role, 'expenses.add');
+  const [fiscal, invoices, purchases, stockItems, toPay] = await Promise.all([
+    getFiscal(staff.businessId),
+    listInvoices(staff, range, staff.timezone),
+    addsExpenses ? listPurchaseInvoices(staff, range) : Promise.resolve([]),
+    addsExpenses ? itemsForPurchase(staff) : Promise.resolve([]),
+    addsExpenses ? pendingExpenses(staff) : Promise.resolve([]),
+  ]);
   const live = invoices.filter((i) => i.status !== 'void');
   const totals = live.reduce((s, i) => ({ total: s.total + i.total, base: s.base + i.base, tax: s.tax + i.tax }), { total: 0, base: 0, tax: 0 });
   const pending = live.filter((i) => i.status === 'pending').length;
+  // Facturas de compra separadas: insumos (entran a la bodega) y gastos (arriendo, servicios…).
+  const shownKind: ExpenseKind | 'all' = compras === 'insumos' ? 'supplies' : compras === 'gastos' ? 'expense' : 'all';
+  const kindTotal = (k: ExpenseKind) => purchases.filter((e) => e.kind === k && !e.voided).reduce((sum, e) => sum + e.amount, 0);
+  const shownPurchases = shownKind === 'all' ? purchases : purchases.filter((e) => e.kind === shownKind);
+  const purchaseTabs: [string, ExpenseKind | 'all', string][] = [
+    ['', 'all', t('Todas')],
+    ['insumos', 'supplies', t('Insumos · {total}', { total: formatCop(kindTotal('supplies')) })],
+    ['gastos', 'expense', t('Gastos · {total}', { total: formatCop(kindTotal('expense')) })],
+  ];
   return (
     <div className="space-y-6">
       <PageTitle title={t('Facturas')} text={t('Cada venta cobrada (mesa o cita) genera su factura, a nombre de consumidor final o del cliente que la pida.')} />
+      {addsExpenses ? <ReceiptExpense today={today} items={stockItems} /> : null}
+
+      {toPay.length ? (
+        <section className={`${card} border-warning/40`}>
+          <h2 className="font-display text-[19px] font-bold">{t('Facturas por pagar ({n})', { n: toPay.length })}</h2>
+          <p className="mt-1 text-[13.5px] text-muted-foreground">{t('Total: {amount}. Las que vencen primero, arriba.', { amount: formatCop(toPay.reduce((s, e) => s + e.amount, 0)) })}</p>
+          <ul className="mt-3 divide-y divide-white/[0.06]">
+            {toPay.map((e) => (
+              <li key={e.id} className="flex flex-wrap items-end justify-between gap-3 py-3 text-[14px]">
+                <span className="min-w-0">
+                  <span className="font-medium">{e.supplier || e.description}</span> · {formatCop(e.amount)}
+                  <span className="block text-[12.5px] text-muted-foreground">
+                    {[e.supplier ? e.description : null, e.invoiceNumber ? t('Factura {n}', { n: e.invoiceNumber }) : null, e.dueOn ? t('vence {date}', { date: e.dueOn }) : t('sin fecha de vencimiento')]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </span>
+                </span>
+                <PayExpenseForm expenseId={e.id} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <h2 className="font-display text-[19px] font-bold">{t('Facturas de venta')}</h2>
       <div className="rounded-[22px] border border-warning/40 bg-warning/[0.07] p-4 text-[14.5px]">
         <strong>{t('Todavía no se envían a la DIAN.')}</strong>{' '}
         {t('Para eso hay que conectar un proveedor de facturación electrónica (Alegra, Siigo u otro). Mientras tanto quedan como «pendientes» y puedes descargarlas para tu contador o para subirlas al proveedor.')}
@@ -33,7 +81,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
 
       <div className="flex flex-wrap items-center gap-1.5">
         {PERIODS.map((p) => (
-          <Link key={p.key} href={`/app/facturas?periodo=${p.key}`} className={`rounded-full px-4 py-1.5 text-[14px] ${period === p.key ? 'bg-primary text-primary-foreground' : 'border border-white/[0.1] text-muted-foreground hover:text-foreground'}`}>
+          <Link key={p.key} href={`/app/facturas?periodo=${p.key}${compras === 'insumos' || compras === 'gastos' ? `&compras=${compras}` : ''}`} className={`rounded-full px-4 py-1.5 text-[14px] ${period === p.key ? 'bg-primary text-primary-foreground' : 'border border-white/[0.1] text-muted-foreground hover:text-foreground'}`}>
             {t(p.label)}
           </Link>
         ))}
@@ -82,6 +130,56 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           ))}
         </ul>
       )}
+
+      {addsExpenses ? (
+        <section className="space-y-3">
+          <h2 className="font-display text-[19px] font-bold">{t('Facturas de compra')}</h2>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {purchaseTabs.map(([param, k, label]) => (
+              <Link
+                key={k}
+                href={`/app/facturas?periodo=${period}${param ? `&compras=${param}` : ''}`}
+                className={`rounded-full px-4 py-1.5 text-[14px] ${shownKind === k ? 'bg-primary text-primary-foreground' : 'border border-white/[0.1] text-muted-foreground hover:text-foreground'}`}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+          {shownPurchases.length === 0 ? (
+            <Empty>{shownKind === 'supplies' ? t('No hay facturas de insumos en este periodo.') : shownKind === 'expense' ? t('No hay gastos en este periodo.') : t('No hay gastos registrados en este periodo.')}</Empty>
+          ) : (
+            <ul className="divide-y divide-white/[0.06] overflow-hidden rounded-[22px] border border-white/[0.08] bg-card">
+              {shownPurchases.map((e) => (
+                <li key={e.id} className={`flex flex-wrap items-center gap-3 px-4 py-3 text-[14px] ${e.voided ? 'opacity-50' : ''}`}>
+                  {e.hasPhoto ? (
+                    <a href={`/app/facturas/compra/${e.id}`} target="_blank" rel="noreferrer" className="size-14 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]" aria-label={t('Ver la foto de la factura')}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`/app/facturas/compra/${e.id}`} alt="" className="size-full object-cover" loading="lazy" />
+                    </a>
+                  ) : (
+                    <span className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-white/10 text-center text-[11px] text-muted-foreground">{t('Sin foto')}</span>
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className={`block font-medium ${e.voided ? 'line-through' : ''}`}>
+                      <span className={`mr-2 inline-block rounded-full px-2 py-0.5 align-middle text-[11.5px] font-semibold ${e.kind === 'supplies' ? 'bg-primary/15 text-primary' : 'bg-white/[0.08] text-muted-foreground'}`}>
+                        {t(EXPENSE_KIND_LABEL[e.kind])}
+                      </span>
+                      {e.description}
+                    </span>
+                    <span className="block text-[12.5px] text-muted-foreground">
+                      {[e.createdOn && e.createdOn !== e.spentOn ? t('Fecha de la factura {date} · registrada {created}', { date: e.spentOn, created: e.createdOn }) : e.spentOn, t(EXPENSE_LABEL[e.category]), e.supplier, e.createdBy, e.invoiceNumber ? t('Factura {n}', { n: e.invoiceNumber }) : null, e.paidFrom === null ? t('por pagar') : e.paidFrom ? t(PAID_FROM_LABEL[e.paidFrom]) : null, e.voided ? t('Anulado') : null].filter(Boolean).join(' · ')}
+                    </span>
+                  </span>
+                  <span className="font-semibold">{formatCop(e.amount)}</span>
+                  {!e.voided && (can(staff.role, 'finance.view') || e.createdById === staff.id) ? (
+                    <DeletePurchaseButton id={e.id} supplies={e.kind === 'supplies'} fromCash={e.paidFrom === 'cash'} />
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
 
       {can(staff.role, 'locations.manage') ? (
         <section className={card}>

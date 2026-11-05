@@ -15,6 +15,8 @@ export function Kiosk({ secret, lang }: { secret: string; lang: Lang }) {
   const [problem, setProblem] = useState<'offline' | 'invalid' | null>(null);
   // El reloj arranca en el navegador: la hora del servidor no coincidiría con la de la tablet.
   const [now, setNow] = useState<Date | null>(null);
+  // Momento en que vence el QR que se está mostrando (para la barra de cuenta regresiva).
+  const [expiresAt, setExpiresAt] = useState<number | null>(null);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -30,6 +32,7 @@ export function Kiosk({ secret, lang }: { secret: string; lang: Lang }) {
         } else if (res.ok) {
           const next = (await res.json()) as Data;
           setData(next);
+          setExpiresAt(Date.now() + next.expiresInMs);
           setProblem(null);
           wait = next.expiresInMs + 300;
         } else {
@@ -74,35 +77,54 @@ export function Kiosk({ secret, lang }: { secret: string; lang: Lang }) {
 
   if (problem === 'invalid') {
     return (
-      <p className="max-w-md text-center text-[18px] text-muted-foreground">
+      <p className="max-w-md text-center text-[18px] text-white/80">
         {t(lang, 'tabletInvalid')}
       </p>
     );
   }
 
+  const secondsLeft = now && expiresAt ? Math.max(0, Math.ceil((expiresAt - now.getTime()) / 1000)) : null;
+
+  // Acostada (horizontal), la tablet muestra el QR a la izquierda y el nombre y la hora a la derecha.
   return (
-    <div className="flex w-full max-w-[560px] flex-col items-center gap-6 text-center">
-      <div className="flex flex-col items-center">
+    <div className={`flex w-full max-w-[560px] flex-col items-center gap-6 rounded-[36px] border border-white/50 bg-white/40 p-6 text-center shadow-[var(--shadow-glass)] backdrop-blur-2xl sm:p-10 min-[900px]:landscape:grid min-[900px]:landscape:max-w-[1100px] min-[900px]:landscape:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] min-[900px]:landscape:items-center min-[900px]:landscape:gap-14 min-[900px]:landscape:text-left`}>
+      <div className={`flex w-full flex-col items-center gap-3 min-[900px]:landscape:order-2 min-[900px]:landscape:items-start`}>
         <Lion size={72} alt={t(lang, 'lionAlt')} />
-        <p className="mt-3 font-display text-[clamp(28px,5vw,44px)] font-bold tracking-tight text-foreground">{data?.name ?? ' '}</p>
-        <p className="mt-1 text-[18px] text-muted-foreground">{t(lang, 'tabletScan')}</p>
+        <p className="font-display text-[clamp(28px,5vw,48px)] leading-tight font-bold tracking-tight text-foreground">{data?.name ?? '\u00a0'}</p>
+        <p className="text-[18px] text-muted-foreground">{t(lang, 'tabletScan')}</p>
+        <div className={`mt-2 hidden min-[900px]:landscape:block`}>
+          <p className="font-display text-[clamp(48px,7vw,84px)] leading-none font-semibold tabular-nums text-foreground">{now ? clock.format(now) : '\u00a0'}</p>
+          <p className="mt-2 text-[20px] first-letter:uppercase text-muted-foreground">{now ? today.format(now) : '\u00a0'}</p>
+        </div>
       </div>
-      <div className="w-full max-w-[420px] rounded-[32px] bg-white p-5 shadow-[var(--shadow-glow)]">
-        {data ? (
-          <div className="aspect-square w-full [&>svg]:size-full" dangerouslySetInnerHTML={{ __html: data.svg }} aria-label={t(lang, 'tabletQrLabel')} role="img" />
-        ) : (
-          <div className="aspect-square w-full animate-pulse rounded-2xl bg-black/10" />
-        )}
+      <div className={`flex w-full flex-col items-center gap-4 min-[900px]:landscape:order-1`}>
+        <div className="w-full max-w-[420px] rounded-[32px] border border-black/[0.08] bg-white p-5 shadow-[var(--shadow-glass)] min-[900px]:landscape:max-w-[min(480px,72dvh)]">
+          {data ? (
+            <div className="aspect-square w-full [&>svg]:size-full" dangerouslySetInnerHTML={{ __html: data.svg }} aria-label={t(lang, 'tabletQrLabel')} role="img" />
+          ) : (
+            <div className="aspect-square w-full animate-pulse rounded-2xl bg-black/10" />
+          )}
+        </div>
+        {secondsLeft !== null && problem !== 'offline' ? (
+          <div className="w-full max-w-[420px]" aria-hidden="true">
+            <div className="h-1.5 overflow-hidden rounded-full bg-white/50">
+              <div className="h-full rounded-full bg-primary transition-[width] duration-1000 ease-linear" style={{ width: `${Math.min(100, (secondsLeft / 30) * 100)}%` }} />
+            </div>
+            <p className="mt-2 text-center text-[14px] tabular-nums text-muted-foreground">{t(lang, 'tabletNextCode', { s: secondsLeft })}</p>
+          </div>
+        ) : null}
       </div>
-      <div>
+      <div className={`min-[900px]:landscape:hidden`}>
         <p className="font-display text-[clamp(36px,7vw,60px)] font-semibold tabular-nums text-foreground">{now ? clock.format(now) : '\u00a0'}</p>
         <p className="text-[18px] first-letter:uppercase text-muted-foreground">{now ? today.format(now) : '\u00a0'}</p>
       </div>
-      {problem === 'offline' ? (
-        <p className="rounded-2xl bg-warning/15 px-4 py-2 text-[15px] text-warning">{t(lang, 'tabletOffline')}</p>
-      ) : (
-        <p className="text-[14px] text-muted-foreground">{t(lang, 'tabletNote')}</p>
-      )}
+      <div className={`min-[900px]:landscape:order-3 min-[900px]:landscape:col-span-2 min-[900px]:landscape:text-center`}>
+        {problem === 'offline' ? (
+          <p className="rounded-2xl bg-warning/15 px-4 py-2 text-[15px] text-warning">{t(lang, 'tabletOffline')}</p>
+        ) : (
+          <p className="text-[14px] text-muted-foreground">{t(lang, 'tabletNote')}</p>
+        )}
+      </div>
     </div>
   );
 }

@@ -5,11 +5,13 @@ import { addExpenseAction, voidExpenseAction } from '@/app/actions';
 import { formatCop } from '@/lib/format';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
-import { CheckField, Field, Select } from './ui';
+import { Field, Select } from './ui';
 import { useT } from './i18n';
+import { PaidFromFields } from './paid-from-fields';
 
 const CATEGORIES: [string, string][] = [
   ['suppliers', 'Proveedores'],
+  ['packaging', 'Bolsas y empaques'],
   ['payroll', 'Nómina'],
   ['rent', 'Arriendo'],
   ['utilities', 'Servicios públicos'],
@@ -38,9 +40,8 @@ export function ExpenseForm({ today }: { today: string }) {
             <Field label={t('Descripción')} name="description" required minLength={3} maxLength={200} placeholder={t('Factura de carnes de la semana')} defaultValue={state?.values?.description} />
           </div>
           <Field label={t('Proveedor (opcional)')} name="supplier" maxLength={120} defaultValue={state?.values?.supplier} />
-          <div className="md:col-span-3">
-            <CheckField name="paidFromCash" label={t('Lo pagué con la plata de la caja')} hint={t('Sale de la caja abierta como una salida de efectivo.')} />
-          </div>
+          <Field label={t('Número de factura (opcional)')} name="invoiceNumber" maxLength={40} defaultValue={state?.values?.invoiceNumber} />
+          <PaidFromFields defaultValue={state?.values?.paidFrom ?? 'other'} dueOn={state?.values?.dueOn} />
           <div className="md:col-span-3">
             <SubmitButton pendingText={t('Guardando…')}>{t('Registrar gasto')}</SubmitButton>
           </div>
@@ -53,16 +54,25 @@ export function ExpenseForm({ today }: { today: string }) {
 type Row = {
   id: string;
   categoryLabel: string;
+  kind: 'supplies' | 'expense';
   description: string;
   supplier: string | null;
   amount: number;
   spentOn: string;
   paidFromCash: boolean;
+  /** Null: por pagar. */
+  paidFrom?: string | null;
+  invoiceNumber?: string | null;
+  dueOn?: string | null;
   createdBy: string;
   locationName: string;
   voided: boolean;
   voidReason: string | null;
+  hasPhoto: boolean;
 };
+
+// De dónde salió la plata, como sale en la lista (lib/finance.ts PAID_FROM_LABEL; aquí sin importar el servidor).
+const PAID_FROM_SHORT: Record<string, string> = { cash: 'de la caja', safe: 'de la caja fuerte', kitchen: 'del sobre de la cocina', bar: 'del sobre del bar', other: 'pagado aparte' };
 
 export function ExpenseRow({ expense: e, showLocation }: { expense: Row; showLocation: boolean }) {
   const [voiding, setVoiding] = useState(false);
@@ -71,12 +81,29 @@ export function ExpenseRow({ expense: e, showLocation }: { expense: Row; showLoc
     <li className="px-4 py-3 text-[14px]">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className={e.voided ? 'line-through opacity-50' : ''}>
-          <span className="font-medium">{e.description}</span> · {e.categoryLabel}
+          <span className="font-medium">{e.description}</span> · {e.kind === 'supplies' ? t('Insumos') : t('Gasto')} · {e.categoryLabel}
           {e.supplier ? ` · ${e.supplier}` : ''}
           <span className="block text-[12.5px] text-muted-foreground no-underline">
             {e.spentOn} · {e.createdBy}
-            {e.paidFromCash ? t(' · de la caja') : ''}
+            {e.invoiceNumber ? ` · ${t('Factura {n}', { n: e.invoiceNumber })}` : ''}
+            {e.paidFrom === null ? (
+              <span className="text-warning"> · {e.dueOn ? t('por pagar, vence {date}', { date: e.dueOn }) : t('por pagar')}</span>
+            ) : e.paidFrom ? (
+              ` · ${t(PAID_FROM_SHORT[e.paidFrom] ?? '')}`
+            ) : e.paidFromCash ? (
+              t(' · de la caja')
+            ) : (
+              ''
+            )}
             {showLocation ? ` · ${e.locationName}` : ''}
+            {e.hasPhoto ? (
+              <>
+                {' · '}
+                <a href={`/app/facturas/compra/${e.id}`} target="_blank" rel="noreferrer" className="text-primary underline">
+                  {t('Ver factura')}
+                </a>
+              </>
+            ) : null}
           </span>
         </span>
         <span className="flex items-center gap-3">
@@ -107,5 +134,42 @@ export function ExpenseRow({ expense: e, showLocation }: { expense: Row; showLoc
         </ActionForm>
       ) : null}
     </li>
+  );
+}
+
+/** «Eliminar factura» en la lista de Facturas (5 nov 2026, pedido de Rigoberto). No se borra: queda anulada con su motivo. */
+export function DeletePurchaseButton({ id, supplies, fromCash }: { id: string; supplies: boolean; fromCash: boolean }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" className="text-[13px] text-muted-foreground hover:text-[#ffb4b5]" onClick={() => setOpen(!open)}>
+        {open ? t('Cancelar') : t('Eliminar')}
+      </button>
+      {open ? (
+        <ActionForm action={voidExpenseAction} onOk={() => setOpen(false)} className="flex basis-full flex-wrap items-end gap-2 pl-[68px]">
+          {() => (
+            <>
+              <input type="hidden" name="expenseId" value={id} />
+              <p className="basis-full text-[12.5px] text-muted-foreground">
+                {[
+                  t('La factura queda anulada (se ve tachada) y deja de contar en los gastos.'),
+                  fromCash ? t('La plata vuelve a la caja.') : '',
+                  supplies ? t('Lo que entró al inventario con ella sale otra vez.') : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              </p>
+              <div className="min-w-[200px] flex-1">
+                <Field label={t('Motivo')} name="reason" required minLength={3} maxLength={200} placeholder={t('Registrado dos veces…')} />
+              </div>
+              <SubmitButton tone="danger" pendingText={t('Anulando…')}>
+                {t('Eliminar factura')}
+              </SubmitButton>
+            </>
+          )}
+        </ActionForm>
+      ) : null}
+    </>
   );
 }

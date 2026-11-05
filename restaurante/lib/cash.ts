@@ -1,10 +1,12 @@
 // Módulo 04: caja y pagos. Turnos de caja, cobro en partes y con varios medios, propina, descuentos y cierre de caja.
 // Nada se borra: un pago equivocado se reversa con motivo, un descuento se anula, una salida de plata se registra.
+import { randomUUID } from 'node:crypto';
 import { formatCop } from './format';
+import { cashCountTotal, cleanCashCount, type CashCount } from './cash-count';
 import { pooled, query, transaction, type Db } from './db';
 import { createInvoice, voidInvoiceFor } from './invoices';
 import { can } from './permissions';
-import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
+import { AppError, audit, hasOrders, isUuid, releaseEmptySessions, requirePermission, type Actor } from './store';
 
 export const METHODS = ['cash', 'card', 'transfer'] as const;
 export const isMethod = (v: string): v is Method => (METHODS as readonly string[]).includes(v);
@@ -29,16 +31,56 @@ export const suggestedTipFor = (total: number, percent: number) => Math.round((t
 
 // ───────── turnos de caja ─────────
 
-export type Shift = { id: string; openedAt: Date; openedBy: string; openingAmount: number; closedAt: Date | null; closedBy: string | null; expectedCash: number | null; countedCash: number | null; notes: string | null };
+export type Shift = {
+  id: string;
+  openedAt: Date;
+  openedBy: string;
+  openingAmount: number;
+  closedAt: Date | null;
+  closedBy: string | null;
+  expectedCash: number | null;
+  countedCash: number | null;
+  notes: string | null;
+  /** Cómo se repartió el efectivo al cerrar (formulario diario de Rigoberto): sobres y caja fuerte. */
+  envelopeKitchen: number;
+  envelopeBar: number;
+  safeAmount: number;
+  /** Arqueo: cuántos billetes y monedas de cada uno se contaron (null si se escribió el total a mano). */
+  cashCount: CashCount | null;
+  /** Día en que se abrió (AAAA-MM-DD, hora de la sede) y qué turno fue ese día: 1, 2… (dos cajeras al día, 30 oct 2026). */
+  day: string;
+  dayNumber: number;
+  /** Si el dueño o el administrador corrigió el cierre después (4 nov 2026). */
+  correctedBy: string | null;
+  correctedAt: Date | null;
+  correctionReason: string | null;
+};
 
 const SHIFT_SELECT = `SELECT c.id, c.opened_at AS "openedAt", o.name AS "openedBy", c.opening_amount AS "openingAmount", c.closed_at AS "closedAt",
-       x.name AS "closedBy", c.expected_cash AS "expectedCash", c.counted_cash AS "countedCash", c.notes
-  FROM cash_shifts c JOIN staff o ON o.id = c.opened_by LEFT JOIN staff x ON x.id = c.closed_by`;
+       x.name AS "closedBy", c.expected_cash AS "expectedCash", c.counted_cash AS "countedCash", c.notes,
+       c.envelope_kitchen AS "envelopeKitchen", c.envelope_bar AS "envelopeBar", c.safe_amount AS "safeAmount", c.cash_count AS "cashCount",
+       to_char(c.opened_at AT TIME ZONE b.timezone, 'YYYY-MM-DD') AS day,
+       (SELECT count(*)::int FROM cash_shifts y
+         WHERE y.location_id = c.location_id AND y.staff_id IS NOT DISTINCT FROM c.staff_id AND y.opened_at <= c.opened_at
+           AND (y.opened_at AT TIME ZONE b.timezone)::date = (c.opened_at AT TIME ZONE b.timezone)::date) AS "dayNumber",
+       z.name AS "correctedBy", c.corrected_at AS "correctedAt", c.correction_reason AS "correctionReason"
+  FROM cash_shifts c JOIN businesses b ON b.id = c.business_id JOIN staff o ON o.id = c.opened_by LEFT JOIN staff x ON x.id = c.closed_by
+  LEFT JOIN staff z ON z.id = c.corrected_by`;
 
-type ShiftRow = Omit<Shift, 'openingAmount' | 'expectedCash' | 'countedCash'> & { openingAmount: string; expectedCash: string | null; countedCash: string | null };
+type ShiftRow = Omit<Shift, 'openingAmount' | 'expectedCash' | 'countedCash' | 'envelopeKitchen' | 'envelopeBar' | 'safeAmount'> & {
+  openingAmount: string;
+  expectedCash: string | null;
+  countedCash: string | null;
+  envelopeKitchen: string;
+  envelopeBar: string;
+  safeAmount: string;
+};
 const toShift = (r: ShiftRow): Shift => ({
   ...r,
   openingAmount: Number(r.openingAmount),
+  envelopeKitchen: Number(r.envelopeKitchen),
+  envelopeBar: Number(r.envelopeBar),
+  safeAmount: Number(r.safeAmount),
   expectedCash: r.expectedCash === null ? null : Number(r.expectedCash),
   countedCash: r.countedCash === null ? null : Number(r.countedCash),
 });
@@ -56,6 +98,37 @@ export async function listShifts(actor: Actor, limit = 15): Promise<Shift[]> {
     limit,
   ]);
   return rows.map(toShift);
+}
+
+/**
+ * Lo que quedó en la caja al cerrar el turno anterior de la sede (lo contado menos sobres y caja fuerte): la base que
+ * recibe la cajera del turno siguiente (dos cajeras al día, 30 oct 2026). Null si nunca se ha cerrado una caja.
+ */
+export async function drawerLeftByLastShift(actor: Actor): Promise<{ amount: number; closedBy: string; closedAt: Date } | null> {
+  requirePermission(actor, 'cash.operate');
+  const row = (
+    await query<{ amount: string; closedBy: string; closedAt: Date }>(
+      `SELECT GREATEST(0, c.counted_cash - c.envelope_kitchen - c.envelope_bar - c.safe_amount) AS amount, x.name AS "closedBy", c.closed_at AS "closedAt"
+         FROM cash_shifts c JOIN staff x ON x.id = c.closed_by
+        WHERE c.location_id = $1 AND c.business_id = $2 AND c.staff_id IS NULL AND c.closed_at IS NOT NULL
+        ORDER BY c.closed_at DESC LIMIT 1`,
+      [actor.locationId, actor.businessId],
+    )
+  )[0];
+  return row ? { amount: Number(row.amount), closedBy: row.closedBy, closedAt: row.closedAt } : null;
+}
+
+/** Los turnos de caja de la sede abiertos el día `date` (AAAA-MM-DD en la hora de la sede), en orden, con su cuadre. */
+export async function dayShifts(actor: Actor, date: string): Promise<ShiftSummary[]> {
+  requirePermission(actor, 'cash.operate');
+  const ids = await query<{ id: string }>(
+    `SELECT c.id FROM cash_shifts c JOIN businesses b ON b.id = c.business_id
+      WHERE c.location_id = $1 AND c.business_id = $2 AND c.staff_id IS NULL AND (c.opened_at AT TIME ZONE b.timezone)::date = $3::date
+      ORDER BY c.opened_at`,
+    [actor.locationId, actor.businessId, date],
+  );
+  const all = await Promise.all(ids.map((r) => loadShiftSummary(actor, r.id)));
+  return all.filter((s): s is ShiftSummary => s !== null);
 }
 
 export async function openShift(actor: Actor, openingAmount: number) {
@@ -88,14 +161,14 @@ export async function lockOpenShift(db: Db, actor: Actor) {
 }
 
 /** Forma de trabajo del negocio (las opciones que prende el dueño en Sedes). */
-export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number }> {
+export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean }> {
   const row = (
-    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number }>(
-      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip" FROM businesses WHERE id = $1`,
+    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean }>(
+      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip", track_prep AS "trackPrep" FROM businesses WHERE id = $1`,
       [businessId],
     )
   )[0];
-  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10 };
+  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10, trackPrep: true };
 }
 
 /**
@@ -236,7 +309,12 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
     ),
     query<{ id: string; kind: 'in' | 'out'; amount: string; reason: string; createdBy: string; createdAt: Date }>(
       `SELECT m.id, m.kind, m.amount, m.reason, s.name AS "createdBy", m.created_at AS "createdAt"
-         FROM cash_movements m JOIN staff s ON s.id = m.created_by WHERE m.shift_id = $1 ORDER BY m.created_at`,
+         FROM cash_movements m JOIN staff s ON s.id = m.created_by WHERE m.shift_id = $1
+          -- Una factura eliminada no salió de la caja: su salida y la entrada que la devolvió se cancelan y no se muestran
+          -- (5 nov 2026, Rigoberto: «me aparece que salió de caja 127.000 y esa plata no salió»). El esperado es el mismo.
+          AND NOT EXISTS (SELECT 1 FROM expenses e WHERE e.cash_movement_id = m.id AND e.voided_at IS NOT NULL)
+          AND NOT (m.kind = 'in' AND m.reason LIKE 'Anulación del gasto:%')
+        ORDER BY m.created_at`,
       [shiftId],
     ),
   ]);
@@ -261,22 +339,94 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
   };
 }
 
+/**
+ * Corrige un cierre ya hecho (4 nov 2026, pedido de Rigoberto: «una empleada mandó un cierre por error y le faltó dinero
+ * por ingresar»). Solo dueño o administrador, siempre con motivo. Lo esperado no cambia (sale de las ventas); cambia lo
+ * contado y cómo se repartió. Si no se escribe un arqueo nuevo, el anterior se quita (ya no sumaría lo contado).
+ */
+export async function correctClosing(
+  actor: Actor,
+  shiftId: string,
+  input: { countedCash: number; reason: string; envelopeKitchen?: number; envelopeBar?: number; safeAmount?: number; cashCount?: unknown },
+) {
+  requirePermission(actor, 'cash.correct');
+  if (!isUuid(shiftId)) throw new AppError('NOT_FOUND', 'No encontramos ese cierre.');
+  const why = requireText(input.reason, 'Motivo de la corrección', 3, 300);
+  requireAmount(input.countedCash, 'Efectivo contado', { allowZero: true });
+  const envelopeKitchen = input.envelopeKitchen ?? 0;
+  const envelopeBar = input.envelopeBar ?? 0;
+  const safeAmount = input.safeAmount ?? 0;
+  requireAmount(envelopeKitchen, 'Sobre para la cocina', { allowZero: true });
+  requireAmount(envelopeBar, 'Sobre para el bar', { allowZero: true });
+  requireAmount(safeAmount, 'Caja fuerte', { allowZero: true });
+  const cashCount = cleanCashCount(input.cashCount);
+  if (cashCount && cashCountTotal(cashCount) !== input.countedCash)
+    throw new AppError('INVALID', `El arqueo suma ${money(cashCountTotal(cashCount))} y el efectivo contado dice ${money(input.countedCash)}: revísalos.`);
+  if (envelopeKitchen + envelopeBar + safeAmount > input.countedCash)
+    throw new AppError('INVALID', `Los sobres y la caja fuerte suman ${money(envelopeKitchen + envelopeBar + safeAmount)}: es más de lo contado (${money(input.countedCash)}).`);
+  await transaction(async (db) => {
+    const before = (
+      await db.query<{ closedAt: Date | null; expected: string; counted: string; kitchen: string; bar: string; safe: string }>(
+        `SELECT closed_at AS "closedAt", expected_cash AS expected, counted_cash AS counted, envelope_kitchen AS kitchen, envelope_bar AS bar, safe_amount AS safe
+           FROM cash_shifts WHERE id = $1 AND location_id = $2 AND business_id = $3 FOR UPDATE`,
+        [shiftId, actor.locationId, actor.businessId],
+      )
+    ).rows[0];
+    if (!before) throw new AppError('NOT_FOUND', 'No encontramos ese cierre.');
+    if (!before.closedAt) throw new AppError('CONFLICT', 'Esa caja sigue abierta: se corrige al cerrarla.');
+    await db.query(
+      `UPDATE cash_shifts SET counted_cash = $2, envelope_kitchen = $3, envelope_bar = $4, safe_amount = $5, cash_count = $6,
+              corrected_by = $7, corrected_at = now(), correction_reason = $8 WHERE id = $1`,
+      [shiftId, input.countedCash, envelopeKitchen, envelopeBar, safeAmount, cashCount ? JSON.stringify(cashCount) : null, actor.id, why],
+    );
+    const expected = Number(before.expected);
+    const diff = input.countedCash - expected;
+    await audit(db, actor, {
+      action: 'cash.correct',
+      entity: 'cash_shift',
+      entityId: shiftId,
+      summary: `Corrigió un cierre de caja: contado ${money(Number(before.counted))} → ${money(input.countedCash)}${diff === 0 ? ' (cuadra)' : diff > 0 ? ` (sobran ${money(diff)})` : ` (faltan ${money(-diff)})`}`,
+      reason: why,
+      data: {
+        before: { counted: Number(before.counted), envelopeKitchen: Number(before.kitchen), envelopeBar: Number(before.bar), safeAmount: Number(before.safe) },
+        after: { counted: input.countedCash, envelopeKitchen, envelopeBar, safeAmount },
+      },
+    });
+  });
+}
+
 /** Cierra la caja: se cuenta la plata y queda la diferencia contra lo esperado. */
-export async function closeShift(actor: Actor, countedCash: number, notes?: string) {
+export async function closeShift(
+  actor: Actor,
+  countedCash: number,
+  notes?: string,
+  split: { envelopeKitchen?: number; envelopeBar?: number; safeAmount?: number; cashCount?: unknown } = {},
+) {
   requirePermission(actor, 'cash.operate');
   requireAmount(countedCash, 'Efectivo contado', { allowZero: true });
-  const why = notes?.trim() ? requireText(notes, 'Nota', 2, 300) : null;
+  const why = notes?.trim() ? requireText(notes, 'Observaciones', 2, 1500) : null;
+  // El efectivo contado se reparte en sobres y caja fuerte; lo que sobra queda en la caja. No se puede repartir más de lo contado.
+  const envelopeKitchen = split.envelopeKitchen ?? 0;
+  const envelopeBar = split.envelopeBar ?? 0;
+  const safeAmount = split.safeAmount ?? 0;
+  requireAmount(envelopeKitchen, 'Sobre para la cocina', { allowZero: true });
+  requireAmount(envelopeBar, 'Sobre para el bar', { allowZero: true });
+  requireAmount(safeAmount, 'Caja fuerte', { allowZero: true });
+  // Con arqueo, lo contado tiene que ser la suma de los billetes y monedas.
+  const cashCount = cleanCashCount(split.cashCount);
+  if (cashCount && cashCountTotal(cashCount) !== countedCash)
+    throw new AppError('INVALID', `El arqueo suma ${money(cashCountTotal(cashCount))} y el efectivo contado dice ${money(countedCash)}: revísalos.`);
+  if (envelopeKitchen + envelopeBar + safeAmount > countedCash)
+    throw new AppError('INVALID', `Los sobres y la caja fuerte suman ${money(envelopeKitchen + envelopeBar + safeAmount)}: es más de lo contado (${money(countedCash)}).`);
   return transaction(async (db) => {
     const shift = await lockOpenShift(db, actor);
     const expected = await expectedCash(db, shift.id, Number(shift.openingAmount));
     const diff = countedCash - expected;
-    await db.query(`UPDATE cash_shifts SET closed_at = now(), closed_by = $2, expected_cash = $3, counted_cash = $4, notes = $5 WHERE id = $1`, [
-      shift.id,
-      actor.id,
-      expected,
-      countedCash,
-      why,
-    ]);
+    await db.query(
+      `UPDATE cash_shifts SET closed_at = now(), closed_by = $2, expected_cash = $3, counted_cash = $4, notes = $5,
+              envelope_kitchen = $6, envelope_bar = $7, safe_amount = $8, cash_count = $9 WHERE id = $1`,
+      [shift.id, actor.id, expected, countedCash, why, envelopeKitchen, envelopeBar, safeAmount, cashCount ? JSON.stringify(cashCount) : null],
+    );
     await audit(db, actor, {
       action: 'cash.close',
       entity: 'cash_shift',
@@ -407,7 +557,27 @@ export async function applyDiscount(actor: Actor, sessionId: string, input: { pe
       reason,
       data: { sessionId, amount, percentOfBill: totalPct },
     });
+    // Si el descuento deja la cuenta en $0 (cortesía del 100 %, p. ej. un jefe; 3 nov 2026) no queda nada por cobrar y
+    // ningún pago la cerraría: se cierra aquí, como cuando el último pago deja el saldo en cero.
+    if (amount === checkout.balance) await closeZeroInTx(db, actor, sessionId, session.number);
     return res.rows[0].id;
+  });
+}
+
+async function closeZeroInTx(db: Db, actor: Actor, sessionId: string, number: string) {
+  await db.query(`UPDATE table_sessions SET status = 'closed', closed_at = now(), closed_by = $2 WHERE id = $1`, [sessionId, actor.id]);
+  await audit(db, actor, { action: 'table.close', entity: 'table_session', entityId: sessionId, summary: `Cerró la mesa ${number}: la cuenta quedó en $0` });
+}
+
+/** Cierra una mesa que ya quedó en $0 y abierta (las de antes del 3 nov 2026, o si algo quedó a medias). */
+export async function closeZeroBalance(actor: Actor, sessionId: string) {
+  requirePermission(actor, 'cash.operate');
+  await transaction(async (db) => {
+    const session = await lockSessionForCash(db, actor, sessionId);
+    if (session.status === 'closed') throw new AppError('CONFLICT', 'Esa mesa ya se cerró.');
+    const checkout = (await loadCheckout(db, actor, sessionId))!;
+    if (checkout.balance > 0) throw new AppError('CONFLICT', `La mesa ${session.number} tiene saldo por pagar: se cierra cobrando.`);
+    await closeZeroInTx(db, actor, sessionId, session.number);
   });
 }
 
@@ -542,6 +712,7 @@ export async function reversePayment(actor: Actor, paymentId: string, reason: st
     }
     const session = await lockSessionForCash(db, actor, p.sessionId!);
     if (session.status === 'closed') {
+      await releaseEmptySessions(db, { tableId: session.tableId });
       const busy = await db.query(`SELECT 1 FROM table_sessions WHERE table_id = $1 AND status <> 'closed'`, [session.tableId]);
       if (busy.rowCount) throw new AppError('CONFLICT', `La mesa ${session.number} ya tiene otra cuenta abierta. Registra la devolución como una salida de caja.`);
       await db.query(`UPDATE table_sessions SET status = 'bill', closed_at = NULL, closed_by = NULL, bill_at = now() WHERE id = $1`, [session.id]);
@@ -560,6 +731,88 @@ export async function reversePayment(actor: Actor, paymentId: string, reason: st
   });
 }
 
+// ───────── faltante al cerrar (29 oct 2026) ─────────
+// Pedido de Rigoberto en pleno cierre: «cuando el arqueo me manda que me faltan dinero, agrega 2 opciones: dinero que se
+// agarró para pagar, y las diferencias que pagaron en transferencia pero que marcaron en efectivo». Lo primero es una
+// salida de caja (`addMovement`); lo segundo cambia el medio de un cobro en efectivo de la caja abierta.
+
+export type CashPayment = { id: string; tableNumber: string | null; amount: number; tip: number; createdBy: string; createdAt: Date };
+
+/** Los cobros en efectivo (sin reversar) de la caja abierta, lo más nuevo primero. */
+export async function openShiftCashPayments(actor: Actor): Promise<CashPayment[]> {
+  requirePermission(actor, 'cash.operate');
+  const rows = await query<{ id: string; tableNumber: string | null; amount: string; tip: string; createdBy: string; createdAt: Date }>(
+    `SELECT p.id, t.number AS "tableNumber", p.amount, p.tip, s.name AS "createdBy", p.created_at AS "createdAt"
+       FROM payments p
+       JOIN cash_shifts c ON c.id = p.shift_id AND c.closed_at IS NULL AND c.staff_id IS NULL
+       JOIN staff s ON s.id = p.created_by
+       LEFT JOIN table_sessions ts ON ts.id = p.session_id
+       LEFT JOIN dining_tables t ON t.id = ts.table_id
+      WHERE p.location_id = $1 AND p.business_id = $2 AND p.method = 'cash' AND p.reversed_at IS NULL
+      ORDER BY p.created_at DESC`,
+    [actor.locationId, actor.businessId],
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    tableNumber: r.tableNumber,
+    amount: Number(r.amount),
+    tip: Number(r.tip),
+    createdBy: r.createdBy,
+    createdAt: r.createdAt,
+  }));
+}
+
+/**
+ * Un cobro marcado en efectivo que en verdad fue por transferencia o datáfono. `amount` es cuánto fue por el otro medio:
+ * todo el cobro (con su propina) cambia de medio; una parte (hasta el valor sin propina) se separa en otro pago del mismo
+ * cobro, así lo cobrado no cambia y el efectivo esperado baja justo eso. Solo en la caja abierta.
+ */
+export async function moveCashPayment(actor: Actor, paymentId: string, input: { method: string; amount: number }) {
+  requirePermission(actor, 'cash.operate');
+  if (input.method !== 'transfer' && input.method !== 'card') throw new AppError('INVALID', 'Elige transferencia o datáfono.');
+  const method = input.method;
+  requireAmount(input.amount, 'Valor');
+  if (!isUuid(paymentId)) throw new AppError('NOT_FOUND', 'No encontramos ese cobro.');
+  return transaction(async (db) => {
+    const shift = await lockOpenShift(db, actor);
+    const p = (
+      await db.query<{ id: string; sessionId: string | null; appointmentId: string | null; amount: string; tip: string; method: Method; reversed: boolean; shiftId: string; createdBy: string; createdAt: Date; tableNumber: string | null }>(
+        `SELECT p.id, p.session_id AS "sessionId", p.appointment_id AS "appointmentId", p.amount, p.tip, p.method, (p.reversed_at IS NOT NULL) AS reversed,
+                p.shift_id AS "shiftId", p.created_by AS "createdBy", p.created_at AS "createdAt", t.number AS "tableNumber"
+           FROM payments p LEFT JOIN table_sessions ts ON ts.id = p.session_id LEFT JOIN dining_tables t ON t.id = ts.table_id
+          WHERE p.id = $1 AND p.business_id = $2 AND p.location_id = $3 FOR UPDATE OF p`,
+        [paymentId, actor.businessId, actor.locationId],
+      )
+    ).rows[0];
+    if (!p || p.reversed) throw new AppError('NOT_FOUND', 'No encontramos ese cobro.');
+    if (p.shiftId !== shift.id) throw new AppError('CONFLICT', 'Ese cobro no es de la caja abierta.');
+    if (p.method !== 'cash') throw new AppError('CONFLICT', 'Ese cobro ya no está en efectivo.');
+    const amount = Number(p.amount);
+    const total = amount + Number(p.tip);
+    const where = p.tableNumber ? `de la mesa ${p.tableNumber}` : 'de una cita';
+    const label = METHOD_LABEL[method].toLowerCase();
+    if (input.amount === total) {
+      await db.query(`UPDATE payments SET method = $2, received = NULL, change_given = NULL WHERE id = $1`, [p.id, method]);
+    } else if (input.amount < amount) {
+      await db.query(`UPDATE payments SET amount = amount - $2, received = NULL, change_given = NULL WHERE id = $1`, [p.id, input.amount]);
+      await db.query(
+        `INSERT INTO payments (business_id, location_id, session_id, appointment_id, shift_id, method, amount, tip, client_key, created_by, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, $10)`,
+        [actor.businessId, actor.locationId, p.sessionId, p.appointmentId, p.shiftId, method, input.amount, randomUUID(), p.createdBy, p.createdAt],
+      );
+    } else {
+      throw new AppError('INVALID', `Ese cobro fue de ${money(total)}: escribe ${money(total)} si todo fue por ${label}, o una parte menor a ${money(amount)}.`);
+    }
+    await audit(db, actor, {
+      action: 'payment.method',
+      entity: 'payment',
+      entityId: p.id,
+      summary: `Pasó ${money(input.amount)} de un cobro en efectivo ${where} a ${label} (se había marcado en efectivo)`,
+    });
+    return { expectedCash: await expectedCash(db, shift.id, Number(shift.openingAmount)) };
+  });
+}
+
 /** Cuentas abiertas de la sede con su saldo, para la pantalla de caja (primero las que pidieron la cuenta). */
 export async function openAccounts(actor: Actor) {
   requirePermission(actor, 'cash.operate');
@@ -569,7 +822,7 @@ export async function openAccounts(actor: Actor) {
             (SELECT COALESCE(sum(amount), 0) FROM session_discounts WHERE session_id = ts.id AND voided_at IS NULL) AS discounts,
             (SELECT COALESCE(sum(amount), 0) FROM payments WHERE session_id = ts.id AND reversed_at IS NULL) AS paid
        FROM table_sessions ts JOIN dining_tables t ON t.id = ts.table_id
-      WHERE ts.location_id = $1 AND ts.business_id = $2 AND ts.status <> 'closed'
+      WHERE ts.location_id = $1 AND ts.business_id = $2 AND ts.status <> 'closed' AND ${hasOrders('ts')}
       ORDER BY (ts.status = 'bill') DESC, ts.bill_at, ts.opened_at`,
     [actor.locationId, actor.businessId],
   );

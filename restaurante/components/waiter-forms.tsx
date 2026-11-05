@@ -7,7 +7,7 @@ import { CheckField, Field } from './ui';
 import { useT } from './i18n';
 
 /** El dueño escoge cómo trabaja su negocio. */
-export function WorkModeForm({ waitersCollect, barOnly, suggestedTip }: { waitersCollect: boolean; barOnly: boolean; suggestedTip: number }) {
+export function WorkModeForm({ waitersCollect, barOnly, suggestedTip, trackPrep }: { waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean }) {
   const t = useT();
   return (
     <ActionForm action={updateWorkModeAction} className="grid gap-3 md:grid-cols-2">
@@ -20,6 +20,12 @@ export function WorkModeForm({ waitersCollect, barOnly, suggestedTip }: { waiter
             defaultChecked={waitersCollect}
           />
           <CheckField name="barOnly" label={t('Solo bar (sin cocina)')} hint={t('Para negocios que solo venden licores y bebidas: se esconde la cocina.')} defaultChecked={barOnly} />
+          <CheckField
+            name="trackPrep"
+            label={t('Cocina y barra marcan sus comandas en pantalla')}
+            hint={t('Quítalo si las comandas le llegan a la cajera y ella avisa: así no se mide cuánto se demoran y el radar de fugas no las cuenta como demoradas.')}
+            defaultChecked={trackPrep}
+          />
           <div className="md:col-span-2 md:max-w-[320px]">
             <Field
               label={t('Propina sugerida (%)')}

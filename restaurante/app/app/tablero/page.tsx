@@ -3,9 +3,11 @@ import { Suspense } from 'react';
 import { BriefCard, BriefSkeleton } from '@/components/brief-card';
 import { requireStaff } from '@/lib/auth';
 import { getDashboard, isValidScope, type Level } from '@/lib/dashboard';
+import { workMode } from '@/lib/cash';
 import { todayIn } from '@/lib/finance';
 import { formatCop } from '@/lib/format';
-import { periodRange } from '@/lib/periods';
+import { customRange, periodRange, shortDate } from '@/lib/periods';
+import { DateRangeForm } from '@/components/date-range';
 import { listLocations } from '@/lib/store';
 import { formatQuantity, type Unit } from '@/lib/units';
 import { AutoRefresh } from '@/components/auto-refresh';
@@ -29,21 +31,30 @@ const LEVEL: Record<Level, { label: string; icon: string; cls: string }> = {
   alert: { label: 'Alerta', icon: '▲', cls: 'bg-destructive/15 text-[#ffb4b5]' },
 };
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ periodo?: string; sede?: string }> }) {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ periodo?: string; sede?: string; desde?: string; hasta?: string }> }) {
   const staff = await requireStaff('finance.view');
   const sp = await searchParams;
   const lang = await getLang();
   const t = makeT(lang);
-  const period = PERIODS.some((p) => p.key === sp.periodo) ? sp.periodo! : 'hoy';
+  // «Desde / Hasta» (3 nov 2026): si se escogieron las dos fechas, mandan sobre los botones de periodo.
+  const picked = customRange(sp.desde, sp.hasta);
+  const period = picked ? 'rango' : PERIODS.some((p) => p.key === sp.periodo) ? sp.periodo! : 'hoy';
   const today = todayIn(staff.timezone);
-  const range = periodRange(period, today);
+  const range = picked ?? periodRange(period, today);
   const isOwner = staff.role === 'owner';
   const locations = isOwner && staff.locationCount > 1 ? await listLocations(staff.businessId, { activeOnly: true }) : [];
   const sede = isOwner && isValidScope(sp.sede) ? (sp.sede ?? (staff.locationCount > 1 ? 'all' : staff.locationId)) : staff.locationId;
-  const d = await getDashboard(staff, { ...range, locationId: sede }, staff.timezone);
+  const [d, mode] = await Promise.all([getDashboard(staff, { ...range, locationId: sede }, staff.timezone), workMode(staff.businessId)]);
   const st = d.statement;
+  // Propina: el porcentaje de Sedes → «Propina sugerida» sobre lo vendido (no la que se marcó al cobrar).
+  const tipPct = mode.suggestedTip;
+  const tips = Math.round((st.sales * tipPct) / 100);
+  // Días del periodo, para el promedio de propina por día.
+  const days = Math.round((Date.parse(range.to) - Date.parse(range.from)) / 86_400_000) + 1;
   const scoreLevel: Level = d.score >= 85 ? 'ok' : d.score >= 60 ? 'watch' : 'alert';
-  const link = (patch: Record<string, string>) => `/app/tablero?${new URLSearchParams({ periodo: period, ...(isOwner && sede ? { sede } : {}), ...patch })}`;
+  const link = (patch: Record<string, string>) =>
+    `/app/tablero?${new URLSearchParams({ ...('periodo' in patch ? {} : picked ? { desde: range.from, hasta: range.to } : { periodo: period }), ...(isOwner && sede ? { sede } : {}), ...patch })}`;
+  const rangeLabel = picked ? (range.from === range.to ? shortDate(range.from, lang) : t('{from} a {to}', { from: shortDate(range.from, lang), to: shortDate(range.to, lang) })) : null;
   const dateLabel = new Date(`${today}T12:00:00Z`).toLocaleDateString(lang === 'en' ? 'en-US' : 'es-CO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 
   return (
@@ -51,7 +62,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <AutoRefresh everyMs={60_000} />
       <PageTitle
         title={t('Control total')}
-        text={`${dateLabel.charAt(0).toUpperCase()}${dateLabel.slice(1)} · ${sede === 'all' ? t('Todas las sedes') : (locations.find((l) => l.id === sede)?.name ?? staff.locationName)}`}
+        text={`${rangeLabel ?? `${dateLabel.charAt(0).toUpperCase()}${dateLabel.slice(1)}`} · ${sede === 'all' ? t('Todas las sedes') : (locations.find((l) => l.id === sede)?.name ?? staff.locationName)}`}
       />
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map((p) => (
@@ -67,6 +78,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             ))
           : null}
       </div>
+      <DateRangeForm action="/app/tablero" from={range.from} to={range.to} keep={isOwner && sede ? { sede } : {}} active={Boolean(picked)} t={t} />
 
       {range.from === range.to ? (
         <Suspense fallback={<BriefSkeleton lang={lang} />}>
@@ -74,8 +86,25 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </Suspense>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         <Kpi label={t('Ventas')} value={formatCop(st.sales)} hint={t('{n} mesas cobradas · ticket {amount}', { n: st.tables, amount: formatCop(st.averageTicket) })} accent="#5ee0a0" />
+        <Kpi
+          label={t('Propinas')}
+          value={formatCop(tips)}
+          hint={[
+            t('{pct} % de lo vendido', { pct: tipPct }),
+            days > 1 ? t('{amount} por día', { amount: formatCop(Math.round(tips / days)) }) : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          accent="#ffc861"
+        />
+        <Kpi
+          label={t('Gastos')}
+          value={formatCop(st.expensesTotal)}
+          hint={st.sales ? t('{pct} % de las ventas', { pct: Math.round((st.expensesTotal / st.sales) * 100) }) : t('Facturas y gastos anotados')}
+          accent="#ff8a65"
+        />
         <Kpi
           label={t('Costo de productos')}
           value={formatCop(st.costOfSales)}
@@ -158,17 +187,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               ))}
             </div>
           </section>
-          <section className={card}>
-            <h2 className="font-display text-[18px] font-bold">{t('Tiempos de preparación')}</h2>
-            <ul className="mt-3 space-y-1.5 text-[14px]">
-              {d.prep.map((p) => (
-                <li key={p.station} className="flex justify-between">
-                  <span className="text-muted-foreground">{t(p.station === 'kitchen' ? 'Cocina' : 'Barra')}</span>
-                  <span>{p.avgMinutes === null ? '—' : t('{min} min promedio · {n} comandas', { min: p.avgMinutes, n: p.tickets })}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          {/* Sin tiempos cuando cocina y barra no marcan sus comandas (Sedes → Forma de trabajo). */}
+          {d.prep.length ? (
+            <section className={card}>
+              <h2 className="font-display text-[18px] font-bold">{t('Tiempos de preparación')}</h2>
+              <ul className="mt-3 space-y-1.5 text-[14px]">
+                {d.prep.map((p) => (
+                  <li key={p.station} className="flex justify-between">
+                    <span className="text-muted-foreground">{t(p.station === 'kitchen' ? 'Cocina' : 'Barra')}</span>
+                    <span>{p.avgMinutes === null ? '—' : t('{min} min promedio · {n} comandas', { min: p.avgMinutes, n: p.tickets })}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
           {d.lowStock.length ? (
             <section className={`${card} border-warning/40`}>
               <h2 className="font-display text-[18px] font-bold">{t('Por comprar')}</h2>
@@ -190,9 +222,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   );
 }
 
-function Kpi({ label, value, hint, accent }: { label: string; value: string; hint?: string; accent: string }) {
+function Kpi({ label, value, hint, accent, className = '' }: { label: string; value: string; hint?: string; accent: string; className?: string }) {
   return (
-    <div className="rounded-[22px] border border-white/[0.08] bg-card p-4" style={{ boxShadow: `inset 3px 0 0 ${accent}` }}>
+    <div className={`rounded-[22px] border border-white/[0.08] bg-card p-4 ${className}`} style={{ boxShadow: `inset 3px 0 0 ${accent}` }}>
       <p className="text-[13px] text-muted-foreground">{label}</p>
       <p className="mt-1 whitespace-nowrap font-display text-[19px] font-bold sm:text-[23px]">{value}</p>
       {hint ? <p className="mt-0.5 text-[12.5px] text-muted-foreground">{hint}</p> : null}

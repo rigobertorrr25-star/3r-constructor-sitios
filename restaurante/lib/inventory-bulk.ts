@@ -3,19 +3,21 @@
 // que el producto, se cuenta en unidades y cada venta descuenta 1.
 import { query, transaction } from './db';
 import { parseQuantity } from './inventory';
-import { can } from './permissions';
+import { can, ownStation } from './permissions';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 
 /** Categorías de la carta con cuántos productos les falta inventario (sin receta). */
 export async function menuForInventory(actor: Actor) {
   requirePermission(actor, 'inventory.load');
+  // Barra y cocina solo ven los productos de su estación.
+  const station = can(actor.role, 'inventory.manage') ? null : ownStation(actor.role);
   return query<{ id: string; name: string; products: number; withoutRecipe: number }>(
     `SELECT c.id, c.name, count(p.id)::int AS products,
             count(p.id) FILTER (WHERE NOT EXISTS (SELECT 1 FROM recipe_lines r WHERE r.product_id = p.id))::int AS "withoutRecipe"
-       FROM menu_categories c JOIN menu_products p ON p.category_id = c.id AND p.is_active
+       FROM menu_categories c JOIN menu_products p ON p.category_id = c.id AND p.is_active AND ($2::text IS NULL OR p.station = $2)
       WHERE c.business_id = $1 AND c.is_active
       GROUP BY c.id, c.name, c.sort ORDER BY c.sort, c.name`,
-    [actor.businessId],
+    [actor.businessId, station],
   );
 }
 
@@ -27,14 +29,16 @@ export async function inventoryFromMenu(actor: Actor, categoryIds: string[]) {
   requirePermission(actor, 'inventory.load');
   const ids = [...new Set(categoryIds)].filter(isUuid);
   if (!ids.length) throw new AppError('INVALID', 'Marca al menos una categoría de la carta.');
+  const station = can(actor.role, 'inventory.manage') ? null : ownStation(actor.role);
   return transaction(async (db) => {
     const products = (
-      await db.query<{ id: string; name: string }>(
-        `SELECT p.id, p.name FROM menu_products p JOIN menu_categories c ON c.id = p.category_id
+      await db.query<{ id: string; name: string; station: string }>(
+        `SELECT p.id, p.name, p.station FROM menu_products p JOIN menu_categories c ON c.id = p.category_id
           WHERE p.business_id = $1 AND p.category_id = ANY($2::uuid[]) AND p.is_active AND c.is_active
             AND NOT EXISTS (SELECT 1 FROM recipe_lines r WHERE r.product_id = p.id)
+            AND ($3::text IS NULL OR p.station = $3)
           ORDER BY c.sort, p.sort, p.name`,
-        [actor.businessId, ids],
+        [actor.businessId, ids, station],
       )
     ).rows;
     let created = 0;
@@ -55,7 +59,12 @@ export async function inventoryFromMenu(actor: Actor, categoryIds: string[]) {
         await db.query(`UPDATE inventory_items SET is_active = TRUE WHERE id = $1`, [itemId]);
       } else {
         itemId = (
-          await db.query<{ id: string }>(`INSERT INTO inventory_items (business_id, name, unit) VALUES ($1, $2, 'und') RETURNING id`, [actor.businessId, p.name.slice(0, 80)])
+          // El insumo queda en el área de la estación del producto (barra o cocina).
+          await db.query<{ id: string }>(`INSERT INTO inventory_items (business_id, name, unit, area) VALUES ($1, $2, 'und', $3) RETURNING id`, [
+            actor.businessId,
+            p.name.slice(0, 80),
+            p.station === 'bar' ? 'bar' : 'kitchen',
+          ])
         ).rows[0].id;
         created++;
       }
@@ -76,6 +85,8 @@ export async function inventoryFromMenu(actor: Actor, categoryIds: string[]) {
 export const countFactor = (item: { unit: string; bottleSize: number | null }) => item.bottleSize ?? (item.unit === 'und' ? 1 : 1000);
 
 export type StockRow = { itemId: string; counted?: string; unitCost?: string; minStock?: string };
+/** Un insumo que no existía (lo vio la IA en la foto): se crea y queda con lo que hay. */
+export type NewStockItem = { name: string; counted: string; unit: 'und' | 'kg' | 'L'; area?: 'bar' | 'kitchen' };
 
 /**
  * Carga de existencias de muchos insumos a la vez. Por cada fila, solo lo que se escribió:
@@ -84,27 +95,52 @@ export type StockRow = { itemId: string; counted?: string; unitCost?: string; mi
  * - el mínimo para que avise.
  * Todo en la unidad en que se cuenta (unidades, botellas, kg o L).
  */
-export async function bulkStock(actor: Actor, rows: StockRow[], reason = 'Carga de inventario') {
+export async function bulkStock(actor: Actor, rows: StockRow[], reason = 'Carga de inventario', newItems: NewStockItem[] = []) {
   requirePermission(actor, 'inventory.load');
+  // Barra y cocina cargan y crean solo lo de su área; el dueño y el administrador, todo.
+  const station = can(actor.role, 'inventory.manage') ? null : ownStation(actor.role);
+  if (newItems.length > 60) throw new AppError('INVALID', 'Son demasiados insumos nuevos de una vez (hasta 60).');
   // El bartender carga cantidades y mínimos; los costos (plata) solo el dueño y el administrador.
   if (!can(actor.role, 'inventory.manage') && rows.some((r) => r.unitCost !== undefined && String(r.unitCost).trim() !== ''))
     throw new AppError('FORBIDDEN', 'Los costos solo los cambia el dueño o el administrador.');
   const filled = rows.filter((r) => [r.counted, r.unitCost, r.minStock].some((v) => v !== undefined && String(v).trim() !== ''));
-  if (!filled.length) throw new AppError('INVALID', 'Escribe al menos una cantidad, un costo o un mínimo.');
+  if (!filled.length && !newItems.length) throw new AppError('INVALID', 'Escribe al menos una cantidad, un costo o un mínimo.');
   if (filled.length > 500) throw new AppError('INVALID', 'Son demasiados insumos de una vez (hasta 500).');
   return transaction(async (db) => {
     let counted = 0;
     let costs = 0;
     let mins = 0;
+    let created = 0;
+    for (const n of newItems) {
+      const name = String(n.name ?? '').replace(/\s+/g, ' ').trim();
+      if (name.length < 2 || name.length > 80) throw new AppError('INVALID', 'El nombre de cada insumo nuevo va de 2 a 80 letras.');
+      const unit = n.unit === 'kg' ? 'g' : n.unit === 'L' ? 'ml' : 'und';
+      const area = station ?? (n.area === 'bar' ? 'bar' : 'kitchen');
+      // Si ya existe con ese nombre (alguien lo creó mientras tanto), se usa ese.
+      const existing = (
+        await db.query<{ id: string; unit: string; bottleSize: string | null }>(
+          `SELECT id, unit, bottle_size AS "bottleSize" FROM inventory_items WHERE business_id = $1 AND lower(name) = lower($2)`,
+          [actor.businessId, name],
+        )
+      ).rows[0];
+      if (existing && (existing.unit !== unit || existing.bottleSize !== null)) throw new AppError('CONFLICT', `Ya hay un insumo ${name}: escribe su cantidad en la tabla.`);
+      const id =
+        existing?.id ??
+        (await db.query<{ id: string }>(`INSERT INTO inventory_items (business_id, name, unit, min_stock, area) VALUES ($1, $2, $3, 0, $4) RETURNING id`, [actor.businessId, name, unit, area]))
+          .rows[0].id;
+      if (!existing) created++;
+      filled.push({ itemId: id, counted: n.counted });
+    }
     for (const r of filled) {
       if (!isUuid(r.itemId)) throw new AppError('NOT_FOUND', 'Hay un insumo que no existe.');
       const item = (
-        await db.query<{ id: string; name: string; unit: string; unitCost: string; bottleSize: string | null }>(
-          `SELECT id, name, unit, unit_cost AS "unitCost", bottle_size AS "bottleSize" FROM inventory_items WHERE id = $1 AND business_id = $2 FOR UPDATE`,
+        await db.query<{ id: string; name: string; unit: string; unitCost: string; bottleSize: string | null; area: string }>(
+          `SELECT id, name, unit, unit_cost AS "unitCost", bottle_size AS "bottleSize", area FROM inventory_items WHERE id = $1 AND business_id = $2 FOR UPDATE`,
           [r.itemId, actor.businessId],
         )
       ).rows[0];
       if (!item) throw new AppError('NOT_FOUND', 'Hay un insumo que no existe.');
+      if (station && item.area !== station) throw new AppError('FORBIDDEN', `${item.name} es de ${item.area === 'bar' ? 'barra' : 'cocina'}: lo carga esa área o el administrador.`);
       const f = countFactor({ unit: item.unit, bottleSize: item.bottleSize === null ? null : Number(item.bottleSize) });
       const label = (field: string) => `${item.name} (${field})`;
       let unitCost = Number(item.unitCost);
@@ -137,8 +173,8 @@ export async function bulkStock(actor: Actor, rows: StockRow[], reason = 'Carga 
       action: 'inventory.bulk',
       entity: 'location',
       entityId: actor.locationId,
-      summary: `Cargó el inventario de una vez: ${counted} cantidades, ${costs} costos y ${mins} mínimos`,
+      summary: `Cargó el inventario de una vez: ${counted} cantidades, ${costs} costos y ${mins} mínimos${created ? `; creó ${created} insumos` : ''}`,
     });
-    return { counted, costs, mins };
+    return created ? { counted, costs, mins, created } : { counted, costs, mins };
   });
 }

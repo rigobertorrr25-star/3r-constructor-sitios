@@ -1,7 +1,9 @@
 'use server';
 
-import { importMenu } from '@/lib/menu-import';
-import { bulkStock, inventoryFromMenu, type StockRow } from '@/lib/inventory-bulk';
+import { importMenu, parseMenuText } from '@/lib/menu-import';
+import { importRecipes, parseRecipesText } from '@/lib/recipe-import';
+import { matchPhotosWithAi, readReceiptWithAi, readStockWithAi, readWithAi, type ReadKind } from '@/lib/ai-read';
+import { bulkStock, inventoryFromMenu, type NewStockItem, type StockRow } from '@/lib/inventory-bulk';
 import { applyLibraryPhotos } from '@/lib/photo-library';
 import { createFixture, removeFixture, saveFixtureLayout, updateFixture } from '@/lib/floor';
 import { cookies, headers } from 'next/headers';
@@ -20,20 +22,22 @@ import {
   requireStaff,
   staffSessionValue,
 } from '@/lib/auth';
-import { homeOf } from '@/lib/permissions';
+import { can, homeOf, ownStation } from '@/lib/permissions';
 import { moveTicket } from '@/lib/kds';
 import { saveFiscal, setInvoiceCustomer } from '@/lib/invoices';
 import { createAppointment, payAppointment, saveService, setAppointmentStatus } from '@/lib/appointments';
 import { getBrief } from '@/lib/brief';
 import { createReservation, requestReservation, seatReservation, updatePublicSettings, updateReservation } from '@/lib/reservations';
-import { addExpense, voidExpense } from '@/lib/finance';
-import { registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
-import { addMovement, applyDiscount, closeShift, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
-import { saveCategory, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
+import { addExpense, payExpense, voidExpense, type PurchaseLine } from '@/lib/finance';
+import { addLoss, voidLoss } from '@/lib/losses';
+import { itemsForPurchase, listItems, registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
+import { addMovement, applyDiscount, closeShift, closeZeroBalance, correctClosing, moveCashPayment, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
+import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
+import { clearInventory, clearMenu, clearSales } from '@/lib/sales-reset';
 import { removeBackground, saveBackground, setFloorBackground } from '@/lib/backgrounds';
 import { removeProductPhoto, saveProductPhoto } from '@/lib/product-photos';
-import { createAgentCode, enqueueClosing, printBill, printTest, removePrinter, reprint, savePrinter } from '@/lib/printing';
+import { createAgentCode, enqueueClosing, enqueueDayClosing, printBill, printTest, removePrinter, reprint, savePrinter } from '@/lib/printing';
 import {
   AppError,
   closeTable,
@@ -132,6 +136,48 @@ export async function createBusinessAction(_prev: FormState, formData: FormData)
     });
     revalidatePath('/admin');
     return { ok: Date.now(), message: await trServer(`Listo. El equipo entra en la página de inicio escogiendo «${text(formData, 'name')}» (o directo en /n/${created.slug}). El dueño usa el código ${created.ownerCode} y el PIN que pusiste.`) };
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+}
+
+/** Borra las ventas de prueba de un negocio (solo 3R). Hay que escribir el nombre del negocio para confirmar. */
+export async function clearSalesAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  try {
+    const r = await clearSales(text(formData, 'businessId'), text(formData, 'confirmName'));
+    revalidatePath('/admin');
+    revalidatePath('/app', 'layout');
+    return {
+      ok: Date.now(),
+      message: await trServer(`Listo. Se borraron ${r.sessions} mesas, ${r.payments} pagos y ${r.shifts} turnos de caja. El negocio arranca a vender de cero.`),
+    };
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+}
+
+/** Borra toda la carta de un negocio (solo 3R). Hay que escribir el nombre del negocio para confirmar. */
+export async function clearMenuAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  try {
+    const r = await clearMenu(text(formData, 'businessId'), text(formData, 'confirmName'));
+    revalidatePath('/admin');
+    revalidatePath('/app', 'layout');
+    return { ok: Date.now(), message: await trServer(`Listo. Se borraron ${r.categories} categorías y ${r.products} productos. Ya puedes cargar la carta de nuevo.`) };
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+}
+
+/** Borra todo el inventario de un negocio (solo 3R). Hay que escribir el nombre del negocio para confirmar. */
+export async function clearInventoryAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  try {
+    const r = await clearInventory(text(formData, 'businessId'), text(formData, 'confirmName'));
+    revalidatePath('/admin');
+    revalidatePath('/app', 'layout');
+    return { ok: Date.now(), message: await trServer(`Listo. Se borraron ${r.items} insumos y ${r.movements} movimientos. Ya puedes cargar el inventario de nuevo.`) };
   } catch (error) {
     return fail(await messageOf(error), formData);
   }
@@ -420,6 +466,63 @@ export async function importMenuAction(_prev: FormState, formData: FormData): Pr
   };
 }
 
+/** Pasa a texto el PDF o las fotos (de la carta o de las recetas) con IA, para revisarlo antes de importarlo. */
+async function readFiles(kind: ReadKind, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  let text: string;
+  try {
+    const files = await Promise.all(
+      formData
+        .getAll('files')
+        .filter((f): f is File => typeof f === 'object' && f !== null && 'arrayBuffer' in f)
+        .map(async (f) => ({ type: f.type, size: f.size, data: Buffer.from(await f.arrayBuffer()) })),
+    );
+    text = await readWithAi(staff, kind, files);
+  } catch (error) {
+    return fail(await messageOf(error));
+  }
+  // Se cuenta lo leído; si el texto no pasa la revisión, igual se entrega para que la persona lo corrija.
+  let message: string;
+  try {
+    if (kind === 'menu') {
+      const menu = parseMenuText(text);
+      const products = menu.categories.reduce((n, c) => n + c.products.length, 0);
+      message = await trServer(`Leímos ${menu.categories.length} categorías y ${products} productos. Revísalos abajo, corrige lo que haga falta y toca «Importar carta».`);
+    } else {
+      const recipes = parseRecipesText(text);
+      message = await trServer(`Leímos ${recipes.products.length} recetas. Revísalas abajo, corrige lo que haga falta y toca «Importar recetas».`);
+    }
+  } catch {
+    message = await trServer('Leímos el archivo, pero hay líneas que revisar. Corrígelas abajo antes de importar.');
+  }
+  return { ok: Date.now(), message, values: { text } };
+}
+
+export async function readMenuFileAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  return readFiles('menu', formData);
+}
+
+export async function readRecipesFileAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  return readFiles('recipes', formData);
+}
+
+/** Importar las recetas pegadas o leídas del PDF (Inventario → Importar recetas). */
+export async function importRecipesAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('inventory.manage');
+  let r: Awaited<ReturnType<typeof importRecipes>>;
+  try {
+    r = await importRecipes(staff, String(formData.get('recipes') ?? ''));
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+  revalidatePath('/app/inventario');
+  revalidatePath('/app/carta');
+  const parts = [await trServer(`Listo: ${r.recipes} productos con receta y ${r.items} insumos nuevos.`)];
+  if (r.missing.length) parts.push(await trServer(`No están en la carta (revisa el nombre): ${r.missing.slice(0, 15).join(', ')}${r.missing.length > 15 ? '…' : ''}.`));
+  if (r.conflicts.length) parts.push(await trServer(`Sin tocar (ya existe ese insumo en otra unidad): ${r.conflicts.slice(0, 15).join(', ')}${r.conflicts.length > 15 ? '…' : ''}.`));
+  return { ok: Date.now(), message: parts.join(' ') };
+}
+
 export async function saveCategoryAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   return run(
@@ -438,6 +541,24 @@ export async function saveCategoryAction(_prev: FormState, formData: FormData): 
   );
 }
 
+/** Carta → «¿A dónde va cada categoría?» (campos station:ID). */
+export async function setCategoryStationsAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const changes: { id: string; station: string }[] = [];
+  for (const [key, value] of formData.entries()) {
+    const m = /^station:(.+)$/.exec(key);
+    if (m && typeof value === 'string') changes.push({ id: m[1], station: value });
+  }
+  let moved: number;
+  try {
+    moved = await setCategoryStations(staff, changes);
+  } catch (error) {
+    return fail(await messageOf(error), formData);
+  }
+  revalidatePath('/app/carta');
+  return { ok: Date.now(), message: await trServer(moved ? `Listo: ${moved} categorías cambiaron de estación, con sus productos.` : 'No había nada que cambiar.') };
+}
+
 export async function saveProductAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   return run(
@@ -453,6 +574,7 @@ export async function saveProductAction(_prev: FormState, formData: FormData): P
         price: text(formData, 'price'),
         station: text(formData, 'station'),
         isActive: formData.has('id') ? formData.get('isActive') === 'on' : true,
+        options: formData.has('options') ? String(formData.get('options') ?? '') : undefined,
       }),
     ['/app/carta'],
     'Producto guardado.',
@@ -460,6 +582,18 @@ export async function saveProductAction(_prev: FormState, formData: FormData): P
 }
 
 /** Agotado / disponible (botón, no formulario). */
+/** Carta → «Todo a cocina» / «Todo a barra» en una categoría: ella y todos sus productos van a esa estación. */
+export async function moveCategoryAction(categoryId: string, station: string): Promise<string | null> {
+  const staff = await requireStaff();
+  try {
+    await setCategoryStations(staff, [{ id: categoryId, station }]);
+  } catch (error) {
+    return await messageOf(error);
+  }
+  revalidatePath('/app/carta');
+  return null;
+}
+
 export async function setAvailableAction(productId: string, available: boolean): Promise<string | null> {
   const staff = await requireStaff();
   try {
@@ -486,7 +620,12 @@ export async function sendOrderAction(sessionId: string, lines: CartLine[], clie
 
 export async function voidItemAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
-  return run(formData, () => voidItem(staff, text(formData, 'itemId'), text(formData, 'reason')), ['/app', `/app/mesa/${text(formData, 'sessionId')}`], 'Anulado.');
+  return run(
+    formData,
+    () => voidItem(staff, text(formData, 'itemId'), text(formData, 'reason'), formData.has('preparedChoice') ? formData.get('prepared') === 'on' : undefined),
+    ['/app', `/app/mesa/${text(formData, 'sessionId')}`],
+    'Anulado.',
+  );
 }
 
 // ───────── cocina y barra ─────────
@@ -518,13 +657,54 @@ export async function openShiftAction(_prev: FormState, formData: FormData): Pro
 }
 
 /** Cierra la caja y lleva al cuadre de ese turno (esperado, contado y diferencia). */
+/** Corregir un cierre ya hecho (dueño o administrador, con motivo). */
+export async function correctClosingAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const shiftId = text(formData, 'shiftId');
+  const optional = (name: string) => (text(formData, name) ? pesos(formData, name) : 0);
+  return run(
+    formData,
+    () =>
+      correctClosing(staff, shiftId, {
+        countedCash: pesos(formData, 'countedCash'),
+        reason: text(formData, 'reason'),
+        envelopeKitchen: optional('envelopeKitchen'),
+        envelopeBar: optional('envelopeBar'),
+        safeAmount: optional('safeAmount'),
+        cashCount: (() => {
+          try {
+            return JSON.parse(text(formData, 'cashCount') || 'null');
+          } catch {
+            return null;
+          }
+        })(),
+      }),
+    [`/app/caja/turno/${shiftId}`, '/app/caja', '/app/caja/dia'],
+    'Cierre corregido.',
+  );
+}
+
 export async function closeShiftAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   let shiftId = '';
   const state = await run(
     formData,
     async () => {
-      shiftId = (await closeShift(staff, pesos(formData, 'countedCash'), text(formData, 'notes'))).shiftId;
+      const optional = (name: string) => (text(formData, name) ? pesos(formData, name) : 0);
+      shiftId = (
+        await closeShift(staff, pesos(formData, 'countedCash'), text(formData, 'notes'), {
+          envelopeKitchen: optional('envelopeKitchen'),
+          envelopeBar: optional('envelopeBar'),
+          safeAmount: optional('safeAmount'),
+          cashCount: (() => {
+            try {
+              return JSON.parse(text(formData, 'cashCount') || 'null');
+            } catch {
+              return null;
+            }
+          })(),
+        })
+      ).shiftId;
     },
     ['/app/caja'],
   );
@@ -545,6 +725,7 @@ export async function updateWorkModeAction(_prev: FormState, formData: FormData)
         waitersCollect: formData.get('waitersCollect') === 'on',
         barOnly: formData.get('barOnly') === 'on',
         suggestedTip: int(formData, 'suggestedTip'),
+        trackPrep: formData.get('trackPrep') === 'on',
       }),
     ['/app', '/app/sedes', '/app/meseros', '/app/mi-cuenta'],
     'Guardado.',
@@ -580,6 +761,37 @@ export async function movementAction(_prev: FormState, formData: FormData): Prom
   return run(formData, () => addMovement(staff, { kind: text(formData, 'kind'), amount: pesos(formData, 'amount'), reason: text(formData, 'reason') }), ['/app/caja'], 'Registrado.');
 }
 
+/** Cierre con faltante: «Se sacó plata para pagar algo». Sale de la caja abierta con el motivo «Pago: …». */
+export async function cashPaidOutAction(amount: number, what: string): Promise<string | null> {
+  const staff = await requireStaff();
+  try {
+    await addMovement(staff, { kind: 'out', amount, reason: what.trim() ? `Pago: ${what.trim()}` : '' });
+  } catch (error) {
+    return await messageOf(error);
+  }
+  revalidatePath('/app/caja');
+  return null;
+}
+
+/** Cierre con faltante: un cobro marcado en efectivo que fue por transferencia o datáfono (todo o una parte). */
+export async function moveCashPaymentAction(paymentId: string, method: string, amount: number): Promise<string | null> {
+  const staff = await requireStaff();
+  try {
+    await moveCashPayment(staff, paymentId, { method, amount });
+  } catch (error) {
+    return await messageOf(error);
+  }
+  revalidatePath('/app/caja');
+  return null;
+}
+
+/** Cierra una mesa que quedó en $0 y abierta (p. ej. con 100 % de descuento antes del 3 nov 2026). */
+export async function closeZeroAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const sessionId = text(formData, 'sessionId');
+  return run(formData, () => closeZeroBalance(staff, sessionId), [`/app/caja/mesa/${sessionId}`, '/app/caja', '/app'], 'Mesa cerrada.');
+}
+
 export async function discountAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   const sessionId = text(formData, 'sessionId');
@@ -588,7 +800,7 @@ export async function discountAction(_prev: FormState, formData: FormData): Prom
   return run(
     formData,
     () => applyDiscount(staff, sessionId, { percent: kind === 'percent' ? value : null, amount: kind === 'amount' ? value : null, reason: text(formData, 'reason') }),
-    [`/app/caja/mesa/${sessionId}`, '/app/caja'],
+    [`/app/caja/mesa/${sessionId}`, '/app/caja', '/app'],
     'Descuento aplicado.',
   );
 }
@@ -637,6 +849,7 @@ export async function saveItemAction(_prev: FormState, formData: FormData): Prom
         bottleSize: text(formData, 'bottleSize') || null,
         unitCost: text(formData, 'unitCost') || null,
         isActive: formData.has('id') ? formData.get('isActive') === 'on' : true,
+        area: text(formData, 'area') || null,
       }),
     ['/app/inventario'],
     'Insumo guardado.',
@@ -672,14 +885,58 @@ export async function bulkStockAction(_prev: FormState, formData: FormData): Pro
     else row.minStock = value;
     rows.set(m[2], row);
   }
-  let r: { counted: number; costs: number; mins: number };
+  // Insumos nuevos que vio la IA en la foto y la persona dejó marcados (new:N:name, new:N:count, new:N:unit).
+  const newItems: NewStockItem[] = [];
+  const area = text(formData, 'area');
+  for (const [key, value] of formData.entries()) {
+    const m = /^new:(\d+):create$/.exec(key);
+    if (!m || value !== 'on') continue;
+    const unit = text(formData, `new:${m[1]}:unit`);
+    newItems.push({
+      name: text(formData, `new:${m[1]}:name`),
+      counted: text(formData, `new:${m[1]}:count`) || '0',
+      unit: unit === 'kg' || unit === 'L' ? unit : 'und',
+      area: area === 'bar' ? 'bar' : 'kitchen',
+    });
+  }
+  let r: { counted: number; costs: number; mins: number; created?: number };
   try {
-    r = await bulkStock(staff, [...rows.values()]);
+    r = await bulkStock(staff, [...rows.values()], undefined, newItems);
   } catch (error) {
     return fail(await messageOf(error), formData);
   }
   revalidatePath('/app/inventario');
-  return { ok: Date.now(), message: await trServer(`Guardado: ${r.counted} cantidades, ${r.costs} costos y ${r.mins} mínimos.`) };
+  const created = r.created ? ' ' + (await trServer(`Insumos nuevos: ${r.created}.`)) : '';
+  return { ok: Date.now(), message: (await trServer(`Guardado: ${r.counted} cantidades, ${r.costs} costos y ${r.mins} mínimos.`)) + created };
+}
+
+/** Inventario → «Llenar con una foto»: la IA cuenta lo que ve en la foto y llena la tabla (la persona revisa y guarda). */
+export async function readStockAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('inventory.load');
+  const area = (can(staff.role, 'inventory.manage') ? null : ownStation(staff.role)) ?? text(formData, 'area');
+  try {
+    const files = await Promise.all(
+      formData
+        .getAll('files')
+        .filter((f): f is File => typeof f === 'object' && f !== null && 'arrayBuffer' in f)
+        .map(async (f) => ({ type: f.type, size: f.size, data: Buffer.from(await f.arrayBuffer()) })),
+    );
+    const items = (await listItems(staff)).filter((i) => i.isActive && (area !== 'bar' && area !== 'kitchen' ? true : i.area === area));
+    const reading = await readStockWithAi(
+      staff,
+      files,
+      items.map((i) => ({ id: i.id, name: i.name, countUnit: i.bottleSize ? 'botellas' : i.unit === 'und' ? 'und' : i.unit === 'g' ? 'kg' : 'L' })),
+    );
+    return {
+      ok: Date.now(),
+      message: await trServer(
+        `La IA leyó ${reading.found.length} insumos${reading.others.length ? ` y ${reading.others.length} que no están en tu inventario` : ''}. Revisa las cantidades abajo, corrige lo que haga falta y toca «Guardar todo».`,
+      ),
+      values: { reading: JSON.stringify(reading) },
+    };
+  } catch (error) {
+    return fail(await messageOf(error));
+  }
 }
 
 export async function inventoryMoveAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -719,25 +976,96 @@ export async function saveRecipeAction(productId: string, lines: { itemId: strin
 
 export async function addExpenseAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
+  const file = formData.get('foto');
+  const photo = file instanceof File && file.size ? new Uint8Array(await file.arrayBuffer()) : null;
   return run(
     formData,
     () =>
       addExpense(staff, {
+        kind: text(formData, 'kind'),
         category: text(formData, 'category'),
         description: text(formData, 'description'),
         supplier: text(formData, 'supplier'),
         amount: pesos(formData, 'amount'),
         spentOn: text(formData, 'spentOn'),
         paidFromCash: formData.get('paidFromCash') === 'on',
+        paidFrom: text(formData, 'paidFrom') || undefined,
+        invoiceNumber: text(formData, 'invoiceNumber'),
+        dueOn: text(formData, 'dueOn'),
+        photo,
+        lines: purchaseLines(formData),
+        bags: formData.get('bags') ? pesos(formData, 'bags') : 0,
       }),
-    ['/app/finanzas', '/app/caja'],
+    ['/app/finanzas', '/app/caja', '/app/facturas', '/app/inventario'],
     'Gasto registrado.',
   );
 }
 
+/** Caja → «Pérdidas del día»: se rompió un vaso, se dañó un plato… con su valor estimado. */
+export async function addLossAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => addLoss(staff, { description: text(formData, 'description'), amount: pesos(formData, 'amount') }), ['/app/caja'], 'Pérdida anotada.');
+}
+
+export async function voidLossAction(lossId: string): Promise<string | null> {
+  const staff = await requireStaff();
+  try {
+    await voidLoss(staff, lossId);
+  } catch (error) {
+    return await messageOf(error);
+  }
+  revalidatePath('/app/caja');
+  return null;
+}
+
+/** Facturas → «Facturas por pagar» → «Marcar pagada». */
+export async function payExpenseAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(formData, () => payExpense(staff, text(formData, 'expenseId'), text(formData, 'paidFrom')), ['/app/facturas', '/app/caja', '/app/finanzas'], 'Factura marcada como pagada.');
+}
+
+/** Los productos de la factura que van al inventario (campo «lines», JSON que arma la pantalla). */
+function purchaseLines(formData: FormData): PurchaseLine[] {
+  const raw = String(formData.get('lines') ?? '').trim();
+  if (!raw) return [];
+  try {
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? (list as PurchaseLine[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Facturas → «Facturas de compra»: la IA lee la foto de la factura y propone el gasto (la cajera lo revisa antes de guardar). */
+export async function readReceiptAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('expenses.add');
+  const file = formData.get('foto');
+  if (!(file instanceof File) || !file.size) return { error: await trServer('Escoge una foto.') };
+  try {
+    const items = await itemsForPurchase(staff);
+    const r = await readReceiptWithAi(staff, { type: file.type, size: file.size, data: Buffer.from(await file.arrayBuffer()) }, items.map((i) => i.name));
+    return {
+      ok: Date.now(),
+      message: await trServer('Listo: revisa lo que leyó la IA, corrige lo que haga falta y guarda.'),
+      values: {
+        supplier: r.supplier,
+        invoiceNumber: r.invoiceNumber,
+        amount: r.total ? String(r.total) : '',
+        spentOn: r.date ?? '',
+        category: r.category,
+        description: r.description,
+        lines: JSON.stringify(r.lines),
+        bags: r.bags ? String(r.bags) : '',
+      },
+    };
+  } catch (error) {
+    return fail(await messageOf(error));
+  }
+}
+
 export async function voidExpenseAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
-  return run(formData, () => voidExpense(staff, text(formData, 'expenseId'), text(formData, 'reason')), ['/app/finanzas', '/app/caja'], 'Gasto anulado.');
+  return run(formData, () => voidExpense(staff, text(formData, 'expenseId'), text(formData, 'reason')), ['/app/finanzas', '/app/caja', '/app/facturas'], 'Factura anulada.');
 }
 
 // ───────── reservas ─────────
@@ -937,6 +1265,25 @@ export async function saveProductPhotoAction(_prev: FormState, formData: FormDat
   return run(formData, () => saveProductPhoto(staff, text(formData, 'productId'), bytes), ['/app/carta', '/app/mesa'], 'Listo. Ya se ve la foto en la carta.');
 }
 
+/** Carta → «Subir fotos de los platos»: la IA dice qué producto es cada foto (la persona lo revisa antes de guardar). */
+export async function matchPhotosAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('menu.edit');
+  try {
+    const photos = await Promise.all(
+      formData
+        .getAll('photos')
+        .filter((f): f is File => typeof f === 'object' && f !== null && 'arrayBuffer' in f && f.size > 0)
+        .map(async (f) => ({ type: f.type, size: f.size, data: Buffer.from(await f.arrayBuffer()) })),
+    );
+    const menu = await getMenu(staff.businessId);
+    const products = menu.products.filter((p) => p.isActive).map((p) => ({ id: p.id, name: p.name }));
+    const matches = await matchPhotosWithAi(staff, photos, products);
+    return { ok: Date.now(), values: { matches: JSON.stringify(matches) } };
+  } catch (error) {
+    return fail(await messageOf(error));
+  }
+}
+
 export async function removeProductPhotoAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff('menu.edit');
   return run(formData, () => removeProductPhoto(staff, text(formData, 'productId')), ['/app/carta', '/app/mesa'], 'Listo. Se quitó la foto.');
@@ -954,12 +1301,13 @@ export async function savePrinterAction(_prev: FormState, formData: FormData): P
     () =>
       savePrinter(staff, id, {
         name: text(formData, 'name'),
-        host: text(formData, 'host'),
-        port: int(formData, 'port'),
+        host: text(formData, 'connection') === 'usb' ? `usb:${text(formData, 'usbName')}` : text(formData, 'host'),
+        port: text(formData, 'connection') === 'usb' ? 9100 : int(formData, 'port'),
         width: int(formData, 'width'),
         printsKitchen: checked(formData, 'kitchen'),
         printsBar: checked(formData, 'bar'),
         printsCashier: checked(formData, 'cashier'),
+        printsOrders: checked(formData, 'orders'),
         copies: int(formData, 'copies'),
         isActive: id ? checked(formData, 'isActive') : true,
       }),
@@ -989,6 +1337,32 @@ export async function createAgentCodeAction(_prev: FormState, formData: FormData
   let code = '';
   const state = await run(formData, async () => (code = await createAgentCode(staff)), ['/app/impresoras']);
   return state?.error ? state : { ok: Date.now(), message: code };
+}
+
+/** «Imprimir cierre» en la pantalla del cuadre: vuelve a mandar el cierre completo a la impresora de caja. */
+export async function printClosingAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('cash.operate');
+  return run(
+    formData,
+    async () => {
+      if (!(await enqueueClosing(staff, text(formData, 'shiftId')))) throw new AppError('CONFLICT', 'Esta sede no tiene impresora de caja. Agrégala en Impresoras.');
+    },
+    [],
+    'Cierre y formulario diario enviados a la impresora de caja.',
+  );
+}
+
+/** Cuadre del día (dos cajeras al día, 30 oct 2026): los turnos del día sumados, a la impresora de caja. */
+export async function printDayAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('cash.operate');
+  return run(
+    formData,
+    async () => {
+      if (!(await enqueueDayClosing(staff, text(formData, 'date')))) throw new AppError('CONFLICT', 'Esta sede no tiene impresora de caja. Agrégala en Impresoras.');
+    },
+    [],
+    'Cuadre del día enviado a la impresora de caja.',
+  );
 }
 
 export async function printBillAction(_prev: FormState, formData: FormData): Promise<FormState> {

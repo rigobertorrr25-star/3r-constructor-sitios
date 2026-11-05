@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createAgentCodeAction, printBillAction, printTestAction, removePrinterAction, reprintAction, savePrinterAction } from '@/app/actions';
+import { createAgentCodeAction, printBillAction, printClosingAction, printDayAction, printTestAction, removePrinterAction, reprintAction, savePrinterAction } from '@/app/actions';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Alert, CheckField, Field, Select, card, quietButton } from './ui';
@@ -17,6 +17,7 @@ export type PrinterView = {
   printsKitchen: boolean;
   printsBar: boolean;
   printsCashier: boolean;
+  printsOrders: boolean;
   copies: number;
   isActive: boolean;
 };
@@ -27,16 +28,41 @@ const PAPER = [
   { width: 32, label: '58 mm' },
 ];
 
+/** Las impresoras por cable USB se guardan como «usb:» + su nombre en Windows (el programa de impresión las usa por ese nombre). */
+const USB = 'usb:';
+const isUsb = (host?: string) => !!host && host.toLowerCase().startsWith(USB);
+const address = (p: { host: string; port: number }) => (isUsb(p.host) ? `USB · ${p.host.slice(USB.length)}` : `${p.host}:${p.port}`);
+
 function PrinterFields({ p, values, barOnly = false }: { p?: PrinterView; values?: Record<string, string>; barOnly?: boolean }) {
   const t = useT();
+  const [connection, setConnection] = useState(values?.connection ?? (p ? (isUsb(p.host) ? 'usb' : 'network') : 'usb'));
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2">
         <Field label={t('Nombre')} name="name" required maxLength={60} placeholder={barOnly ? t('Barra') : t('Cocina')} defaultValue={values?.name ?? p?.name} />
-        <div className="grid grid-cols-[1fr_110px] gap-3">
-          <Field label={t('Dirección IP')} name="host" required placeholder="192.168.1.50" defaultValue={values?.host ?? p?.host} autoCapitalize="none" />
-          <Field label={t('Puerto')} name="port" inputMode="numeric" required defaultValue={values?.port ?? String(p?.port ?? 9100)} />
-        </div>
+        <Select label={t('¿Cómo está conectada?')} name="connection" value={connection} onChange={(e) => setConnection(e.target.value)}>
+          <option value="usb">{t('Por cable USB al computador')}</option>
+          <option value="network">{t('A la red del local (tiene IP)')}</option>
+        </Select>
+        {connection === 'usb' ? (
+          <div className="md:col-span-2">
+            <Field
+              label={t('Nombre de la impresora en Windows')}
+              name="usbName"
+              required
+              maxLength={90}
+              placeholder="EPSON TM-T20II Receipt"
+              hint={t('Tal cual lo muestra el programa de impresión al prenderse, en la lista «Impresoras de este computador».')}
+              defaultValue={values?.usbName ?? (p && isUsb(p.host) ? p.host.slice(USB.length) : '')}
+              autoCapitalize="none"
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-[1fr_110px] gap-3 md:col-span-2">
+            <Field label={t('Dirección IP')} name="host" required placeholder="192.168.1.50" defaultValue={values?.host ?? (p && !isUsb(p.host) ? p.host : '')} autoCapitalize="none" />
+            <Field label={t('Puerto')} name="port" inputMode="numeric" required defaultValue={values?.port ?? String(p?.port ?? 9100)} />
+          </div>
+        )}
         <Select label={t('Papel')} name="width" defaultValue={values?.width ?? String(p?.width ?? 48)}>
           {PAPER.map((o) => (
             <option key={o.width} value={o.width}>
@@ -53,12 +79,18 @@ function PrinterFields({ p, values, barOnly = false }: { p?: PrinterView; values
         </Select>
       </div>
       <p className="mt-5 text-sm font-medium text-foreground">{t('¿Qué imprime?')}</p>
-      <div className="mt-2 grid gap-3 md:grid-cols-3">
+      <div className="mt-2 grid gap-3 md:grid-cols-2">
         {barOnly && !p?.printsKitchen ? null : (
           <CheckField name="kitchen" label={t('Comandas de cocina')} hint={t('Los platos de las categorías de cocina.')} defaultChecked={p?.printsKitchen} />
         )}
         <CheckField name="bar" label={t('Comandas de barra')} hint={t('Los tragos de las categorías de barra.')} defaultChecked={p?.printsBar} />
         <CheckField name="cashier" label={t('Caja')} hint={t('Precuentas y cierre de caja.')} defaultChecked={p?.printsCashier} />
+        <CheckField
+          name="orders"
+          label={t('Copia de cada pedido')}
+          hint={t('Todo lo que manda cada mesero en un solo papel, y lo que se anula. Para la caja.')}
+          defaultChecked={p?.printsOrders}
+        />
       </div>
     </>
   );
@@ -79,7 +111,7 @@ export function NewPrinterForm({ barOnly = false }: { barOnly?: boolean }) {
 }
 
 const targets = (p: PrinterView, t: T) =>
-  [p.printsKitchen ? t('Cocina') : null, p.printsBar ? t('Barra') : null, p.printsCashier ? t('Caja') : null].filter(Boolean).join(' · ') || t('No imprime nada todavía');
+  [p.printsKitchen ? t('Cocina') : null, p.printsBar ? t('Barra') : null, p.printsCashier ? t('Caja') : null, p.printsOrders ? t('Copia de pedidos') : null].filter(Boolean).join(' · ') || t('No imprime nada todavía');
 
 export function PrinterRow({ printer, barOnly = false }: { printer: PrinterView; barOnly?: boolean }) {
   const [mode, setMode] = useState<'view' | 'edit' | 'remove'>('view');
@@ -91,7 +123,7 @@ export function PrinterRow({ printer, barOnly = false }: { printer: PrinterView;
         <div>
           <p className="font-display text-[17px] font-semibold">{printer.name}</p>
           <p className="text-[14px] text-muted-foreground">
-            {targets(printer, t)} · {printer.host}:{printer.port} · {paper ? t(paper) : ''}
+            {targets(printer, t)} · {address(printer)} · {paper ? t(paper) : ''}
             {printer.copies > 1 ? ` · ${t('{n} copias', { n: printer.copies })}` : ''}
             {printer.isActive ? '' : ` · ${t('Apagada')}`}
           </p>
@@ -204,6 +236,36 @@ export function ReprintButton({ jobId }: { jobId: string }) {
           <SubmitButton tone="quiet" pendingText={t('Enviando…')} className="py-1.5 text-[13px]">
             {t('Reimprimir')}
           </SubmitButton>
+        </>
+      )}
+    </ActionForm>
+  );
+}
+
+/** «Imprimir cierre» en el cuadre de una caja cerrada: el cierre completo, con el inventario, a la impresora de caja. */
+export function PrintClosingButton({ shiftId }: { shiftId: string }) {
+  const t = useT();
+  return (
+    <ActionForm action={printClosingAction} className="flex flex-col gap-2">
+      {() => (
+        <>
+          <input type="hidden" name="shiftId" value={shiftId} />
+          <SubmitButton pendingText={t('Enviando…')}>{t('Imprimir cierre')}</SubmitButton>
+        </>
+      )}
+    </ActionForm>
+  );
+}
+
+/** «Imprimir cuadre del día» (dos cajeras al día, 30 oct 2026). */
+export function PrintDayButton({ date }: { date: string }) {
+  const t = useT();
+  return (
+    <ActionForm action={printDayAction} className="flex flex-col gap-2">
+      {() => (
+        <>
+          <input type="hidden" name="date" value={date} />
+          <SubmitButton pendingText={t('Enviando…')}>{t('Imprimir cuadre del día')}</SubmitButton>
         </>
       )}
     </ActionForm>

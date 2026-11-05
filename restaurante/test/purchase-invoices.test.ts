@@ -1,0 +1,234 @@
+// Facturas de compra: la cajera toma la foto de la factura, la IA redacta el gasto y se guarda con la foto.
+import assert from 'node:assert/strict';
+import { after, before, describe, it } from 'node:test';
+
+const url = process.env.TEST_DATABASE_URL;
+
+// JPG mínimo válido (cabecera FF D8 FF): basta para reconocer el tipo.
+const JPG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0xff, 0xd9]);
+
+describe('leer la respuesta de la IA sobre una factura', () => {
+  it('toma proveedor, total, fecha, tipo y qué se compró; lo raro queda vacío', async () => {
+    const { receiptReading } = await import('../lib/ai-read');
+    assert.deepEqual(
+      receiptReading('Aquí va: {"proveedor":"Surtifruver La Sexta","numero_factura":"FE-1043","total":"$84.500","fecha":"2026-10-23","tipo":"suppliers","descripcion":"Compra de 10 kg de limón y 5 kg de tomate"}'),
+      { supplier: 'Surtifruver La Sexta', invoiceNumber: 'FE-1043', total: 84500, date: '2026-10-23', category: 'suppliers', description: 'Compra de 10 kg de limón y 5 kg de tomate', lines: [], bags: 0 },
+    );
+    assert.deepEqual(receiptReading('{"proveedor":null,"total":null,"fecha":"23/10/2026","tipo":"comida","descripcion":"Hielo"}'), {
+      supplier: '',
+      invoiceNumber: '',
+      total: null,
+      date: null,
+      category: 'other',
+      description: 'Hielo',
+      lines: [],
+      bags: 0,
+    });
+    assert.equal(receiptReading('{"proveedor":null,"total":null,"fecha":null,"tipo":null,"descripcion":""}'), null, 'no era una factura');
+    assert.equal(receiptReading('no sé'), null);
+    const withLines = receiptReading(
+      '{"proveedor":"Makro","total":250000,"fecha":"2026-10-23","tipo":"suppliers","descripcion":"Cerveza y limón","productos":[{"nombre":"Club Colombia","cantidad":24,"unidad":"und","total":"$96.000"},{"nombre":"Limón","cantidad":"2,5","unidad":"kg","total":10000},{"nombre":"Limón","cantidad":2500,"unidad":"g","total":10000},{"nombre":"x","cantidad":1,"unidad":"und"}]}',
+    );
+    assert.deepEqual(withLines?.lines, [
+      { name: 'Club Colombia', quantity: 24, unit: 'und', total: 96000 },
+      { name: 'Limón', quantity: 2500, unit: 'g', total: 10000 },
+    ], 'kg no es una unidad válida y el nombre muy corto se descarta');
+    // Las bolsas no van al inventario: se suman aparte, aunque la IA las deje como producto. La bolsa de hielo sí es insumo.
+    const withBags = receiptReading(
+      '{"descripcion":"Mercado","total":50000,"bolsas":"$300","productos":[{"nombre":"Bolsas plásticas","cantidad":3,"unidad":"und","total":600},{"nombre":"Impuesto a la bolsa","cantidad":1,"unidad":"und","total":200},{"nombre":"Bolsa de hielo","cantidad":2,"unidad":"und","total":8000}]}',
+    );
+    assert.equal(withBags?.bags, 1100);
+    assert.deepEqual(withBags?.lines.map((l) => l.name), ['Bolsa de hielo']);
+  });
+});
+
+describe('facturas de compra con foto', { skip: url ? false : 'sin TEST_DATABASE_URL' }, () => {
+  let store: typeof import('../lib/store');
+  let cash: typeof import('../lib/cash');
+  let fin: typeof import('../lib/finance');
+  let db: typeof import('../lib/db');
+  type Actor = import('../lib/store').StaffSession;
+  let owner: Actor, cashier: Actor, waiter: Actor, northCashier: Actor;
+  const stamp = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
+  let today: string;
+
+  before(async () => {
+    process.env.DATABASE_URL = url;
+    db = await import('../lib/db');
+    store = await import('../lib/store');
+    cash = await import('../lib/cash');
+    fin = await import('../lib/finance');
+    today = fin.todayIn('America/Bogota');
+    const a = await store.createBusiness({ name: `Prueba ${stamp} Compras`, locationName: 'Centro', ownerName: 'Dueña', ownerPin: '2580' });
+    const login = async (code: string, pin: string) => {
+      const r = await store.loginStaff({ slug: a.slug, code, pin });
+      if (r.kind !== 'ok') throw new Error('sin sesión ' + code);
+      return (await store.getStaffSession(r.staffId, r.locationId, r.epoch))!;
+    };
+    owner = await login('0001', '2580');
+    const north = await store.createLocation(owner, { name: 'Norte' });
+    await store.createStaff(owner, { name: 'Cajera', role: 'cashier', locationId: owner.locationId, pin: '2468' });
+    await store.createStaff(owner, { name: 'Mesero', role: 'waiter', locationId: owner.locationId, pin: '1357' });
+    await store.createStaff(owner, { name: 'Cajera Norte', role: 'cashier', locationId: north, pin: '8642' });
+    cashier = await login('0002', '2468');
+    waiter = await login('0003', '1357');
+    northCashier = await login('0004', '8642');
+    await cash.openShift(cashier, 200000);
+  });
+
+  after(async () => {
+    const rows = await db.query<{ id: string }>('SELECT id FROM businesses WHERE name LIKE $1', [`Prueba ${stamp} %`]);
+    for (const row of rows) await store.purgeBusiness(row.id);
+    await db.closePool();
+  });
+
+  it('los productos de la factura entran al inventario: a un insumo que existe y a uno nuevo', async () => {
+    const inv = await import('../lib/inventory');
+    const beer = await inv.saveItem(owner, { name: 'Club Colombia', unit: 'und', minStock: 0 });
+    await inv.registerPurchase(owner, { itemId: beer, quantity: 24, total: 72000 }); // 3.000 c/u
+    const items = await inv.itemsForPurchase(cashier);
+    assert.ok(items.some((i) => i.name === 'Club Colombia'));
+    await assert.rejects(inv.itemsForPurchase(waiter), { code: 'FORBIDDEN' });
+    const base = { category: 'suppliers', description: 'Cerveza y limones', supplier: 'Makro', amount: 106000, spentOn: today, paidFromCash: false };
+    await assert.rejects(fin.addExpense(cashier, { ...base, lines: [{ newName: 'Limón', newUnit: 'kg', quantity: 2, total: 10000 }] }), { code: 'INVALID' });
+    await assert.rejects(fin.addExpense(cashier, { ...base, lines: [{ itemId: beer, quantity: 0, total: 1 }] }), { code: 'INVALID' });
+    // Un insumo nuevo con el nombre de uno que existe en otra unidad no se crea a escondidas.
+    await assert.rejects(fin.addExpense(cashier, { ...base, lines: [{ newName: 'club colombia', newUnit: 'ml', quantity: 2, total: 1 }] }), { code: 'CONFLICT' });
+    await fin.addExpense(cashier, {
+      ...base,
+      lines: [
+        { itemId: beer, quantity: 24, total: 96000 }, // 4.000 c/u: el promedio queda en 3.500
+        { newName: 'Limón', newUnit: 'g', quantity: 2500, total: 10000 },
+      ],
+    });
+    const beerNow = (await inv.getItem(owner, beer))!;
+    assert.equal(beerNow.stock, 48);
+    assert.equal(beerNow.unitCost, 3500);
+    const lemon = (await inv.listItems(owner)).find((i) => i.name === 'Limón')!;
+    assert.equal(lemon.stock, 2500);
+    assert.equal(lemon.unitCost, 4);
+    const moves = await db.query<{ reason: string; by: string }>(
+      `SELECT m.reason, s.name AS by FROM inventory_movements m JOIN staff s ON s.id = m.created_by WHERE m.item_id = $1 AND m.kind = 'purchase' ORDER BY m.created_at DESC LIMIT 1`,
+      [beer],
+    );
+    assert.equal(moves[0].by, 'Cajera');
+    assert.match(moves[0].reason, /Factura de compra de Makro/);
+    // Con productos y sin decir el tipo, es de insumos; un gasto no puede sumar al inventario.
+    const listed = await fin.listPurchaseInvoices(cashier, { from: today, to: today });
+    assert.ok(listed.some((e) => e.description === 'Cerveza y limones' && e.kind === 'supplies'));
+    await assert.rejects(fin.addExpense(cashier, { ...base, kind: 'expense', lines: [{ itemId: beer, quantity: 1, total: 4000 }] }), { code: 'INVALID' });
+    await assert.rejects(fin.addExpense(cashier, { ...base, kind: 'otro' }), { code: 'INVALID' });
+    // Una factura con fecha de otro día registrada hoy también sale en «Hoy» (5 nov 2026).
+    const old = await fin.addExpense(cashier, { kind: 'expense', category: 'other', description: 'Factura vieja', amount: 1000, spentOn: '2026-01-15' });
+    const today2 = (await fin.listPurchaseInvoices(cashier, { from: today, to: today })).find((e) => e.id === old)!;
+    assert.equal(today2.spentOn, '2026-01-15');
+    assert.equal(today2.createdOn, today);
+    assert.ok((await fin.listPurchaseInvoices(cashier, { from: '2026-01-15', to: '2026-01-15' })).some((e) => e.id === old));
+  });
+
+  it('separa insumos y gastos, y las bolsas quedan como gasto aparte (también en la caja)', async () => {
+    const luz = await fin.addExpense(cashier, { kind: 'expense', category: 'utilities', description: 'Luz de octubre', amount: 300000, spentOn: today });
+    const base = { kind: 'supplies', category: 'suppliers', description: 'Mercado de la semana', supplier: 'D1', amount: 50000, spentOn: today, paidFromCash: true };
+    await assert.rejects(fin.addExpense(cashier, { ...base, bags: 50000 }), { code: 'INVALID' }, 'las bolsas no pueden ser todo');
+    await assert.rejects(fin.addExpense(cashier, { ...base, kind: 'expense', bags: 500 }), { code: 'INVALID' });
+    const id = await fin.addExpense(cashier, { ...base, bags: 1100 });
+    const list = await fin.listPurchaseInvoices(cashier, { from: today, to: today });
+    assert.equal(list.find((e) => e.id === luz)?.kind, 'expense');
+    const main = list.find((e) => e.id === id)!;
+    assert.equal(main.kind, 'supplies');
+    assert.equal(main.amount, 48900);
+    const bags = list.find((e) => e.category === 'packaging')!;
+    assert.equal(bags.kind, 'expense');
+    assert.equal(bags.amount, 1100);
+    assert.equal(bags.supplier, 'D1');
+    assert.match(bags.description, /Bolsas de la factura: Mercado de la semana/);
+    // Cada uno con su salida de caja: anular las bolsas devuelve solo las bolsas.
+    const outs = await db.query<{ amount: string }>(`SELECT amount FROM cash_movements WHERE business_id = $1 AND kind = 'out' AND amount IN (48900, 1100) ORDER BY amount`, [owner.businessId]);
+    assert.deepEqual(outs.map((r) => Number(r.amount)), [1100, 48900]);
+    await fin.voidExpense(owner, bags.id, 'Prueba');
+    const back = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM cash_movements WHERE business_id = $1 AND kind = 'in' AND amount = 1100`, [owner.businessId]);
+    assert.equal(back[0].n, 1);
+    // En Finanzas, «Bolsas y empaques» es su propia categoría.
+    assert.equal(fin.EXPENSE_LABEL.packaging, 'Bolsas y empaques');
+  });
+
+  it('la cajera registra el gasto con la foto y pagado de la caja; el mesero no puede', async () => {
+    const input = { category: 'suppliers', description: 'Compra de 10 kg de limón', supplier: 'Surtifruver', amount: 84500, spentOn: today, paidFromCash: true, photo: JPG };
+    await assert.rejects(fin.addExpense(waiter, input), { code: 'FORBIDDEN' });
+    await assert.rejects(fin.addExpense(cashier, { ...input, photo: new Uint8Array([1, 2, 3]) }), { code: 'INVALID' }, 'no es una foto');
+    const id = await fin.addExpense(cashier, input);
+    const list = (await fin.listPurchaseInvoices(cashier, { from: today, to: today })).filter((e) => e.id === id);
+    assert.equal(list.length, 1);
+    assert.equal(list[0].hasPhoto, true);
+    assert.equal(list[0].paidFromCash, true);
+    assert.equal(list[0].createdBy, 'Cajera');
+    const photo = await fin.getExpensePhoto(cashier, id);
+    assert.equal(photo?.mime, 'image/jpeg');
+    assert.equal(Buffer.compare(photo!.image, Buffer.from(JPG)), 0);
+    // La dueña la ve; la cajera de otra sede no; el mesero no entra.
+    assert.ok(await fin.getExpensePhoto(owner, id));
+    assert.equal(await fin.getExpensePhoto(northCashier, id), null);
+    await assert.rejects(fin.getExpensePhoto(waiter, id), { code: 'FORBIDDEN' });
+    assert.equal((await fin.listPurchaseInvoices(northCashier, { from: today, to: today })).length, 0);
+    // Salió de la caja.
+    const out = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM cash_movements WHERE business_id = $1 AND kind = 'out' AND amount = 84500`, [owner.businessId]);
+    assert.equal(out[0].n, 1);
+    // En Finanzas se ve que tiene foto.
+    const finance = await fin.listExpenses(owner, { from: today, to: today, locationId: null });
+    assert.equal(finance.find((e) => e.id === id)?.hasPhoto, true);
+  });
+
+  it('formulario diario: número de factura, de dónde salió la plata y facturas por pagar que se pagan después', async () => {
+    const base = { category: 'suppliers', supplier: 'Distribuidora Costa', spentOn: today };
+    await assert.rejects(fin.addExpense(cashier, { ...base, description: 'Cajas de cerveza', amount: 300000, paidFrom: 'bolsillo' }), /de dónde salió la plata/);
+    // Pagada de la caja fuerte: no toca la caja abierta.
+    const before = (await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM cash_movements WHERE business_id = $1`, [owner.businessId]))[0].n;
+    const safe = await fin.addExpense(cashier, { ...base, description: 'Carne de la semana', amount: 420000, paidFrom: 'safe', invoiceNumber: 'FV-88' });
+    assert.equal((await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM cash_movements WHERE business_id = $1`, [owner.businessId]))[0].n, before);
+    const listed = (await fin.listPurchaseInvoices(cashier, { from: today, to: today })).find((e) => e.id === safe)!;
+    assert.deepEqual([listed.paidFrom, listed.invoiceNumber, listed.paidFromCash], ['safe', 'FV-88', false]);
+    // Por pagar, con vencimiento: no sale plata hasta que se paga.
+    const unpaid = await fin.addExpense(cashier, { ...base, description: 'Licores del mes', amount: 900000, paidFrom: 'unpaid', dueOn: '2026-11-15', invoiceNumber: 'A-2001' });
+    const pending = await fin.pendingExpenses(cashier);
+    assert.deepEqual(
+      pending.filter((e) => e.id === unpaid).map((e) => [e.paidFrom, e.dueOn, e.invoiceNumber]),
+      [[null, '2026-11-15', 'A-2001']],
+    );
+    await assert.rejects(fin.payExpense(waiter, unpaid, 'cash'), { code: 'FORBIDDEN' });
+    await assert.rejects(fin.payExpense(cashier, unpaid, 'unpaid'), /de dónde salió la plata/);
+    await fin.payExpense(cashier, unpaid, 'bar');
+    assert.equal((await fin.pendingExpenses(cashier)).some((e) => e.id === unpaid), false);
+    await assert.rejects(fin.payExpense(cashier, unpaid, 'cash'), /ya estaba pagada/);
+    const paid = (await fin.listPurchaseInvoices(cashier, { from: today, to: today })).find((e) => e.id === unpaid)!;
+    assert.equal(paid.paidFrom, 'bar');
+  });
+
+  it('eliminar factura: la plata vuelve a la caja, el inventario sale y las bolsas se anulan con ella (5 nov 2026)', async () => {
+    const inv = await import('../lib/inventory');
+    const ice = await inv.saveItem(owner, { name: 'Hielo', unit: 'und', minStock: 0 });
+    const stock = async () => (await inv.listItems(owner)).find((i) => i.id === ice)!.stock;
+    const expected = async () => (await cash.shiftSummary(cashier, (await cash.getOpenShift(cashier))!.id))!.expectedCash;
+    const before = await expected();
+    const id = await fin.addExpense(cashier, {
+      kind: 'supplies', category: 'suppliers', description: 'Hielo para la noche', amount: 48000, bags: 1000, spentOn: today, paidFromCash: true,
+      lines: [{ itemId: ice, quantity: 10, total: 47000 }],
+    });
+    assert.equal(await expected(), before - 48000);
+    assert.equal(await stock(), 10);
+    // Solo quien la registró (o el dueño/administrador); el mesero no.
+    const byOwner = await fin.addExpense(owner, { kind: 'expense', category: 'other', description: 'De la dueña', amount: 1000, spentOn: today });
+    await assert.rejects(fin.voidExpense(cashier, byOwner, 'Error'), { code: 'FORBIDDEN' });
+    await assert.rejects(fin.voidExpense(waiter, id, 'Error'), { code: 'FORBIDDEN' });
+    await assert.rejects(fin.voidExpense(cashier, id, ''), { code: 'INVALID' });
+    await fin.voidExpense(cashier, id, 'Registrada dos veces');
+    assert.equal(await expected(), before, 'los 47.000 y los 1.000 de bolsas vuelven');
+    const sum = (await cash.shiftSummary(cashier, (await cash.getOpenShift(cashier))!.id))!;
+    assert.ok(!sum.movements.some((m) => /Hielo para la noche/.test(m.reason)), 'la factura eliminada no sale ni como salida ni como entrada');
+    assert.equal(await stock(), 0);
+    const list = await fin.listPurchaseInvoices(cashier, { from: today, to: today });
+    assert.equal(list.find((e) => e.id === id)!.voided, true);
+    assert.equal(list.find((e) => e.description === 'Bolsas de la factura: Hielo para la noche')!.voided, true);
+    await assert.rejects(fin.voidExpense(cashier, id, 'Otra vez'), { code: 'CONFLICT' });
+    await fin.voidExpense(owner, byOwner, 'Prueba');
+  });
+});

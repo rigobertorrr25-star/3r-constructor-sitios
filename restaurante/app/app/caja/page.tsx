@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/auth';
-import { METHOD_LABEL, METHODS, getOpenShift, listShifts, openAccounts, shiftSummary } from '@/lib/cash';
+import { METHOD_LABEL, METHODS, drawerLeftByLastShift, getOpenShift, listShifts, openAccounts, openShiftCashPayments, shiftSummary } from '@/lib/cash';
 import { elapsedMinutes, formatCop, formatDateTime, formatElapsed } from '@/lib/format';
 import { AutoRefresh } from '@/components/auto-refresh';
-import { CloseShiftForm, MovementForm, OpenShiftForm } from '@/components/cash-forms';
-import { Empty, PageTitle, card } from '@/components/ui';
+import { CloseShiftForm, LossForm, MovementForm, OpenShiftForm, VoidLossButton } from '@/components/cash-forms';
+import { listLosses } from '@/lib/losses';
+import { Empty, PageTitle, card, quietButton } from '@/components/ui';
 import { getLang } from '@/lib/i18n/server';
 import { makeT, type T, type Lang } from '@/lib/i18n';
 
@@ -14,7 +15,7 @@ export default async function CashPage() {
   const staff = await requireStaff('cash.operate');
   const lang = await getLang();
   const t = makeT(lang);
-  const [shift, history] = await Promise.all([getOpenShift(staff), listShifts(staff)]);
+  const [shift, history, left] = await Promise.all([getOpenShift(staff), listShifts(staff), drawerLeftByLastShift(staff)]);
   const closed = history.filter((h) => h.closedAt);
 
   if (!shift) {
@@ -22,24 +23,40 @@ export default async function CashPage() {
       <div className="space-y-6">
         <PageTitle title={t('Caja')} text={t('Sede {location}. La caja está cerrada: ábrela con la base en efectivo para empezar a cobrar.', { location: staff.locationName })} />
         <section className={`${card} max-w-md`}>
-          <OpenShiftForm />
+          <OpenShiftForm
+            suggested={left?.amount}
+            hint={
+              left
+                ? t('Al cerrar el turno anterior ({name}, {date}) quedaron {amount} en la caja.', { name: left.closedBy, date: formatDateTime(left.closedAt, staff.timezone, lang), amount: formatCop(left.amount) })
+                : undefined
+            }
+          />
         </section>
         <ShiftHistory shifts={closed} timeZone={staff.timezone} lang={lang} />
       </div>
     );
   }
 
-  const [summary, accounts] = await Promise.all([shiftSummary(staff, shift.id), openAccounts(staff)]);
+  const [summary, accounts, losses, cashPayments] = await Promise.all([shiftSummary(staff, shift.id), openAccounts(staff), listLosses(staff, shift.openedAt, null), openShiftCashPayments(staff)]);
   const s = summary!;
   const now = Date.now();
   return (
     <div className="space-y-6">
       <AutoRefresh everyMs={15_000} />
-      <PageTitle title={t('Caja')} text={t('Abierta por {name} · {date} · base {amount}', { name: shift.openedBy, date: formatDateTime(shift.openedAt, staff.timezone, lang), amount: formatCop(shift.openingAmount) })} />
+      <PageTitle
+        title={`${t('Caja')} · ${t('Turno {n}', { n: shift.dayNumber })}`}
+        text={t('Abierta por {name} · {date} · base {amount}', { name: shift.openedBy, date: formatDateTime(shift.openedAt, staff.timezone, lang), amount: formatCop(shift.openingAmount) })}
+      >
+        <Link href={`/app/caja/dia?fecha=${shift.day}`} className={quietButton}>
+          {t('Cuadre del día')}
+        </Link>
+      </PageTitle>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={t('Ventas del turno')} value={formatCop(s.sales)} hint={s.tablesClosed === 1 ? t('1 mesa cerrada') : t('{n} mesas cerradas', { n: s.tablesClosed })} />
-        <Stat label={t('Efectivo esperado en caja')} value={formatCop(s.expectedCash)} hint={t('Base + efectivo + entradas − salidas')} strong />
+        <Stat label={t('Efectivo esperado en caja')} value={formatCop(s.expectedCash)} hint={t('Mira abajo de dónde sale')}
+          strong
+        />
         <Stat label={t('Propinas')} value={formatCop(s.tips)} />
         <Stat label={t('Descuentos')} value={formatCop(s.discounts)} hint={s.reversed ? t('Pagos reversados: {amount}', { amount: formatCop(s.reversed) }) : undefined} />
         {METHODS.map((m) => (
@@ -51,6 +68,33 @@ export default async function CashPage() {
           />
         ))}
       </div>
+
+      {/* Renglón por renglón (5 nov 2026, Rigoberto: «en efectivo esperado siento que está muy enredado»). */}
+      <section className={`${card} max-w-md`}>
+        <h2 className="font-display text-[16px] font-bold">{t('¿De dónde sale el efectivo esperado?')}</h2>
+        <dl className="mt-2 space-y-1 text-[14.5px]">
+          {(
+            [
+              [t('Base con que se abrió'), s.shift.openingAmount, ''],
+              [t('Cobrado en efectivo (con propina)'), s.byMethod.cash.amount + s.byMethod.cash.tip, '+'],
+              [t('Entró a la caja'), s.movementsIn, '+'],
+              [t('Salió de la caja (pagos y facturas)'), s.movementsOut, '−'],
+            ] as [string, number, string][]
+          )
+            .filter(([, v, sign]) => v > 0 || sign !== '+' && sign !== '−')
+            .map(([label, v, sign]) => (
+              <div key={label} className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">{label}</dt>
+                <dd className={sign === '−' ? 'text-warning' : ''}>{sign ? `${sign} ` : ''}{formatCop(v)}</dd>
+              </div>
+            ))}
+          <div className="flex justify-between gap-3 border-t border-white/[0.08] pt-1.5 font-bold">
+            <dt>{t('Debe haber en la caja')}</dt>
+            <dd>{formatCop(s.expectedCash)}</dd>
+          </div>
+        </dl>
+        {s.movementsIn || s.movementsOut ? <p className="mt-2 text-[12.5px] text-muted-foreground">{t('El detalle de cada entrada y salida está abajo, en «Entradas y salidas de efectivo».')}</p> : null}
+      </section>
 
       <section className="space-y-3">
         <h2 className="font-display text-[19px] font-bold">{t('Cuentas por cobrar')}</h2>
@@ -107,13 +151,38 @@ export default async function CashPage() {
           ) : null}
         </section>
         <section className={card}>
+          <h2 className="font-display text-[18px] font-bold">{t('Pérdidas del día')}</h2>
+          <p className="mt-1 text-[14px] text-muted-foreground">{t('Lo que se rompió o se dañó y no está en el inventario, con lo que costaba. Sale en el informe del cierre.')}</p>
+          <div className="mt-4">
+            <LossForm />
+          </div>
+          {losses.length ? (
+            <ul className="mt-4 divide-y divide-white/[0.06] text-[14px]">
+              {losses.map((l) => (
+                <li key={l.id} className={`flex justify-between gap-3 py-2 ${l.voided ? 'opacity-50' : ''}`}>
+                  <span className={l.voided ? 'line-through' : ''}>
+                    {l.description}
+                    <span className="block text-[12.5px] text-muted-foreground">
+                      {l.createdBy} · {formatDateTime(l.createdAt, staff.timezone, lang)}
+                    </span>
+                  </span>
+                  <span className="flex items-start gap-3">
+                    <span>{formatCop(l.amount)}</span>
+                    {l.voided ? null : <VoidLossButton lossId={l.id} />}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+        <section className={card}>
           <h2 className="font-display text-[18px] font-bold">{t('Cerrar caja')}</h2>
           <p className="mt-1 text-[14px] text-muted-foreground">
             {t('Cuenta el efectivo que hay en la caja (con la base) y escríbelo. Debería haber')} <strong className="text-foreground">{formatCop(s.expectedCash)}</strong>.
             {accounts.length ? t(' Ojo: quedan {n} mesas abiertas; se podrán cobrar en la siguiente caja.', { n: accounts.length }) : ''}
           </p>
           <div className="mt-4">
-            <CloseShiftForm />
+            <CloseShiftForm expected={s.expectedCash} cashPayments={cashPayments.map((p) => ({ ...p, createdAt: p.createdAt.toISOString() }))} timeZone={staff.timezone} />
           </div>
         </section>
       </div>
@@ -137,7 +206,12 @@ function ShiftHistory({ shifts, timeZone, lang }: { shifts: Awaited<ReturnType<t
   const t: T = makeT(lang);
   return (
     <section className="space-y-3">
-      <h2 className="font-display text-[19px] font-bold">{t('Cajas anteriores')}</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-[19px] font-bold">{t('Cajas anteriores')}</h2>
+        <Link href={`/app/caja/dia?fecha=${shifts[0].day}`} className={quietButton}>
+          {t('Cuadre del día')}
+        </Link>
+      </div>
       <ul className="divide-y divide-white/[0.06] overflow-hidden rounded-[22px] border border-white/[0.08] bg-card">
         {shifts.map((h) => {
           const diff = (h.countedCash ?? 0) - (h.expectedCash ?? 0);
@@ -145,7 +219,7 @@ function ShiftHistory({ shifts, timeZone, lang }: { shifts: Awaited<ReturnType<t
             <li key={h.id}>
               <Link href={`/app/caja/turno/${h.id}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-[14px] transition hover:bg-white/[0.03]">
                 <span>
-                  {formatDateTime(h.openedAt, timeZone, lang)} → {h.closedAt ? formatDateTime(h.closedAt, timeZone, lang) : ''}
+                  <strong>{t('Turno {n}', { n: h.dayNumber })}</strong> · {formatDateTime(h.openedAt, timeZone, lang)} → {h.closedAt ? formatDateTime(h.closedAt, timeZone, lang) : ''}
                   <span className="block text-[12.5px] text-muted-foreground">
                     {h.openedBy} → {h.closedBy}
                   </span>

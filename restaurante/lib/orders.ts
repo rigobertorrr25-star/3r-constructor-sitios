@@ -4,6 +4,7 @@ import { query, transaction, type Db } from './db';
 import { consumeForRound, returnForVoid } from './inventory';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 import { enqueueRound, enqueueVoid } from './printing';
+import { completeChoices, describeChoices, normalizeGroups, parseOptionGroups, type OptionGroup } from './product-options';
 
 import { STATIONS, isStation, type Station } from './stations';
 
@@ -44,6 +45,8 @@ export type MenuProduct = {
   sort: number;
   /** Versión de la foto del producto (para armar su dirección), o null si no tiene. */
   photo: number | null;
+  /** Opciones para armar el plato (se escogen al pedirlo), o null. */
+  optionGroups: OptionGroup[] | null;
 };
 
 /** La carta completa. Para tomar pedidos, `activeOnly` deja solo lo que está en la carta. */
@@ -56,14 +59,14 @@ export async function getMenu(businessId: string, { activeOnly = false } = {}) {
     ),
     query<MenuProduct & { price: string }>(
       `SELECT p.id, p.category_id AS "categoryId", p.name, p.description, p.name_en AS "nameEn", p.description_en AS "descriptionEn", p.price, p.station, p.is_available AS "isAvailable",
-              p.is_active AS "isActive", p.sort, (extract(epoch FROM f.updated_at) * 1000)::bigint::float8 AS photo
+              p.is_active AS "isActive", p.sort, p.option_groups AS "optionGroups", (extract(epoch FROM f.updated_at) * 1000)::bigint::float8 AS photo
          FROM menu_products p JOIN menu_categories c ON c.id = p.category_id
          LEFT JOIN product_photos f ON f.product_id = p.id
         WHERE p.business_id = $1 ${activeOnly ? 'AND p.is_active AND c.is_active' : ''} ORDER BY p.sort, p.name`,
       [businessId],
     ),
   ]);
-  return { categories, products: products.map((p) => ({ ...p, price: Number(p.price) })) };
+  return { categories, products: products.map((p) => ({ ...p, price: Number(p.price), optionGroups: normalizeGroups(p.optionGroups) })) };
 }
 
 export async function saveCategory(
@@ -84,6 +87,13 @@ export async function saveCategory(
           [input.id, actor.businessId, name, input.station, sort, input.isActive ?? true, nameEn],
         );
         if (!res.rowCount) throw new AppError('NOT_FOUND', 'No encontramos esa categoría.');
+        // Al guardar, todos sus productos quedan donde va la categoría, aunque no haya cambiado (27 oct 2026: en Azul,
+        // «Desayuno» decía cocina, sus productos seguían en barra y guardar la categoría no los movía).
+        await db.query(`UPDATE menu_products SET station = $3 WHERE category_id = $1 AND business_id = $2 AND station <> $3`, [
+          input.id,
+          actor.businessId,
+          input.station,
+        ]);
         await audit(db, actor, { action: 'menu.category', entity: 'menu_category', entityId: input.id, summary: `Cambió la categoría ${name}` });
         return input.id;
       }
@@ -114,9 +124,14 @@ export async function saveProduct(
     price: string | number;
     station?: string;
     isActive?: boolean;
+    /** Opciones para armar el plato, una línea por grupo. Sin el campo, no se tocan. */
+    options?: string;
   },
 ) {
   requirePermission(actor, 'menu.edit');
+  const parsed = input.options === undefined ? null : parseOptionGroups(input.options);
+  if (parsed?.error) throw new AppError('INVALID', parsed.error);
+  const optionGroups = parsed ? JSON.stringify(parsed.groups.length ? parsed.groups : null) : undefined;
   const name = requireText(input.name, 'Nombre del producto', 2, 80);
   const description = input.description?.trim() ? requireText(input.description, 'Descripción', 2, 200) : null;
   const nameEn = input.nameEn?.trim() ? requireText(input.nameEn, 'Nombre en inglés', 2, 80) : null;
@@ -143,9 +158,10 @@ export async function saveProduct(
       ).rows[0];
       if (!before) throw new AppError('NOT_FOUND', 'No encontramos ese producto.');
       await db.query(
-        `UPDATE menu_products SET category_id = $3, name = $4, description = $5, price = $6, station = $7, is_active = $8, name_en = $9, description_en = $10
+        `UPDATE menu_products SET category_id = $3, name = $4, description = $5, price = $6, station = $7, is_active = $8, name_en = $9, description_en = $10,
+                option_groups = CASE WHEN $11::boolean THEN $12::jsonb ELSE option_groups END
           WHERE id = $1 AND business_id = $2`,
-        [input.id, actor.businessId, input.categoryId, name, description, price, station, input.isActive ?? true, nameEn, descriptionEn],
+        [input.id, actor.businessId, input.categoryId, name, description, price, station, input.isActive ?? true, nameEn, descriptionEn, optionGroups !== undefined, optionGroups ?? null],
       );
       const oldPrice = Number(before.price);
       // Los cambios de precio quedan siempre en la auditoría.
@@ -162,9 +178,9 @@ export async function saveProduct(
       return input.id;
     }
     const res = await db.query<{ id: string }>(
-      `INSERT INTO menu_products (business_id, category_id, name, description, price, station, sort, name_en, description_en)
-       VALUES ($1, $2, $3, $4, $5, $6, (SELECT COALESCE(max(sort), 0) + 10 FROM menu_products WHERE category_id = $2), $7, $8) RETURNING id`,
-      [actor.businessId, input.categoryId, name, description, price, station, nameEn, descriptionEn],
+      `INSERT INTO menu_products (business_id, category_id, name, description, price, station, sort, name_en, description_en, option_groups)
+       VALUES ($1, $2, $3, $4, $5, $6, (SELECT COALESCE(max(sort), 0) + 10 FROM menu_products WHERE category_id = $2), $7, $8, $9::jsonb) RETURNING id`,
+      [actor.businessId, input.categoryId, name, description, price, station, nameEn, descriptionEn, optionGroups ?? null],
     );
     await audit(db, actor, {
       action: 'menu.product',
@@ -197,7 +213,8 @@ export async function setProductAvailable(actor: Actor, productId: string, avail
 
 // ───────── pedidos ─────────
 
-export type CartLine = { productId: string; quantity: number; notes?: string };
+/** `choices`: lo escogido de cada grupo de opciones del producto (en el mismo orden), si las tiene. */
+export type CartLine = { productId: string; quantity: number; notes?: string; choices?: string[][] };
 
 export type SessionInfo = { id: string; tableId: string; tableNumber: string; zone: string; status: string; guests: number; openedAt: Date; openedBy: string };
 
@@ -227,7 +244,7 @@ export async function sendOrder(actor: Actor, sessionId: string, lines: CartLine
     if (!isUuid(l.productId)) throw new AppError('INVALID', 'Hay un producto que no existe.');
     if (!Number.isInteger(l.quantity) || l.quantity < 1 || l.quantity > 99) throw new AppError('INVALID', 'Cantidad: de 1 a 99.');
     const notes = l.notes?.replace(/\s+/g, ' ').trim().slice(0, 140) || null;
-    return { productId: l.productId, quantity: l.quantity, notes };
+    return { productId: l.productId, quantity: l.quantity, notes, choices: l.choices };
   });
 
   const existing = await query<{ id: string; number: number }>(`SELECT id, number FROM order_rounds WHERE business_id = $1 AND client_key = $2`, [
@@ -241,8 +258,8 @@ export async function sendOrder(actor: Actor, sessionId: string, lines: CartLine
       const session = await lockOpenSession(db, actor, sessionId);
       const ids = [...new Set(clean.map((l) => l.productId))];
       const products = (
-        await db.query<{ id: string; name: string; price: string; station: Station; isAvailable: boolean }>(
-          `SELECT p.id, p.name, p.price, p.station, p.is_available AS "isAvailable"
+        await db.query<{ id: string; name: string; price: string; station: Station; isAvailable: boolean; optionGroups: OptionGroup[] | null }>(
+          `SELECT p.id, p.name, p.price, p.station, p.is_available AS "isAvailable", p.option_groups AS "optionGroups"
              FROM menu_products p JOIN menu_categories c ON c.id = p.category_id
             WHERE p.id = ANY($1::uuid[]) AND p.business_id = $2 AND p.is_active AND c.is_active`,
           [ids, actor.businessId],
@@ -253,6 +270,14 @@ export async function sendOrder(actor: Actor, sessionId: string, lines: CartLine
         const product = byId.get(id);
         if (!product) throw new AppError('CONFLICT', 'Un producto del pedido ya no está en la carta. Recarga la página.');
         if (!product.isAvailable) throw new AppError('CONFLICT', `${product.name} está agotado. Quítalo del pedido.`);
+      }
+      // Lo escogido para armar el plato va adelante de la nota, para que salga en la comanda y en la cuenta.
+      for (const line of clean) {
+        const groups = normalizeGroups(byId.get(line.productId)!.optionGroups);
+        if (!groups?.length) continue;
+        const picked = completeChoices(groups, line.choices);
+        if (!picked) throw new AppError('INVALID', `Escoge las opciones de ${byId.get(line.productId)!.name}.`);
+        line.notes = [describeChoices(groups, picked), line.notes].filter(Boolean).join(' — ').slice(0, 300);
       }
       const number =
         (await db.query<{ n: number }>(`SELECT COALESCE(max(number), 0) + 1 AS n FROM order_rounds WHERE session_id = $1`, [sessionId])).rows[0].n;
@@ -313,8 +338,13 @@ export async function sendOrder(actor: Actor, sessionId: string, lines: CartLine
   }
 }
 
-/** Anula un producto ya enviado (no lo borra). Solo dueño o administrador, siempre con motivo. */
-export async function voidItem(actor: Actor, itemId: string, reason: string) {
+/** Anula un producto ya enviado (no lo borra). Dueño, administrador o jefe de servicio, siempre con motivo. */
+/**
+ * Anula un producto ya enviado. `prepared` lo dice quien anula (la comanda se marca entera en la pantalla de cocina o
+ * barra, así que su estado no basta): si no se había preparado, los insumos vuelven al inventario. Sin decirlo, se
+ * toma el estado de la comanda.
+ */
+export async function voidItem(actor: Actor, itemId: string, reason: string, prepared?: boolean) {
   requirePermission(actor, 'orders.void');
   const why = requireText(reason, 'Motivo', 3, 300);
   if (!isUuid(itemId)) throw new AppError('NOT_FOUND', 'No encontramos ese producto.');
@@ -331,8 +361,9 @@ export async function voidItem(actor: Actor, itemId: string, reason: string) {
     if (item.voidedAt) throw new AppError('CONFLICT', 'Ese producto ya estaba anulado.');
     const session = await lockOpenSession(db, actor, item.sessionId);
     await db.query(`UPDATE order_items SET voided_at = now(), voided_by = $2, void_reason = $3 WHERE id = $1`, [itemId, actor.id, why]);
-    // Si la cocina no lo había empezado, los insumos vuelven al inventario; si ya lo preparó, se quedan gastados.
-    if (item.ticketStatus === 'sent') await returnForVoid(db, actor, itemId);
+    // Si no se había preparado, los insumos vuelven al inventario; si ya se preparó, se quedan gastados.
+    const wasPrepared = prepared ?? item.ticketStatus !== 'sent';
+    if (!wasPrepared) await returnForVoid(db, actor, itemId);
     // La estación recibe un papel de «ANULADO» para no prepararlo (o dejarlo de lado).
     await enqueueVoid(db, actor, itemId, why);
     const amount = Number(item.unitPrice) * item.quantity;
@@ -340,9 +371,9 @@ export async function voidItem(actor: Actor, itemId: string, reason: string) {
       action: 'order.void',
       entity: 'order_item',
       entityId: itemId,
-      summary: `Anuló ${item.quantity} × ${item.name} ($${amount.toLocaleString('es-CO')}) de la mesa ${session.number}${item.ticketStatus === 'sent' ? '' : ' (ya estaba en preparación o lista)'}`,
+      summary: `Anuló ${item.quantity} × ${item.name} ($${amount.toLocaleString('es-CO')}) de la mesa ${session.number}${wasPrepared ? ' (ya estaba preparado)' : ''}`,
       reason: why,
-      data: { sessionId: item.sessionId, amount, ticketStatus: item.ticketStatus },
+      data: { sessionId: item.sessionId, amount, ticketStatus: item.ticketStatus, prepared: wasPrepared },
     });
   });
 }
@@ -405,4 +436,42 @@ export async function sessionTotals(businessId: string, sessionIds: string[]) {
     [businessId, sessionIds],
   );
   return new Map(rows.map((r) => [r.sessionId, Number(r.total)]));
+}
+
+/**
+ * Carta → «¿A dónde va cada categoría?»: cambia de una vez la estación de varias categorías, y sus productos se van con
+ * ellas (los que ya iban a otra estación que la de su categoría se quedan como están).
+ */
+export async function setCategoryStations(actor: Actor, changes: { id: string; station: string }[]) {
+  requirePermission(actor, 'menu.edit');
+  for (const c of changes) {
+    if (!isUuid(c.id)) throw new AppError('NOT_FOUND', 'No encontramos esa categoría.');
+    if (!isStation(c.station)) throw new AppError('INVALID', 'Elige si va a cocina o a barra.');
+  }
+  return transaction(async (db) => {
+    let moved = 0;
+    for (const c of changes) {
+      const before = (
+        await db.query<{ name: string; station: string }>(`SELECT name, station FROM menu_categories WHERE id = $1 AND business_id = $2 FOR UPDATE`, [c.id, actor.businessId])
+      ).rows[0];
+      if (!before) throw new AppError('NOT_FOUND', 'No encontramos esa categoría.');
+      // Todos sus productos quedan en la estación escogida, aunque la categoría ya estuviera ahí: una carta importada
+      // a barra pudo quedar con la categoría en cocina y los productos todavía en barra.
+      const products = await db.query(`UPDATE menu_products SET station = $3 WHERE category_id = $1 AND business_id = $2 AND station <> $3`, [
+        c.id,
+        actor.businessId,
+        c.station,
+      ]);
+      if (before.station === c.station && !products.rowCount) continue;
+      await db.query(`UPDATE menu_categories SET station = $3 WHERE id = $1 AND business_id = $2`, [c.id, actor.businessId, c.station]);
+      await audit(db, actor, {
+        action: 'menu.category',
+        entity: 'menu_category',
+        entityId: c.id,
+        summary: `${before.name} ahora va a ${c.station === 'kitchen' ? 'cocina' : 'barra'}`,
+      });
+      moved++;
+    }
+    return moved;
+  });
 }

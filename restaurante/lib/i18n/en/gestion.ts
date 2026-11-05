@@ -180,6 +180,29 @@ export const en: Record<string, string> = {
   'El plano de mesas usa esta foto de fondo.': 'The table map uses this background photo.',
   'El plano de mesas usa el piso de madera de 3R.': 'The table map uses the 3R wooden floor.',
   'Volver al piso de madera': 'Back to the wooden floor',
+  'Borrar ventas de prueba': 'Delete test sales',
+  'Borra mesas abiertas y cerradas, pedidos, pagos, descuentos, facturas y turnos de caja, y devuelve al inventario lo que esas ventas descontaron. El equipo, el plano, la carta, el inventario cargado, los gastos y las reservas se quedan. No se puede deshacer.':
+    'Deletes open and closed tables, orders, payments, discounts, invoices and cash shifts, and gives back to inventory what those sales took out. The team, floor plan, menu, loaded inventory, expenses and reservations stay. This can’t be undone.',
+  'Para confirmar, escribe el nombre del negocio: {name}': 'To confirm, type the business name: {name}',
+  'Borrando…': 'Deleting…',
+  'Borrar toda la carta': 'Delete the whole menu',
+  'Borra todas las categorías y productos, con sus fotos y recetas, para cargar la carta de nuevo (Carta → «Importar carta»). Si hay pedidos con esos productos, primero borra las ventas de prueba. El inventario, el equipo y el plano se quedan. No se puede deshacer.':
+    'Deletes every category and product, with their photos and recipes, so the menu can be loaded again (Menu → “Import menu”). If there are orders with those products, delete the test sales first. Inventory, team and floor plan stay. This can’t be undone.',
+  'Opciones para armar el plato (opcional)': 'Options to build the dish (optional)',
+  'Una línea por grupo: «Bebida: Limonada, Panelada» (también sirve «o» o «/» entre opciones). El mesero escoge una de cada grupo al pedirlo («(elige 2)» después del grupo para dos). Una línea sin «:» es algo que el plato siempre trae.':
+    'One line per group: “Drink: Lemonade, Panelada” (“o” or “/” between options also works). The waiter picks one from each group when ordering (“(elige 2)” after the group for two). A line without “:” is something the dish always includes.',
+  'Borrar todo el inventario': 'Delete all inventory',
+  'su categoría va a {station}': 'its category goes to {station}',
+  'Todo a cocina': 'All to kitchen',
+  'Todo a barra': 'All to bar',
+  'Todo en cocina': 'All in kitchen',
+  'Todo en barra': 'All in bar',
+  // Inventario separado en barra y cocina (app/app/inventario/page.tsx, components/inventory-forms.tsx)
+  'Barra · {n}': 'Bar · {n}',
+  'Cocina · {n}': 'Kitchen · {n}',
+  'Es de': 'Belongs to',
+  'Borra todos los insumos de todas las sedes con sus existencias, compras, conteos y movimientos, y las recetas de la carta que los usaban. La carta, las ventas, los gastos y facturas de compra, el equipo y el plano se quedan. No se puede deshacer.':
+    'Deletes every ingredient in every location with its stock, purchases, counts and movements, and the menu recipes that used them. The menu, sales, expenses and purchase invoices, team and floor plan stay. This can’t be undone.',
   'Usar esta foto en el plano de mesas': 'Use this photo on the table map',
   'Escoger otra foto': 'Choose another photo',
   'Guardar fondo': 'Save background',
@@ -193,21 +216,24 @@ export const en: Record<string, string> = {
   Conectado: 'Connected',
   'Desconectado · último contacto hace {time}': 'Disconnected · last seen {time} ago',
   'Todavía no se ha conectado': 'Hasn’t connected yet',
-  'Un computador del restaurante (con Windows, o un mini PC) queda prendido con este programa. Recibe lo que hay que imprimir y lo manda a cada impresora por la red del local.':
-    'A computer at the restaurant (Windows, or a mini PC) stays on running this program. It receives what needs printing and sends it to each printer over the local network.',
-  'Conecta cada impresora al router del local (cable de red o wifi) y dale una': 'Connect each printer to the restaurant’s router (network cable or Wi-Fi) and give it a',
+  'Un computador del restaurante con Windows queda prendido con este programa. Recibe lo que hay que imprimir y lo manda a cada impresora: a la que está conectada por cable USB a ese computador, o a las que están en la red del local.':
+    'A Windows computer at the restaurant stays on running this program. It receives what needs printing and sends it to each printer: the one plugged into that computer by USB cable, or the ones on the local network.',
+  'Si la impresora va con cable USB al computador de la caja, basta con que imprima desde Windows (su programa o «driver» instalado). Si va al router del local, dale una':
+    'If the printer is plugged into the cash register computer by USB, it only needs to print from Windows (its driver installed). If it goes to the restaurant’s router, give it a',
   'IP fija': 'static IP',
-  'Casi todas imprimen su IP si las prendes con el botón de avanzar papel (FEED) presionado.':
-    'Most print their IP if you turn them on while holding the paper feed (FEED) button.',
-  'Agrega cada impresora abajo, con su IP, y escoge qué imprime.': 'Add each printer below with its IP and choose what it prints.',
+  '(casi todas imprimen su IP si las prendes con el botón de avanzar papel, FEED, presionado).':
+    '(most print their IP if you turn them on while holding the paper feed button, FEED).',
   'En el computador instala': 'On the computer, install',
   '(nodejs.org, versión LTS). Crea una carpeta, por ejemplo «Impresion 3R», y descarga ahí estos dos archivos:':
     '(nodejs.org, LTS version). Create a folder, for example “Impresion 3R”, and download these two files into it:',
   Abre: 'Open',
+  'Si Windows avisa «No se pudo comprobar el editor», toca «Ejecutar» (el archivo es de 3R).':
+    'If Windows warns “The publisher could not be verified”, tap “Run” (the file is from 3R).',
   'La primera vez te pide la dirección del sistema': 'The first time, it asks for the system address',
-  'y el código de la sede (lo creas aquí abajo). Deja la ventana abierta.': 'and the location code (you create it below). Leave the window open.',
-  'Para que se prenda solo con el computador: tecla Windows + R, escribe': 'To have it start with the computer: press Windows + R, type',
-  'y pon ahí un acceso directo a iniciar-windows.bat.': 'and put a shortcut to iniciar-windows.bat there.',
+  'y el código de la sede (lo creas aquí abajo). Deja la ventana abierta: desde ahí se prende sola cada vez que prendas el computador.':
+    'and the location code (you create it below). Leave the window open: from then on it starts by itself every time you turn on the computer.',
+  'Agrega cada impresora abajo y escoge qué imprime. Si es de cable USB, escribe su nombre tal cual sale en la ventana del programa, en «Impresoras de este computador».':
+    'Add each printer below and choose what it prints. If it’s a USB printer, type its name exactly as it shows in the program window, under “Printers on this computer”.',
   'Toca «Imprimir prueba» en cada impresora. Debe salir un papel con su nombre y las tildes bien.':
     'Tap “Print test” on each printer. A slip should come out with its name and accented letters printed correctly.',
   'Código de la sede para el programa': 'Location code for the program',
@@ -241,6 +267,12 @@ export const en: Record<string, string> = {
   'El código no es válido. Crea uno nuevo en Impresoras y borra config.json.': 'The code isn’t valid. Create a new one in Printers and delete config.json.',
   // Formulario de impresora
   'Dirección IP': 'IP address',
+  '¿Cómo está conectada?': 'How is it connected?',
+  'Por cable USB al computador': 'By USB cable to the computer',
+  'A la red del local (tiene IP)': 'To the local network (has an IP)',
+  'Nombre de la impresora en Windows': 'Printer name in Windows',
+  'Tal cual lo muestra el programa de impresión al prenderse, en la lista «Impresoras de este computador».':
+    'Exactly as the printing program shows it when it starts, in the list “Printers on this computer”.',
   Puerto: 'Port',
   Papel: 'Paper',
   '80 mm (letra más grande)': '80 mm (larger text)',
@@ -251,6 +283,9 @@ export const en: Record<string, string> = {
   'Comandas de barra': 'Bar tickets',
   'Los tragos de las categorías de barra.': 'Drinks from bar categories.',
   'Precuentas y cierre de caja.': 'Pre-checks and cashier closing.',
+  'Copia de cada pedido': 'Copy of every order',
+  'Todo lo que manda cada mesero en un solo papel, y lo que se anula. Para la caja.': 'Everything each waiter sends on one ticket, plus voided items. For the cash register.',
+  'Copia de pedidos': 'Order copies',
   'No imprime nada todavía': 'Doesn’t print anything yet',
   '{n} copias': '{n} copies',
   Apagada: 'Off',
@@ -324,4 +359,21 @@ export const en: Record<string, string> = {
   'Escribe solo lo que quieras cambiar. «Hay» queda como un conteo con tu nombre, y el administrador lo ve en los movimientos.':
     'Fill in only what you want to change. "On hand" is saved as a count under your name, and the manager sees it in the movements.',
   'Los costos solo los cambia el dueño o el administrador.': 'Only the owner or the manager can change costs.',
+  'Llenar con una foto': 'Fill in from a photo',
+  'Tómale foto a la nevera, la barra o la bodega, o a la hoja donde anotaron el conteo (hasta 4 fotos). La IA cuenta lo que ve y llena la tabla; tú revisas y guardas.':
+    'Take a photo of the fridge, the bar or the storeroom, or of the sheet where the count was written down (up to 4 photos). AI counts what it sees and fills in the table; you review and save.',
+  'Leyendo la foto…': 'Reading the photo…',
+  'Subir o tomar fotos': 'Upload or take photos',
+  'leído de la foto': 'read from the photo',
+  'Vimos esto y no está en tu inventario': 'We saw this and it is not in your inventory',
+  'Los marcados se crean como insumos nuevos con esa cantidad. Corrige el nombre si hace falta.':
+    'Checked ones are created as new ingredients with that quantity. Fix the name if needed.',
+  'Pídele al dueño o al administrador que los cree.': 'Ask the owner or the manager to create them.',
+  'Crear {item}': 'Create {item}',
+  Unidad: 'Unit',
+  'La IA leyó {a} insumos. Revisa las cantidades abajo, corrige lo que haga falta y toca «Guardar todo».':
+    'AI read {a} ingredients. Check the quantities below, fix anything needed and tap "Save all".',
+  'La IA leyó {a} insumos y {b} que no están en tu inventario. Revisa las cantidades abajo, corrige lo que haga falta y toca «Guardar todo».':
+    'AI read {a} ingredients and {b} that are not in your inventory. Check the quantities below, fix anything needed and tap "Save all".',
+  'Insumos nuevos: {a}.': 'New ingredients: {a}.',
 };

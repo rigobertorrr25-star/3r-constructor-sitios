@@ -1,4 +1,5 @@
-import { LibraryPhotos, MenuImport } from '@/components/menu-import';
+import { CategoryStations, LibraryPhotos, MenuImport } from '@/components/menu-import';
+import { BulkPhotos } from '@/components/bulk-photos';
 import { requireStaff } from '@/lib/auth';
 import { getMenu } from '@/lib/orders';
 import { productCosts } from '@/lib/inventory';
@@ -8,6 +9,8 @@ import { PageTitle } from '@/components/ui';
 import { getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
+// Leer la carta de un PDF o fotos con IA puede tardar más de lo normal.
+export const maxDuration = 60;
 
 export default async function MenuPage() {
   const staff = await requireStaff('orders.take');
@@ -29,6 +32,18 @@ export default async function MenuPage() {
         }
       />
       {canEdit ? <MenuImport barOnly={staff.barOnly} open={menu.categories.length === 0} /> : null}
+      {canEdit && !staff.barOnly && menu.categories.length ? (
+        <CategoryStations
+          categories={menu.categories.map((c) => ({ id: c.id, name: c.name, station: c.station, products: menu.products.filter((p) => p.categoryId === c.id).length }))}
+        />
+      ) : null}
+      {canEdit && menu.products.length ? (
+        <BulkPhotos
+          products={menu.categories.flatMap((c) =>
+            menu.products.filter((p) => p.isActive && p.categoryId === c.id).map((p) => ({ id: p.id, name: p.name, category: c.name, hasPhoto: !!p.photo })),
+          )}
+        />
+      ) : null}
       {canEdit && menu.products.length ? <LibraryPhotos withoutPhoto={menu.products.filter((p) => p.isActive && !p.photo).length} /> : null}
       <MenuEditor categories={menu.categories} products={menu.products} canEdit={canEdit} canRecipe={canRecipe} costs={costs} barOnly={staff.barOnly} />
     </div>

@@ -90,7 +90,7 @@ describe('cada mesero cobra sus mesas', { skip: url ? false : 'sin TEST_DATABASE
     assert.equal(acc.tables.length, 1);
     assert.equal(acc.tables[0].tableNumber, '1');
     assert.deepEqual(acc.tables[0].payments.map((p) => p.method).sort(), ['card', 'cash']);
-    assert.equal(acc.openTables.length, 1, 'la mesa 2 sigue abierta');
+    assert.equal(acc.openTables.length, 0, 'la mesa 2 está abierta pero no ha comandado nada: no cuenta');
     await assert.rejects(waiters.waiterAccount(johan, isabel.id), { code: 'FORBIDDEN' });
     const all = await waiters.listWaiterAccounts(agusto);
     assert.deepEqual(all.map((a) => a.staff.name), ['Isabel', 'Johan']);

@@ -3,6 +3,8 @@
 import { useActionState, useState } from 'react';
 import {
   addRecordAction,
+  changeAvatarAction,
+  setAvatarGenderAction,
   createBusinessAction,
   createManagerAction,
   deleteManagerAction,
@@ -65,6 +67,43 @@ export function EmployeeForm({ businessId, employee, lang }: { businessId: strin
   );
 }
 
+/** El dibujo del empleado: hombre o mujer (si se adivinó mal por el nombre) y "Otro avatar" por si no le gustó. */
+export function AvatarControls({ businessId, employee, lang }: { businessId: string; employee: AttendanceEmployee; lang: Lang }) {
+  const option = (gender: 'm' | 'f', label: string) => (
+    <button
+      type="submit"
+      name="gender"
+      value={gender}
+      aria-pressed={employee.gender === gender}
+      className={`rounded-full px-3 py-1.5 text-[13px] font-medium transition ${
+        employee.gender === gender ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+      }`}
+    >
+      {label}
+    </button>
+  );
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      {/* eslint-disable-next-line @next/next/no-img-element -- dibujo SVG propio */}
+      <img src={employee.avatar} alt="" width={56} height={56} className="size-14 rounded-full ring-1 ring-black/[0.06]" />
+      <form action={setAvatarGenderAction} className="inline-flex rounded-full border border-white/70 p-0.5">
+        <input type="hidden" name="businessId" value={businessId} />
+        <input type="hidden" name="employeeId" value={employee.id} />
+        {option('m', t(lang, 'avatarMale'))}
+        {option('f', t(lang, 'avatarFemale'))}
+      </form>
+      <form action={changeAvatarAction}>
+        <input type="hidden" name="businessId" value={businessId} />
+        <input type="hidden" name="employeeId" value={employee.id} />
+        <button type="submit" className={quietButton}>
+          {t(lang, 'changeAvatar')}
+        </button>
+      </form>
+      {employee.genderSet ? null : <span className="text-[12.5px] text-muted-foreground">{t(lang, 'avatarGuessed')}</span>}
+    </div>
+  );
+}
+
 /** Para un PIN olvidado: el empleado crea uno nuevo la próxima vez que escanee. */
 export function ResetPinButton({ businessId, employee, lang }: { businessId: string; employee: AttendanceEmployee; lang: Lang }) {
   return (
@@ -110,7 +149,7 @@ export function KioskLink({ url, businessId, lang }: { url: string; businessId: 
   const [copied, setCopied] = useState(false);
   return (
     <div className="space-y-3">
-      <p className="break-all rounded-2xl bg-white/[0.04] px-4 py-3 text-[14px] text-foreground">{url}</p>
+      <p className="break-all rounded-2xl bg-white/50 px-4 py-3 text-[14px] text-foreground">{url}</p>
       <div className="flex flex-wrap gap-2">
         <a href={url} target="_blank" rel="noopener noreferrer" className={quietButton}>
           {t(lang, 'openTablet')}
@@ -153,7 +192,7 @@ export function RecordEditor({ businessId, record, lang }: { businessId: string;
   return (
     <details className="mt-2">
       <summary className="cursor-pointer text-[13px] text-primary hover:underline">{record.clockOut ? t(lang, 'fix') : t(lang, 'addExit')}</summary>
-      <form action={action} className="mt-3 space-y-3 rounded-2xl bg-white/[0.03] p-4">
+      <form action={action} className="mt-3 space-y-3 rounded-2xl bg-white/50 p-4">
         <input type="hidden" name="businessId" value={businessId} />
         <input type="hidden" name="recordId" value={record.id} />
         <div className="grid gap-3 sm:grid-cols-2">
@@ -179,7 +218,7 @@ export function RecordEditor({ businessId, record, lang }: { businessId: string;
       >
         <input type="hidden" name="businessId" value={businessId} />
         <input type="hidden" name="recordId" value={record.id} />
-        <button type="submit" className="text-[13px] text-muted-foreground transition hover:text-[#ffb4b5]">
+        <button type="submit" className="text-[13px] text-muted-foreground transition hover:text-destructive">
           {t(lang, 'deleteRecord')}
         </button>
       </form>
@@ -221,7 +260,7 @@ export function DeleteManagerButton({ businessId, manager, lang }: { businessId:
     >
       <input type="hidden" name="businessId" value={businessId} />
       <input type="hidden" name="managerId" value={manager.id} />
-      <button type="submit" className="text-[13px] text-muted-foreground transition hover:text-[#ffb4b5]">
+      <button type="submit" className="text-[13px] text-muted-foreground transition hover:text-destructive">
         {t(lang, 'deleteManager')}
       </button>
     </form>
@@ -233,7 +272,7 @@ export function AddRecordForm({ businessId, employees, lang }: { businessId: str
   const [state, action] = useActionState(addRecordAction, undefined);
   const v = state?.values;
   return (
-    <details className="mt-4 rounded-2xl border border-white/[0.08] p-4" open={Boolean(state?.error)}>
+    <details className="rounded-[28px] border border-white/60 bg-white/55 p-5 shadow-[var(--shadow-glass)] backdrop-blur-xl" open={Boolean(state?.error)}>
       <summary className="cursor-pointer text-[14px] font-medium text-primary">{t(lang, 'addRecord')}</summary>
       <form key={`add-${state?.ok ?? 0}-${state?.error ?? ''}`} action={action} className="mt-4 space-y-3">
         <p className="text-[13px] text-muted-foreground">{t(lang, 'addRecordIntro')}</p>
@@ -247,13 +286,13 @@ export function AddRecordForm({ businessId, employees, lang }: { businessId: str
             name="employeeId"
             required
             defaultValue={v?.employeeId ?? ''}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[15px] text-foreground focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+            className="w-full rounded-2xl border border-white/70 bg-white/50 px-4 py-3 text-[15px] text-foreground focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
           >
-            <option value="" disabled className="bg-[#0a131a]">
+            <option value="" disabled className="bg-white">
               —
             </option>
             {employees.map((employee) => (
-              <option key={employee.id} value={employee.id} className="bg-[#0a131a]">
+              <option key={employee.id} value={employee.id} className="bg-white">
                 {employee.name}
               </option>
             ))}

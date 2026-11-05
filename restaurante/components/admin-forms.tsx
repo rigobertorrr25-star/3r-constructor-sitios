@@ -1,7 +1,7 @@
 'use client';
 
 import { useTransition } from 'react';
-import { createBusinessAction, setBusinessActiveAction } from '@/app/actions';
+import { clearInventoryAction, clearMenuAction, clearSalesAction, createBusinessAction, setBusinessActiveAction } from '@/app/actions';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Field, dangerButton, quietButton } from './ui';
@@ -44,5 +44,71 @@ export function BusinessToggle({ id, active }: { id: string; active: boolean }) 
     >
       {active ? t('Suspender') : t('Reactivar')}
     </button>
+  );
+}
+
+/** Borra las ventas de prueba de un negocio. Va plegado y pide escribir el nombre del negocio para que no se toque por error. */
+export function ClearSalesForm({ id, name }: { id: string; name: string }) {
+  const t = useT();
+  return (
+    <details className="w-full rounded-2xl border border-destructive/25 px-4 py-3">
+      <summary className="cursor-pointer text-[14px] text-[#ffb4b5]">{t('Borrar ventas de prueba')}</summary>
+      <p className="mt-2 text-[13px] text-muted-foreground">
+        {t('Borra mesas abiertas y cerradas, pedidos, pagos, descuentos, facturas y turnos de caja, y devuelve al inventario lo que esas ventas descontaron. El equipo, el plano, la carta, el inventario cargado, los gastos y las reservas se quedan. No se puede deshacer.')}
+      </p>
+      <ActionForm action={clearSalesAction} resetOnOk className="mt-3 space-y-3">
+        {() => (
+          <>
+            <input type="hidden" name="businessId" value={id} />
+            <Field label={t('Para confirmar, escribe el nombre del negocio: {name}', { name })} name="confirmName" required autoComplete="off" />
+            <SubmitButton tone="danger" pendingText={t('Borrando…')}>{t('Borrar ventas de prueba')}</SubmitButton>
+          </>
+        )}
+      </ActionForm>
+    </details>
+  );
+}
+
+/** Borra toda la carta de un negocio para cargarla de nuevo. Plegado y con el nombre del negocio para confirmar. */
+export function ClearMenuForm({ id, name }: { id: string; name: string }) {
+  const t = useT();
+  return (
+    <details className="w-full rounded-2xl border border-destructive/25 px-4 py-3">
+      <summary className="cursor-pointer text-[14px] text-[#ffb4b5]">{t('Borrar toda la carta')}</summary>
+      <p className="mt-2 text-[13px] text-muted-foreground">
+        {t('Borra todas las categorías y productos, con sus fotos y recetas, para cargar la carta de nuevo (Carta → «Importar carta»). Si hay pedidos con esos productos, primero borra las ventas de prueba. El inventario, el equipo y el plano se quedan. No se puede deshacer.')}
+      </p>
+      <ActionForm action={clearMenuAction} resetOnOk className="mt-3 space-y-3">
+        {() => (
+          <>
+            <input type="hidden" name="businessId" value={id} />
+            <Field label={t('Para confirmar, escribe el nombre del negocio: {name}', { name })} name="confirmName" required autoComplete="off" />
+            <SubmitButton tone="danger" pendingText={t('Borrando…')}>{t('Borrar toda la carta')}</SubmitButton>
+          </>
+        )}
+      </ActionForm>
+    </details>
+  );
+}
+
+/** Borra todo el inventario de un negocio para cargarlo de nuevo. Plegado y con el nombre del negocio para confirmar. */
+export function ClearInventoryForm({ id, name }: { id: string; name: string }) {
+  const t = useT();
+  return (
+    <details className="w-full rounded-2xl border border-destructive/25 px-4 py-3">
+      <summary className="cursor-pointer text-[14px] text-[#ffb4b5]">{t('Borrar todo el inventario')}</summary>
+      <p className="mt-2 text-[13px] text-muted-foreground">
+        {t('Borra todos los insumos de todas las sedes con sus existencias, compras, conteos y movimientos, y las recetas de la carta que los usaban. La carta, las ventas, los gastos y facturas de compra, el equipo y el plano se quedan. No se puede deshacer.')}
+      </p>
+      <ActionForm action={clearInventoryAction} resetOnOk className="mt-3 space-y-3">
+        {() => (
+          <>
+            <input type="hidden" name="businessId" value={id} />
+            <Field label={t('Para confirmar, escribe el nombre del negocio: {name}', { name })} name="confirmName" required autoComplete="off" />
+            <SubmitButton tone="danger" pendingText={t('Borrando…')}>{t('Borrar todo el inventario')}</SubmitButton>
+          </>
+        )}
+      </ActionForm>
+    </details>
   );
 }

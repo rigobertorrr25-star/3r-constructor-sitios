@@ -1,6 +1,9 @@
 // Textos en inglés: salon. La llave es el texto exacto en español (con sus {huecos}).
 // Mesas, tomar pedido, cobrar una mesa, plano y pantallas de cocina y barra.
 export const en: Record<string, string> = {
+  'Quitar {name} del pedido': 'Remove {name} from the order',
+  '¿Borrar todo lo que no se ha enviado?': 'Clear everything that hasn’t been sent?',
+  'Borrar todo': 'Clear all',
   // Estados de mesa (STATUS_LABEL de components/table-board.tsx)
   Libre: 'Free',
   Ocupada: 'Seated',
@@ -94,11 +97,19 @@ export const en: Record<string, string> = {
   Cantidad: 'Quantity',
   'Otro {name}': 'One more {name}',
   'Sin cebolla, término medio…': 'No onion, medium…',
+  // Opciones para armar un plato (PROMO ALMUERZO, components/pos-screen.tsx OptionPicker)
+  'Incluye: {name}': 'Includes: {name}',
+  '(escoge 1)': '(choose 1)',
+  '(escoge {n})': '(choose {n})',
+  'Agregar al pedido': 'Add to order',
+  'Escoge las opciones': 'Choose the options',
   'Nota para {name}': 'Note for {name}',
   Anulado: 'Voided',
   Anular: 'Void',
   'Motivo: {reason}': 'Reason: {reason}',
   'Motivo de la anulación': 'Void reason',
+  'Ya se había preparado': 'It was already made',
+  'Si no se alcanzó a hacer, déjalo sin marcar: sus insumos vuelven al inventario.': 'If it wasn’t made yet, leave it unchecked: its ingredients go back to inventory.',
   'Se equivocó el mesero, cliente cambió…': 'Server error, guest changed their mind…',
   'Anulando…': 'Voiding…',
 
@@ -270,5 +281,4 @@ export const en: Record<string, string> = {
   'Propina sugerida (%)': 'Suggested tip (%)',
   'Pon 0 si tu negocio no maneja propina: no se ofrece al cobrar ni sale en la precuenta.': "Set 0 if your business doesn't take tips: it won't be offered when charging or shown on the pre-check.",
   'Propina sugerida: de 0 a 30 %.': 'Suggested tip: 0 to 30%.',
-  'Quedan {n}': '{n} left',
 };

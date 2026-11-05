@@ -82,10 +82,11 @@ describe('módulo 11: reservas y carta pública', { skip: url ? false : 'sin TES
     const list = await res.listReservations(waiter, tomorrow);
     const pedro = list.day.find((r) => r.customerName === 'Pedro')!;
     const sessionId = await res.seatReservation(waiter, pedro.id);
-    const table = (await store.listTables(waiter)).find((t) => t.id === t2)!;
-    assert.equal(table.session?.id, sessionId);
-    assert.equal(table.session?.guests, 3);
-    assert.match(table.session?.notes ?? '', /Reserva de Pedro · Cumpleaños/);
+    // La mesa queda abierta (en el plano sale ocupada cuando se comande algo).
+    const session = (await db.query<{ tableId: string; guests: number; notes: string }>(`SELECT table_id AS "tableId", guests, notes FROM table_sessions WHERE id = $1 AND status <> 'closed'`, [sessionId]))[0];
+    assert.equal(session.tableId, t2);
+    assert.equal(session.guests, 3);
+    assert.match(session.notes, /Reserva de Pedro · Cumpleaños/);
     await assert.rejects(res.seatReservation(waiter, pedro.id), { code: 'CONFLICT' });
     const laura = list.day.find((r) => r.customerName === 'Laura Gómez')!;
     await res.updateReservation(waiter, laura.id, { status: 'no_show' });

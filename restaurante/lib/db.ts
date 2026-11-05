@@ -191,6 +191,13 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS suggested_tip INT NOT NULL DEFAU
 -- Forma de trabajo: «cada mesero cobra sus mesas» (sin cajero) y «solo bar» (sin cocina). Las prende el dueño en Sedes.
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS waiters_collect BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS bar_only BOOLEAN NOT NULL DEFAULT FALSE;
+-- Cocina y barra marcan sus comandas en pantalla (Preparando / Listo). En Azul Caribe no (31 oct 2026): las comandas le
+-- llegan a la cajera y ella avisa; sin marcar, el radar las veía como demoradas. Apagado, no se mide su tiempo.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS track_prep BOOLEAN NOT NULL DEFAULT TRUE;
+-- Corrección de un cierre ya hecho (4 nov 2026): quién, cuándo y por qué. Lo que decía antes queda en la auditoría.
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS corrected_by UUID REFERENCES staff(id);
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS corrected_at TIMESTAMPTZ;
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS correction_reason VARCHAR(300);
 
 -- Turno de caja de una sede: se abre con una base en efectivo y se cierra contando la plata.
 CREATE TABLE IF NOT EXISTS cash_shifts (
@@ -294,6 +301,18 @@ CREATE TABLE IF NOT EXISTS recipe_lines (
   PRIMARY KEY (product_id, item_id)
 );
 
+-- Área del insumo: barra o cocina (pedido de Rigoberto, 23 oct 2026), para que cada una cuente lo suyo. Al crear la
+-- columna, lo que solo usan productos de barra queda en barra y lo demás en cocina.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'inventory_items' AND column_name = 'area') THEN
+    ALTER TABLE inventory_items ADD COLUMN area VARCHAR(10) NOT NULL DEFAULT 'kitchen' CHECK (area IN ('kitchen', 'bar'));
+    UPDATE inventory_items i SET area = 'bar'
+     WHERE EXISTS (SELECT 1 FROM recipe_lines r JOIN menu_products p ON p.id = r.product_id WHERE r.item_id = i.id AND p.station = 'bar')
+       AND NOT EXISTS (SELECT 1 FROM recipe_lines r JOIN menu_products p ON p.id = r.product_id WHERE r.item_id = i.id AND p.station = 'kitchen');
+  END IF;
+END $$;
+
 -- Libro de movimientos por sede (la existencia es la suma). kind: purchase, sale, void (devuelto por anulación),
 -- waste (merma), count (ajuste por conteo físico), adjust. quantity con signo. No se cambia ni se borra.
 CREATE TABLE IF NOT EXISTS inventory_movements (
@@ -349,6 +368,45 @@ CREATE TABLE IF NOT EXISTS expenses (
   void_reason      VARCHAR(200)
 );
 CREATE INDEX IF NOT EXISTS idx_expenses_location_date ON expenses (location_id, spent_on);
+-- Cada factura de compra es de insumos (lo que entra a la bodega: comida, bebida, licor, desechables) o un gasto
+-- (arriendo, servicios, mantenimiento…), pedido de Rigoberto 23 oct 2026. Al crear la columna, lo que ya estaba como
+-- «Proveedores» queda como insumos.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'expenses' AND column_name = 'kind') THEN
+    ALTER TABLE expenses ADD COLUMN kind VARCHAR(10) NOT NULL DEFAULT 'expense' CHECK (kind IN ('expense', 'supplies'));
+    UPDATE expenses SET kind = 'supplies' WHERE category = 'suppliers';
+  END IF;
+END $$;
+
+-- Formulario diario de Rigoberto (28 oct 2026): cada factura lleva su número, de dónde salió la plata (caja, caja
+-- fuerte, sobre de la cocina, sobre del bar u otro) y si todavía no se paga, su fecha de vencimiento (paid_from vacío =
+-- por pagar). Al crear la columna, lo que ya estaba queda pagado: de la caja si salió de ella, si no «otro».
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS invoice_number VARCHAR(40);
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS due_on DATE;
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'expenses' AND column_name = 'paid_from') THEN
+    ALTER TABLE expenses ADD COLUMN paid_from VARCHAR(10) CHECK (paid_from IN ('cash', 'safe', 'kitchen', 'bar', 'other'));
+    UPDATE expenses SET paid_from = CASE WHEN paid_from_cash THEN 'cash' ELSE 'other' END, paid_at = created_at;
+  END IF;
+END $$;
+
+-- Pérdidas del día que no son del inventario (se rompió un vaso, se dañó un plato): descripción y valor estimado.
+-- Nada se borra: se anulan.
+CREATE TABLE IF NOT EXISTS losses (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  description VARCHAR(200) NOT NULL,
+  amount      BIGINT NOT NULL CHECK (amount >= 0),
+  created_by  UUID NOT NULL REFERENCES staff(id),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  voided_at   TIMESTAMPTZ,
+  voided_by   UUID REFERENCES staff(id)
+);
+CREATE INDEX IF NOT EXISTS idx_losses_location ON losses (location_id, created_at);
 
 -- ───────── módulo 11: clientes, reservas y menú QR ─────────
 
@@ -539,6 +597,18 @@ ALTER TABLE business_backgrounds ALTER COLUMN on_floor SET DEFAULT TRUE;
 ALTER TABLE menu_categories ADD COLUMN IF NOT EXISTS name_en VARCHAR(60);
 ALTER TABLE menu_products ADD COLUMN IF NOT EXISTS name_en VARCHAR(80);
 ALTER TABLE menu_products ADD COLUMN IF NOT EXISTS description_en VARCHAR(200);
+-- Opciones para armar un plato (PROMO ALMUERZO, 23 oct 2026): [{name, choose, options[]}]. Lo escogido viaja en la nota
+-- de la línea del pedido, que por eso ahora es más larga.
+ALTER TABLE menu_products ADD COLUMN IF NOT EXISTS option_groups JSONB;
+ALTER TABLE order_items ALTER COLUMN notes TYPE VARCHAR(300);
+-- Observaciones del día al cerrar la caja (se cayó un vaso, se devolvió un plato…): más espacio (28 oct 2026).
+ALTER TABLE cash_shifts ALTER COLUMN notes TYPE VARCHAR(1500);
+-- Al cerrar, el efectivo se reparte: sobre para la cocina, sobre para el bar y caja fuerte; lo demás queda en la caja.
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS envelope_kitchen BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS envelope_bar BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS safe_amount BIGINT NOT NULL DEFAULT 0;
+-- Arqueo al cerrar: cuántos billetes y monedas de cada uno (llaves «b50000», «c500»…); el contado es su suma.
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS cash_count JSONB;
 
 -- Foto de cada producto de la carta (la sube quien edita la carta); se ve en la carta QR y al tomar pedidos.
 CREATE TABLE IF NOT EXISTS product_photos (
@@ -547,6 +617,15 @@ CREATE TABLE IF NOT EXISTS product_photos (
   mime        VARCHAR(20) NOT NULL,
   image       BYTEA NOT NULL,
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Foto de la factura de compra de un gasto (la toma la cajera en Facturas; la IA llena el gasto con lo que lee).
+CREATE TABLE IF NOT EXISTS expense_photos (
+  expense_id  UUID PRIMARY KEY REFERENCES expenses(id) ON DELETE CASCADE,
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  mime        VARCHAR(20) NOT NULL,
+  image       BYTEA NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Impresión de comandas: impresoras térmicas de red de cada sede y lo que se les manda. Un programa de 3R en un
@@ -567,12 +646,21 @@ CREATE TABLE IF NOT EXISTS printers (
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS printers_location ON printers (location_id);
+-- Copia de cada pedido (pedido de Rigoberto, 22 oct 2026): la impresora recibe en un solo papel todo lo que manda cada
+-- mesero, y las anulaciones. Al crear la columna, las impresoras de caja que ya existían quedan con la copia prendida.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'printers' AND column_name = 'prints_orders') THEN
+    ALTER TABLE printers ADD COLUMN prints_orders BOOLEAN NOT NULL DEFAULT FALSE;
+    UPDATE printers SET prints_orders = prints_cashier;
+  END IF;
+END $$;
 CREATE TABLE IF NOT EXISTS print_jobs (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
   location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
   printer_id  UUID NOT NULL REFERENCES printers(id) ON DELETE CASCADE,
-  kind        VARCHAR(12) NOT NULL CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'prueba')),
+  kind        VARCHAR(12) NOT NULL CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'ventas', 'dia', 'prueba')),
   title       VARCHAR(160) NOT NULL,
   data        BYTEA NOT NULL,
   preview     TEXT NOT NULL,
@@ -585,6 +673,9 @@ CREATE TABLE IF NOT EXISTS print_jobs (
   printed_at  TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS print_jobs_queue ON print_jobs (location_id, status, created_at);
+-- «Ventas por categoría» sale con el cierre de caja (28 oct 2026).
+ALTER TABLE print_jobs DROP CONSTRAINT IF EXISTS print_jobs_kind_check;
+ALTER TABLE print_jobs ADD CONSTRAINT print_jobs_kind_check CHECK (kind IN ('comanda', 'anulacion', 'precuenta', 'cierre', 'ventas', 'dia', 'prueba'));
 ALTER TABLE locations ADD COLUMN IF NOT EXISTS print_token_hash VARCHAR(64);
 ALTER TABLE locations ADD COLUMN IF NOT EXISTS print_agent_seen_at TIMESTAMPTZ;
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_print_token ON locations (print_token_hash) WHERE print_token_hash IS NOT NULL;

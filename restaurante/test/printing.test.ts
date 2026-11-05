@@ -54,6 +54,7 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     printsKitchen: false,
     printsBar: false,
     printsCashier: false,
+    printsOrders: false,
     copies: 1,
     isActive: true,
   };
@@ -145,6 +146,11 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     assert.equal(bill.length, 1);
     assert.equal(bill[0].printerId, cashP);
     assert.ok(bill[0].preview.includes('PRECUENTA · Mesa 7') && bill[0].preview.includes('$90.000'), bill[0].preview);
+    assert.ok(bill[0].preview.includes('Propina sugerida (10 %)') && bill[0].preview.includes('$99.000'), bill[0].preview);
+    // Ya cobrada, el 10 % sigue saliendo en el papel (5 nov 2026).
+    const paid = { balance: 0, total: 85000, suggestedTipPercent: 10 };
+    assert.deepEqual(printing.billTip({ ...paid, tips: 0 }, 0), { label: 'Propina sugerida (10 %)', amount: '$8.500', totalLabel: 'Total con propina', withTip: '$93.500' });
+    assert.deepEqual(printing.billTip({ ...paid, tips: 8500 }, 0), { label: 'Propina / servicio', amount: '$8.500', totalLabel: 'Total pagado', withTip: '$93.500' });
   });
 
   it('el programa del local pide los trabajos con su código y avisa si salieron', async () => {
@@ -189,12 +195,125 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
   it('al cerrar la caja sale el resumen en la impresora de caja', async () => {
     await cash.openShift(owner, 100000);
     await cash.pay(owner, sessionId, { method: 'cash', amount: 60000, clientKey: randomUUID() });
-    const { shiftId } = await cash.closeShift(owner, 160000);
+    // Lo que pasó en el turno: una cerveza que se devolvió en otra mesa (sale en las observaciones).
+    const t9 = await store.createTable(owner, { zone: 'Salón', number: '9', capacity: 2, shape: 'square' });
+    const s9 = await store.openTable(waiter, t9, { guests: 1 });
+    await orders.sendOrder(waiter, s9, [{ productId: beer, quantity: 1 }], randomUUID());
+    const [spilled] = await db.query<{ id: string }>(`SELECT id FROM order_items WHERE session_id = $1`, [s9]);
+    await orders.voidItem(owner, spilled.id, 'Se cayó la cerveza');
+    // Cómo queda el inventario (27 oct 2026): lo que hay, lo que se acabó y lo que hay que comprar para llegar al mínimo.
+    const inv = await import('../lib/inventory');
+    const bulk = await import('../lib/inventory-bulk');
+    const limon = await inv.saveItem(owner, { name: 'Limón', unit: 'g', minStock: 0, area: 'bar' });
+    const hielo = await inv.saveItem(owner, { name: 'Hielo', unit: 'und', minStock: 0, area: 'bar' });
+    const papa = await inv.saveItem(owner, { name: 'Papa', unit: 'g', minStock: 0, area: 'kitchen' });
+    await db.query(`UPDATE inventory_items SET unit_cost = 4 WHERE id = $1`, [papa]);
+    await bulk.bulkStock(owner, [
+      { itemId: limon, counted: '0,5', minStock: '2' },
+      { itemId: hielo, counted: '0', minStock: '3' },
+      { itemId: papa, counted: '10', minStock: '5' },
+    ]);
+    // El formulario diario (28 oct 2026): facturas con y sin número, una salida de efectivo, una factura por pagar,
+    // una pérdida suelta, una merma del inventario y el reparto del efectivo en sobres y caja fuerte.
+    const fin = await import('../lib/finance');
+    const losses = await import('../lib/losses');
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date());
+    await fin.addExpense(owner, { category: 'suppliers', description: 'Hielo', supplier: 'Hielos del Mar', amount: 15000, spentOn: today, paidFrom: 'cash', invoiceNumber: 'H-77' });
+    await fin.addExpense(owner, { category: 'maintenance', description: 'Bombillo del baño', amount: 8000, spentOn: today, paidFrom: 'kitchen' });
+    await fin.addExpense(owner, { category: 'suppliers', description: 'Licores', supplier: 'Dislicores', amount: 500000, spentOn: today, paidFrom: 'unpaid', dueOn: '2026-11-15' });
+    await cash.addMovement(owner, { kind: 'out', amount: 5000, reason: 'Propina del domiciliario' });
+    await losses.addLoss(owner, { description: 'Se rompió un vaso', amount: 6000 });
+    await inv.registerWaste(owner, { itemId: papa, quantity: '1000', reason: 'Se dañó' });
+    // Arqueo: 1 de 100.000, 2 de 10.000, 3 monedas de 500 y… no da 140.000: se rechaza; con lo que falta, sí.
+    await assert.rejects(cash.closeShift(owner, 140000, undefined, { cashCount: { b100000: 1, b10000: 2 } }), /El arqueo suma \$120\.000/);
+    const { shiftId } = await cash.closeShift(owner, 140000, 'Se rompió un vaso en la mesa 3', {
+      envelopeKitchen: 30000,
+      envelopeBar: 20000,
+      safeAmount: 50000,
+      cashCount: { b100000: 1, b10000: 3, b5000: 1, c1000: 3, c500: 4, x99: 7, c200: 'nada' },
+    });
+    await assert.rejects(cash.closeShift(owner, 1000, undefined, { safeAmount: 2000 }), /es más de lo contado/, 'no se reparte más de lo contado');
     assert.equal(await printing.enqueueClosing(owner, shiftId), 1);
+    const sales = (await jobs()).filter((j) => j.kind === 'ventas');
+    assert.equal(sales.length, 1);
+    // Los renglones largos se parten: se revisa el texto seguido.
+    const salesText = sales[0].preview.replace(/\s+/g, ' ');
+    for (const s of [
+      'FORMULARIO DIARIO',
+      '1. VENTAS DEL DÍA', 'PLATOS', 'x Hamburguesa', 'Total Platos',
+      '2. SALIDAS DE DINERO CON FACTURA', 'Hielos del Mar: Hielo $15.000', 'Factura H-77 · de: Caja',
+      '3. SALIDAS DE DINERO SIN FACTURA', 'Bombillo del baño $8.000', 'Mantenimiento · de: Sobre cocina', 'Propina del domiciliario $5.000',
+      '4. FACTURAS POR PAGAR', 'Dislicores $500.000', 'vence: 2026-11-15',
+      '5. PÉRDIDAS DEL DÍA', 'Se rompió un vaso $6.000', 'Merma de Papa (Se dañó)',
+      'Total salidas de dinero $28.000', 'Total en caja $40.000', 'Sobre para la cocina $30.000', 'Sobre para el bar $20.000', 'Caja fuerte $50.000',
+      'COMENTARIOS', 'Se rompió un vaso en la mesa 3', 'Anulaciones y devoluciones:', '1 x Cerveza · mesa 9: Se cayó la cerveza', 'Firma',
+    ])
+      assert.ok(salesText.includes(s), s);
     const closing = (await jobs()).filter((j) => j.kind === 'cierre');
     assert.equal(closing.length, 1);
     assert.equal(closing[0].printerId, cashP);
-    for (const s of ['CIERRE DE CAJA', 'Efectivo (1)', '$60.000', 'CUADRA']) assert.ok(closing[0].preview.includes(s), s);
+    const paper = closing[0].preview;
+    for (const s of ['Arqueo:', 'Billetes de $100.000 x 1', 'Billetes de $10.000 x 3', 'Monedas de $1.000 x 3', 'Monedas de $500 x 4']) assert.ok(paper.includes(s), s);
+    assert.ok(!paper.includes('Monedas de $200'), 'lo que no se contó no sale');
+    for (const s of ['CIERRE DE CAJA', 'Efectivo (1)', '$60.000', 'CUADRA']) assert.ok(paper.includes(s), s);
+    for (const s of ['Propina (10 % de ventas)', '$6.000', 'Propinas cobradas', 'INVENTARIO QUE QUEDA', 'SE ACABÓ', 'POR COMPRAR PARA MAÑANA', 'hay 500 g · mínimo 2 kg'])
+      assert.ok(paper.includes(s), s);
+    const after = (title: string) => paper.slice(paper.indexOf(title));
+    assert.match(after('INVENTARIO QUE QUEDA'), /COCINA\n.*Papa\s+9 kg/);
+    assert.match(after('SE ACABÓ'), /- Hielo/);
+    assert.match(after('POR COMPRAR PARA MAÑANA'), /Limón\s+1,5 kg/);
+    assert.match(after('POR COMPRAR PARA MAÑANA'), /Hielo\s+3 und/);
+    assert.doesNotMatch(after('POR COMPRAR PARA MAÑANA'), /Papa/, 'la papa quedó sobre el mínimo');
+  });
+
+  it('la caja puede sacar copia de cada pedido: todo junto, con el mesero, y sin repetir papel en la misma impresora', async () => {
+    // La caja saca copia de pedidos; y la barra también, así que ya no recibe aparte su comanda de barra.
+    await printing.savePrinter(owner, cashP, { ...base, name: 'Caja', host: '192.168.1.52', printsCashier: true, printsOrders: true, copies: 1 });
+    await printing.savePrinter(owner, barP, { ...base, name: 'Barra', host: '192.168.1.51', printsBar: true, printsOrders: true, width: 32 });
+    assert.equal(await printing.hasPrinter(owner, 'orders'), true);
+    await db.query(`DELETE FROM print_jobs WHERE location_id = $1`, [owner.locationId]);
+    const t2 = await store.createTable(owner, { zone: 'Salón', number: '8', capacity: 2, shape: 'square' });
+    const s2 = await store.openTable(waiter, t2, { guests: 2 });
+    await orders.sendOrder(
+      waiter,
+      s2,
+      [
+        { productId: burger, quantity: 1 },
+        { productId: beer, quantity: 2 },
+      ],
+      randomUUID(),
+    );
+    const all = (await jobs()).filter((j) => j.kind === 'comanda');
+    assert.equal(all.filter((j) => j.printerId === kitchenP).length, 1, 'la cocina sigue con la suya');
+    const copies = all.filter((j) => j.printerId === cashP);
+    assert.equal(copies.length, 1);
+    for (const s of ['PEDIDO', 'MESA 8', '1 X HAMBURGUESA', '2 X CERVEZA', waiter.name]) assert.ok(copies[0].preview.includes(s), s);
+    const bar = all.filter((j) => j.printerId === barP);
+    assert.equal(bar.length, 1, 'un solo papel en la barra');
+    assert.ok(bar[0].preview.includes('PEDIDO'));
+
+    const order = await orders.getSessionOrder(owner, s2);
+    const burgerItem = order!.rounds.at(-1)!.items.find((i) => i.name === 'Hamburguesa')!;
+    await orders.voidItem(owner, burgerItem.id, 'El cliente se arrepintió');
+    const voids = (await jobs()).filter((j) => j.kind === 'anulacion');
+    assert.deepEqual(voids.map((j) => j.printerId).sort(), [barP, cashP, kitchenP].sort(), 'la anulación llega a la cocina y a las copias');
+  });
+
+  it('una impresora por cable USB se guarda por su nombre en Windows y el programa la recibe así', async () => {
+    await assert.rejects(printing.savePrinter(owner, null, { ...base, name: 'Caja USB', host: 'usb:' }), { code: 'INVALID' });
+    await assert.rejects(printing.savePrinter(owner, null, { ...base, name: 'Caja USB', host: 'usb:<script>' }), { code: 'INVALID' });
+    const usb = await printing.savePrinter(owner, null, { ...base, name: 'Caja USB', host: 'usb:  EPSON TM-T20II   Receipt ', port: 0, printsCashier: true });
+    const saved = (await printing.listPrinters(owner)).find((p) => p.id === usb)!;
+    assert.equal(saved.host, 'usb:EPSON TM-T20II Receipt');
+    assert.equal(saved.port, 9100);
+    assert.equal(printing.printerAddress(saved), 'USB · EPSON TM-T20II Receipt');
+    await db.query(`DELETE FROM print_jobs WHERE location_id = $1`, [owner.locationId]);
+    await printing.printTest(owner, usb);
+    const code = await printing.createAgentCode(owner);
+    const got = await printing.claimJobs(code);
+    assert.equal(got!.length, 1);
+    assert.equal(got![0].host, 'usb:EPSON TM-T20II Receipt');
+    await printing.removePrinter(owner, usb);
   });
 
   it('el aviso de papeles atascados cuenta lo que no ha salido', async () => {

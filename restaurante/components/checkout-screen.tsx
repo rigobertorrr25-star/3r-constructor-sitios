@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, useTransition } from 'react';
-import { discountAction, payAction, reversePaymentAction, voidDiscountAction } from '@/app/actions';
+import { closeZeroAction, discountAction, payAction, reversePaymentAction, voidDiscountAction } from '@/app/actions';
 import type { Checkout, Method } from '@/lib/cash';
 import { formatCop, formatTime } from '@/lib/format';
 import { isNetworkError, retryDelay } from '@/lib/offline';
@@ -252,6 +252,19 @@ export function CheckoutScreen({
               </ActionForm>
             </details>
           ) : null}
+
+          {/* Cuenta en $0 que quedó abierta (100 % de descuento antes del 3 nov 2026): se cierra de un toque. */}
+          {!closed && c.balance <= 0 && c.subtotal > 0 && canDiscount ? (
+            <ActionForm action={closeZeroAction} className="mt-6 space-y-2 rounded-2xl border border-warning/50 bg-warning/[0.05] px-4 py-3">
+              {() => (
+                <>
+                  <input type="hidden" name="sessionId" value={c.session.id} />
+                  <p className="text-[14px]">{t('La cuenta quedó en $0 y la mesa sigue abierta.')}</p>
+                  <SubmitButton pendingText={t('Cerrando…')}>{t('Cerrar mesa (cuenta en $0)')}</SubmitButton>
+                </>
+              )}
+            </ActionForm>
+          ) : null}
         </section>
 
         {!closed && c.balance > 0 && shiftOpen ? (
@@ -300,10 +313,44 @@ export function CheckoutScreen({
             </div>
             ) : null}
             {method === 'cash' ? (
-              <div className="space-y-1.5">
-                <Field label={t('Recibido en efectivo')} name="received" inputMode="numeric" placeholder={String(value + tipValue)} value={received} onChange={(e) => setReceived(e.target.value)} />
+              // Panel de efectivo (28 oct 2026, pedido de Rigoberto): el total en grande, con cuánto paga el cliente y
+              // las vueltas en grande, para que la cajera no haga cuentas.
+              <div className="space-y-3 rounded-2xl border border-white/[0.1] bg-white/[0.03] p-4">
+                <div>
+                  <p className="text-[13px] text-muted-foreground">{t('Total a cobrar')}</p>
+                  <p className="font-display text-[40px] font-bold leading-tight">{formatCop(value + tipValue)}</p>
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="received" className="text-sm font-medium">
+                    {t('¿Con cuánto paga el cliente?')}
+                  </label>
+                  <input
+                    id="received"
+                    name="received"
+                    className={`${inputClass} py-3 font-display text-[24px] font-bold`}
+                    inputMode="numeric"
+                    placeholder={formatCop(value + tipValue)}
+                    value={received}
+                    onChange={(e) => setReceived(e.target.value.replace(/[^\d]/g, ''))}
+                  />
+                  <div className="flex flex-wrap gap-1.5">
+                    {cashSuggestions(value + tipValue).map((v, i) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setReceived(String(v))}
+                        className={`rounded-xl border px-3 py-1.5 text-[14px] ${receivedValue === v ? 'border-primary bg-primary/15' : 'border-white/[0.1] text-muted-foreground hover:text-foreground'}`}
+                      >
+                        {i === 0 ? t('Exacto') : formatCop(v)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {change !== null ? (
-                  <p className={`text-[15px] font-semibold ${change < 0 ? 'text-[#ffb4b5]' : 'text-success'}`}>{change < 0 ? t('Faltan {amount}', { amount: formatCop(-change) }) : t('Vueltas: {amount}', { amount: formatCop(change) })}</p>
+                  <div className={`rounded-2xl px-4 py-3 ${change < 0 ? 'bg-destructive/15' : 'bg-success/15'}`} role="status">
+                    <p className="text-[13px] text-muted-foreground">{change < 0 ? t('Faltan') : t('Vueltas para el cliente')}</p>
+                    <p className={`font-display text-[40px] font-bold leading-tight ${change < 0 ? 'text-[#ffb4b5]' : 'text-success'}`}>{formatCop(Math.abs(change))}</p>
+                  </div>
                 ) : null}
               </div>
             ) : (
@@ -338,6 +385,17 @@ export function CheckoutScreen({
       </div>
     </div>
   );
+}
+
+/** Con cuánto suele pagar un cliente: exacto y los billetes redondos de arriba (10, 20, 50 y 100 mil). */
+function cashSuggestions(due: number) {
+  if (due <= 0) return [];
+  const out = [due];
+  for (const step of [10_000, 20_000, 50_000, 100_000]) {
+    const v = Math.ceil(due / step) * step;
+    if (!out.includes(v)) out.push(v);
+  }
+  return out.slice(0, 5);
 }
 
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {

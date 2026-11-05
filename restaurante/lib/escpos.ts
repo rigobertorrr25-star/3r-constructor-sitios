@@ -129,10 +129,11 @@ export class Ticket {
 
 // ───────── documentos ─────────
 
-const STATION_TITLE = { kitchen: 'Cocina', bar: 'Barra' } as const;
+const STATION_TITLE = { kitchen: 'Cocina', bar: 'Barra', all: 'Pedido' } as const;
 
 export type ComandaInput = {
-  station: 'kitchen' | 'bar';
+  /** all: copia de todo el pedido (cocina y barra juntas). */
+  station: 'kitchen' | 'bar' | 'all';
   table: string;
   zone: string;
   round: number;
@@ -181,7 +182,7 @@ export type PrecuentaInput = {
   total: string;
   paid: string | null;
   balance: string | null;
-  tip: { percent: number; amount: string; withTip: string } | null;
+  tip: { label: string; amount: string; totalLabel: string; withTip: string } | null;
 };
 
 export function precuenta(width: number, p: PrecuentaInput) {
@@ -197,7 +198,7 @@ export function precuenta(width: number, p: PrecuentaInput) {
   t.row('TOTAL', p.total, { bold: true });
   if (p.paid) t.row('Abonado', p.paid);
   if (p.balance) t.row('Falta por pagar', p.balance, { bold: true });
-  if (p.tip) t.row(`Propina sugerida (${p.tip.percent} %)`, p.tip.amount).row('Total con propina', p.tip.withTip, { bold: true });
+  if (p.tip) t.row(p.tip.label, p.tip.amount).row(p.tip.totalLabel, p.tip.withTip, { bold: true });
   return t.rule().line('La propina es voluntaria.', { align: 'center' }).line('Este documento no es una factura.', { align: 'center' });
 }
 
@@ -223,6 +224,19 @@ export type CierreInput = {
   result: string;
   tables: number;
   notes: string | null;
+  /** Arqueo: cuántos billetes y monedas de cada uno se contaron (vacío si se escribió el total a mano). */
+  cashCount?: { label: string; quantity: number; total: string }[];
+  /** Si el cierre se corrigió después: quién, cuándo y por qué (4 nov 2026). */
+  correction?: string | null;
+  /** Propina del día: el % de «Propina sugerida» sobre lo vendido. Sin ella (0 %), no sale. */
+  tipOfSales?: { pct: number; amount: string } | null;
+  /** Cómo queda el inventario de la sede (solo en el cierre de la caja, no en el de un mesero). */
+  inventory?: {
+    remaining: { area: string; name: string; qty: string }[];
+    out: { area: string; name: string }[];
+    toBuy: { area: string; name: string; qty: string; detail: string }[];
+    hasMinimums: boolean;
+  } | null;
 };
 
 export function cierre(width: number, c: CierreInput) {
@@ -234,19 +248,194 @@ export function cierre(width: number, c: CierreInput) {
     .rule()
     .row('Base', c.opening);
   for (const m of c.methods) t.row(`${m.label} (${m.count})`, m.amount);
-  t.row('Ventas', c.sales, { bold: true })
-    .row('Propinas', c.tips)
+  t.row('Ventas', c.sales, { bold: true });
+  if (c.tipOfSales) t.row(`Propina (${c.tipOfSales.pct} % de ventas)`, c.tipOfSales.amount, { bold: true });
+  t.row(c.tipOfSales ? 'Propinas cobradas' : 'Propinas', c.tips)
     .row('Descuentos', c.discounts)
     .row('Anulaciones', c.voids)
     .row('Entradas de efectivo', c.movementsIn)
     .row('Salidas de efectivo', c.movementsOut)
     .rule()
     .row('Efectivo esperado', c.expected)
-    .row('Efectivo contado', c.counted, { bold: true })
+    .row('Efectivo contado', c.counted, { bold: true });
+  if (c.cashCount?.length) {
+    t.line('Arqueo:', { bold: true });
+    for (const x of c.cashCount) t.row(`  ${x.label} x ${x.quantity}`, x.total);
+  }
+  t.line(c.result, { align: 'center', big: true })
+    .line(`${c.tables} ${c.tables === 1 ? 'mesa cerrada' : 'mesas cerradas'}`, { align: 'center' });
+  if (c.correction) t.line(`CORREGIDO ${c.correction}`, { bold: true });
+  if (c.notes) t.line(`Nota: ${c.notes}`);
+  if (c.inventory) inventorySection(t, c.inventory);
+  return t.rule().blank().line('Firma: ______________________');
+}
+
+export type CuadreDiaInput = {
+  business: string;
+  location: string | null;
+  date: string;
+  turns: { label: string; who: string; hours: string; opening: string; sales: string; expected: string; counted: string; result: string }[];
+  methods: { label: string; amount: string; count: number }[];
+  sales: string;
+  tipOfSales: { pct: number; amount: string } | null;
+  tips: string;
+  discounts: string;
+  movementsIn: string;
+  movementsOut: string;
+  envelopeKitchen: string;
+  envelopeBar: string;
+  safe: string;
+  result: string;
+  tables: number;
+  open: number;
+};
+
+/** Cuadre del día (dos cajeras al día, 30 oct 2026): cada turno con su resultado y lo del día sumado. */
+export function cuadreDia(width: number, c: CuadreDiaInput) {
+  const t = new Ticket(width).line(c.business, { align: 'center', bold: true });
+  if (c.location) t.line(c.location, { align: 'center' });
+  t.line('CUADRE DEL DIA', { align: 'center', big: true }).line(c.date, { align: 'center' });
+  for (const turn of c.turns) {
+    t.rule()
+      .line(`${turn.label}: ${turn.who}`, { bold: true })
+      .line(turn.hours)
+      .row('Base', turn.opening)
+      .row('Ventas', turn.sales)
+      .row('Efectivo esperado', turn.expected)
+      .row('Efectivo contado', turn.counted)
+      .line(turn.result, { bold: true });
+  }
+  t.rule('=').line('TOTAL DEL DIA', { bold: true });
+  for (const m of c.methods) t.row(`${m.label} (${m.count})`, m.amount);
+  t.row('Ventas', c.sales, { bold: true });
+  if (c.tipOfSales) t.row(`Propina (${c.tipOfSales.pct} % de ventas)`, c.tipOfSales.amount, { bold: true });
+  t.row(c.tipOfSales ? 'Propinas cobradas' : 'Propinas', c.tips)
+    .row('Descuentos', c.discounts)
+    .row('Entradas de efectivo', c.movementsIn)
+    .row('Salidas de efectivo', c.movementsOut)
+    .row('Sobre para la cocina', c.envelopeKitchen)
+    .row('Sobre para el bar', c.envelopeBar)
+    .row('Caja fuerte', c.safe)
+    .rule()
     .line(c.result, { align: 'center', big: true })
     .line(`${c.tables} ${c.tables === 1 ? 'mesa cerrada' : 'mesas cerradas'}`, { align: 'center' });
-  if (c.notes) t.line(`Nota: ${c.notes}`);
+  if (c.open) t.line(c.open === 1 ? 'Ojo: 1 turno sigue abierto.' : `Ojo: ${c.open} turnos siguen abiertos.`, { align: 'center', bold: true });
   return t.rule().blank().line('Firma: ______________________');
+}
+
+/** Lo que queda, lo que se acabó y lo que hay que comprar, cada lista por área (Barra / Cocina). */
+function inventorySection(t: Ticket, inv: NonNullable<CierreInput['inventory']>) {
+  const title = (s: string) => t.rule('=').line(s, { align: 'center', bold: true });
+  const byArea = <T extends { area: string }>(list: T[], each: (x: T) => void) => {
+    let area = '';
+    for (const x of list) {
+      if (x.area !== area) (area = x.area), t.line(area.toUpperCase(), { bold: true });
+      each(x);
+    }
+  };
+  title('INVENTARIO QUE QUEDA');
+  if (inv.remaining.length) byArea(inv.remaining, (x) => t.row(x.name, x.qty));
+  else t.line('No queda nada cargado en el inventario.');
+  title('SE ACABÓ');
+  if (inv.out.length) byArea(inv.out, (x) => t.line(`- ${x.name}`));
+  else t.line('Nada: hay de todo.');
+  title('POR COMPRAR PARA MAÑANA');
+  if (!inv.hasMinimums) t.line('Pon el mínimo de cada insumo en Inventario y aquí sale cuánto comprar.');
+  else if (inv.toBuy.length) {
+    t.line('Lo que quedó debajo del mínimo, hasta llegar a él:');
+    byArea(inv.toBuy, (x) => t.row(x.name, x.qty, { bold: true }).line(`  ${x.detail}`));
+  } else t.line('Nada: todo quedó sobre el mínimo.');
+}
+
+/**
+ * Segundo papel del cierre de caja: el formulario diario de operaciones de Rigoberto (28 oct 2026). 1. ventas del día
+ * por categoría, 2. salidas de dinero con factura, 3. salidas sin factura, 4. facturas por pagar, 5. pérdidas del día,
+ * los totales (ventas, salidas, pérdidas, en caja, sobres y caja fuerte) y los comentarios con renglones para escribir.
+ */
+export type VentasInput = {
+  business: string;
+  location: string | null;
+  date: string;
+  employee: string;
+  categories: { category: string; quantity: number; total: string; products: { name: string; quantity: number; total: string }[] }[];
+  /** Lo vendido antes de descuentos (suma de las categorías). */
+  total: string;
+  withInvoice: { description: string; invoiceNumber: string; amount: string; from: string }[];
+  withInvoiceTotal: string;
+  withoutInvoice: { description: string; reason: string; amount: string; from: string }[];
+  withoutInvoiceTotal: string;
+  toPay: { supplier: string; description: string; amount: string; dueOn: string }[];
+  toPayTotal: string;
+  losses: { description: string; amount: string }[];
+  lossesTotal: string;
+  totals: { sales: string; out: string; losses: string; inCash: string; kitchen: string; bar: string; safe: string };
+  notes: string | null;
+  voids: string[];
+  discounts: string[];
+  closedUnpaid: string[];
+};
+
+export function ventasCategoria(width: number, v: VentasInput) {
+  const t = new Ticket(width).line(v.business, { align: 'center', bold: true });
+  if (v.location) t.line(v.location, { align: 'center' });
+  t.line('FORMULARIO DIARIO', { align: 'center', big: true }).line('OPERACIONES', { align: 'center', bold: true }).row('Fecha', v.date).row('Empleado', v.employee);
+  const section = (title: string) => t.rule('=').line(title, { bold: true });
+  const subtotal = (value: string) => t.row('Subtotal', value, { bold: true });
+  const none = (text: string) => t.line(text);
+
+  section('1. VENTAS DEL DÍA');
+  if (!v.categories.length) none('No hubo ventas en este turno.');
+  for (const c of v.categories) {
+    t.line(c.category.toUpperCase(), { bold: true });
+    for (const p of c.products) t.row(`${p.quantity} x ${p.name}`, p.total);
+    t.row(`Total ${c.category} (${c.quantity})`, c.total);
+  }
+  subtotal(v.total);
+  t.line('(antes de descuentos)');
+
+  section('2. SALIDAS DE DINERO CON FACTURA');
+  if (!v.withInvoice.length) none('Ninguna.');
+  for (const x of v.withInvoice) t.row(x.description, x.amount).line(`  Factura ${x.invoiceNumber} · de: ${x.from}`);
+  subtotal(v.withInvoiceTotal);
+
+  section('3. SALIDAS DE DINERO SIN FACTURA');
+  if (!v.withoutInvoice.length) none('Ninguna.');
+  for (const x of v.withoutInvoice) t.row(x.description, x.amount).line(`  ${x.reason} · de: ${x.from}`);
+  subtotal(v.withoutInvoiceTotal);
+
+  section('4. FACTURAS POR PAGAR');
+  if (!v.toPay.length) none('Ninguna.');
+  for (const x of v.toPay) t.row(x.supplier || x.description, x.amount).line(`  ${x.supplier ? `${x.description} · ` : ''}vence: ${x.dueOn}`);
+  subtotal(v.toPayTotal);
+
+  section('5. PÉRDIDAS DEL DÍA');
+  if (!v.losses.length) none('Ninguna.');
+  for (const x of v.losses) t.row(x.description, x.amount);
+  subtotal(v.lossesTotal);
+
+  t.rule('=')
+    .row('Total ventas', v.totals.sales, { bold: true })
+    .row('Total salidas de dinero', v.totals.out)
+    .row('Total pérdidas', v.totals.losses)
+    .row('Total en caja', v.totals.inCash, { bold: true })
+    .row('Sobre para la cocina', v.totals.kitchen)
+    .row('Sobre para el bar', v.totals.bar)
+    .row('Caja fuerte', v.totals.safe);
+
+  section('COMENTARIOS');
+  if (v.notes) t.line(v.notes);
+  const list = (title: string, items: string[]) => {
+    if (!items.length) return;
+    t.line(title, { bold: true });
+    for (const x of items) t.line(`- ${x}`);
+  };
+  list('Anulaciones y devoluciones:', v.voids);
+  list('Descuentos:', v.discounts);
+  list('Mesas cerradas sin cobrar:', v.closedUnpaid);
+  if (!v.notes && !v.voids.length && !v.discounts.length && !v.closedUnpaid.length) t.line('Nada registrado en el sistema.');
+  t.blank();
+  for (let i = 0; i < 5; i++) t.blank().line('_'.repeat(width));
+  return t.blank().line('Firma: ______________________');
 }
 
 export function prueba(width: number, p: { business: string; printer: string; address: string; time: string; jobs: string[] }) {

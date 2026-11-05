@@ -22,23 +22,34 @@ export default async function PanelPage() {
 
   return (
     <>
-      <h1 className="font-display text-[32px] font-bold tracking-tight text-foreground">{t(lang, 'businesses')}</h1>
-      <p className="mt-1 max-w-2xl text-[15px] text-muted-foreground">{t(lang, 'businessesIntro')}</p>
+      <h1 className="font-display text-[32px] font-bold tracking-tight text-white">{t(lang, 'businesses')}</h1>
+      <p className="mt-1 max-w-2xl text-[15px] text-white/70">{t(lang, 'businessesIntro')}</p>
 
-      <div className="mt-8 space-y-4">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {businesses.map((business) => (
           <Link
             key={business.id}
             href={`/panel/${business.id}`}
-            className={`${card} flex flex-wrap items-center justify-between gap-2 transition hover:border-white/[0.16]`}
+            className={`${card} lift group flex items-center gap-4`}
           >
-            <span className="font-display text-[20px] font-semibold text-foreground">{business.name}</span>
-            <span className="text-[14px] text-muted-foreground">
-              {business.employees === 1 ? t(lang, 'employeesCountOne') : t(lang, 'employeesCount', { n: business.employees })}
+            <span
+              aria-hidden="true"
+              className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--ink)] font-display text-[18px] font-bold text-white"
+            >
+              {business.name.trim()[0]?.toUpperCase()}
             </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-display text-[20px] font-semibold text-foreground">{business.name}</span>
+              <span className="text-[14px] text-muted-foreground">
+                {business.employees === 1 ? t(lang, 'employeesCountOne') : t(lang, 'employeesCount', { n: business.employees })}
+              </span>
+            </span>
+            <span className="text-[14px] text-primary transition group-hover:translate-x-0.5">{t(lang, 'openBusiness')} →</span>
           </Link>
         ))}
+      </div>
 
+      <div className="mt-4">
         <details className={card} open={businesses.length === 0}>
           <summary className="cursor-pointer font-display text-[20px] font-semibold text-foreground">{t(lang, 'addBusiness')}</summary>
           <div className="mt-5 max-w-md">
