@@ -297,7 +297,6 @@ export async function dayReportPdf(r: DayReport): Promise<Uint8Array> {
     w.row(`${METHOD_LABEL[m]} (${b.count} ${b.count === 1 ? 'pago' : 'pagos'})`, `${formatCop(b.amount)}${b.tip ? ` + propina ${formatCop(b.tip)}` : ''}`, { indent: 10 });
   }
   w.row('Descuentos', formatCop(totals.discounts));
-  w.row('Anulado en cuentas cobradas', formatCop(r.shifts.reduce((s, x) => s + x.voids, 0)));
   w.row('Pagos reversados', formatCop(r.shifts.reduce((s, x) => s + x.reversed, 0)));
   w.row('Entradas de efectivo', formatCop(totals.movementsIn));
   w.row('Salidas de efectivo', formatCop(totals.movementsOut));
@@ -396,33 +395,14 @@ export async function dayReportPdf(r: DayReport): Promise<Uint8Array> {
   );
   list('Pérdidas del día', r.form.losses.map((x) => ({ left: x.description, amount: x.amount })), 'Ninguna.');
 
-  // 6. Anulaciones, descuentos y mesas sin cobrar
-  w.heading('Anulaciones, descuentos y mesas sin cobrar');
-  w.sub('Anulaciones y devoluciones');
-  if (!r.incidents.voids.length) w.text('Ninguna.', { color: MUTED, indent: 10 });
-  for (const v of r.incidents.voids) w.text(`${v.quantity} x ${v.name} · mesa ${v.table}${v.reason ? ` · ${v.reason}` : ''}${v.by ? ` (${v.by})` : ''}`, { indent: 10, size: 9 });
+  // 6. Descuentos y mesas sin cobrar (sin anulaciones ni inventario: 5 nov 2026, pedido de Rigoberto)
+  w.heading('Descuentos y mesas sin cobrar');
   w.sub('Descuentos');
   if (!r.incidents.discounts.length) w.text('Ninguno.', { color: MUTED, indent: 10 });
   for (const x of r.incidents.discounts) w.row(`Mesa ${x.table} · ${x.reason}${x.by ? ` (${x.by})` : ''}`, formatCop(x.amount), { indent: 10, size: 9 });
   w.sub('Mesas cerradas sin cobrar');
   if (!r.incidents.closedUnpaid.length) w.text('Ninguna.', { color: MUTED, indent: 10 });
   for (const x of r.incidents.closedUnpaid) w.text(`${x.summary}: ${x.reason}${x.by ? ` (${x.by})` : ''}`, { indent: 10, size: 9 });
-
-  // 7. Inventario (el de ahora)
-  w.heading('Inventario');
-  w.text(`Cómo estaba al descargar este cierre (${formatDateTime(r.generatedAt, tz)}).`, { size: 8.5, color: MUTED });
-  const inv = r.inventory;
-  w.sub('Por comprar (por debajo del mínimo)');
-  if (!inv.hasMinimums) w.text('Ningún insumo tiene mínimo: ponlo en Inventario para que salga esta lista.', { color: MUTED, indent: 10 });
-  else if (!inv.toBuy.length) w.text('Nada: todo está por encima del mínimo.', { color: MUTED, indent: 10 });
-  for (const i of inv.toBuy)
-    w.row(`${AREA_LABEL[i.area]} · ${i.name} (hay ${shortQuantity(i.stock, i.unit, i.bottleSize)}, mínimo ${shortQuantity(i.minStock, i.unit, i.bottleSize)})`, shortQuantity(i.buy, i.unit, i.bottleSize), { indent: 10, size: 9 });
-  w.sub('Se acabó');
-  if (!inv.out.length) w.text('Nada.', { color: MUTED, indent: 10 });
-  if (inv.out.length) w.text(inv.out.map((i) => `${AREA_LABEL[i.area]}: ${i.name}`).join(' · '), { indent: 10, size: 9 });
-  w.sub('Lo que queda');
-  if (!inv.remaining.length) w.text('Sin insumos cargados.', { color: MUTED, indent: 10 });
-  for (const i of inv.remaining) w.row(`${AREA_LABEL[i.area]} · ${i.name}`, shortQuantity(i.stock, i.unit, i.bottleSize), { indent: 10, size: 9 });
 
   // 8. Firmas
   w.ensure(110);

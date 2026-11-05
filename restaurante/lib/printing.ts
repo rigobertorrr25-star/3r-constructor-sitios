@@ -314,7 +314,8 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
   if (!s || !s.shift.closedAt) return 0;
   const { suggestedTip } = await workMode(actor.businessId);
   // El inventario va en el cierre de la caja; el cierre de un mesero (DELIRIUM) es solo su plata.
-  const inv = waiter ? null : await closingInventory(actor);
+  // Sin inventario ni anulaciones en el papel del cierre (5 nov 2026, pedido de Rigoberto); siguen en la pantalla.
+  const inv = null as Awaited<ReturnType<typeof closingInventory>> | null;
   // Y aparte, el papel de ventas por categoría con las observaciones del día.
   const [byCategory, incidents, form] = waiter
     ? [null, null, null]
@@ -402,7 +403,7 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
               safe: formatCop(sh.safeAmount),
             },
             notes: s.shift.notes,
-            voids: incidents.voids.map((v) => `${v.quantity} x ${v.name} · mesa ${v.table}${v.reason ? `: ${v.reason}` : ''}${v.by ? ` (${v.by})` : ''}`),
+            voids: [],
             discounts: incidents.discounts.map((d) => `Mesa ${d.table} · ${formatCop(d.amount)}: ${d.reason}${d.by ? ` (${d.by})` : ''}`),
             closedUnpaid: incidents.closedUnpaid.map((c) => `${c.summary}: ${c.reason}${c.by ? ` (${c.by})` : ''}`),
           }),
