@@ -3,6 +3,9 @@
 Tienda: https://llevalo.rigoberto-rrr25.workers.dev
 WhatsApp: 310 790 7194
 
+**Imágenes:** abre https://llevalo.rigoberto-rrr25.workers.dev/#publicar (cuadradas, para Marketplace, grupos e Instagram) o
+https://llevalo.rigoberto-rrr25.workers.dev/#historias (verticales, para estados e historias) y toma captura de cada una.
+
 Regla para todo: precio claro, «pagas cuando te llega» y el enlace. Usa las fotos que salen en la tienda.
 
 ---

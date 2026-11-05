@@ -100,6 +100,31 @@
   .err { color: #dc2626; font-size: .9rem; min-height: 1.2em; }
 
   .wa-float { position: fixed; right: 16px; bottom: 16px; width: 56px; height: 56px; border-radius: 50%; background: var(--ok); display: grid; place-items: center; z-index: 20; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+
+  /* Imágenes para publicar: abrir la tienda con #publicar (cuadradas) o #historias (verticales) */
+  #promo { display: none; padding: 16px; background: #e5e7eb; }
+  body.promo > *:not(#promo):not(script) { display: none !important; }
+  body.promo #promo { display: grid; gap: 24px; justify-items: center; }
+  .promo-help { max-width: 560px; background: #fff; border-radius: 10px; padding: 14px 16px; font-size: .95rem; }
+  .promo-help a { color: var(--accent); font-weight: 700; }
+  .pc { width: min(560px, 100%); aspect-ratio: 1; background: var(--dark); color: #fff; border-radius: 0; overflow: hidden; display: grid; grid-template-rows: auto 1fr auto; font-family: "Archivo", sans-serif; }
+  .pc.story { aspect-ratio: 9 / 16; }
+  .pc .pc-top { display: flex; justify-content: space-between; align-items: center; padding: 4% 5% 2%; }
+  .pc .pc-brand { font-family: "Archivo Black", sans-serif; font-size: clamp(1rem, 4.5vw, 1.6rem); }
+  .pc .pc-brand span { color: var(--accent); }
+  .pc .pc-badge { background: var(--accent); color: #fff; font-weight: 700; font-size: clamp(.7rem, 2.8vw, .95rem); padding: 4px 10px; border-radius: 6px; }
+  .pc .pc-mid { display: grid; grid-template-columns: 1fr 1fr; gap: 4%; padding: 0 5%; align-items: center; min-height: 0; }
+  .pc.story .pc-mid { grid-template-columns: 1fr; grid-template-rows: auto auto; align-content: center; gap: 5%; padding-bottom: 5%; }
+  .pc .pc-photo { position: relative; background: #fff; border-radius: 12px; aspect-ratio: 1; overflow: hidden; }
+  .pc .pc-photo img { position: absolute; inset: 4%; width: 92%; height: 92%; object-fit: contain; }
+  .pc .pc-photo .noimg { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-weight: 600; text-align: center; padding: 8px; }
+  .pc .pc-ref { position: absolute; left: 6px; bottom: 6px; background: rgba(0,0,0,.72); color: #fff; font-size: clamp(.6rem, 2.4vw, .8rem); padding: 2px 6px; border-radius: 4px; }
+  .pc .pc-name { font-family: "Archivo Black", sans-serif; font-size: clamp(1.1rem, 5.2vw, 2rem); line-height: 1.05; }
+  .pc .pc-desc { color: #d1d5db; font-size: clamp(.8rem, 3.2vw, 1.1rem); margin-top: 8px; }
+  .pc .pc-price { font-family: "Archivo Black", sans-serif; color: var(--accent); font-size: clamp(1.6rem, 8vw, 3rem); margin-top: 10px; line-height: 1; }
+  .pc .pc-price small { display: block; color: #fff; font-family: "Archivo", sans-serif; font-weight: 600; font-size: clamp(.75rem, 3vw, 1rem); margin-bottom: 4px; }
+  .pc .pc-band { background: var(--accent); color: #fff; font-weight: 700; text-align: center; padding: 3.5% 4%; font-size: clamp(.8rem, 3.6vw, 1.25rem); }
+  .pc .pc-band span { display: block; font-weight: 600; font-size: .8em; opacity: .95; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -149,6 +174,8 @@
 <a class="wa-float" id="wa" href="#" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
   <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.5 1 2.7.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.6-.3Z"/></svg>
 </a>
+
+<div id="promo"></div>
 
 <dialog id="dlg">
   <form class="sheet" id="form" method="dialog" novalidate>
@@ -203,7 +230,7 @@
   const PRODUCTS = [
     { dropi: 1411936, cat: "belleza", top: true, name: "Luces LED para espejo de maquillaje", desc: "Bombillos LED que se pegan alrededor de cualquier espejo, como en un camerino.", price: 45900, img: IMG + "1411936/1730219504imagen_2024-10-29_113116103.png" },
     { dropi: 375183, cat: "hogar", top: true, name: "Espejo redondo de pared (luna)", desc: "Espejo grande para la sala, la entrada o el baño.", price: 270000, sizes: [{ name: "70 cm", price: 270000, ref: 2508514 }, { name: "90 cm", price: 370000, ref: 2508515 }], img: IMG + "375183/1781792061IMG_2729.jpg" },
-    { dropi: 5417, cat: "moto", name: "Restaurador de partes negras 250 ml", desc: "Devuelve el negro a plásticos opacos de moto y carro.", price: 49900, img: "img/5417.jpg" },
+    { dropi: 5417, cat: "moto", name: "Restaurador de partes negras 250 ml", desc: "Devuelve el negro a plásticos opacos de moto y carro.", price: 49900, refPhoto: true, img: "img/5417.jpg" },
     { dropi: 2155730, cat: "moto", name: "Hidrolavadora 6 chorros + mini aspiradora", desc: "Lava la moto o el carro y aspira por dentro.", price: 109900, img: IMG + "2155730/1779374038Hidrolavadora%206%20chorros%20mas%20Aspiradora.jpg" },
     { dropi: 1947192, cat: "moto", name: "Compresor de aire inalámbrico", desc: "Infla llantas de moto, carro y bicicleta donde estés.", price: 99900, img: IMG + "1947192/175936901671.webp" },
     { dropi: 2135050, cat: "moto", name: "Intercomunicador para casco Q58", desc: "Habla y escucha música en la moto con manos libres.", price: 119900, img: IMG + "2135050/17768278971000628221.jpg" },
@@ -318,6 +345,36 @@
   document.getElementById("wa").href = hello;
   document.getElementById("wa-top").href = hello;
   renderChips(); renderGrid();
+
+  // Imágenes para publicar (tomar captura de cada tarjeta)
+  function renderPromo() {
+    const story = location.hash === "#historias";
+    document.body.classList.add("promo");
+    const priceTxt = (p) => p.sizes ? p.sizes.map((z) => `${z.name}: ${cop(z.price)}`).join(" · ") : cop(p.price);
+    document.getElementById("promo").innerHTML = `
+      <div class="promo-help">Toma captura de pantalla de cada imagen y recórtala por el borde. Formato:
+        ${story ? '<a href="#publicar">ver cuadradas para publicaciones</a>' : '<a href="#historias">ver verticales para estados e historias</a>'}
+        · <a href="#">volver a la tienda</a></div>` +
+      PRODUCTS.map((p) => `
+      <div class="pc${story ? " story" : ""}">
+        <div class="pc-top"><div class="pc-brand">LLÉVA<span>LO</span></div>${p.top ? '<div class="pc-badge">Más vendido</div>' : ""}</div>
+        <div class="pc-mid">
+          <div class="pc-photo"><img src="${p.img}" alt="${esc(p.name)}" onerror="noImg(this)">${p.refPhoto ? '<span class="pc-ref">Imagen de referencia</span>' : ""}</div>
+          <div>
+            <div class="pc-name">${esc(p.name)}</div>
+            <div class="pc-desc">${esc(p.desc)}</div>
+            <div class="pc-price">${p.sizes ? "<small>" + esc(priceTxt(p)) + "</small>Desde " + cop(p.price) : cop(p.price)}</div>
+          </div>
+        </div>
+        <div class="pc-band">Pagas cuando te llega · Envío incluido<span>WhatsApp 310 790 7194</span></div>
+      </div>`).join("");
+    scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", () => {
+    if (location.hash === "#publicar" || location.hash === "#historias") renderPromo();
+    else { document.body.classList.remove("promo"); }
+  });
+  if (location.hash === "#publicar" || location.hash === "#historias") renderPromo();
 </script>
 </body>
 </html>

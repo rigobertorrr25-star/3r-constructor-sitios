@@ -22,5 +22,8 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
 - **Textos para publicar** (5 nov 2026) en `TEXTOS.md`: Marketplace por producto, grupos de Facebook, estados de WhatsApp,
   mensaje a contactos, Instagram/TikTok y respuestas. No se publica (el despliegue solo copia `index.html` e `img`). Si cambian
   precios o productos, actualizarlo también.
+- **Imágenes para publicar** (5 nov 2026): la misma tienda con `#publicar` (cuadradas) o `#historias` (verticales) muestra una
+  tarjeta por producto (foto, nombre, precio, «Pagas cuando te llega», WhatsApp) para que Rigoberto les tome captura desde el
+  celular (las fotos del CDN de Dropi no se pueden bajar desde la sesión). `refPhoto: true` pone «Imagen de referencia».
 - Cuando entre un pedido: revisar al comprador con la huella de Dropi, confirmar por WhatsApp y crear el pedido en Dropi
   solo después de que Rigoberto confirme el resumen.
