@@ -228,6 +228,8 @@
     .perks { max-width: 900px; margin: 18px auto 0; }
     .bar { max-width: 1180px; margin: 0 auto; padding: 16px 24px; }
   }
+  .cap { width: min(560px, 100%); background: #fff; border-radius: 10px; padding: 12px; display: grid; gap: 10px; margin-top: -12px; }
+  .cap pre { margin: 0; white-space: pre-wrap; font: 500 .92rem/1.45 "Archivo", sans-serif; color: #111; }
 </style>
 </head>
 <body>
@@ -571,15 +573,24 @@
   })();
 
   // Imágenes para publicar (tomar captura de cada tarjeta)
+  // Los 5 mejores para publicar (#top5): imagen + texto listo para copiar
+  const TOP5 = [
+    { id: 1411936, cap: "💡 Convierte cualquier espejo en un espejo de camerino.\nLuces LED que se pegan alrededor del espejo: ideal para maquillarte en casa, peluquerías y barberías.\n\n💰 $45.700\n✅ Pagas en efectivo cuando te llega\n🚚 Envío gratis a toda Colombia\n\nPídelo aquí 👉 https://llevalo.rigoberto-rrr25.workers.dev\nO escríbenos al WhatsApp 310 790 7194" },
+    { id: 375183, cap: "✨ Un espejo grande le cambia la cara a tu sala, tu entrada o tu baño.\nEspejo redondo de pared, uno de los más pedidos de la temporada.\n\n📏 70 cm: $268.400\n📏 90 cm: $367.300\n✅ Pagas en efectivo cuando te llega\n🚚 Envío gratis a toda Colombia\n\nPídelo aquí 👉 https://llevalo.rigoberto-rrr25.workers.dev\nWhatsApp 310 790 7194" },
+    { id: 931275, cap: "🔪 Set de 7 cuchillos en acero con base y tabla para picar.\nBuen regalo para esta Navidad 🎁 Colores: rosado, azul o verde.\n\n💰 $77.400\n✅ Pagas cuando te llega · 🚚 Envío gratis\n\nPídelo aquí 👉 https://llevalo.rigoberto-rrr25.workers.dev\nWhatsApp 310 790 7194" },
+    { id: 1915585, cap: "💆‍♀️ El regalo perfecto para mamá: tina spa para pies con hidromasaje.\nSe pliega para guardarla.\n\n💰 $136.400\n✅ Pagas cuando te llega · 🚚 Envío gratis a toda Colombia\n\nPídela aquí 👉 https://llevalo.rigoberto-rrr25.workers.dev\nWhatsApp 310 790 7194" },
+    { id: 2055149, cap: "🔧 Para papá, el que arregla todo en la casa: destornillador inalámbrico con accesorios.\nArma, ajusta y repara sin esfuerzo.\n\n💰 $76.300\n✅ Pagas cuando te llega · 🚚 Envío gratis\n\nPídelo aquí 👉 https://llevalo.rigoberto-rrr25.workers.dev\nWhatsApp 310 790 7194" },
+  ];
   function renderPromo() {
-    const story = location.hash === "#historias";
+    const story = location.hash === "#historias", top5 = location.hash === "#top5";
     document.body.classList.add("promo");
+    const list = top5 ? TOP5.map((t) => Object.assign({ cap: t.cap }, PRODUCTS.find((p) => p.dropi === t.id))) : PRODUCTS;
     const priceTxt = (p) => p.sizes ? p.sizes.map((z) => `${z.name}: ${cop(z.price)}`).join(" · ") : cop(p.price);
     document.getElementById("promo").innerHTML = `
-      <div class="promo-help">Toma captura de pantalla de cada imagen y recórtala por el borde. Formato:
-        ${story ? '<a href="#publicar">ver cuadradas para publicaciones</a>' : '<a href="#historias">ver verticales para estados e historias</a>'}
+      <div class="promo-help">${top5 ? "<b>Los 5 mejores para publicar.</b> " : ""}Toma captura de pantalla de cada imagen y recórtala por el borde${top5 ? "; copia el texto con el botón y pégalo en Facebook, Marketplace, Instagram, TikTok o WhatsApp" : ""}. Formato:
+        ${story ? '<a href="#publicar">ver cuadradas</a>' : '<a href="#historias">ver verticales para estados e historias</a>'}${top5 ? "" : ' · <a href="#top5">ver los 5 mejores con texto</a>'}
         · <a href="#">volver a la tienda</a></div>` +
-      PRODUCTS.map((p) => `
+      list.map((p, i) => `
       <div class="pc${story ? " story" : ""}">
         <div class="pc-top"><div class="pc-brand">3R <span>MARKET</span></div>${p.top ? '<div class="pc-badge">Más vendido</div>' : ""}</div>
         <div class="pc-mid">
@@ -591,14 +602,20 @@
           </div>
         </div>
         <div class="pc-band">Pagas cuando te llega · Envío gratis<span>WhatsApp 310 790 7194</span></div>
-      </div>`).join("");
+      </div>${p.cap ? `<div class="cap"><pre id="cap${i}">${esc(p.cap)}</pre><button class="btn btn-main" type="button" data-copy="cap${i}">Copiar texto</button></div>` : ""}`).join("");
     scrollTo(0, 0);
   }
   window.addEventListener("hashchange", () => {
-    if (location.hash === "#publicar" || location.hash === "#historias") renderPromo();
+    if (["#publicar", "#historias", "#top5"].includes(location.hash)) renderPromo();
     else { document.body.classList.remove("promo"); }
   });
-  if (location.hash === "#publicar" || location.hash === "#historias") renderPromo();
+  if (["#publicar", "#historias", "#top5"].includes(location.hash)) renderPromo();
+  document.addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-copy]"); if (!b) return;
+    const txt = document.getElementById(b.dataset.copy).textContent;
+    try { await navigator.clipboard.writeText(txt); } catch { const r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.copy)); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy"); }
+    b.textContent = "¡Copiado!"; setTimeout(() => (b.textContent = "Copiar texto"), 1800);
+  });
 </script>
 </body>
 </html>
