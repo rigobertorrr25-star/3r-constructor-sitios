@@ -1,4 +1,4 @@
-# Tienda online 3R (antes «Llévalo») — dropshipping de Rigoberto con Dropi
+# 3R Market (antes «Llévalo» y «Tienda online 3R») — dropshipping de Rigoberto con Dropi
 
 Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un cliente: no enlazar desde 3rpaginas.com.
 
@@ -17,10 +17,10 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   color o tamaño (se pueden tocar) y «Pedir · pagas al recibir». Al tocar, deslizar o usar las flechas, se detiene 7 s y
   luego sigue rodando. Rigoberto pidió quitar los ganchos («no son ropa») y que los productos «vayan rodando». Franja verde
   neón abajo con texto que corre. Debajo sigue la lista completa con categorías. Acento: verde neón `#39ff14` con texto oscuro.
-- **Marca y ventas** (5 nov 2026, pedido de Rigoberto): se llama **«Tienda online 3R»** (inicio con ese título; la carpeta y el
+- **Marca y ventas** (5 nov 2026, pedido de Rigoberto): se llama **«3R Market»** (escogido por Rigoberto el 5 nov 2026 entre 3R Market, Pídelo.3R y 3RYA; no le gustó «Tienda online 3R». Logo: «3R» en negro con letras verde neón + «MARKET», frase «Recibe · Revisa · Paga al recibir»; la carpeta y el
   proyecto de Cloudflare siguen como `llevalo`). Precios **no redondos** (tipo $42.300, todos en `PRODUCTOS.md`). Colores: botón
   «Pedir» y precio en rojo-naranja `#e8380d` (acción, oferta, alto contraste con la pared gris); verde neón para confianza
-  (franja, «Más vendido», «Tienda online»). Mensajes: «Pagas cuando te llega», «Envío gratis», «Te confirmamos por WhatsApp
+  (franja, «Más vendido», el «3R» del logo). Mensajes: «Pagas cuando te llega», «Envío gratis», «Te confirmamos por WhatsApp
   antes de enviar», «Pide con tiempo para Navidad». No inventar reseñas, escasez ni descuentos falsos.
 - **Título del inicio** (5 nov 2026, Rigoberto pidió uno mejor y con mejor diseño): «Lo mejor para tu [palabra] llega a tu puerta.
   Pagas al recibirlo.». La palabra cambia sola cada 2,2 s (casa, moto, cocina, carro, mascota, Navidad) en rojo-naranja; «Pagas al

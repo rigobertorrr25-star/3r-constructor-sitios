@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tienda online 3R — Pagas cuando te llega</title>
+<title>3R Market — Pagas cuando te llega</title>
 <meta name="description" content="Productos para la moto, el carro, la cocina, el hogar y para regalar. Pago contra entrega y envío gratis a toda Colombia.">
-<meta property="og:title" content="Tienda online 3R — Pagas cuando te llega">
+<meta property="og:title" content="3R Market — Pagas cuando te llega">
 <meta property="og:description" content="Productos para la moto, la casa y para regalar. Pago contra entrega en toda Colombia.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -135,17 +135,22 @@
   .wall { position: relative; background: radial-gradient(120% 80% at 50% 35%, #fafafa 0%, var(--wall) 55%, #d9d9d9 100%); overflow: hidden; padding-bottom: 18px; }
   .wall-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 0; }
   .wall-head .brand { font-size: 1.15rem; }
-  .wall-head .brand { display: inline-flex; align-items: baseline; gap: 6px; }
+  .wall-head .head-note { font-size: .8rem; font-weight: 700; color: #333; }
+  .logo3r { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #111; }
+  .logo3r .k { font-family: "Archivo Black", sans-serif; font-size: clamp(2.2rem, 10vw, 3.4rem); line-height: 1.1; background: #111; color: var(--accent); border-radius: 12px; padding: 2px 14px; }
+  .logo3r .w { font-family: "Archivo Black", sans-serif; font-size: clamp(2rem, 9vw, 3.1rem); letter-spacing: -0.02em; }
+  .intro .tagline { font-weight: 700; color: #444; font-size: .95rem; letter-spacing: .02em; margin-top: -2px; }
+  .headline { margin-top: 14px !important; }
   .wall-head .brand small { font-family: "Archivo", sans-serif; font-weight: 700; font-size: .78rem; background: var(--accent); color: var(--accent-ink); padding: 1px 6px; border-radius: 4px; }
   .intro { text-align: center; padding: 18px 16px 0; display: grid; justify-items: center; gap: 8px; }
   .intro .lockup { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: .85rem; color: #333; background: #fff; padding: 4px 12px 4px 4px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
   .intro .lockup b { font-family: "Archivo Black", sans-serif; font-weight: 400; background: #111; color: var(--accent); border-radius: 5px; padding: 2px 8px; font-size: .9rem; }
   .headline { margin: 4px 0 0; display: grid; justify-items: center; font-family: "Archivo Black", sans-serif; font-weight: 400; letter-spacing: -0.02em; line-height: .98; }
-  .headline .l1, .headline .l2 { font-size: clamp(1.7rem, 7.6vw, 3rem); color: #111; }
-  .headline .rot { display: block; height: 1.08em; overflow: hidden; white-space: nowrap; font-size: clamp(2.4rem, 11vw, 4.4rem); color: var(--cta); }
+  .headline .l1, .headline .l2 { font-size: clamp(1.4rem, 6.4vw, 2.5rem); color: #111; }
+  .headline .rot { display: block; height: 1.08em; overflow: hidden; white-space: nowrap; font-size: clamp(2rem, 9vw, 3.6rem); color: var(--cta); }
   .headline .rot span { display: inline-block; animation: wordIn .55s cubic-bezier(.2,.9,.25,1) both; }
   @keyframes wordIn { from { transform: translateY(100%); opacity: 0; } to { transform: none; opacity: 1; } }
-  .headline .l3 { font-size: clamp(1.7rem, 7.6vw, 3rem); margin-top: 6px; }
+  .headline .l3 { font-size: clamp(1.4rem, 6.4vw, 2.5rem); margin-top: 6px; }
   .headline mark { background: linear-gradient(transparent 52%, var(--accent) 52%, var(--accent) 92%, transparent 92%); color: #111; padding: 0 .1em; }
   @media (prefers-reduced-motion: reduce) { .headline .rot span { animation: none; } }
   .intro .sub { color: #333; font-size: 1rem; max-width: 34ch; }
@@ -197,10 +202,12 @@
 
 <section class="wall" id="wall">
   <div class="wall-head">
-    <a class="brand" href="#">3R <small>Tienda online</small></a>
+    <span class="head-note">Pagas cuando te llega</span>
     <a class="wa" id="wa-top" href="#" target="_blank" rel="noopener">WhatsApp 310 790 7194</a>
   </div>
   <div class="intro">
+    <a class="logo3r" href="#" aria-label="3R Market"><span class="k">3R</span><span class="w">MARKET</span></a>
+    <p class="tagline">Recibe · Revisa · Paga al recibir</p>
     <h1 class="headline">
       <span class="l1">Lo mejor para tu</span>
       <span class="rot" aria-live="off"><span id="rot">casa</span></span>
@@ -242,7 +249,7 @@
 
 <footer>
   <div class="wrap">
-    <p><b style="color:var(--text)">Tienda online 3R</b> · Pedidos contra entrega a toda Colombia · WhatsApp 310 790 7194</p>
+    <p><b style="color:var(--text)">3R Market</b> · Pedidos contra entrega a toda Colombia · WhatsApp 310 790 7194</p>
     <p style="margin-top:6px">Tus datos se usan solo para entregar tu pedido.</p>
   </div>
 </footer>
@@ -419,7 +426,7 @@
     window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
   });
 
-  const hello = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Hola, quiero información de un producto de la Tienda online 3R.")}`;
+  const hello = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Hola, quiero información de un producto de 3R Market.")}`;
   document.getElementById("wa").href = hello;
   document.getElementById("wa-top").href = hello;
   renderChips(); renderGrid();
@@ -537,7 +544,7 @@
         · <a href="#">volver a la tienda</a></div>` +
       PRODUCTS.map((p) => `
       <div class="pc${story ? " story" : ""}">
-        <div class="pc-top"><div class="pc-brand">3R <span>Tienda online</span></div>${p.top ? '<div class="pc-badge">Más vendido</div>' : ""}</div>
+        <div class="pc-top"><div class="pc-brand">3R <span>MARKET</span></div>${p.top ? '<div class="pc-badge">Más vendido</div>' : ""}</div>
         <div class="pc-mid">
           <div class="pc-photo"><img src="${p.img}" alt="${esc(p.name)}" onerror="noImg(this)">${p.refPhoto ? '<span class="pc-ref">Imagen de referencia</span>' : ""}</div>
           <div>

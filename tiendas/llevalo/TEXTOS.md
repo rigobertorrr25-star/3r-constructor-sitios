@@ -1,4 +1,4 @@
-# Tienda online 3R — textos para publicar
+# 3R Market — textos para publicar
 
 Tienda: https://llevalo.rigoberto-rrr25.workers.dev
 WhatsApp: 310 790 7194
