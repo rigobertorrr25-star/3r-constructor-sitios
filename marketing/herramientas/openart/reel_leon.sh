@@ -1,10 +1,10 @@
 #!/bin/bash
 # Reel «Hola, somos 3R» con el video del león saludando (apps/web/public/hero-lion.mp4).
-# Uso: reel_leon.sh <carpeta con hero-lion.mp4, cara.png y letras .woff> salida.mp4
+# Uso: reel_leon.sh <carpeta con hero-lion.mp4, cara.png y letras .woff> salida.mp4 [champeta|dembow]
 set -e
 W="$1"; OUT="$2"; DIR=$(dirname "$0"); TMP=$(mktemp -d)
 S="$W/sora-latin-800-normal.woff"; M="$W/manrope-latin-400-normal.woff"; B="$W/bebas-neue-latin-400-normal.woff"
-python3 "$DIR/musica.py" "$TMP/m.wav" plastilina 10
+python3 "$DIR/musica2.py" "$TMP/m.wav" "${3:-champeta}" 10.5
 fade() { echo "alpha='if(lt(t,$1),0,min(1,(t-$1)/0.4))'"; }
 row() { # texto precio y t0
   echo "drawtext=fontfile=$M:text='$1':fontsize=50:fontcolor=white:x=120:y=$3:$(fade $4),drawtext=fontfile=$S:text='$2':fontsize=54:fontcolor=white:x=w-120-text_w:y=$(( $3 - 2 )):$(fade $4)"

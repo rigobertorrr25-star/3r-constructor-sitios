@@ -1,11 +1,55 @@
 {
   "nota": "Publicaciones con el logo de 3R (el león), 5 nov 2026. Diseñadas con los colores y letras de la marca (Sora, Manrope, Bebas Neue). Sin fecha: Rigoberto decide cuándo salen.",
   "piezas": [
-    {"id": "l1", "archivo": "l1-hola-3r.jpg", "texto": "¡Hola! Somos 3R 🦁👋\n\nDesde Cartagena ayudamos a negocios como el tuyo a aparecer en el celular de sus clientes: páginas web, menús con QR y perfil de Google, con precios claros desde el principio.\n\nComenta PRECIOS y te contamos todo 👇\n\n#Cartagena #PaginasWeb #NegociosCartagena #EmprendedoresColombia #3Rpaginas"},
-    {"id": "l2", "archivo": "l2-precios.jpg", "texto": "Precios claros, sin letra pequeña 💰✅\n\nPágina web $550.000 · Menú con QR $350.000 · Tarjeta de sellos $69.000 al mes · Perfil de Google $150.000 · Control de asistencia $90.000 al mes · Restaurant Control desde $119.000 al mes.\n\nGuarda esta publicación y escríbenos cuando la necesites 📲\n\n#Cartagena #PaginasWeb #MenuQR #EmprendedoresColombia #3Rpaginas"},
-    {"id": "l3", "archivo": "l3-navidad.jpg", "texto": "En diciembre todos buscan dónde comprar, comer y regalar 🎄🦁\n\nQue te encuentren a ti: tu página web con tus productos y botón de WhatsApp, desde $550.000.\n\nComenta PRECIOS 👇\n\n#Cartagena #Navidad #NegociosCartagena #EmprendedoresColombia #3Rpaginas"},
-    {"id": "l4", "archivo": "l4-carnaval.jpg", "texto": "Quien lo vive es quien lo goza 🎉🦁 y quien tiene su negocio en internet, vende más.\n\nMenú con QR $350.000 · Página web desde $550.000.\n\nComenta PRECIOS 👇\n\n#Carnaval #Barranquilla #Cartagena #EmprendedoresColombia #3Rpaginas"},
-    {"id": "l5", "archivo": "l5-leon-cartagena.jpg", "texto": "Tu negocio, en el celular de toda Cartagena 📱🦁\n\nUna página con tu marca, tus productos y un botón directo a tu WhatsApp. Desde $550.000.\n\nComenta PRECIOS y te mandamos ejemplos 👇\n\n#Cartagena #PaginasWeb #NegociosCartagena #EmprendedoresColombia #3Rpaginas"},
-    {"id": "lv1", "archivo": "lv1-reel-hola-3r.mp4", "texto": "El león de 3R te saluda 🦁👋\n\nPáginas web, menús con QR, perfil de Google y tarjeta de sellos para negocios de Cartagena, con precios claros.\n\nComenta PRECIOS 👇\n\n#Cartagena #PaginasWeb #NegociosCartagena #EmprendedoresColombia #3Rpaginas"}
+    {
+      "id": "l1",
+      "archivo": "l1-hola-3r.jpg",
+      "texto": "¡Hola! Somos 3R 🦁👋\n\nDesde Cartagena ayudamos a negocios como el tuyo a aparecer en el celular de sus clientes: páginas web, menús con QR y perfil de Google, con precios claros desde el principio.\n\nComenta PRECIOS y te contamos todo 👇\n\n#Cartagena #PaginasWeb #NegociosCartagena #EmprendedoresColombia #3Rpaginas"
+    },
+    {
+      "id": "l2",
+      "archivo": "l2-precios.jpg",
+      "texto": "Precios claros, sin letra pequeña 💰✅\n\nPágina web $550.000 · Menú con QR $350.000 · Tarjeta de sellos $69.000 al mes · Perfil de Google $150.000 · Control de asistencia $90.000 al mes · Restaurant Control desde $119.000 al mes.\n\nGuarda esta publicación y escríbenos cuando la necesites 📲\n\n#Cartagena #PaginasWeb #MenuQR #EmprendedoresColombia #3Rpaginas"
+    },
+    {
+      "id": "l3",
+      "archivo": "l3-navidad.jpg",
+      "texto": "En diciembre todos buscan dónde comprar, comer y regalar 🎄🦁\n\nQue te encuentren a ti: tu página web con tus productos y botón de WhatsApp, desde $550.000.\n\nComenta PRECIOS 👇\n\n#Cartagena #Navidad #NegociosCartagena #EmprendedoresColombia #3Rpaginas"
+    },
+    {
+      "id": "l4",
+      "archivo": "l4-carnaval.jpg",
+      "texto": "Quien lo vive es quien lo goza 🎉🦁 y quien tiene su negocio en internet, vende más.\n\nMenú con QR $350.000 · Página web desde $550.000.\n\nComenta PRECIOS 👇\n\n#Carnaval #Barranquilla #Cartagena #EmprendedoresColombia #3Rpaginas"
+    },
+    {
+      "id": "l5",
+      "archivo": "l5-leon-cartagena.jpg",
+      "texto": "Tu negocio, en el celular de toda Cartagena 📱🦁\n\nUna página con tu marca, tus productos y un botón directo a tu WhatsApp. Desde $550.000.\n\nComenta PRECIOS y te mandamos ejemplos 👇\n\n#Cartagena #PaginasWeb #NegociosCartagena #EmprendedoresColombia #3Rpaginas"
+    },
+    {
+      "id": "lv1",
+      "archivo": "lv1-reel-hola-3r.mp4",
+      "texto": "El león de 3R te saluda 🦁👋\n\nPáginas web, menús con QR, perfil de Google y tarjeta de sellos para negocios de Cartagena, con precios claros.\n\nComenta PRECIOS 👇\n\n#Cartagena #PaginasWeb #NegociosCartagena #EmprendedoresColombia #3Rpaginas"
+    },
+    {
+      "id": "l6",
+      "archivo": "l6-antes-de-ir.jpg",
+      "texto": "Antes de ir, tu cliente se pregunta 4 cosas 🤔📲\n\n¿A qué hora abren? ¿Dónde queda? ¿Cuánto cuesta? ¿Cómo pido? Tu página responde todo eso sola, de día y de noche. Desde $550.000.\n\nComenta PRECIOS 👇\n\n#Cartagena #PaginasWeb #NegociosCartagena #EmprendedoresColombia #3Rpaginas"
+    },
+    {
+      "id": "l7",
+      "archivo": "l7-antes-despues.jpg",
+      "texto": "Tu negocio antes y después de 3R 🦁✨\n\nMenos mensajes preguntando lo mismo, más clientes que llegan listos para pedir. Página web desde $550.000.\n\nComenta PRECIOS y te mostramos cómo 👇\n\n#Cartagena #PaginasWeb #NegociosCartagena #EmprendedoresColombia #3Rpaginas"
+    },
+    {
+      "id": "lv2",
+      "archivo": "lv2-reel-cartagena.mp4",
+      "texto": "Cartagena ya busca todo en el celular 📱🌴 ¿Y tu negocio aparece?\n\nMenú con QR $350.000 · Perfil de Google $150.000 · Tienda en línea.\n\nComenta PRECIOS 👇\n\n#Cartagena #Champeta #NegociosCartagena #EmprendedoresColombia #3Rpaginas"
+    },
+    {
+      "id": "lv3",
+      "archivo": "lv3-reel-precios.mp4",
+      "texto": "¿Cuánto cuesta? Aquí va, sin rodeos 💰🦁\n\nPágina web $550.000 · Menú con QR $350.000 · Perfil de Google $150.000 · Tarjeta de sellos $69.000 al mes.\n\nComenta PRECIOS y te mandamos el detalle 👇\n\n#Cartagena #PaginasWeb #MenuQR #EmprendedoresColombia #3Rpaginas"
+    }
   ]
 }
