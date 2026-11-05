@@ -1,0 +1,10 @@
+{
+  "nota": "Publicaciones en estilo normal (fotos realistas, poco texto), 5 nov 2026. Sin fecha: Rigoberto decide cuándo salen.",
+  "piezas": [
+    {"id": "n1", "archivo": "n1-menu-qr.jpg", "texto": "Escanea, mira y pide 📲🍽️\n\nCon el menú QR tus clientes ven tus platos con foto y precio desde su celular. Si cambias un precio, se actualiza al instante y no tienes que volver a imprimir. $350.000.\n\nComenta PRECIOS y te mostramos uno 👇\n\n#Cartagena #MenuQR #RestaurantesCartagena #EmprendedoresColombia #3Rpaginas"},
+    {"id": "n2", "archivo": "n2-tienda-navidad.jpg", "texto": "Esta Navidad tus clientes también compran desde el celular 🎄🛍️\n\nCon tu tienda en línea ven tus productos, eligen y te escriben por WhatsApp para pedir. Tú solo empacas y entregas.\n\nComenta PRECIOS y te mandamos el detalle 👇\n\n#Cartagena #TiendaEnLinea #NegociosCartagena #EmprendedoresColombia #3Rpaginas"},
+    {"id": "n3", "archivo": "n3-pagina-web.jpg", "texto": "Que tu negocio se vea igual de bien en el celular que en el computador 💻📱\n\nTe hacemos la página con tu marca, tus productos o servicios y un botón directo a tu WhatsApp. Desde $550.000.\n\nComenta PRECIOS 👇\n\n#Cartagena #PaginasWeb #NegociosCartagena #EmprendedoresColombia #3Rpaginas"},
+    {"id": "n4", "archivo": "n4-google.jpg", "texto": "Antes de venir, tus clientes te buscan en Google ⭐📍\n\nTe dejamos el perfil completo, con fotos, horario, ubicación y la forma de pedir reseñas a tus clientes. $150.000.\n\nComenta PRECIOS y te ayudamos 👇\n\n#Cartagena #GoogleMaps #NegociosCartagena #EmprendedoresColombia #3Rpaginas"},
+    {"id": "nv1", "archivo": "nv1-qr-navidad.mp4", "texto": "Diciembre llega con mesas llenas 🎄🍹 Que tus clientes pidan sin esperar la carta.\n\nMenú con QR: escanean, ven fotos y precios, y piden. $350.000.\n\nComenta PRECIOS 👇\n\n#Cartagena #MenuQR #RestaurantesCartagena #EmprendedoresColombia #3Rpaginas"}
+  ]
+}
