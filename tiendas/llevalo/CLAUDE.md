@@ -1,0 +1,22 @@
+# Llévalo — tienda de dropshipping de Rigoberto (Dropi)
+
+Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un cliente: no enlazar desde 3rpaginas.com.
+
+## Estado
+
+- **Qué es** (4 nov 2026, pedido de Rigoberto): página estática `index.html` con productos de Dropi, filtros por categoría y
+  un pedido por producto contra entrega por WhatsApp 573107907194 (producto, color o tamaño, cantidad, total, referencia de
+  Dropi y datos de envío). Un pedido por producto porque cada uno sale de su bodega y paga su envío.
+- **Productos** (`PRODUCTS` en el script; costos y ganancia en `PRODUCTOS.md`): 20 escogidos por ganancia el 4 nov y, desde
+  el 5 nov, los **más vendidos** según el ranking de Dropdata (Rigoberto tiene cuenta gratis: 2 productos al día; los
+  manda por captura y se buscan en Dropi por nombre). Los más vendidos van primero con la etiqueta «Más vendido» (`top: true`).
+  Rigoberto pidió (5 nov) priorizar lo que más se vende aunque deje menos. Productos con tamaños de distinto precio: `sizes`.
+- Sin réplicas de marcas, suplementos ni aparatos médicos. Fotos enlazadas del CDN de Dropi (desde la sesión no cargan; en
+  el navegador sí), salvo el restaurador (`img/5417.jpg`).
+- **Publicación: Cloudflare, no Vercel** (5 nov 2026, pedido de Rigoberto), igual que ZENOVA: proyecto `llevalo`, rama
+  `main`, directorio raíz `tiendas/llevalo`, comando `mkdir -p _site && cp -r index.html img _site/`, salida `_site` (así
+  `PRODUCTOS.md` y estas notas, que tienen costos, no quedan públicos). Si se crea como Worker:
+  `npx wrangler deploy --assets=./_site --name=llevalo --compatibility-date=2026-10-01`. Entra a `main` con el PR #94.
+  Falta que Rigoberto lo cree y pase la dirección.
+- Cuando entre un pedido: revisar al comprador con la huella de Dropi, confirmar por WhatsApp y crear el pedido en Dropi
+  solo después de que Rigoberto confirme el resumen.

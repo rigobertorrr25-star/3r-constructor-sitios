@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Llévalo — Pagas cuando te llega</title>
+<meta name="description" content="Productos para la moto, el carro, la cocina, el hogar y para regalar. Pago contra entrega y envío a toda Colombia.">
+<meta property="og:title" content="Llévalo — Pagas cuando te llega">
+<meta property="og:description" content="Productos para la moto, la casa y para regalar. Pago contra entrega en toda Colombia.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #ffffff;
+    --soft: #f3f4f6;
+    --line: #e5e7eb;
+    --text: #111827;
+    --muted: #6b7280;
+    --accent: #ff4d00;
+    --accent-ink: #ffffff;
+    --dark: #111827;
+    --ok: #25d366;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 "Archivo", system-ui, sans-serif; }
+  img { max-width: 100%; display: block; }
+  a { color: inherit; }
+  .wrap { width: min(1180px, 100% - 32px); margin-inline: auto; }
+  h1, h2, h3 { margin: 0; line-height: 1.1; }
+  h1, h2 { font-family: "Archivo Black", "Archivo", sans-serif; font-weight: 400; letter-spacing: -0.01em; }
+  h1 { font-size: clamp(2rem, 6vw, 3.6rem); }
+  h2 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
+  p { margin: 0; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 20px; border-radius: 8px; border: 0; font: 700 1rem "Archivo", sans-serif; text-decoration: none; cursor: pointer; }
+  .btn-main { background: var(--accent); color: var(--accent-ink); }
+  .btn-main:hover { filter: brightness(1.06); }
+
+  .top { background: var(--dark); color: #fff; text-align: center; font-weight: 600; font-size: .9rem; padding: 8px 12px; }
+  .top b { color: #ffb48a; }
+  header.nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
+  .brand { font-family: "Archivo Black", sans-serif; font-size: 1.5rem; text-decoration: none; }
+  .brand span { color: var(--accent); }
+  .nav a.wa { font-weight: 700; text-decoration: none; font-size: .95rem; }
+
+  .hero { background: var(--dark); color: #fff; border-radius: 14px; padding: 32px 24px; display: grid; gap: 18px; margin-bottom: 28px; }
+  @media (min-width: 860px) { .hero { padding: 48px; grid-template-columns: 1.4fr 1fr; align-items: center; } }
+  .hero h1 span { color: var(--accent); }
+  .hero p { color: #d1d5db; font-size: 1.08rem; max-width: 40ch; margin-top: 12px; }
+  .steps { display: grid; gap: 10px; }
+  .steps div { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 12px 14px; }
+  .steps b { color: #ffb48a; }
+
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 18px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--line); background: #fff; font: 600 .95rem "Archivo", sans-serif; cursor: pointer; color: var(--text); }
+  .chip[aria-pressed="true"] { background: var(--dark); color: #fff; border-color: var(--dark); }
+
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 48px; }
+  @media (min-width: 700px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (min-width: 1000px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .card { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; background: #fff; }
+  .card .ph { aspect-ratio: 1; background: var(--soft); display: grid; place-items: center; overflow: hidden; }
+  .card .ph img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+  .card .ph .noimg { padding: 16px; text-align: center; color: var(--muted); font-weight: 600; }
+  .card .body { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .card h3 { font-size: .98rem; font-weight: 700; }
+  .card .desc { color: var(--muted); font-size: .88rem; }
+  .card .top { align-self: flex-start; background: #fff4ee; color: var(--accent); font-weight: 700; font-size: .75rem; padding: 2px 8px; border-radius: 6px; }
+  .card .price { font-family: "Archivo Black", sans-serif; font-size: 1.25rem; margin-top: auto; }
+  .card .btn { width: 100%; padding: 11px 12px; font-size: .95rem; }
+
+  section.info { border-top: 1px solid var(--line); padding: 40px 0; }
+  details { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  details + details { margin-top: 10px; }
+  summary { cursor: pointer; font-weight: 700; }
+  details p { color: var(--muted); margin-top: 8px; }
+  footer { border-top: 1px solid var(--line); padding: 28px 0 90px; color: var(--muted); font-size: .9rem; }
+
+  /* Ficha de pedido */
+  dialog { border: 0; padding: 0; border-radius: 14px; width: min(560px, 100% - 24px); max-height: calc(100% - 24px); }
+  dialog::backdrop { background: rgba(17,24,39,.6); }
+  .sheet { padding: 18px; display: grid; gap: 14px; }
+  .sheet .head { display: grid; grid-template-columns: 88px 1fr auto; gap: 12px; align-items: center; }
+  .sheet .head img { width: 88px; height: 88px; object-fit: contain; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
+  .x { background: var(--soft); border: 0; width: 36px; height: 36px; border-radius: 8px; font-size: 1.2rem; cursor: pointer; }
+  .row { display: grid; gap: 12px; }
+  @media (min-width: 480px) { .row.two { grid-template-columns: 1fr 1fr; } }
+  label { display: grid; gap: 5px; font-weight: 600; font-size: .92rem; }
+  input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--line); font: 1rem "Archivo", sans-serif; background: #fff; color: var(--text); }
+  input:focus, select:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .qty { display: flex; gap: 8px; }
+  .qty button { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: #fff; font: 700 1rem "Archivo"; cursor: pointer; }
+  .qty button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: #fff4ee; }
+  .total { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--line); padding-top: 10px; }
+  .total b { font-family: "Archivo Black", sans-serif; font-size: 1.4rem; color: var(--accent); }
+  .note { color: var(--muted); font-size: .85rem; }
+  .err { color: #dc2626; font-size: .9rem; min-height: 1.2em; }
+
+  .wa-float { position: fixed; right: 16px; bottom: 16px; width: 56px; height: 56px; border-radius: 50%; background: var(--ok); display: grid; place-items: center; z-index: 20; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+</style>
+</head>
+<body>
+
+<div class="top">Pagas <b>en efectivo</b> cuando te llega · Envío a toda Colombia</div>
+
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="#">LLÉVA<span>LO</span></a>
+    <a class="wa" id="wa-top" href="#" target="_blank" rel="noopener">WhatsApp 310 790 7194</a>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>Lo pides hoy. <span>Lo pagas cuando te llega.</span></h1>
+      <p>Productos para la moto, el carro, la cocina y la casa, y regalos para diciembre. Sin pagar nada por adelantado.</p>
+    </div>
+    <div class="steps">
+      <div><b>1.</b> Escoge tu producto y toca «Pedir».</div>
+      <div><b>2.</b> Te confirmamos por WhatsApp.</div>
+      <div><b>3.</b> Pagas en efectivo al recibir.</div>
+    </div>
+  </div>
+
+  <div class="chips" id="chips" role="toolbar" aria-label="Categorías"></div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<section class="info">
+  <div class="wrap">
+    <h2 style="margin-bottom:16px">Preguntas</h2>
+    <details><summary>¿Tengo que pagar antes?</summary><p>No. Pagas en efectivo cuando la transportadora te entrega el pedido.</p></details>
+    <details><summary>¿El envío tiene costo?</summary><p>No: el precio que ves ya incluye el envío.</p></details>
+    <details><summary>¿Cuánto se demora en llegar?</summary><p>Depende de tu ciudad. Al confirmar tu pedido por WhatsApp te decimos la fecha aproximada.</p></details>
+    <details><summary>¿Puedo pedir varios productos?</summary><p>Sí. Haz un pedido por cada producto: cada uno sale de su bodega y puede llegarte en días distintos.</p></details>
+    <details><summary>¿Las fotos son del producto que me llega?</summary><p>Son las fotos del proveedor. Si tienes dudas de color, tamaño o lo que trae, pregúntanos por WhatsApp antes de pedir.</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><b style="color:var(--text)">Llévalo</b> · Pedidos contra entrega a toda Colombia · WhatsApp 310 790 7194</p>
+    <p style="margin-top:6px">Tus datos se usan solo para entregar tu pedido.</p>
+  </div>
+</footer>
+
+<a class="wa-float" id="wa" href="#" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.5 1 2.7.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.6-.3Z"/></svg>
+</a>
+
+<dialog id="dlg">
+  <form class="sheet" id="form" method="dialog" novalidate>
+    <div class="head">
+      <img id="d-img" alt="" onerror="this.style.visibility='hidden'">
+      <div><h3 id="d-name" style="font-size:1.05rem"></h3><p class="note" id="d-desc"></p></div>
+      <button class="x" type="button" id="close" aria-label="Cerrar">×</button>
+    </div>
+    <div>
+      <p style="font-weight:600;font-size:.92rem;margin-bottom:6px">Cantidad</p>
+      <div class="qty" id="qty"></div>
+    </div>
+    <label id="size-wrap" hidden>Tamaño <select name="size" id="size"></select></label>
+    <label id="color-wrap" hidden>Color <select name="color" id="color"></select></label>
+    <div class="row two">
+      <label>Nombre <input name="nombre" autocomplete="given-name" required></label>
+      <label>Apellido <input name="apellido" autocomplete="family-name" required></label>
+    </div>
+    <label>Celular (WhatsApp) <input name="celular" type="tel" inputmode="numeric" autocomplete="tel" placeholder="300 123 4567" required></label>
+    <div class="row two">
+      <label>Departamento
+        <select name="departamento" required>
+          <option value="">Escoge…</option>
+          <option>Amazonas</option><option>Antioquia</option><option>Arauca</option><option>Atlántico</option><option>Bogotá D.C.</option><option>Bolívar</option><option>Boyacá</option><option>Caldas</option><option>Caquetá</option><option>Casanare</option><option>Cauca</option><option>Cesar</option><option>Chocó</option><option>Córdoba</option><option>Cundinamarca</option><option>Guainía</option><option>Guaviare</option><option>Huila</option><option>La Guajira</option><option>Magdalena</option><option>Meta</option><option>Nariño</option><option>Norte de Santander</option><option>Putumayo</option><option>Quindío</option><option>Risaralda</option><option>San Andrés</option><option>Santander</option><option>Sucre</option><option>Tolima</option><option>Valle del Cauca</option><option>Vaupés</option><option>Vichada</option>
+        </select>
+      </label>
+      <label>Ciudad o municipio <input name="ciudad" autocomplete="address-level2" required></label>
+    </div>
+    <label>Dirección completa <input name="direccion" autocomplete="street-address" placeholder="Calle 10 # 23-45, apto 302" required></label>
+    <label>Barrio y punto de referencia <input name="barrio" placeholder="Barrio, frente a la tienda…"></label>
+    <div class="total"><span>Total a pagar al recibir</span><b id="d-total"></b></div>
+    <p class="note">Envío incluido. No pagas nada ahora.</p>
+    <p class="err" id="err" role="alert"></p>
+    <button class="btn btn-main" type="submit" id="send">Confirmar pedido por WhatsApp</button>
+  </form>
+</dialog>
+
+<script>
+  // Número de WhatsApp que recibe los pedidos
+  const WHATSAPP = "573107907194";
+  const IMG = "https://d39ru7awumhhs2.cloudfront.net/colombia/products/";
+  const CATS = [
+    { id: "todo", name: "Todo" },
+    { id: "moto", name: "Moto y carro" },
+    { id: "hogar", name: "Cocina y hogar" },
+    { id: "herramientas", name: "Herramientas" },
+    { id: "belleza", name: "Belleza y bienestar" },
+    { id: "regalos", name: "Regalos" },
+    { id: "mascotas", name: "Mascotas" },
+  ];
+  // dropi: id del producto en Dropi (para crear el pedido)
+  const PRODUCTS = [
+    { dropi: 1411936, cat: "belleza", top: true, name: "Luces LED para espejo de maquillaje", desc: "Bombillos LED que se pegan alrededor de cualquier espejo, como en un camerino.", price: 45900, img: IMG + "1411936/1730219504imagen_2024-10-29_113116103.png" },
+    { dropi: 375183, cat: "hogar", top: true, name: "Espejo redondo de pared (luna)", desc: "Espejo grande para la sala, la entrada o el baño.", price: 270000, sizes: [{ name: "70 cm", price: 270000, ref: 2508514 }, { name: "90 cm", price: 370000, ref: 2508515 }], img: IMG + "375183/1781792061IMG_2729.jpg" },
+    { dropi: 5417, cat: "moto", name: "Restaurador de partes negras 250 ml", desc: "Devuelve el negro a plásticos opacos de moto y carro.", price: 49900, img: "img/5417.jpg" },
+    { dropi: 2155730, cat: "moto", name: "Hidrolavadora 6 chorros + mini aspiradora", desc: "Lava la moto o el carro y aspira por dentro.", price: 109900, img: IMG + "2155730/1779374038Hidrolavadora%206%20chorros%20mas%20Aspiradora.jpg" },
+    { dropi: 1947192, cat: "moto", name: "Compresor de aire inalámbrico", desc: "Infla llantas de moto, carro y bicicleta donde estés.", price: 99900, img: IMG + "1947192/175936901671.webp" },
+    { dropi: 2135050, cat: "moto", name: "Intercomunicador para casco Q58", desc: "Habla y escucha música en la moto con manos libres.", price: 119900, img: IMG + "2135050/17768278971000628221.jpg" },
+    { dropi: 1427314, cat: "moto", name: "Candado para moto", desc: "Asegura tu moto cuando la dejas parqueada.", price: 69900, img: IMG + "1427314/1734546511Simple%20Instagram%20Frame%20Template%20Instagram%20Post%20%20(17).png" },
+    { dropi: 931275, cat: "hogar", name: "Set de 7 cuchillos con base y tabla", desc: "Cuchillos en acero, base y tabla para picar.", price: 79900, colors: ["Rosado", "Azul", "Verde"], img: IMG + "931275/1734719133Simple%20Instagram%20Frame%20Template%20Instagram%20Post%20%20(33).png" },
+    { dropi: 2162882, cat: "hogar", name: "Juego de ollas 13 piezas", desc: "Ollas, tapas y utensilios para la cocina.", price: 99900, img: IMG + "2162882/1780078054JUEGO%20DE%20OLLAS%2013%20NEGRO.webp" },
+    { dropi: 2316315, cat: "hogar", name: "Organizador de cocina 2 niveles", desc: "Bandejas deslizables para debajo del lavaplatos o la alacena.", price: 129900, img: IMG + "2316315/fd28f061-20d0-4a33-b68c-80a83ef86e56.webp" },
+    { dropi: 2222432, cat: "hogar", name: "Colador escurridor giratorio", desc: "Lava y escurre frutas y verduras sin mojarte.", price: 64900, img: IMG + "2222432/4647368b-f427-462f-802d-bede2f9e28ea.webp" },
+    { dropi: 1925861, cat: "hogar", name: "Trapero autoescurrible de microfibra", desc: "Trapea y escurre sin tocar el agua sucia.", price: 59900, img: IMG + "1925861/1757957144D_NQ_NP_2X_933805-MCO78179304008_082024-F.webp" },
+    { dropi: 2139745, cat: "hogar", name: "Licuadora portátil recargable", desc: "Batidos y jugos donde estés. Trae dos vasos.", price: 54900, img: IMG + "2139745/1777331143image-9b408f73f74b4889ab322346ae215a85.webp" },
+    { dropi: 2055149, cat: "herramientas", name: "Destornillador inalámbrico con accesorios", desc: "Arma, ajusta y repara sin esfuerzo. Buen regalo para papá.", price: 79900, img: IMG + "2055149/1769551538images%20(25).jpg" },
+    { dropi: 2238229, cat: "herramientas", name: "Adaptador angular para taladro", desc: "Llega a tornillos en rincones donde el taladro no cabe.", price: 59900, img: IMG + "2238229/3286b4b1-9fa2-48eb-a0b3-fc26d4969a14.gif" },
+    { dropi: 1915585, cat: "belleza", name: "Tina spa para pies plegable", desc: "Hidromasaje para pies en casa. Se pliega para guardarla.", price: 139900, img: IMG + "1915585/1763231417TINA%20PARA%20PIES%20PLEGABLE%20SML%20SQ-806%209.JPG" },
+    { dropi: 1885151, cat: "belleza", name: "Masajeador de percusión 4 en 1", desc: "Relaja espalda, piernas y cuello. Trae 4 cabezales.", price: 89900, img: IMG + "1885151/1753893446Masajeador4-1.jpg" },
+    { dropi: 2151602, cat: "belleza", name: "Cepillo secador térmico", desc: "Seca y peina al mismo tiempo.", price: 64900, img: IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%20p.%20m..png" },
+    { dropi: 2237413, cat: "regalos", name: "Micrófono de solapa inalámbrico doble", desc: "Para grabar videos y en vivo con buen sonido.", price: 99900, img: IMG + "2237413/dca89646-f164-47fb-b9b3-8e339b6f9847.jpg" },
+    { dropi: 2209683, cat: "regalos", name: "Lámpara LED con parlante bluetooth", desc: "Lámpara, parlante y cargador inalámbrico en uno.", price: 159900, img: IMG + "2209683/1784761240w=1200,h=1200,fit=pad.jpg" },
+    { dropi: 2286139, cat: "regalos", name: "Tren navideño eléctrico 30 piezas", desc: "El regalo de diciembre para los niños de la casa.", price: 149900, img: IMG + "2286139/9eca0a30-b00f-4281-ae1e-862c40ea5418.png" },
+    { dropi: 1634168, cat: "mascotas", name: "Cepillo de vapor para mascotas + removedor", desc: "Quita el pelo suelto de tu perro o gato y de la ropa.", price: 59900, img: IMG + "1634168/17373953061725037036COMBO.png" },
+  ];
+
+  const cop = (n) => "$" + n.toLocaleString("es-CO");
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  let cat = "todo", current = null, qty = 1;
+  const size = () => current.sizes[Number(document.getElementById("size").value) || 0];
+  const unit = () => (current.sizes ? size().price : current.price);
+
+  function noImg(img) {
+    const box = img.parentElement;
+    box.innerHTML = `<div class="noimg">${esc(img.alt)}</div>`;
+  }
+  function renderChips() {
+    document.getElementById("chips").innerHTML = CATS.map((c) =>
+      `<button class="chip" type="button" data-cat="${c.id}" aria-pressed="${c.id === cat}">${c.name}</button>`).join("");
+  }
+  function renderGrid() {
+    const list = PRODUCTS.filter((p) => cat === "todo" || p.cat === cat);
+    document.getElementById("grid").innerHTML = list.map((p) => `
+      <article class="card">
+        <div class="ph"><img src="${p.img}" alt="${esc(p.name)}" loading="lazy" onerror="noImg(this)"></div>
+        <div class="body">
+          ${p.top ? '<span class="top">Más vendido</span>' : ""}
+          <h3>${esc(p.name)}</h3>
+          <p class="desc">${esc(p.desc)}</p>
+          <p class="price">${p.sizes ? "Desde " : ""}${cop(p.price)}</p>
+          <button class="btn btn-main" type="button" data-pedir="${p.dropi}">Pedir · pagas al recibir</button>
+        </div>
+      </article>`).join("");
+  }
+  function renderQty() {
+    document.getElementById("qty").innerHTML = [1, 2, 3].map((n) =>
+      `<button type="button" data-qty="${n}" aria-pressed="${n === qty}">${n}</button>`).join("");
+    document.getElementById("d-total").textContent = cop(unit() * qty);
+  }
+  function openSheet(p) {
+    current = p; qty = 1;
+    const img = document.getElementById("d-img");
+    img.style.visibility = ""; img.src = p.img; img.alt = p.name;
+    document.getElementById("d-name").textContent = p.name;
+    const sw = document.getElementById("size-wrap"), ss = document.getElementById("size");
+    sw.hidden = !p.sizes;
+    ss.innerHTML = (p.sizes || []).map((z, i) => `<option value="${i}">${z.name} · ${cop(z.price)}</option>`).join("");
+    document.getElementById("d-desc").textContent = (p.sizes ? "Desde " : "") + cop(p.price) + " c/u · envío incluido";
+    const cw = document.getElementById("color-wrap"), cs = document.getElementById("color");
+    cw.hidden = !p.colors;
+    cs.innerHTML = (p.colors || []).map((c) => `<option>${c}</option>`).join("");
+    document.getElementById("err").textContent = "";
+    renderQty();
+    document.getElementById("dlg").showModal();
+  }
+
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-cat],[data-pedir],[data-qty],#close");
+    if (!t) return;
+    if (t.dataset.cat) { cat = t.dataset.cat; renderChips(); renderGrid(); }
+    else if (t.dataset.pedir) openSheet(PRODUCTS.find((p) => String(p.dropi) === t.dataset.pedir));
+    else if (t.dataset.qty) { qty = Number(t.dataset.qty); renderQty(); }
+    else if (t.id === "close") document.getElementById("dlg").close();
+  });
+
+  document.getElementById("size").addEventListener("change", () => renderQty());
+  document.getElementById("form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const v = (k) => (f.get(k) || "").toString().trim();
+    const phone = v("celular").replace(/\D/g, "");
+    const err = document.getElementById("err");
+    if (["nombre", "apellido", "departamento", "ciudad", "direccion"].some((k) => !v(k))) { err.textContent = "Completa todos los datos para poder enviarte el pedido."; return; }
+    if (phone.length !== 10) { err.textContent = "Escribe tu celular de 10 números."; return; }
+    err.textContent = "";
+    const msg = [
+      "Hola, quiero hacer este pedido (pago contra entrega):",
+      "",
+      `Producto: ${current.name}`,
+      current.sizes ? `Tamaño: ${size().name}` : null,
+      current.colors ? `Color: ${v("color")}` : null,
+      `Cantidad: ${qty}`,
+      `Total: ${cop(unit() * qty)}`,
+      `Ref.: ${current.dropi}${current.sizes ? " / " + size().ref : ""}`,
+      "",
+      `Nombre: ${v("nombre")} ${v("apellido")}`,
+      `Celular: ${phone}`,
+      `Departamento: ${v("departamento")}`,
+      `Ciudad: ${v("ciudad")}`,
+      `Dirección: ${v("direccion")}`,
+      v("barrio") ? `Barrio / referencia: ${v("barrio")}` : null,
+    ].filter((l) => l !== null).join("\n");
+    window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
+  });
+
+  const hello = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Hola, quiero información de un producto de Llévalo.")}`;
+  document.getElementById("wa").href = hello;
+  document.getElementById("wa-top").href = hello;
+  renderChips(); renderGrid();
+</script>
+</body>
+</html>

@@ -16,6 +16,7 @@ de los demás salvo que él lo pida. Cuando algo cambie, actualiza las notas de 
 | Tienda 3R (3rpaginas.com, muestras de venta, plataforma empresarial) | `apps/web`, `apps/api` | `apps/CLAUDE.md` |
 | ZENOVA (cliente, tienda de ropa) | `clientes/zenova/` | `clientes/zenova/CLAUDE.md` |
 | Instagram, contenido y ventas de 3R | `marketing/` | `marketing/CLAUDE.md` |
+| Llévalo (dropshipping propio de Rigoberto con Dropi) | `tiendas/llevalo/` | `tiendas/llevalo/CLAUDE.md` |
 
 ## Para todos los proyectos
 
