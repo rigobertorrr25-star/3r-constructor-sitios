@@ -25,6 +25,12 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
 - **Título del inicio** (5 nov 2026, Rigoberto pidió uno mejor y con mejor diseño): «Lo mejor para tu [palabra] llega a tu puerta.
   Pagas al recibirlo.». La palabra cambia sola cada 2,2 s (casa, moto, cocina, carro, mascota, Navidad) en rojo-naranja; «Pagas al
   recibirlo» va resaltado en verde. Debajo, tres recuadros con ✓ (envío gratis, efectivo al recibir, confirmación por WhatsApp).
+- **Distribución del inicio** (5 nov 2026, a Rigoberto no le gustó la anterior): barra con el logo 3R Market a la izquierda y
+  botón negro «Escríbenos» (WhatsApp) a la derecha; título alineado a la izquierda («Lo mejor para tu [palabra] llega a tu
+  puerta.» + «Pagas al recibirlo.» resaltado); la vitrina se ve sin bajar; debajo, franja blanca con 3 columnas e íconos (envío
+  gratis, pagas al recibir, te confirmamos). En computador, título a la izquierda y vitrina a la derecha. El botón flotante de
+  WhatsApp solo aparece cuando ya no se ve «Escríbenos». Ojo: la clase vieja `.hero` sigue en el CSS (fondo oscuro); la nueva
+  es `.hero3`.
 - Sin réplicas de marcas, suplementos ni aparatos médicos. Fotos enlazadas del CDN de Dropi (desde la sesión no cargan; en
   el navegador sí), salvo el restaurador (`img/5417.jpg`).
 - **Publicación: Cloudflare, no Vercel** (5 nov 2026, pedido de Rigoberto), igual que ZENOVA: proyecto `llevalo`, rama
