@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Llévalo — Pagas cuando te llega</title>
-<meta name="description" content="Productos para la moto, el carro, la cocina, el hogar y para regalar. Pago contra entrega y envío a toda Colombia.">
-<meta property="og:title" content="Llévalo — Pagas cuando te llega">
+<title>Tienda online 3R — Pagas cuando te llega</title>
+<meta name="description" content="Productos para la moto, el carro, la cocina, el hogar y para regalar. Pago contra entrega y envío gratis a toda Colombia.">
+<meta property="og:title" content="Tienda online 3R — Pagas cuando te llega">
 <meta property="og:description" content="Productos para la moto, la casa y para regalar. Pago contra entrega en toda Colombia.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,6 +22,8 @@
     --accent-soft: #eaffe4;
     --accent-text: #138a00;
     --wall: #ececec;
+    --cta: #e8380d;
+    --cta-ink: #ffffff;
     --dark: #111827;
     --ok: #25d366;
   }
@@ -38,7 +40,7 @@
   h2 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
   p { margin: 0; }
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 20px; border-radius: 8px; border: 0; font: 700 1rem "Archivo", sans-serif; text-decoration: none; cursor: pointer; }
-  .btn-main { background: var(--accent); color: var(--accent-ink); }
+  .btn-main { background: var(--cta); color: var(--cta-ink); box-shadow: 0 6px 16px rgba(232,56,13,.28); }
   .btn-main:hover { filter: brightness(1.06); }
 
   .top { background: var(--dark); color: #fff; text-align: center; font-weight: 600; font-size: .9rem; padding: 8px 12px; }
@@ -98,7 +100,7 @@
   .qty button { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: #fff; font: 700 1rem "Archivo"; cursor: pointer; }
   .qty button[aria-pressed="true"] { border-color: var(--accent-text); color: var(--accent-text); background: var(--accent-soft); }
   .total { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--line); padding-top: 10px; }
-  .total b { font-family: "Archivo Black", sans-serif; font-size: 1.4rem; color: var(--accent-text); }
+  .total b { font-family: "Archivo Black", sans-serif; font-size: 1.4rem; color: var(--cta); }
   .note { color: var(--muted); font-size: .85rem; }
   .err { color: #dc2626; font-size: .9rem; min-height: 1.2em; }
 
@@ -114,7 +116,7 @@
   .pc.story { aspect-ratio: 9 / 16; }
   .pc .pc-top { display: flex; justify-content: space-between; align-items: center; padding: 4% 5% 2%; }
   .pc .pc-brand { font-family: "Archivo Black", sans-serif; font-size: clamp(1rem, 4.5vw, 1.6rem); }
-  .pc .pc-brand span { color: var(--accent); }
+  .pc .pc-brand span { color: var(--accent); font-family: "Archivo", sans-serif; font-weight: 700; font-size: .7em; }
   .pc .pc-badge { background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: clamp(.7rem, 2.8vw, .95rem); padding: 4px 10px; border-radius: 6px; }
   .pc .pc-mid { display: grid; grid-template-columns: 1fr 1fr; gap: 4%; padding: 0 5%; align-items: center; min-height: 0; }
   .pc.story .pc-mid { grid-template-columns: 1fr; grid-template-rows: auto auto; align-content: center; gap: 5%; padding-bottom: 5%; }
@@ -129,72 +131,78 @@
   .pc .pc-band { background: var(--accent); color: var(--accent-ink); font-weight: 700; text-align: center; padding: 3.5% 4%; font-size: clamp(.8rem, 3.6vw, 1.25rem); }
   .pc .pc-band span { display: block; font-weight: 600; font-size: .8em; opacity: .95; margin-top: 2px; }
 
-  /* Pared con productos colgados (estilo pedido por Rigoberto, 5 nov 2026) */
-  .wall { position: relative; background: radial-gradient(120% 90% at 50% 30%, #f7f7f7 0%, var(--wall) 60%, #dedede 100%); overflow: hidden; }
+  /* Vitrina que gira (pedido de Rigoberto, 5 nov 2026: «no son ropa», sin ganchos) */
+  .wall { position: relative; background: radial-gradient(120% 80% at 50% 35%, #fafafa 0%, var(--wall) 55%, #d9d9d9 100%); overflow: hidden; padding-bottom: 18px; }
   .wall-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 0; }
   .wall-head .brand { font-size: 1.15rem; }
-  .wall-head .brand span { color: var(--accent-ink); background: var(--accent); padding: 0 4px; border-radius: 4px; }
+  .wall-head .brand { display: inline-flex; align-items: baseline; gap: 6px; }
+  .wall-head .brand small { font-family: "Archivo", sans-serif; font-weight: 700; font-size: .78rem; background: var(--accent); color: var(--accent-ink); padding: 1px 6px; border-radius: 4px; }
+  .intro { text-align: center; padding: 18px 16px 0; display: grid; justify-items: center; gap: 8px; }
+  .intro h1 { font-size: clamp(2rem, 9vw, 3.4rem); line-height: 1; }
+  .intro .sub { color: #333; font-size: 1rem; max-width: 34ch; }
+  .intro .trust { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+  .intro .trust li { background: #fff; border-radius: 6px; padding: 5px 9px; font-size: .78rem; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .intro .trust li::before { content: "✓ "; color: #138a00; }
+  .info .assure { color: #444; font-size: .8rem; }
   .wall-head .wa { font-size: .85rem; }
-  .wall-hint { text-align: center; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: #555; margin: 6px 0 0; }
-  .rack { overflow-x: auto; scroll-snap-type: x proximity; padding: 26px 0 26px; scrollbar-width: none; transition: filter .35s, opacity .35s; }
-  .rack::-webkit-scrollbar { display: none; }
-  .rack-track { display: flex; gap: 6px; padding: 0 24px; width: max-content; position: relative; }
-  .rack-track::before { content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 6px; border-radius: 3px; background: linear-gradient(#f5f5f5, #9a9a9a 55%, #cfcfcf); box-shadow: 0 2px 3px rgba(0,0,0,.18); }
-  .hang { flex: none; width: 132px; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: inherit; }
-  .hang svg { width: 44px; height: 34px; margin-top: 2px; position: relative; z-index: 2; }
-  .hang .pic { position: relative; width: 124px; height: 170px; margin-top: -4px; transition: margin .25s; }
-  .hang:hover .pic, .hang:focus-visible .pic { margin-top: 0; }
-  .hang img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
-  .hang .noimg { position: absolute; inset: 20px 0 auto; font-size: .8rem; font-weight: 700; text-align: center; color: #444; padding: 8px; background: #fff; border-radius: 6px; mix-blend-mode: normal; }
-  .hang .lbl { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-top: 8px; max-width: 124px; text-align: center; line-height: 1.2; }
-  .hang .lbl b { display: block; font-family: "Archivo Black", sans-serif; font-weight: 400; font-size: .85rem; margin-top: 2px; }
-  .wall.focusing { min-height: 600px; }
-  .wall.focusing .wall-head .wa { visibility: hidden; }
-  .wall.focusing .rack { filter: blur(6px); opacity: .3; pointer-events: none; }
-  .wall.focusing .wall-hint { visibility: hidden; }
-  .focus { position: absolute; inset: 70px 0 24px; display: none; grid-template-columns: 1fr; justify-items: center; align-content: center; gap: 8px; padding: 0 16px; }
-  .wall.focusing .focus { display: grid; }
-  .focus .stage { position: relative; display: flex; align-items: flex-start; gap: 10px; animation: pop .35s cubic-bezier(.2,.8,.2,1); }
-  @keyframes pop { from { opacity: 0; margin-top: 24px; } to { opacity: 1; margin-top: 0; } }
-  .focus .big { position: relative; width: min(58vw, 290px); height: min(58vw, 290px); }
-  .focus .big img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
-  .focus .big .noimg { position: absolute; inset: 40% 0 auto; text-align: center; font-weight: 700; }
-  .tags { display: flex; flex-direction: column; gap: 10px; padding-top: 18px; }
-  .tag { position: relative; min-width: 64px; padding: 14px 8px 8px; border-radius: 4px; background: #111; color: #fff; font: 700 .72rem "Archivo", sans-serif; text-align: center; border: 0; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,.15); transform: rotate(-4deg); }
-  .tag:nth-child(even) { transform: rotate(3deg); }
-  .tag::before { content: ""; position: absolute; top: 5px; left: 50%; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--wall); }
-  .tag.price { background: var(--accent); color: var(--accent-ink); cursor: default; font-size: .8rem; }
-  .tag.opt[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .tag.c-rosado { background: #f4a6c6; color: #111; } .tag.c-azul { background: #3b82f6; } .tag.c-verde { background: #22c55e; color: #111; }
-  .focus h2 { font-family: "Archivo Black", sans-serif; font-size: clamp(1rem, 4.4vw, 1.4rem); text-transform: uppercase; text-align: center; letter-spacing: .01em; margin-top: 4px; }
-  .focus .fdesc { color: #555; font-size: .9rem; text-align: center; max-width: 36ch; }
-  .focus .fprice { font-family: "Archivo Black", sans-serif; font-size: 1.5rem; }
-  .focus .btn { padding: 12px 22px; }
-  .focus .x, .focus .nav-btn { position: absolute; top: -8px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.15); font-size: 1.3rem; cursor: pointer; }
-  .focus .x { right: 12px; top: -52px; }
-  .focus .nav-btn { top: 30%; }
-  .focus .prev { left: 6px; } .focus .next { right: 6px; }
+  .wall-hint { text-align: center; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #555; margin: 6px 0 0; }
+  .show { position: relative; height: clamp(300px, 78vw, 420px); perspective: 1100px; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+  .show .floor { position: absolute; left: 50%; bottom: 8%; width: 70%; height: 22%; transform: translateX(-50%); background: radial-gradient(closest-side, rgba(0,0,0,.16), transparent); pointer-events: none; }
+  .it { position: absolute; left: 50%; top: 50%; width: clamp(170px, 50vw, 260px); aspect-ratio: 1; margin: calc(clamp(170px, 50vw, 260px) / -2) 0 0 calc(clamp(170px, 50vw, 260px) / -2);
+        cursor: pointer; will-change: transform; }
+  .it .card3 { position: absolute; inset: 0; background: #fff; border-radius: 18px; box-shadow: 0 18px 30px rgba(0,0,0,.14), 0 2px 6px rgba(0,0,0,.06); overflow: hidden; }
+  .it.on .card3 { animation: bob 3.2s ease-in-out infinite; }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .it img { position: absolute; inset: 7%; width: 86%; height: 86%; object-fit: contain; }
+  .it .noimg { position: absolute; inset: 0; display: grid; place-items: center; padding: 12px; text-align: center; font-weight: 700; color: #444; }
+  .it .badge { position: absolute; top: 10px; left: 10px; background: var(--accent); color: var(--accent-ink); font: 800 .68rem "Archivo", sans-serif; text-transform: uppercase; letter-spacing: .04em; padding: 3px 7px; border-radius: 5px; }
+  .show .arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 200; width: 42px; height: 42px; border-radius: 50%; border: 0; background: #fff; box-shadow: 0 3px 10px rgba(0,0,0,.15); font-size: 1.4rem; cursor: pointer; }
+  .show .prev { left: 10px; } .show .next { right: 10px; }
+  .info { text-align: center; padding: 0 16px; display: grid; justify-items: center; gap: 8px; }
+  .info h2 { font-family: "Archivo Black", sans-serif; text-transform: uppercase; font-size: clamp(1rem, 4.6vw, 1.5rem); letter-spacing: .01em; max-width: 24ch; }
+  .info .fdesc { color: #555; font-size: .92rem; max-width: 38ch; }
+  .tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .tag { position: relative; padding: 6px 12px 6px 18px; border-radius: 4px 8px 8px 4px; background: #111; color: #fff; font: 700 .8rem "Archivo", sans-serif; border: 0; cursor: pointer; }
+  .tag::before { content: ""; position: absolute; left: 6px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; background: var(--wall); }
+  .tag.price { background: var(--cta); color: var(--cta-ink); cursor: default; font-size: 1rem; }
+  .tag.opt { background: #fff; color: #111; box-shadow: inset 0 0 0 1px #cfcfcf; }
+  .tag.opt[aria-pressed="true"] { background: #111; color: #fff; box-shadow: none; }
+  .dots { display: flex; gap: 5px; justify-content: center; margin-top: 4px; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: #c4c4c4; transition: width .3s, background .3s; }
+  .dots i.on { width: 18px; border-radius: 3px; background: #111; }
+  .info .fade { animation: up .45s ease both; }
+  @keyframes up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .it.on .card3, .info .fade { animation: none; } }
   .ticker { position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; background: var(--accent); color: var(--accent-ink); overflow: hidden; white-space: nowrap; font: 800 .78rem "Archivo", sans-serif; letter-spacing: .08em; text-transform: uppercase; padding: 7px 0; }
   .ticker span { display: inline-block; padding-left: 100%; animation: run 22s linear infinite; }
   @keyframes run { to { transform: translateX(-100%); } }
-  @media (prefers-reduced-motion: reduce) { .ticker span { animation: none; padding-left: 16px; } .focus .stage { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .ticker span { animation: none; padding-left: 16px; } }
   .wa-float { bottom: 44px !important; }
   footer { padding-bottom: 70px; }
   .all-head { display: flex; justify-content: space-between; align-items: baseline; margin: 28px 0 14px; }
   .steps-line { display: grid; gap: 8px; margin: 0 0 18px; color: var(--muted); font-size: .92rem; }
-  @media (min-width: 700px) { .steps-line { grid-template-columns: repeat(3, 1fr); } .hang { width: 150px; } .hang .pic { width: 142px; height: 200px; } }
+  @media (min-width: 700px) { .steps-line { grid-template-columns: repeat(3, 1fr); } }
 </style>
 </head>
 <body>
 
 <section class="wall" id="wall">
   <div class="wall-head">
-    <a class="brand" href="#">LLÉVA<span>LO</span></a>
+    <a class="brand" href="#">3R <small>Tienda online</small></a>
     <a class="wa" id="wa-top" href="#" target="_blank" rel="noopener">WhatsApp 310 790 7194</a>
   </div>
-  <p class="wall-hint">Toca un producto · pagas cuando te llega</p>
-  <div class="rack" id="rack"><div class="rack-track" id="rack-track"></div></div>
-  <div class="focus" id="focus" aria-live="polite"></div>
+  <div class="intro">
+    <h1>Tienda online 3R</h1>
+    <p class="sub">Lo pides hoy y lo pagas cuando te llega. <b>Envío gratis a toda Colombia.</b></p>
+    <ul class="trust"><li>Pagas en efectivo al recibir</li><li>Envío gratis</li><li>Te confirmamos por WhatsApp</li></ul>
+  </div>
+  <p class="wall-hint">Desliza para ver más productos</p>
+  <div class="show" id="show">
+    <div class="floor"></div>
+    <button class="arrow prev" type="button" data-step="-1" aria-label="Anterior">‹</button>
+    <button class="arrow next" type="button" data-step="1" aria-label="Siguiente">›</button>
+  </div>
+  <div class="info" id="info" aria-live="polite"></div>
 </section>
 
 <div class="wrap">
@@ -212,7 +220,7 @@
   <div class="wrap">
     <h2 style="margin-bottom:16px">Preguntas</h2>
     <details><summary>¿Tengo que pagar antes?</summary><p>No. Pagas en efectivo cuando la transportadora te entrega el pedido.</p></details>
-    <details><summary>¿El envío tiene costo?</summary><p>No: el precio que ves ya incluye el envío.</p></details>
+    <details><summary>¿El envío tiene costo?</summary><p>No, el envío es gratis: el precio que ves es lo único que pagas.</p></details>
     <details><summary>¿Cuánto se demora en llegar?</summary><p>Depende de tu ciudad. Al confirmar tu pedido por WhatsApp te decimos la fecha aproximada.</p></details>
     <details><summary>¿Puedo pedir varios productos?</summary><p>Sí. Haz un pedido por cada producto: cada uno sale de su bodega y puede llegarte en días distintos.</p></details>
     <details><summary>¿Las fotos son del producto que me llega?</summary><p>Son las fotos del proveedor. Si tienes dudas de color, tamaño o lo que trae, pregúntanos por WhatsApp antes de pedir.</p></details>
@@ -221,7 +229,7 @@
 
 <footer>
   <div class="wrap">
-    <p><b style="color:var(--text)">Llévalo</b> · Pedidos contra entrega a toda Colombia · WhatsApp 310 790 7194</p>
+    <p><b style="color:var(--text)">Tienda online 3R</b> · Pedidos contra entrega a toda Colombia · WhatsApp 310 790 7194</p>
     <p style="margin-top:6px">Tus datos se usan solo para entregar tu pedido.</p>
   </div>
 </footer>
@@ -230,7 +238,7 @@
   <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.5 1 2.7.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.6-.3Z"/></svg>
 </a>
 
-<div class="ticker" aria-hidden="true"><span>Pagas cuando te llega · Envío a toda Colombia · Regalos de diciembre · Pedidos por WhatsApp 310 790 7194 · Pagas cuando te llega · Envío a toda Colombia · Regalos de diciembre ·</span></div>
+<div class="ticker" aria-hidden="true"><span>Pagas cuando te llega · Envío gratis a toda Colombia · Pide con tiempo para Navidad · Te confirmamos por WhatsApp · Pagas cuando te llega · Envío gratis a toda Colombia · Pide con tiempo para Navidad ·</span></div>
 
 <div id="promo"></div>
 
@@ -264,7 +272,7 @@
     <label>Dirección completa <input name="direccion" autocomplete="street-address" placeholder="Calle 10 # 23-45, apto 302" required></label>
     <label>Barrio y punto de referencia <input name="barrio" placeholder="Barrio, frente a la tienda…"></label>
     <div class="total"><span>Total a pagar al recibir</span><b id="d-total"></b></div>
-    <p class="note">Envío incluido. No pagas nada ahora.</p>
+    <p class="note">Envío gratis. No pagas nada ahora: te confirmamos por WhatsApp antes de enviar.</p>
     <p class="err" id="err" role="alert"></p>
     <button class="btn btn-main" type="submit" id="send">Confirmar pedido por WhatsApp</button>
   </form>
@@ -285,28 +293,28 @@
   ];
   // dropi: id del producto en Dropi (para crear el pedido)
   const PRODUCTS = [
-    { dropi: 1411936, cat: "belleza", top: true, name: "Luces LED para espejo de maquillaje", desc: "Bombillos LED que se pegan alrededor de cualquier espejo, como en un camerino.", price: 45900, img: IMG + "1411936/1730219504imagen_2024-10-29_113116103.png" },
-    { dropi: 375183, cat: "hogar", top: true, name: "Espejo redondo de pared (luna)", desc: "Espejo grande para la sala, la entrada o el baño.", price: 270000, sizes: [{ name: "70 cm", price: 270000, ref: 2508514 }, { name: "90 cm", price: 370000, ref: 2508515 }], img: IMG + "375183/1781792061IMG_2729.jpg" },
-    { dropi: 5417, cat: "moto", name: "Restaurador de partes negras 250 ml", desc: "Devuelve el negro a plásticos opacos de moto y carro.", price: 49900, refPhoto: true, img: "img/5417.jpg" },
-    { dropi: 2155730, cat: "moto", name: "Hidrolavadora 6 chorros + mini aspiradora", desc: "Lava la moto o el carro y aspira por dentro.", price: 109900, img: IMG + "2155730/1779374038Hidrolavadora%206%20chorros%20mas%20Aspiradora.jpg" },
-    { dropi: 1947192, cat: "moto", name: "Compresor de aire inalámbrico", desc: "Infla llantas de moto, carro y bicicleta donde estés.", price: 99900, img: IMG + "1947192/175936901671.webp" },
-    { dropi: 2135050, cat: "moto", name: "Intercomunicador para casco Q58", desc: "Habla y escucha música en la moto con manos libres.", price: 119900, img: IMG + "2135050/17768278971000628221.jpg" },
-    { dropi: 1427314, cat: "moto", name: "Candado para moto", desc: "Asegura tu moto cuando la dejas parqueada.", price: 69900, img: IMG + "1427314/1734546511Simple%20Instagram%20Frame%20Template%20Instagram%20Post%20%20(17).png" },
-    { dropi: 931275, cat: "hogar", name: "Set de 7 cuchillos con base y tabla", desc: "Cuchillos en acero, base y tabla para picar.", price: 79900, colors: ["Rosado", "Azul", "Verde"], img: IMG + "931275/1734719133Simple%20Instagram%20Frame%20Template%20Instagram%20Post%20%20(33).png" },
-    { dropi: 2162882, cat: "hogar", name: "Juego de ollas 13 piezas", desc: "Ollas, tapas y utensilios para la cocina.", price: 99900, img: IMG + "2162882/1780078054JUEGO%20DE%20OLLAS%2013%20NEGRO.webp" },
-    { dropi: 2316315, cat: "hogar", name: "Organizador de cocina 2 niveles", desc: "Bandejas deslizables para debajo del lavaplatos o la alacena.", price: 129900, img: IMG + "2316315/fd28f061-20d0-4a33-b68c-80a83ef86e56.webp" },
-    { dropi: 2222432, cat: "hogar", name: "Colador escurridor giratorio", desc: "Lava y escurre frutas y verduras sin mojarte.", price: 64900, img: IMG + "2222432/4647368b-f427-462f-802d-bede2f9e28ea.webp" },
-    { dropi: 1925861, cat: "hogar", name: "Trapero autoescurrible de microfibra", desc: "Trapea y escurre sin tocar el agua sucia.", price: 59900, img: IMG + "1925861/1757957144D_NQ_NP_2X_933805-MCO78179304008_082024-F.webp" },
-    { dropi: 2139745, cat: "hogar", name: "Licuadora portátil recargable", desc: "Batidos y jugos donde estés. Trae dos vasos.", price: 54900, img: IMG + "2139745/1777331143image-9b408f73f74b4889ab322346ae215a85.webp" },
-    { dropi: 2055149, cat: "herramientas", name: "Destornillador inalámbrico con accesorios", desc: "Arma, ajusta y repara sin esfuerzo. Buen regalo para papá.", price: 79900, img: IMG + "2055149/1769551538images%20(25).jpg" },
-    { dropi: 2238229, cat: "herramientas", name: "Adaptador angular para taladro", desc: "Llega a tornillos en rincones donde el taladro no cabe.", price: 59900, img: IMG + "2238229/3286b4b1-9fa2-48eb-a0b3-fc26d4969a14.gif" },
-    { dropi: 1915585, cat: "belleza", name: "Tina spa para pies plegable", desc: "Hidromasaje para pies en casa. Se pliega para guardarla.", price: 139900, img: IMG + "1915585/1763231417TINA%20PARA%20PIES%20PLEGABLE%20SML%20SQ-806%209.JPG" },
-    { dropi: 1885151, cat: "belleza", name: "Masajeador de percusión 4 en 1", desc: "Relaja espalda, piernas y cuello. Trae 4 cabezales.", price: 89900, img: IMG + "1885151/1753893446Masajeador4-1.jpg" },
-    { dropi: 2151602, cat: "belleza", name: "Cepillo secador térmico", desc: "Seca y peina al mismo tiempo.", price: 64900, img: IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%20p.%20m..png" },
-    { dropi: 2237413, cat: "regalos", name: "Micrófono de solapa inalámbrico doble", desc: "Para grabar videos y en vivo con buen sonido.", price: 99900, img: IMG + "2237413/dca89646-f164-47fb-b9b3-8e339b6f9847.jpg" },
-    { dropi: 2209683, cat: "regalos", name: "Lámpara LED con parlante bluetooth", desc: "Lámpara, parlante y cargador inalámbrico en uno.", price: 159900, img: IMG + "2209683/1784761240w=1200,h=1200,fit=pad.jpg" },
-    { dropi: 2286139, cat: "regalos", name: "Tren navideño eléctrico 30 piezas", desc: "El regalo de diciembre para los niños de la casa.", price: 149900, img: IMG + "2286139/9eca0a30-b00f-4281-ae1e-862c40ea5418.png" },
-    { dropi: 1634168, cat: "mascotas", name: "Cepillo de vapor para mascotas + removedor", desc: "Quita el pelo suelto de tu perro o gato y de la ropa.", price: 59900, img: IMG + "1634168/17373953061725037036COMBO.png" },
+    { dropi: 1411936, cat: "belleza", top: true, name: "Luces LED para espejo de maquillaje", desc: "Bombillos LED que se pegan alrededor de cualquier espejo, como en un camerino.", price: 45700, img: IMG + "1411936/1730219504imagen_2024-10-29_113116103.png" },
+    { dropi: 375183, cat: "hogar", top: true, name: "Espejo redondo de pared (luna)", desc: "Espejo grande para la sala, la entrada o el baño.", price: 268400, sizes: [{ name: "70 cm", price: 268400, ref: 2508514 }, { name: "90 cm", price: 367300, ref: 2508515 }], img: IMG + "375183/1781792061IMG_2729.jpg" },
+    { dropi: 5417, cat: "moto", name: "Restaurador de partes negras 250 ml", desc: "Devuelve el negro a plásticos opacos de moto y carro.", price: 48700, refPhoto: true, img: "img/5417.jpg" },
+    { dropi: 2155730, cat: "moto", name: "Hidrolavadora 6 chorros + mini aspiradora", desc: "Lava la moto o el carro y aspira por dentro.", price: 107300, img: IMG + "2155730/1779374038Hidrolavadora%206%20chorros%20mas%20Aspiradora.jpg" },
+    { dropi: 1947192, cat: "moto", name: "Compresor de aire inalámbrico", desc: "Infla llantas de moto, carro y bicicleta donde estés.", price: 97400, img: IMG + "1947192/175936901671.webp" },
+    { dropi: 2135050, cat: "moto", name: "Intercomunicador para casco Q58", desc: "Habla y escucha música en la moto con manos libres.", price: 117600, img: IMG + "2135050/17768278971000628221.jpg" },
+    { dropi: 1427314, cat: "moto", name: "Candado para moto", desc: "Asegura tu moto cuando la dejas parqueada.", price: 67300, img: IMG + "1427314/1734546511Simple%20Instagram%20Frame%20Template%20Instagram%20Post%20%20(17).png" },
+    { dropi: 931275, cat: "hogar", name: "Set de 7 cuchillos con base y tabla", desc: "Cuchillos en acero, base y tabla para picar.", price: 77400, colors: ["Rosado", "Azul", "Verde"], img: IMG + "931275/1734719133Simple%20Instagram%20Frame%20Template%20Instagram%20Post%20%20(33).png" },
+    { dropi: 2162882, cat: "hogar", name: "Juego de ollas 13 piezas", desc: "Ollas, tapas y utensilios para la cocina.", price: 96800, img: IMG + "2162882/1780078054JUEGO%20DE%20OLLAS%2013%20NEGRO.webp" },
+    { dropi: 2316315, cat: "hogar", name: "Organizador de cocina 2 niveles", desc: "Bandejas deslizables para debajo del lavaplatos o la alacena.", price: 126700, img: IMG + "2316315/fd28f061-20d0-4a33-b68c-80a83ef86e56.webp" },
+    { dropi: 2222432, cat: "hogar", name: "Colador escurridor giratorio", desc: "Lava y escurre frutas y verduras sin mojarte.", price: 63300, img: IMG + "2222432/4647368b-f427-462f-802d-bede2f9e28ea.webp" },
+    { dropi: 1925861, cat: "hogar", name: "Trapero autoescurrible de microfibra", desc: "Trapea y escurre sin tocar el agua sucia.", price: 58400, img: IMG + "1925861/1757957144D_NQ_NP_2X_933805-MCO78179304008_082024-F.webp" },
+    { dropi: 2139745, cat: "hogar", name: "Licuadora portátil recargable", desc: "Batidos y jugos donde estés. Trae dos vasos.", price: 53600, img: IMG + "2139745/1777331143image-9b408f73f74b4889ab322346ae215a85.webp" },
+    { dropi: 2055149, cat: "herramientas", name: "Destornillador inalámbrico con accesorios", desc: "Arma, ajusta y repara sin esfuerzo. Buen regalo para papá.", price: 76300, img: IMG + "2055149/1769551538images%20(25).jpg" },
+    { dropi: 2238229, cat: "herramientas", name: "Adaptador angular para taladro", desc: "Llega a tornillos en rincones donde el taladro no cabe.", price: 57800, img: IMG + "2238229/3286b4b1-9fa2-48eb-a0b3-fc26d4969a14.gif" },
+    { dropi: 1915585, cat: "belleza", name: "Tina spa para pies plegable", desc: "Hidromasaje para pies en casa. Se pliega para guardarla.", price: 136400, img: IMG + "1915585/1763231417TINA%20PARA%20PIES%20PLEGABLE%20SML%20SQ-806%209.JPG" },
+    { dropi: 1885151, cat: "belleza", name: "Masajeador de percusión 4 en 1", desc: "Relaja espalda, piernas y cuello. Trae 4 cabezales.", price: 87300, img: IMG + "1885151/1753893446Masajeador4-1.jpg" },
+    { dropi: 2151602, cat: "belleza", name: "Cepillo secador térmico", desc: "Seca y peina al mismo tiempo.", price: 62700, img: IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%20p.%20m..png" },
+    { dropi: 2237413, cat: "regalos", name: "Micrófono de solapa inalámbrico doble", desc: "Para grabar videos y en vivo con buen sonido.", price: 97300, img: IMG + "2237413/dca89646-f164-47fb-b9b3-8e339b6f9847.jpg" },
+    { dropi: 2209683, cat: "regalos", name: "Lámpara LED con parlante bluetooth", desc: "Lámpara, parlante y cargador inalámbrico en uno.", price: 156300, img: IMG + "2209683/1784761240w=1200,h=1200,fit=pad.jpg" },
+    { dropi: 2286139, cat: "regalos", name: "Tren navideño eléctrico 30 piezas", desc: "El regalo de diciembre para los niños de la casa.", price: 146300, img: IMG + "2286139/9eca0a30-b00f-4281-ae1e-862c40ea5418.png" },
+    { dropi: 1634168, cat: "mascotas", name: "Cepillo de vapor para mascotas + removedor", desc: "Quita el pelo suelto de tu perro o gato y de la ropa.", price: 58300, img: IMG + "1634168/17373953061725037036COMBO.png" },
   ];
 
   const cop = (n) => "$" + n.toLocaleString("es-CO");
@@ -350,7 +358,7 @@
     const sw = document.getElementById("size-wrap"), ss = document.getElementById("size");
     sw.hidden = !p.sizes;
     ss.innerHTML = (p.sizes || []).map((z, i) => `<option value="${i}">${z.name} · ${cop(z.price)}</option>`).join("");
-    document.getElementById("d-desc").textContent = (p.sizes ? "Desde " : "") + cop(p.price) + " c/u · envío incluido";
+    document.getElementById("d-desc").textContent = (p.sizes ? "Desde " : "") + cop(p.price) + " c/u · envío gratis";
     const cw = document.getElementById("color-wrap"), cs = document.getElementById("color");
     cw.hidden = !p.colors;
     cs.innerHTML = (p.colors || []).map((c) => `<option>${c}</option>`).join("");
@@ -398,68 +406,101 @@
     window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
   });
 
-  const hello = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Hola, quiero información de un producto de Llévalo.")}`;
+  const hello = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Hola, quiero información de un producto de la Tienda online 3R.")}`;
   document.getElementById("wa").href = hello;
   document.getElementById("wa-top").href = hello;
   renderChips(); renderGrid();
 
-  // Pared con productos colgados y vista de cerca
-  const HANGER = '<svg viewBox="0 0 44 34" aria-hidden="true"><path d="M22 2c3 0 5 2 5 4.5S24 10 22 11v4" fill="none" stroke="#2b2b2b" stroke-width="2" stroke-linecap="round"/><path d="M22 15 3 29c-1.5 1-1 3 1 3h36c2 0 2.5-2 1-3L22 15Z" fill="none" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/></svg>';
-  let fi = -1, fopt = 0;
-  function renderRack() {
-    document.getElementById("rack-track").innerHTML = PRODUCTS.map((p, i) => `
-      <button class="hang" type="button" data-focus="${i}" aria-label="${esc(p.name)}">
-        ${HANGER}
-        <div class="pic"><img src="${p.img}" alt="${esc(p.name)}" loading="lazy" onerror="noImg(this)"></div>
-        <span class="lbl">${esc(p.name)}<b>${p.sizes ? "Desde " : ""}${cop(p.price)}</b></span>
-      </button>`).join("");
+  // Vitrina que gira sola: el del centro grande, los demás a los lados
+  let cur = 0, opt = 0, pos = 0, target = null, pauseUntil = 0, last = 0;
+  const SPEED = 1 / 3.2; // productos por segundo mientras rueda solo
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function buildShow() {
+    const show = document.getElementById("show");
+    show.insertAdjacentHTML("beforeend", PRODUCTS.map((p, i) => `
+      <div class="it" data-it="${i}" role="button" tabindex="-1" aria-label="${esc(p.name)}">
+        <div class="card3"><img src="${p.img}" alt="${esc(p.name)}" loading="${i < 4 ? "eager" : "lazy"}" onerror="noImg(this)">${p.top ? '<span class="badge">Más vendido</span>' : ""}</div>
+      </div>`).join(""));
+    place(); renderInfo();
+    requestAnimationFrame(tick);
   }
-  function renderFocus() {
-    const p = PRODUCTS[fi];
+  function place() {
+    const n = PRODUCTS.length, w = Math.min(innerWidth, 900);
+    document.querySelectorAll(".it").forEach((el) => {
+      let d = Number(el.dataset.it) - pos;
+      d = ((d % n) + n) % n; if (d > n / 2) d -= n;
+      const a = Math.abs(d);
+      el.style.transform = `translateX(${d * w * 0.34}px) translateZ(${-a * 160}px) rotateY(${-d * 28}deg) scale(${1 - Math.min(a, 1) * 0.18})`;
+      el.style.opacity = a > 2.6 ? 0 : 1 - Math.min(a, 1) * 0.45 - Math.max(0, a - 2) * 0.9;
+      el.style.filter = a > 0.6 ? `blur(${(Math.min(a, 3) - 0.6) * 2.2}px)` : "none";
+      el.style.zIndex = Math.round(100 - a * 10);
+      el.style.pointerEvents = a > 2.4 ? "none" : "auto";
+      el.classList.toggle("on", a < 0.5);
+    });
+    const c = ((Math.round(pos) % n) + n) % n;
+    if (c !== cur) { cur = c; opt = 0; renderInfo(); }
+  }
+  function tick(t) {
+    const dt = last ? Math.min((t - last) / 1000, 0.05) : 0; last = t;
+    const busy = document.getElementById("dlg").open || document.hidden;
+    if (target !== null) {
+      pos += (target - pos) * Math.min(1, dt * 7);
+      if (Math.abs(target - pos) < 0.002) { pos = target; target = null; }
+      place();
+    } else if (!reduce && !busy && performance.now() > pauseUntil) {
+      const f = pos - Math.floor(pos); // más despacio cuando un producto pasa por el centro
+      pos += dt * SPEED * (0.2 + 1.6 * Math.sin(Math.PI * f) ** 2); place();
+    }
+    requestAnimationFrame(tick);
+  }
+  function renderInfo() {
+    const p = PRODUCTS[cur];
     const opts = p.sizes ? p.sizes.map((z) => z.name) : (p.colors || []);
-    const price = p.sizes ? p.sizes[fopt].price : p.price;
-    document.getElementById("focus").innerHTML = `
-      <button class="x" type="button" data-unfocus aria-label="Cerrar">×</button>
-      <button class="nav-btn prev" type="button" data-step="-1" aria-label="Anterior">‹</button>
-      <button class="nav-btn next" type="button" data-step="1" aria-label="Siguiente">›</button>
-      <div class="stage">
-        <div class="big"><img src="${p.img}" alt="${esc(p.name)}" onerror="noImg(this)"></div>
-        <div class="tags">
-          <span class="tag price">${cop(price)}</span>
-          ${opts.map((o, i) => `<button class="tag opt c-${o.toLowerCase().replace(/[^a-z]/g, "")}" type="button" data-opt="${i}" aria-pressed="${i === fopt}">${esc(o)}</button>`).join("")}
-        </div>
-      </div>
+    const price = p.sizes ? p.sizes[opt].price : p.price;
+    document.getElementById("info").innerHTML = `<div class="fade" style="display:grid;gap:8px;justify-items:center">
       <h2>${esc(p.name)}</h2>
-      <p class="fdesc">${esc(p.desc)} Envío incluido.</p>
-      <button class="btn btn-main" type="button" data-order="${fi}">Pedir · pagas al recibir</button>`;
+      <div class="tags"><span class="tag price">${cop(price)}</span>${opts.map((o, i) => `<button class="tag opt" type="button" data-opt="${i}" aria-pressed="${i === opt}">${esc(o)}</button>`).join("")}</div>
+      <p class="fdesc">${esc(p.desc)} Envío gratis.</p>
+      <button class="btn btn-main" type="button" data-order="${cur}">Pedir · pagas al recibir</button>
+      <p class="assure">Te confirmamos por WhatsApp antes de enviar. Nada por adelantado.</p>
+      <div class="dots">${PRODUCTS.map((_, i) => `<i class="${i === cur ? "on" : ""}"></i>`).join("")}</div></div>`;
   }
-  function focusOn(i) {
-    fi = (i + PRODUCTS.length) % PRODUCTS.length; fopt = 0;
-    renderFocus();
-    document.getElementById("wall").classList.add("focusing");
+  // ir a un producto (al tocarlo, con flechas o deslizando) y pausar un rato para que lo vean
+  function go(i) {
+    const n = PRODUCTS.length; let d = ((i - pos) % n + n) % n; if (d > n / 2) d -= n;
+    target = Math.round(pos + d);
+    pauseUntil = performance.now() + 7000;
   }
-  function unfocus() { fi = -1; document.getElementById("wall").classList.remove("focusing"); }
+  function hold() { pauseUntil = performance.now() + 7000; if (target === null) target = Math.round(pos); }
+  // deslizar con el dedo
+  let sx = null;
+  document.getElementById("show").addEventListener("pointerdown", (e) => { sx = e.clientX; });
+  addEventListener("pointerup", (e) => {
+    if (sx === null) return;
+    const dx = e.clientX - sx; sx = null;
+    if (Math.abs(dx) > 40) go(Math.round(pos) + (dx < 0 ? 1 : -1));
+  });
   document.addEventListener("click", (e) => {
-    const t = e.target.closest("[data-focus],[data-unfocus],[data-step],[data-opt],[data-order]");
+    const t = e.target.closest("[data-it],[data-step],[data-opt],[data-order]");
     if (!t) return;
-    if (t.dataset.focus !== undefined) focusOn(Number(t.dataset.focus));
-    else if (t.dataset.unfocus !== undefined) unfocus();
-    else if (t.dataset.step) focusOn(fi + Number(t.dataset.step));
-    else if (t.dataset.opt) { fopt = Number(t.dataset.opt); renderFocus(); }
+    if (t.dataset.it !== undefined) { const i = Number(t.dataset.it); i !== cur ? go(i) : hold(); }
+    else if (t.dataset.step) go(Math.round(pos) + Number(t.dataset.step));
+    else if (t.dataset.opt) { opt = Number(t.dataset.opt); hold(); renderInfo(); }
     else if (t.dataset.order !== undefined) {
       const p = PRODUCTS[Number(t.dataset.order)];
+      hold();
       openSheet(p);
-      if (p.sizes) { document.getElementById("size").value = String(fopt); renderQty(); }
-      if (p.colors) document.getElementById("color").value = p.colors[fopt];
+      if (p.sizes) { document.getElementById("size").value = String(opt); renderQty(); }
+      if (p.colors) document.getElementById("color").value = p.colors[opt];
     }
   });
   document.addEventListener("keydown", (e) => {
-    if (fi < 0 || document.getElementById("dlg").open) return;
-    if (e.key === "Escape") unfocus();
-    if (e.key === "ArrowRight") focusOn(fi + 1);
-    if (e.key === "ArrowLeft") focusOn(fi - 1);
+    if (document.getElementById("dlg").open) return;
+    if (e.key === "ArrowRight") go(Math.round(pos) + 1);
+    if (e.key === "ArrowLeft") go(Math.round(pos) - 1);
   });
-  renderRack();
+  addEventListener("resize", place);
+  buildShow();
 
   // Imágenes para publicar (tomar captura de cada tarjeta)
   function renderPromo() {
@@ -472,7 +513,7 @@
         · <a href="#">volver a la tienda</a></div>` +
       PRODUCTS.map((p) => `
       <div class="pc${story ? " story" : ""}">
-        <div class="pc-top"><div class="pc-brand">LLÉVA<span>LO</span></div>${p.top ? '<div class="pc-badge">Más vendido</div>' : ""}</div>
+        <div class="pc-top"><div class="pc-brand">3R <span>Tienda online</span></div>${p.top ? '<div class="pc-badge">Más vendido</div>' : ""}</div>
         <div class="pc-mid">
           <div class="pc-photo"><img src="${p.img}" alt="${esc(p.name)}" onerror="noImg(this)">${p.refPhoto ? '<span class="pc-ref">Imagen de referencia</span>' : ""}</div>
           <div>
@@ -481,7 +522,7 @@
             <div class="pc-price">${p.sizes ? "<small>" + esc(priceTxt(p)) + "</small>Desde " + cop(p.price) : cop(p.price)}</div>
           </div>
         </div>
-        <div class="pc-band">Pagas cuando te llega · Envío incluido<span>WhatsApp 310 790 7194</span></div>
+        <div class="pc-band">Pagas cuando te llega · Envío gratis<span>WhatsApp 310 790 7194</span></div>
       </div>`).join("");
     scrollTo(0, 0);
   }
