@@ -19,5 +19,8 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   `npx wrangler deploy --assets=./_site --name=llevalo --compatibility-date=2026-10-01`. Entró a `main` con el PR #94.
   **Publicada el 5 nov 2026** como Worker (despliegue verde): **https://llevalo.rigoberto-rrr25.workers.dev** (la sesión no
   puede abrirla: el proxy la bloquea; Rigoberto la revisa desde el celular).
+- **Textos para publicar** (5 nov 2026) en `TEXTOS.md`: Marketplace por producto, grupos de Facebook, estados de WhatsApp,
+  mensaje a contactos, Instagram/TikTok y respuestas. No se publica (el despliegue solo copia `index.html` e `img`). Si cambian
+  precios o productos, actualizarlo también.
 - Cuando entre un pedido: revisar al comprador con la huella de Dropi, confirmar por WhatsApp y crear el pedido en Dropi
   solo después de que Rigoberto confirme el resumen.
