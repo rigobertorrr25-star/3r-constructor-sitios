@@ -256,6 +256,7 @@ export const en: Record<string, string> = {
   Comentarios: 'Comments',
   'Factura {n}': 'Invoice {n}',
   'Fecha de la factura {date} · registrada {created}': 'Invoice date {date} · entered {created}',
+  Cobrada: 'Collected',
   'Descargar cierre del día (Excel)': 'Download the day closing (Excel)',
   'Descargar cierre (Excel)': 'Download closing (Excel)',
   PDF: 'PDF',

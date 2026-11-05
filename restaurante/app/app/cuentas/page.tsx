@@ -78,15 +78,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={t('Por cobrar')} value={formatCop(pendingTotal)} hint={pending.length === 1 ? t('1 mesa') : t('{n} mesas', { n: pending.length })} strong={pending.length > 0} />
         <Stat label={t('Cobradas')} value={formatCop(collectedTotal)} hint={collected.length === 1 ? t('1 mesa') : t('{n} mesas', { n: collected.length })} />
-        {data.tipPercent > 0 ? (
-          <Stat
-            label={t('Propina ({pct} % de lo vendido)', { pct: data.tipPercent })}
-            value={formatCop(tipOfSales(collectedTotal, data.tipPercent))}
-            hint={tipsMarked ? t('Marcada al cobrar: {amount}', { amount: formatCop(tipsMarked) }) : undefined}
-          />
-        ) : (
-          <Stat label={t('Propinas cobradas')} value={formatCop(tipsMarked)} />
-        )}
+        <Stat label={t('Propinas cobradas')} value={formatCop(tipsMarked)} />
       </div>
 
       {data.waiters.length > 0 ? (

@@ -46,9 +46,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const sede = isOwner && isValidScope(sp.sede) ? (sp.sede ?? (staff.locationCount > 1 ? 'all' : staff.locationId)) : staff.locationId;
   const [d, mode] = await Promise.all([getDashboard(staff, { ...range, locationId: sede }, staff.timezone), workMode(staff.businessId)]);
   const st = d.statement;
-  // Propina: el porcentaje de Sedes → «Propina sugerida» sobre lo vendido (no la que se marcó al cobrar).
-  const tipPct = mode.suggestedTip;
-  const tips = Math.round((st.sales * tipPct) / 100);
+  // Solo la propina que se cobró (5 nov 2026, Rigoberto: «solo pongamos lo que se cobró», no el % calculado).
+  const tips = st.tips;
   // Días del periodo, para el promedio de propina por día.
   const days = Math.round((Date.parse(range.to) - Date.parse(range.from)) / 86_400_000) + 1;
   const scoreLevel: Level = d.score >= 85 ? 'ok' : d.score >= 60 ? 'watch' : 'alert';
@@ -92,7 +91,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           label={t('Propinas')}
           value={formatCop(tips)}
           hint={[
-            t('{pct} % de lo vendido', { pct: tipPct }),
+            t('Cobrada'),
             days > 1 ? t('{amount} por día', { amount: formatCop(Math.round(tips / days)) }) : null,
           ]
             .filter(Boolean)
