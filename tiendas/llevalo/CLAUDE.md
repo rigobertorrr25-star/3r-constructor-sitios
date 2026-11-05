@@ -11,12 +11,12 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   el 5 nov, los **más vendidos** según el ranking de Dropdata (Rigoberto tiene cuenta gratis: 2 productos al día; los
   manda por captura y se buscan en Dropi por nombre). Los más vendidos van primero con la etiqueta «Más vendido» (`top: true`).
   Rigoberto pidió (5 nov) priorizar lo que más se vende aunque deje menos. Productos con tamaños de distinto precio: `sizes`.
-- **Diseño** (5 nov 2026, Rigoberto mandó un video de referencia: tienda de ropa con prendas colgadas): arriba una «pared» gris
-  claro con un tubo y todos los productos colgados de ganchos (se desliza de lado); al tocar uno pasa al frente, los demás
-  quedan borrosos, con etiquetas colgando al lado (precio y color o tamaño, que se pueden tocar), nombre en mayúsculas y
-  «Pedir · pagas al recibir». Franja verde neón abajo con texto que corre. Las fotos usan `mix-blend-mode: multiply` para
-  que el fondo blanco se funda con la pared: no poner `z-index`, `transform` ni `filter` en sus contenedores (rompen la
-  mezcla). Debajo sigue la lista completa con categorías. Color de acento: verde neón `#39ff14` con texto oscuro.
+- **Diseño** (5 nov 2026, con un video de referencia de Rigoberto): arriba una **vitrina que rueda sola y sin parar**
+  (más despacio cuando un producto pasa por el centro). El del centro va grande sobre una tarjeta blanca que flota; los de
+  los lados, más pequeños, girados y borrosos. Debajo: nombre en mayúsculas, etiqueta verde con el precio, etiquetas de
+  color o tamaño (se pueden tocar) y «Pedir · pagas al recibir». Al tocar, deslizar o usar las flechas, se detiene 7 s y
+  luego sigue rodando. Rigoberto pidió quitar los ganchos («no son ropa») y que los productos «vayan rodando». Franja verde
+  neón abajo con texto que corre. Debajo sigue la lista completa con categorías. Acento: verde neón `#39ff14` con texto oscuro.
 - Sin réplicas de marcas, suplementos ni aparatos médicos. Fotos enlazadas del CDN de Dropi (desde la sesión no cargan; en
   el navegador sí), salvo el restaurador (`img/5417.jpg`).
 - **Publicación: Cloudflare, no Vercel** (5 nov 2026, pedido de Rigoberto), igual que ZENOVA: proyecto `llevalo`, rama

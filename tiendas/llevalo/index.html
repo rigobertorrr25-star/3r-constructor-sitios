@@ -129,60 +129,49 @@
   .pc .pc-band { background: var(--accent); color: var(--accent-ink); font-weight: 700; text-align: center; padding: 3.5% 4%; font-size: clamp(.8rem, 3.6vw, 1.25rem); }
   .pc .pc-band span { display: block; font-weight: 600; font-size: .8em; opacity: .95; margin-top: 2px; }
 
-  /* Pared con productos colgados (estilo pedido por Rigoberto, 5 nov 2026) */
-  .wall { position: relative; background: radial-gradient(120% 90% at 50% 30%, #f7f7f7 0%, var(--wall) 60%, #dedede 100%); overflow: hidden; }
+  /* Vitrina que gira (pedido de Rigoberto, 5 nov 2026: «no son ropa», sin ganchos) */
+  .wall { position: relative; background: radial-gradient(120% 80% at 50% 35%, #fafafa 0%, var(--wall) 55%, #d9d9d9 100%); overflow: hidden; padding-bottom: 18px; }
   .wall-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 0; }
   .wall-head .brand { font-size: 1.15rem; }
   .wall-head .brand span { color: var(--accent-ink); background: var(--accent); padding: 0 4px; border-radius: 4px; }
   .wall-head .wa { font-size: .85rem; }
-  .wall-hint { text-align: center; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: #555; margin: 6px 0 0; }
-  .rack { overflow-x: auto; scroll-snap-type: x proximity; padding: 26px 0 26px; scrollbar-width: none; transition: filter .35s, opacity .35s; }
-  .rack::-webkit-scrollbar { display: none; }
-  .rack-track { display: flex; gap: 6px; padding: 0 24px; width: max-content; position: relative; }
-  .rack-track::before { content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 6px; border-radius: 3px; background: linear-gradient(#f5f5f5, #9a9a9a 55%, #cfcfcf); box-shadow: 0 2px 3px rgba(0,0,0,.18); }
-  .hang { flex: none; width: 132px; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: inherit; }
-  .hang svg { width: 44px; height: 34px; margin-top: 2px; position: relative; z-index: 2; }
-  .hang .pic { position: relative; width: 124px; height: 170px; margin-top: -4px; transition: margin .25s; }
-  .hang:hover .pic, .hang:focus-visible .pic { margin-top: 0; }
-  .hang img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
-  .hang .noimg { position: absolute; inset: 20px 0 auto; font-size: .8rem; font-weight: 700; text-align: center; color: #444; padding: 8px; background: #fff; border-radius: 6px; mix-blend-mode: normal; }
-  .hang .lbl { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-top: 8px; max-width: 124px; text-align: center; line-height: 1.2; }
-  .hang .lbl b { display: block; font-family: "Archivo Black", sans-serif; font-weight: 400; font-size: .85rem; margin-top: 2px; }
-  .wall.focusing { min-height: 600px; }
-  .wall.focusing .wall-head .wa { visibility: hidden; }
-  .wall.focusing .rack { filter: blur(6px); opacity: .3; pointer-events: none; }
-  .wall.focusing .wall-hint { visibility: hidden; }
-  .focus { position: absolute; inset: 70px 0 24px; display: none; grid-template-columns: 1fr; justify-items: center; align-content: center; gap: 8px; padding: 0 16px; }
-  .wall.focusing .focus { display: grid; }
-  .focus .stage { position: relative; display: flex; align-items: flex-start; gap: 10px; animation: pop .35s cubic-bezier(.2,.8,.2,1); }
-  @keyframes pop { from { opacity: 0; margin-top: 24px; } to { opacity: 1; margin-top: 0; } }
-  .focus .big { position: relative; width: min(58vw, 290px); height: min(58vw, 290px); }
-  .focus .big img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
-  .focus .big .noimg { position: absolute; inset: 40% 0 auto; text-align: center; font-weight: 700; }
-  .tags { display: flex; flex-direction: column; gap: 10px; padding-top: 18px; }
-  .tag { position: relative; min-width: 64px; padding: 14px 8px 8px; border-radius: 4px; background: #111; color: #fff; font: 700 .72rem "Archivo", sans-serif; text-align: center; border: 0; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,.15); transform: rotate(-4deg); }
-  .tag:nth-child(even) { transform: rotate(3deg); }
-  .tag::before { content: ""; position: absolute; top: 5px; left: 50%; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--wall); }
-  .tag.price { background: var(--accent); color: var(--accent-ink); cursor: default; font-size: .8rem; }
-  .tag.opt[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .tag.c-rosado { background: #f4a6c6; color: #111; } .tag.c-azul { background: #3b82f6; } .tag.c-verde { background: #22c55e; color: #111; }
-  .focus h2 { font-family: "Archivo Black", sans-serif; font-size: clamp(1rem, 4.4vw, 1.4rem); text-transform: uppercase; text-align: center; letter-spacing: .01em; margin-top: 4px; }
-  .focus .fdesc { color: #555; font-size: .9rem; text-align: center; max-width: 36ch; }
-  .focus .fprice { font-family: "Archivo Black", sans-serif; font-size: 1.5rem; }
-  .focus .btn { padding: 12px 22px; }
-  .focus .x, .focus .nav-btn { position: absolute; top: -8px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.15); font-size: 1.3rem; cursor: pointer; }
-  .focus .x { right: 12px; top: -52px; }
-  .focus .nav-btn { top: 30%; }
-  .focus .prev { left: 6px; } .focus .next { right: 6px; }
+  .wall-hint { text-align: center; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #555; margin: 6px 0 0; }
+  .show { position: relative; height: clamp(300px, 78vw, 420px); perspective: 1100px; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+  .show .floor { position: absolute; left: 50%; bottom: 8%; width: 70%; height: 22%; transform: translateX(-50%); background: radial-gradient(closest-side, rgba(0,0,0,.16), transparent); pointer-events: none; }
+  .it { position: absolute; left: 50%; top: 50%; width: clamp(170px, 50vw, 260px); aspect-ratio: 1; margin: calc(clamp(170px, 50vw, 260px) / -2) 0 0 calc(clamp(170px, 50vw, 260px) / -2);
+        cursor: pointer; will-change: transform; }
+  .it .card3 { position: absolute; inset: 0; background: #fff; border-radius: 18px; box-shadow: 0 18px 30px rgba(0,0,0,.14), 0 2px 6px rgba(0,0,0,.06); overflow: hidden; }
+  .it.on .card3 { animation: bob 3.2s ease-in-out infinite; }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .it img { position: absolute; inset: 7%; width: 86%; height: 86%; object-fit: contain; }
+  .it .noimg { position: absolute; inset: 0; display: grid; place-items: center; padding: 12px; text-align: center; font-weight: 700; color: #444; }
+  .it .badge { position: absolute; top: 10px; left: 10px; background: var(--accent); color: var(--accent-ink); font: 800 .68rem "Archivo", sans-serif; text-transform: uppercase; letter-spacing: .04em; padding: 3px 7px; border-radius: 5px; }
+  .show .arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 200; width: 42px; height: 42px; border-radius: 50%; border: 0; background: #fff; box-shadow: 0 3px 10px rgba(0,0,0,.15); font-size: 1.4rem; cursor: pointer; }
+  .show .prev { left: 10px; } .show .next { right: 10px; }
+  .info { text-align: center; padding: 0 16px; display: grid; justify-items: center; gap: 8px; }
+  .info h2 { font-family: "Archivo Black", sans-serif; text-transform: uppercase; font-size: clamp(1rem, 4.6vw, 1.5rem); letter-spacing: .01em; max-width: 24ch; }
+  .info .fdesc { color: #555; font-size: .92rem; max-width: 38ch; }
+  .tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .tag { position: relative; padding: 6px 12px 6px 18px; border-radius: 4px 8px 8px 4px; background: #111; color: #fff; font: 700 .8rem "Archivo", sans-serif; border: 0; cursor: pointer; }
+  .tag::before { content: ""; position: absolute; left: 6px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; background: var(--wall); }
+  .tag.price { background: var(--accent); color: var(--accent-ink); cursor: default; font-size: .95rem; }
+  .tag.opt { background: #fff; color: #111; box-shadow: inset 0 0 0 1px #cfcfcf; }
+  .tag.opt[aria-pressed="true"] { background: #111; color: #fff; box-shadow: none; }
+  .dots { display: flex; gap: 5px; justify-content: center; margin-top: 4px; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: #c4c4c4; transition: width .3s, background .3s; }
+  .dots i.on { width: 18px; border-radius: 3px; background: #111; }
+  .info .fade { animation: up .45s ease both; }
+  @keyframes up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .it.on .card3, .info .fade { animation: none; } }
   .ticker { position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; background: var(--accent); color: var(--accent-ink); overflow: hidden; white-space: nowrap; font: 800 .78rem "Archivo", sans-serif; letter-spacing: .08em; text-transform: uppercase; padding: 7px 0; }
   .ticker span { display: inline-block; padding-left: 100%; animation: run 22s linear infinite; }
   @keyframes run { to { transform: translateX(-100%); } }
-  @media (prefers-reduced-motion: reduce) { .ticker span { animation: none; padding-left: 16px; } .focus .stage { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .ticker span { animation: none; padding-left: 16px; } }
   .wa-float { bottom: 44px !important; }
   footer { padding-bottom: 70px; }
   .all-head { display: flex; justify-content: space-between; align-items: baseline; margin: 28px 0 14px; }
   .steps-line { display: grid; gap: 8px; margin: 0 0 18px; color: var(--muted); font-size: .92rem; }
-  @media (min-width: 700px) { .steps-line { grid-template-columns: repeat(3, 1fr); } .hang { width: 150px; } .hang .pic { width: 142px; height: 200px; } }
+  @media (min-width: 700px) { .steps-line { grid-template-columns: repeat(3, 1fr); } }
 </style>
 </head>
 <body>
@@ -192,9 +181,13 @@
     <a class="brand" href="#">LLÉVA<span>LO</span></a>
     <a class="wa" id="wa-top" href="#" target="_blank" rel="noopener">WhatsApp 310 790 7194</a>
   </div>
-  <p class="wall-hint">Toca un producto · pagas cuando te llega</p>
-  <div class="rack" id="rack"><div class="rack-track" id="rack-track"></div></div>
-  <div class="focus" id="focus" aria-live="polite"></div>
+  <p class="wall-hint">Desliza para ver más · pagas cuando te llega</p>
+  <div class="show" id="show">
+    <div class="floor"></div>
+    <button class="arrow prev" type="button" data-step="-1" aria-label="Anterior">‹</button>
+    <button class="arrow next" type="button" data-step="1" aria-label="Siguiente">›</button>
+  </div>
+  <div class="info" id="info" aria-live="polite"></div>
 </section>
 
 <div class="wrap">
@@ -403,63 +396,95 @@
   document.getElementById("wa-top").href = hello;
   renderChips(); renderGrid();
 
-  // Pared con productos colgados y vista de cerca
-  const HANGER = '<svg viewBox="0 0 44 34" aria-hidden="true"><path d="M22 2c3 0 5 2 5 4.5S24 10 22 11v4" fill="none" stroke="#2b2b2b" stroke-width="2" stroke-linecap="round"/><path d="M22 15 3 29c-1.5 1-1 3 1 3h36c2 0 2.5-2 1-3L22 15Z" fill="none" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/></svg>';
-  let fi = -1, fopt = 0;
-  function renderRack() {
-    document.getElementById("rack-track").innerHTML = PRODUCTS.map((p, i) => `
-      <button class="hang" type="button" data-focus="${i}" aria-label="${esc(p.name)}">
-        ${HANGER}
-        <div class="pic"><img src="${p.img}" alt="${esc(p.name)}" loading="lazy" onerror="noImg(this)"></div>
-        <span class="lbl">${esc(p.name)}<b>${p.sizes ? "Desde " : ""}${cop(p.price)}</b></span>
-      </button>`).join("");
+  // Vitrina que gira sola: el del centro grande, los demás a los lados
+  let cur = 0, opt = 0, pos = 0, target = null, pauseUntil = 0, last = 0;
+  const SPEED = 1 / 3.2; // productos por segundo mientras rueda solo
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function buildShow() {
+    const show = document.getElementById("show");
+    show.insertAdjacentHTML("beforeend", PRODUCTS.map((p, i) => `
+      <div class="it" data-it="${i}" role="button" tabindex="-1" aria-label="${esc(p.name)}">
+        <div class="card3"><img src="${p.img}" alt="${esc(p.name)}" loading="${i < 4 ? "eager" : "lazy"}" onerror="noImg(this)">${p.top ? '<span class="badge">Más vendido</span>' : ""}</div>
+      </div>`).join(""));
+    place(); renderInfo();
+    requestAnimationFrame(tick);
   }
-  function renderFocus() {
-    const p = PRODUCTS[fi];
+  function place() {
+    const n = PRODUCTS.length, w = Math.min(innerWidth, 900);
+    document.querySelectorAll(".it").forEach((el) => {
+      let d = Number(el.dataset.it) - pos;
+      d = ((d % n) + n) % n; if (d > n / 2) d -= n;
+      const a = Math.abs(d);
+      el.style.transform = `translateX(${d * w * 0.34}px) translateZ(${-a * 160}px) rotateY(${-d * 28}deg) scale(${1 - Math.min(a, 1) * 0.18})`;
+      el.style.opacity = a > 2.6 ? 0 : 1 - Math.min(a, 1) * 0.45 - Math.max(0, a - 2) * 0.9;
+      el.style.filter = a > 0.6 ? `blur(${(Math.min(a, 3) - 0.6) * 2.2}px)` : "none";
+      el.style.zIndex = Math.round(100 - a * 10);
+      el.style.pointerEvents = a > 2.4 ? "none" : "auto";
+      el.classList.toggle("on", a < 0.5);
+    });
+    const c = ((Math.round(pos) % n) + n) % n;
+    if (c !== cur) { cur = c; opt = 0; renderInfo(); }
+  }
+  function tick(t) {
+    const dt = last ? Math.min((t - last) / 1000, 0.05) : 0; last = t;
+    const busy = document.getElementById("dlg").open || document.hidden;
+    if (target !== null) {
+      pos += (target - pos) * Math.min(1, dt * 7);
+      if (Math.abs(target - pos) < 0.002) { pos = target; target = null; }
+      place();
+    } else if (!reduce && !busy && performance.now() > pauseUntil) {
+      const f = pos - Math.floor(pos); // más despacio cuando un producto pasa por el centro
+      pos += dt * SPEED * (0.2 + 1.6 * Math.sin(Math.PI * f) ** 2); place();
+    }
+    requestAnimationFrame(tick);
+  }
+  function renderInfo() {
+    const p = PRODUCTS[cur];
     const opts = p.sizes ? p.sizes.map((z) => z.name) : (p.colors || []);
-    const price = p.sizes ? p.sizes[fopt].price : p.price;
-    document.getElementById("focus").innerHTML = `
-      <button class="x" type="button" data-unfocus aria-label="Cerrar">×</button>
-      <button class="nav-btn prev" type="button" data-step="-1" aria-label="Anterior">‹</button>
-      <button class="nav-btn next" type="button" data-step="1" aria-label="Siguiente">›</button>
-      <div class="stage">
-        <div class="big"><img src="${p.img}" alt="${esc(p.name)}" onerror="noImg(this)"></div>
-        <div class="tags">
-          <span class="tag price">${cop(price)}</span>
-          ${opts.map((o, i) => `<button class="tag opt c-${o.toLowerCase().replace(/[^a-z]/g, "")}" type="button" data-opt="${i}" aria-pressed="${i === fopt}">${esc(o)}</button>`).join("")}
-        </div>
-      </div>
+    const price = p.sizes ? p.sizes[opt].price : p.price;
+    document.getElementById("info").innerHTML = `<div class="fade" style="display:grid;gap:8px;justify-items:center">
       <h2>${esc(p.name)}</h2>
+      <div class="tags"><span class="tag price">${cop(price)}</span>${opts.map((o, i) => `<button class="tag opt" type="button" data-opt="${i}" aria-pressed="${i === opt}">${esc(o)}</button>`).join("")}</div>
       <p class="fdesc">${esc(p.desc)} Envío incluido.</p>
-      <button class="btn btn-main" type="button" data-order="${fi}">Pedir · pagas al recibir</button>`;
+      <button class="btn btn-main" type="button" data-order="${cur}">Pedir · pagas al recibir</button>
+      <div class="dots">${PRODUCTS.map((_, i) => `<i class="${i === cur ? "on" : ""}"></i>`).join("")}</div></div>`;
   }
-  function focusOn(i) {
-    fi = (i + PRODUCTS.length) % PRODUCTS.length; fopt = 0;
-    renderFocus();
-    document.getElementById("wall").classList.add("focusing");
+  // ir a un producto (al tocarlo, con flechas o deslizando) y pausar un rato para que lo vean
+  function go(i) {
+    const n = PRODUCTS.length; let d = ((i - pos) % n + n) % n; if (d > n / 2) d -= n;
+    target = Math.round(pos + d);
+    pauseUntil = performance.now() + 7000;
   }
-  function unfocus() { fi = -1; document.getElementById("wall").classList.remove("focusing"); }
+  function hold() { pauseUntil = performance.now() + 7000; if (target === null) target = Math.round(pos); }
+  // deslizar con el dedo
+  let sx = null;
+  document.getElementById("show").addEventListener("pointerdown", (e) => { sx = e.clientX; });
+  addEventListener("pointerup", (e) => {
+    if (sx === null) return;
+    const dx = e.clientX - sx; sx = null;
+    if (Math.abs(dx) > 40) go(Math.round(pos) + (dx < 0 ? 1 : -1));
+  });
   document.addEventListener("click", (e) => {
-    const t = e.target.closest("[data-focus],[data-unfocus],[data-step],[data-opt],[data-order]");
+    const t = e.target.closest("[data-it],[data-step],[data-opt],[data-order]");
     if (!t) return;
-    if (t.dataset.focus !== undefined) focusOn(Number(t.dataset.focus));
-    else if (t.dataset.unfocus !== undefined) unfocus();
-    else if (t.dataset.step) focusOn(fi + Number(t.dataset.step));
-    else if (t.dataset.opt) { fopt = Number(t.dataset.opt); renderFocus(); }
+    if (t.dataset.it !== undefined) { const i = Number(t.dataset.it); i !== cur ? go(i) : hold(); }
+    else if (t.dataset.step) go(Math.round(pos) + Number(t.dataset.step));
+    else if (t.dataset.opt) { opt = Number(t.dataset.opt); hold(); renderInfo(); }
     else if (t.dataset.order !== undefined) {
       const p = PRODUCTS[Number(t.dataset.order)];
+      hold();
       openSheet(p);
-      if (p.sizes) { document.getElementById("size").value = String(fopt); renderQty(); }
-      if (p.colors) document.getElementById("color").value = p.colors[fopt];
+      if (p.sizes) { document.getElementById("size").value = String(opt); renderQty(); }
+      if (p.colors) document.getElementById("color").value = p.colors[opt];
     }
   });
   document.addEventListener("keydown", (e) => {
-    if (fi < 0 || document.getElementById("dlg").open) return;
-    if (e.key === "Escape") unfocus();
-    if (e.key === "ArrowRight") focusOn(fi + 1);
-    if (e.key === "ArrowLeft") focusOn(fi - 1);
+    if (document.getElementById("dlg").open) return;
+    if (e.key === "ArrowRight") go(Math.round(pos) + 1);
+    if (e.key === "ArrowLeft") go(Math.round(pos) - 1);
   });
-  renderRack();
+  addEventListener("resize", place);
+  buildShow();
 
   // Imágenes para publicar (tomar captura de cada tarjeta)
   function renderPromo() {
