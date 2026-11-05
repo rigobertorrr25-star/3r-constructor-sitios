@@ -367,7 +367,7 @@
     { dropi: 2238229, cat: "herramientas", name: "Adaptador angular para taladro", desc: "Llega a tornillos en rincones donde el taladro no cabe.", price: 57800, img: IMG + "2238229/3286b4b1-9fa2-48eb-a0b3-fc26d4969a14.gif" },
     { dropi: 1915585, cat: "belleza", name: "Tina spa para pies plegable", desc: "Hidromasaje para pies en casa. Se pliega para guardarla.", price: 136400, img: IMG + "1915585/1763231417TINA%20PARA%20PIES%20PLEGABLE%20SML%20SQ-806%209.JPG" },
     { dropi: 1885151, cat: "belleza", name: "Masajeador de percusión 4 en 1", desc: "Relaja espalda, piernas y cuello. Trae 4 cabezales.", price: 87300, img: IMG + "1885151/1753893446Masajeador4-1.jpg" },
-    { dropi: 2151602, cat: "belleza", name: "Cepillo secador térmico", desc: "Seca y peina al mismo tiempo.", price: 62700, img: IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%20p.%20m..png" },
+    { dropi: 2151602, cat: "belleza", name: "Cepillo secador térmico", desc: "Seca y peina al mismo tiempo.", price: 62700, img: IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%C2%A0m..png", imgTry: [IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%C2%A0m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%E2%80%AFm..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%C2%A0p.%C2%A0m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%20p.%C2%A0m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%20m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%20p.%20m..png", IMG + "1771574/1745604025CEPILLO%20SECADOR%20AGUACATE.jpg"] },
     { dropi: 2237413, cat: "regalos", name: "Micrófono de solapa inalámbrico doble", desc: "Para grabar videos y en vivo con buen sonido.", price: 97300, img: IMG + "2237413/dca89646-f164-47fb-b9b3-8e339b6f9847.jpg" },
     { dropi: 2209683, cat: "regalos", name: "Lámpara LED con parlante bluetooth", desc: "Lámpara, parlante y cargador inalámbrico en uno.", price: 156300, img: IMG + "2209683/1784761240w=1200,h=1200,fit=pad.jpg" },
     { dropi: 2286139, cat: "regalos", name: "Tren navideño eléctrico 30 piezas", desc: "El regalo de diciembre para los niños de la casa.", price: 146300, img: IMG + "2286139/9eca0a30-b00f-4281-ae1e-862c40ea5418.png" },
@@ -381,6 +381,8 @@
   const unit = () => (current.sizes ? size().price : current.price);
 
   function noImg(img) {
+    const pr = PRODUCTS.find((q) => q.name === img.alt);
+    if (pr && pr.imgTry && !pr.imgDone) { img.style.visibility = "hidden"; return; } // todavía probando otras formas del enlace
     const box = img.parentElement;
     box.innerHTML = `<div class="noimg">${esc(img.alt)}</div>`;
   }
@@ -557,6 +559,22 @@
     if (e.key === "ArrowLeft") go(Math.round(pos) - 1);
   });
   addEventListener("resize", place);
+
+  // Fotos con nombre raro en Dropi: probar varias formas del enlace y quedarse con la que cargue
+  PRODUCTS.filter((p) => p.imgTry).forEach((p) => {
+    (async () => {
+      for (const u of p.imgTry) {
+        const ok = await new Promise((r) => { const im = new Image(); im.onload = () => r(true); im.onerror = () => r(false); im.src = u; });
+        if (ok) {
+          p.img = u; p.imgDone = true;
+          document.querySelectorAll("img").forEach((el) => { if (el.alt === p.name) { el.style.visibility = ""; el.src = u; } });
+          return;
+        }
+      }
+      p.imgDone = true;
+      document.querySelectorAll("img").forEach((el) => { if (el.alt === p.name) noImg(el); });
+    })();
+  });
   buildShow();
   // El botón flotante de WhatsApp solo aparece cuando ya no se ve el de arriba
   (() => {
