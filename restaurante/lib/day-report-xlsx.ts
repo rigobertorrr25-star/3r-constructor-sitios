@@ -63,8 +63,7 @@ export async function dayReportXlsx(r: DayReport): Promise<Buffer> {
   const lines: [string, number | string, boolean?][] = [
     ...METHODS.map((m): [string, number] => [`${METHOD_LABEL[m]} (${totals.byMethod[m].count} ${totals.byMethod[m].count === 1 ? "pago" : "pagos"})`, totals.byMethod[m].amount]),
     ['Ventas del día', totals.sales, true],
-    ...(r.tipPercent > 0 ? [[`Propina (${r.tipPercent} % de ventas)`, tipOfSales(totals.sales, r.tipPercent), true] as [string, number, boolean]] : []),
-    ['Propinas cobradas', totals.tips],
+    ['Propinas cobradas', totals.tips, true],
     ['Descuentos', totals.discounts],
     ['Entradas de efectivo', totals.movementsIn],
     ['Salidas de efectivo', totals.movementsOut],

@@ -250,7 +250,7 @@ export function cierre(width: number, c: CierreInput) {
   for (const m of c.methods) t.row(`${m.label} (${m.count})`, m.amount);
   t.row('Ventas', c.sales, { bold: true });
   if (c.tipOfSales) t.row(`Propina (${c.tipOfSales.pct} % de ventas)`, c.tipOfSales.amount, { bold: true });
-  t.row(c.tipOfSales ? 'Propinas cobradas' : 'Propinas', c.tips)
+  t.row('Propinas cobradas', c.tips)
     .row('Descuentos', c.discounts)
     .row('Entradas de efectivo', c.movementsIn)
     .row('Salidas de efectivo', c.movementsOut)
@@ -308,7 +308,7 @@ export function cuadreDia(width: number, c: CuadreDiaInput) {
   for (const m of c.methods) t.row(`${m.label} (${m.count})`, m.amount);
   t.row('Ventas', c.sales, { bold: true });
   if (c.tipOfSales) t.row(`Propina (${c.tipOfSales.pct} % de ventas)`, c.tipOfSales.amount, { bold: true });
-  t.row(c.tipOfSales ? 'Propinas cobradas' : 'Propinas', c.tips)
+  t.row('Propinas cobradas', c.tips)
     .row('Descuentos', c.discounts)
     .row('Entradas de efectivo', c.movementsIn)
     .row('Salidas de efectivo', c.movementsOut)

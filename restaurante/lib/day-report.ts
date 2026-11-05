@@ -290,7 +290,6 @@ export async function dayReportPdf(r: DayReport): Promise<Uint8Array> {
   // 1. Resumen
   w.heading('Resumen del día');
   w.row('Ventas cobradas', formatCop(totals.sales), { bold: true });
-  if (r.tipPercent > 0) w.row(`Propina (${r.tipPercent} % de las ventas)`, formatCop(tipOfSales(totals.sales, r.tipPercent)), { bold: true });
   w.row(r.tipPercent > 0 ? 'Propinas cobradas (marcadas al cobrar)' : 'Propinas', formatCop(totals.tips));
   for (const m of METHODS) {
     const b = totals.byMethod[m];

@@ -359,7 +359,7 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
         tables: s.tablesClosed,
         // Las observaciones de la caja van al final de «Ventas por categoría»; el cierre de un mesero las trae aquí.
         notes: waiter ? s.shift.notes : null,
-        tipOfSales: suggestedTip > 0 ? { pct: suggestedTip, amount: formatCop(tipOfSales(s.sales, suggestedTip)) } : null,
+        tipOfSales: null,
         inventory: inv && {
           remaining: inv.remaining.map((i) => ({ area: AREA_LABEL[i.area], name: i.name, qty: shortQuantity(i.stock, i.unit, i.bottleSize) })),
           out: inv.out.map((i) => ({ area: AREA_LABEL[i.area], name: i.name })),
@@ -454,7 +454,7 @@ export async function enqueueDayClosing(actor: Actor, date: string) {
         }),
         methods: METHODS.map((m) => ({ label: METHOD_LABEL[m], amount: formatCop(totals.byMethod[m].amount), count: totals.byMethod[m].count })),
         sales: formatCop(totals.sales),
-        tipOfSales: suggestedTip > 0 ? { pct: suggestedTip, amount: formatCop(tipOfSales(totals.sales, suggestedTip)) } : null,
+        tipOfSales: null,
         tips: formatCop(totals.tips),
         discounts: formatCop(totals.discounts),
         movementsIn: formatCop(totals.movementsIn),

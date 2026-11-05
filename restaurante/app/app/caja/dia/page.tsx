@@ -32,8 +32,8 @@ export default async function DayClosingPage({ searchParams }: { searchParams: P
   const rows: [string, string, boolean?][] = [
     ...METHODS.map((m): [string, string] => [`${t(METHOD_LABEL[m])} (${totals.byMethod[m].count})`, formatCop(totals.byMethod[m].amount)]),
     [t('Ventas'), formatCop(totals.sales), true],
-    ...(suggestedTip > 0 ? [[t('Propina ({pct} % de ventas)', { pct: suggestedTip }), formatCop(tipOfSales(totals.sales, suggestedTip)), true] as [string, string, boolean]] : []),
-    [suggestedTip > 0 ? t('Propinas cobradas') : t('Propinas'), formatCop(totals.tips)],
+    // Solo la propina cobrada (5 nov 2026, pedido de Rigoberto).
+    [t('Propinas cobradas'), formatCop(totals.tips), true],
     [t('Descuentos'), formatCop(totals.discounts)],
     [t('Entradas de efectivo'), formatCop(totals.movementsIn)],
     [t('Salidas de efectivo'), formatCop(totals.movementsOut)],
