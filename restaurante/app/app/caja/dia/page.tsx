@@ -51,8 +51,12 @@ export default async function DayClosingPage({ searchParams }: { searchParams: P
         {shifts.length ? (
           <div className="flex flex-wrap items-start gap-2">
             {/* El cierre completo del día, para guardar o mandar (4 nov 2026). */}
+            {/* En Excel desde el 5 nov 2026 (pedido de Rigoberto); el PDF sigue a un lado. */}
+            <a href={`/app/caja/dia/excel?fecha=${day}`} download className={quietButton}>
+              {t('Descargar cierre (Excel)')}
+            </a>
             <a href={`/app/caja/dia/pdf?fecha=${day}`} download className={quietButton}>
-              {t('Descargar cierre (PDF)')}
+              {t('PDF')}
             </a>
             <PrintDayButton date={day} />
           </div>

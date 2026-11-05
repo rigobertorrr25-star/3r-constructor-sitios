@@ -128,6 +128,14 @@ describe('dos turnos de caja al día', { skip: url ? false : 'sin TEST_DATABASE_
     assert.equal(Buffer.from(pdf.slice(0, 5)).toString(), '%PDF-');
     const { PDFDocument } = await import('pdf-lib');
     assert.ok((await PDFDocument.load(pdf)).getPageCount() >= 1);
+    // En Excel (5 nov 2026): una hoja por parte.
+    const { dayReportXlsx } = await import('../lib/day-report-xlsx');
+    const ExcelJS = (await import('exceljs')).default;
+    const book = new ExcelJS.Workbook();
+    await book.xlsx.load((await dayReportXlsx(r)) as never);
+    assert.deepEqual(book.worksheets.map((w) => w.name), ['Resumen', 'Turnos', 'Ventas por producto', 'Mesas cobradas', 'Gastos', 'Por pagar', 'Pérdidas', 'Descuentos']);
+    assert.equal(book.getWorksheet('Turnos')!.rowCount, 5, 'título, vacío, encabezado y dos turnos');
+    assert.equal(book.getWorksheet('Ventas por producto')!.getCell('D4').value, 100000);
     assert.equal(await report.dayReport(who, '2020-01-01'), null);
     await assert.rejects(report.dayReport({ ...waiter, businessName: '', locationName: '', timezone: 'America/Bogota' }, today), { code: 'FORBIDDEN' });
   });
