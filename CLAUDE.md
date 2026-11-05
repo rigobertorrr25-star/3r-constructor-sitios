@@ -144,8 +144,9 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto):
 - **Llévalo** (4 nov 2026, pedido de Rigoberto: «20 productos con mejor rendimiento»): tienda de dropshipping con 20 productos de
   Dropi en `tiendas/llevalo/` (categorías, un pedido por producto contra entrega por WhatsApp 573107907194; costos y ganancia en
   `tiendas/llevalo/PRODUCTOS.md`). Fotos enlazadas del CDN de Dropi (desde la sesión no cargan; en el navegador sí), salvo el
-  restaurador (`img/5417.jpg`). No enlazar desde 3rpaginas.com. Falta publicarla (proyecto aparte de Vercel, Root Directory
-  `tiendas/llevalo`). Kit de Marketplace de Negro Nuevo en `tiendas/negro-nuevo/marketing/`.
+  restaurador (`img/5417.jpg`). No enlazar desde 3rpaginas.com. Se publica en **Cloudflare Pages, no en Vercel** (pedido de
+  Rigoberto, 5 nov 2026): proyecto `llevalo` conectado a GitHub, rama `main`, Root Directory `tiendas/llevalo`, sin comando
+  de build. Entra a `main` con el PR #94. Kit de Marketplace de Negro Nuevo en `tiendas/negro-nuevo/marketing/`.
 - 3R Burgers: página de muestra a la venta, sin dueño (16 oct 2026). Rigoberto pidió ayuda para conseguir comprador.
 - **ZENOVA** (18 oct 2026): cliente nuevo, tienda de ropa deportiva para mujer. Página estática en `clientes/zenova/`
   (estructura del estilo que mandó el cliente, HNST Studio, con Raleway + Poppins; desde el 19 oct 2026 **solo negro y
