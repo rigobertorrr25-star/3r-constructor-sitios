@@ -45,5 +45,7 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
 - **Imágenes para publicar** (5 nov 2026): la misma tienda con `#publicar` (cuadradas) o `#historias` (verticales) muestra una
   tarjeta por producto (foto, nombre, precio, «Pagas cuando te llega», WhatsApp) para que Rigoberto les tome captura desde el
   celular (las fotos del CDN de Dropi no se pueden bajar desde la sesión). `refPhoto: true` pone «Imagen de referencia».
+- **Los 5 mejores para publicar** (5 nov 2026): `#top5` muestra 5 tarjetas (luces para espejo, espejo de pared, cuchillos, tina
+  spa, destornillador) con su texto y botón «Copiar texto» (`TOP5` en el script; si cambian precios, cambiarlos ahí también).
 - Cuando entre un pedido: revisar al comprador con la huella de Dropi, confirmar por WhatsApp y crear el pedido en Dropi
   solo después de que Rigoberto confirme el resumen.
