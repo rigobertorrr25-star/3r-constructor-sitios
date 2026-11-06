@@ -256,6 +256,8 @@ export const en: Record<string, string> = {
   Comentarios: 'Comments',
   'Factura {n}': 'Invoice {n}',
   'Fecha de la factura {date} · registrada {created}': 'Invoice date {date} · entered {created}',
+  'ventas en efectivo': 'cash sales',
+  'propina de datáfono y transferencia': 'card and transfer tips',
   'Es lo que queda en la caja después de entregar la propina.': 'This is what stays in the drawer after handing out the tips.',
   'Antes de entregar la propina, en la caja debe haber {before} ({cash} + {tips} de propina). Al sacar la propina quedan {cash}.': 'Before handing out the tips, the drawer should have {before} ({cash} + {tips} in tips). After taking the tips out, {cash} remains.',
   'Para el cierre': 'For closing',

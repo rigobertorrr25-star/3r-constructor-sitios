@@ -58,7 +58,20 @@ export default async function CashPage() {
         <div className="rounded-[22px] border-2 border-primary/60 bg-primary/10 p-5">
           <p className="text-[14px] font-semibold uppercase tracking-wide text-primary">{t('Debe haber en la caja')}</p>
           <p className="mt-1 font-display text-[40px] font-bold leading-none">{formatCop(s.expectedCash)}</p>
-          <p className="mt-2 text-[13px] text-muted-foreground">{t('Es lo que queda en la caja después de entregar la propina.')}</p>
+          {/* La suma con la base (6 nov 2026, pedido de Rigoberto: «lo mismo con la base»). */}
+          <p className="mt-3 text-[15px] font-medium">
+            {[
+              `${t('Base')} ${formatCop(s.shift.openingAmount)}`,
+              `+ ${t('ventas en efectivo')} ${formatCop(s.byMethod.cash.amount)}`,
+              s.movementsIn ? `+ ${t('entradas')} ${formatCop(s.movementsIn)}` : '',
+              s.movementsOut ? `− ${t('salidas')} ${formatCop(s.movementsOut)}` : '',
+              s.byMethod.card.tip + s.byMethod.transfer.tip ? `− ${t('propina de datáfono y transferencia')} ${formatCop(s.byMethod.card.tip + s.byMethod.transfer.tip)}` : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}{' '}
+            = {formatCop(s.expectedCash)}
+          </p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{t('Es lo que queda en la caja después de entregar la propina.')}</p>
         </div>
         <div className="rounded-[22px] border-2 border-success/60 bg-success/10 p-5">
           <p className="text-[14px] font-semibold uppercase tracking-wide text-success">{t('Propina para entregar')}</p>
