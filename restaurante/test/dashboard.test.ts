@@ -168,7 +168,7 @@ describe('módulo 08: tablero del dueño', { skip: url ? false : 'sin TEST_DATAB
 });
 
 describe('módulo 12: resumen del día', { skip: url ? false : 'sin TEST_DATABASE_URL' }, () => {
-  it('sin llave de IA arma el resumen con plantilla y lo guarda', async () => {
+  it('sin llave de IA arma el resumen con plantilla; lo de la IA se guarda una vez', async () => {
     delete process.env.ANTHROPIC_API_KEY;
     process.env.DATABASE_URL = url;
     const store = await import('../lib/store');
@@ -185,13 +185,15 @@ describe('módulo 12: resumen del día', { skip: url ? false : 'sin TEST_DATABAS
     assert.equal(first.source, 'plantilla');
     assert.equal(first.cached, false);
     assert.match(first.text, /todavía no hay ventas/);
-    const again = await brief.getBrief(owner, { day, locationId: null, timeZone: 'America/Bogota' });
-    assert.equal(again.cached, true);
-    // En inglés se escribe y se guarda aparte; el de español sigue igual.
+    // La plantilla no se guarda (solo lo escrito por la IA, una vez al día desde las 7 p. m.).
+    const n = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM daily_briefs WHERE business_id = $1`, [a.businessId]);
+    assert.equal(n[0].n, 0);
     const en = await brief.getBrief(owner, { day, locationId: null, timeZone: 'America/Bogota', lang: 'en' });
-    assert.equal(en.cached, false);
     assert.match(en.text, /^Today: no paid sales yet/);
-    assert.equal((await brief.getBrief(owner, { day, locationId: null, timeZone: 'America/Bogota' })).text, first.text);
+    // Lo que la IA ya escribió para el día se devuelve tal cual y no se vuelve a escribir.
+    await db.query(`INSERT INTO daily_briefs (business_id, scope, day, text, source, created_by, lang) VALUES ($1, 'all', $2, 'Texto de la IA', 'ia', $3, 'es')`, [a.businessId, day, owner.id]);
+    const saved = await brief.getBrief(owner, { day, locationId: null, timeZone: 'America/Bogota' });
+    assert.deepEqual([saved.text, saved.source, saved.cached], ['Texto de la IA', 'ia', true]);
     await store.purgeBusiness(a.businessId);
     await db.closePool();
   });

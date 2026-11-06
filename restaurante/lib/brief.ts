@@ -117,28 +117,25 @@ async function writeWithClaude(facts: ReturnType<typeof briefFacts>, lang: Lang)
   }
 }
 
-export type Brief = { text: string; source: 'ia' | 'plantilla'; createdAt: Date; cached: boolean };
+export type Brief = { text: string; source: 'ia' | 'plantilla'; createdAt: Date; cached: boolean; aiAt?: string };
+
+/** Hora (en la sede) desde la que la IA escribe el resumen del día. */
+export const AI_BRIEF_HOUR = 19;
 
 /**
- * El resumen de un día. Se guarda una vez por día y alcance; `refresh` lo vuelve a escribir (por ejemplo, al final
- * de la noche con todas las ventas). El día de hoy guardado con más de 1 hora se rehace solo.
+ * El resumen de un día. La IA escribe UNO solo por negocio y día, a partir de las 7 p. m. (hora de la sede)
+ * (6 nov 2026, pedido de Rigoberto: «que la IA solo redacte un texto por día, en la noche, a las 7 p. m.»). Antes de esa
+ * hora, en otro idioma u otra sede, o si ya se escribió, sale el resumen automático (plantilla), que no gasta IA.
+ * Lo escrito por la IA se guarda y no se vuelve a escribir. Un día pasado sin texto de la IA lo recibe una vez.
  */
 export async function getBrief(actor: Actor, input: { day: string; locationId: string | null; timeZone: string; refresh?: boolean; lang?: Lang }): Promise<Brief> {
   requirePermission(actor, 'finance.view');
   const d = await getDashboard(actor, { from: input.day, to: input.day, locationId: input.locationId }, input.timeZone);
   const scope = d.statement.scope ?? 'all';
   const lang: Lang = input.lang === 'en' ? 'en' : 'es';
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: input.timeZone }).format(new Date());
-  if (!input.refresh) {
-    const saved = (
-      await query<{ text: string; source: string; createdAt: Date; stale: boolean }>(
-        `SELECT text, source, created_at AS "createdAt", (day = $4::date AND created_at < now() - interval '1 hour') AS stale
-           FROM daily_briefs WHERE business_id = $1 AND scope = $2 AND day = $3 AND lang = $5`,
-        [actor.businessId, scope, input.day, today, lang],
-      )
-    )[0];
-    if (saved && !saved.stale) return { text: saved.text, source: saved.source === 'plantilla' ? 'plantilla' : 'ia', createdAt: saved.createdAt, cached: true };
-  }
+  const now = new Date();
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: input.timeZone }).format(now);
+  const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: input.timeZone, hour: 'numeric', hourCycle: 'h23' }).format(now));
   const date = new Date(`${input.day}T12:00:00Z`);
   const label =
     lang === 'en'
@@ -148,18 +145,39 @@ export async function getBrief(actor: Actor, input: { day: string; locationId: s
       : input.day === today
         ? 'Hoy'
         : `El ${date.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', timeZone: 'UTC' })}`;
-  const ai = await writeWithClaude(briefFacts(d, label), lang);
-  const text = ai ?? (lang === 'en' ? templateBriefEn(d, label) : templateBrief(d, label));
-  const source = ai ? 'ia' : 'plantilla';
-  const row = (
-    await query<{ createdAt: Date }>(
-      `INSERT INTO daily_briefs (business_id, scope, day, text, source, created_by, lang) VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (business_id, scope, day, lang) DO UPDATE SET text = EXCLUDED.text, source = EXCLUDED.source, created_by = EXCLUDED.created_by, created_at = now()
-       RETURNING created_at AS "createdAt"`,
-      [actor.businessId, scope, input.day, text, source, actor.id, lang],
+  const template = (): Brief => ({
+    text: lang === 'en' ? templateBriefEn(d, label) : templateBrief(d, label),
+    source: 'plantilla',
+    createdAt: now,
+    cached: false,
+    aiAt: '7:00 p. m.',
+  });
+  // Lo que la IA ya escribió para este día, alcance e idioma.
+  const saved = (
+    await query<{ text: string; createdAt: Date }>(
+      `SELECT text, created_at AS "createdAt" FROM daily_briefs WHERE business_id = $1 AND scope = $2 AND day = $3 AND lang = $4 AND source = 'ia'`,
+      [actor.businessId, scope, input.day, lang],
     )
   )[0];
-  return { text, source, createdAt: row.createdAt, cached: false };
+  if (saved) return { text: saved.text, source: 'ia', createdAt: saved.createdAt, cached: true };
+  // Hoy, antes de las 7 p. m., no se llama a la IA.
+  if (input.day === today && hour < AI_BRIEF_HOUR) return template();
+  // Uno solo por negocio y día: si ya se escribió otro (otra sede o idioma), plantilla.
+  const already = (
+    await query<{ n: number }>(`SELECT count(*)::int AS n FROM daily_briefs WHERE business_id = $1 AND day = $2 AND source = 'ia'`, [actor.businessId, input.day])
+  )[0].n;
+  if (already) return template();
+  const ai = await writeWithClaude(briefFacts(d, label), lang);
+  if (!ai) return template();
+  const row = (
+    await query<{ createdAt: Date }>(
+      `INSERT INTO daily_briefs (business_id, scope, day, text, source, created_by, lang) VALUES ($1, $2, $3, $4, 'ia', $5, $6)
+       ON CONFLICT (business_id, scope, day, lang) DO UPDATE SET text = EXCLUDED.text, source = 'ia', created_by = EXCLUDED.created_by, created_at = now()
+       RETURNING created_at AS "createdAt"`,
+      [actor.businessId, scope, input.day, ai, actor.id, lang],
+    )
+  )[0];
+  return { text: ai, source: 'ia', createdAt: row.createdAt, cached: false };
 }
 
 export const aiConfigured = () => Boolean(process.env.ANTHROPIC_API_KEY);
