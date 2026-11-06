@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NÁRDIS Casa de Perfumes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="NÁRDIS, casa de perfumes de autor. Eau de Parfum con fijación de 8 a 10 horas. Pide por WhatsApp con envío a toda Colombia y pago contra entrega.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+/* Diseño: vitrina nocturna. Fondo vino muy oscuro como el interior de un estuche; cada perfume es un frasco dibujado
+   con el color real de su líquido; el ámbar es el único acento. Una sola apariencia (oscura) a propósito. */
+:root {
+  --ink: #170D10;        /* fondo: vino casi negro */
+  --case: #22141A;       /* superficies: tarjetas, ficha, bolsa */
+  --case-2: #2E1C23;     /* superficies elevadas, campos */
+  --amber: #DDA45E;      /* acento: ámbar */
+  --amber-ink: #1E1007;  /* texto sobre ámbar */
+  --text: #F2E7E1;       /* texto principal */
+  --muted: #BCA59E;      /* texto secundario */
+  --line: rgba(242, 231, 225, .14);
+  --ok: #8FCB9B;
+  --display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --body: "Hanken Grotesk", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --radius: 3px;
+  --wrap: 1180px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--ink); color: var(--text); font: 400 16px/1.6 var(--body); -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
+img, svg { max-width: 100%; }
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+.wrap { max-width: var(--wrap); margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); font-weight: 500; line-height: 1.08; margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font-size: clamp(2rem, 4.4vw, 3.1rem); }
+h3 { font-size: 1.45rem; }
+p { margin: 0; }
+.kicker { font-size: .78rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--amber); }
+.lead { color: var(--muted); font-size: 1.06rem; max-width: 58ch; }
+
+/* Botones: rectos, sin forma de píldora */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .5em; min-height: 48px; padding: 0 1.4em; border-radius: var(--radius); border: 1px solid var(--amber); background: var(--amber); color: var(--amber-ink); font-weight: 600; letter-spacing: .02em; text-decoration: none; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+.btn:hover { background: #E8B672; border-color: #E8B672; }
+.btn.ghost { background: transparent; color: var(--text); border-color: var(--line); }
+.btn.ghost:hover { border-color: var(--amber); color: var(--amber); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* Encabezado */
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: rgba(23, 13, 16, .92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; gap: 24px; min-height: 68px; }
+.logo { font-family: var(--display); font-size: 1.5rem; font-weight: 600; letter-spacing: .28em; text-decoration: none; margin-right: auto; }
+.logo small { display: block; font-family: var(--body); font-size: .62rem; font-weight: 500; letter-spacing: .3em; color: var(--muted); margin-top: -2px; }
+.top nav { display: flex; gap: 22px; }
+.top nav a { text-decoration: none; color: var(--muted); font-weight: 500; font-size: .95rem; }
+.top nav a:hover { color: var(--text); }
+.bag-btn { position: relative; display: inline-flex; align-items: center; gap: 8px; background: none; border: 1px solid var(--line); border-radius: var(--radius); min-height: 44px; padding: 0 14px; cursor: pointer; }
+.bag-btn:hover { border-color: var(--amber); }
+.bag-count { min-width: 22px; height: 22px; border-radius: 11px; background: var(--amber); color: var(--amber-ink); font-size: .78rem; font-weight: 700; display: inline-grid; place-items: center; padding: 0 6px; font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) { .top nav { display: none; } }
+
+/* Portada */
+.hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px; align-items: center; padding-block: 56px 40px; }
+.hero h1 { font-size: clamp(2.7rem, 6.6vw, 5.2rem); margin-top: 14px; }
+.hero .lead { margin-top: 20px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.shelf { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 4%; padding: 30px 6% 0; min-width: 0; }
+.shelf::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 14px; border-top: 1px solid rgba(221, 164, 94, .45); background: linear-gradient(rgba(221, 164, 94, .16), transparent); }
+.shelf .bottle { width: 30%; }
+.shelf .bottle:nth-child(2) { width: 36%; }
+.facts { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.facts div { padding: 18px 16px; border-left: 1px solid var(--line); min-width: 0; }
+.facts div:first-child { border-left: 0; }
+.facts b { display: block; font-family: var(--display); font-size: 1.5rem; font-weight: 500; color: var(--amber); font-variant-numeric: tabular-nums; }
+.facts span { color: var(--muted); font-size: .9rem; }
+@media (max-width: 860px) {
+  .hero-grid { grid-template-columns: 1fr; padding-block: 36px 28px; gap: 28px; }
+  .shelf { max-width: 420px; margin-inline: auto; width: 100%; }
+  .facts { grid-template-columns: repeat(2, 1fr); }
+  .facts div:nth-child(3) { border-left: 0; }
+  .facts div:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+
+/* Frasco dibujado */
+.bottle { display: block; }
+.bottle .liquid { transform-origin: 50% 100%; transform-box: fill-box; }
+@media (prefers-reduced-motion: no-preference) {
+  .shelf .bottle .liquid { animation: fill 1.4s cubic-bezier(.2, .7, .2, 1) both; }
+  .shelf .bottle:nth-child(2) .liquid { animation-delay: .15s; }
+  .shelf .bottle:nth-child(3) .liquid { animation-delay: .3s; }
+}
+@keyframes fill { from { transform: scaleY(.55); } to { transform: scaleY(1); } }
+
+/* Secciones */
+section.band { padding-block: 72px; }
+.band-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px 32px; margin-bottom: 28px; }
+.band-head > div { display: grid; gap: 10px; min-width: 0; }
+
+/* Filtros */
+.filters { display: grid; gap: 12px; margin-bottom: 28px; }
+.filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.filter-row > span { font-size: .85rem; color: var(--muted); width: 70px; }
+.chip { min-height: 40px; padding: 0 14px; border-radius: var(--radius); border: 1px solid var(--line); background: transparent; cursor: pointer; font-size: .92rem; color: var(--muted); }
+.chip:hover { color: var(--text); border-color: rgba(242, 231, 225, .35); }
+.chip[aria-pressed="true"] { background: var(--text); color: var(--ink); border-color: var(--text); font-weight: 600; }
+@media (max-width: 560px) { .filter-row > span { width: 100%; } }
+
+/* Catálogo */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+@media (min-width: 1024px) { .grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .grid { gap: 10px; } .card-body { padding: 12px; } .card-body h3 { font-size: 1.15rem; } .card-foot { flex-wrap: wrap; } }
+.card { display: flex; flex-direction: column; background: var(--case); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; min-width: 0; }
+.card-art { position: relative; display: grid; place-items: center; aspect-ratio: 1 / 1.05; max-width: 100%; padding: 18px 0 0; background: radial-gradient(70% 60% at 50% 70%, var(--glow), transparent 75%), var(--case); border: 0; cursor: pointer; width: 100%; }
+.card-art .bottle { width: 46%; transition: transform .35s ease; }
+.card:hover .card-art .bottle { transform: translateY(-6px); }
+.tag { position: absolute; top: 12px; left: 12px; font-size: .74rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.card-body { display: grid; gap: 6px; padding: 16px 16px 18px; border-top: 1px solid var(--line); flex: 1; align-content: start; }
+.card-body h3 { font-size: 1.32rem; }
+.card-notes { color: var(--muted); font-size: .9rem; }
+.card-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; }
+.price { font-weight: 600; font-variant-numeric: tabular-nums; }
+.price small { color: var(--muted); font-weight: 400; }
+.link-btn { background: none; border: 0; padding: 6px 0; color: var(--amber); font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.empty { color: var(--muted); padding: 30px 0; }
+
+/* Encuentra tu aroma */
+.finder { background: var(--case); border-block: 1px solid var(--line); }
+.finder .wrap { display: grid; grid-template-columns: 1fr 1.25fr; gap: 48px; align-items: start; }
+.quiz { display: grid; gap: 22px; }
+.q { border: 0; margin: 0; padding: 0; display: grid; gap: 10px; }
+.q legend { font-weight: 600; margin-bottom: 4px; padding: 0; }
+.q .filter-row { gap: 8px; }
+.result { display: grid; grid-template-columns: 120px 1fr; gap: 20px; align-items: center; padding: 20px; background: var(--case-2); border: 1px solid rgba(221, 164, 94, .35); border-radius: var(--radius); }
+.result .bottle { width: 100%; }
+.result-body { display: grid; gap: 6px; min-width: 0; }
+.result-body .also { color: var(--muted); font-size: .9rem; }
+.result-body .also button { background: none; border: 0; padding: 0; color: var(--text); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+@media (max-width: 860px) { .finder .wrap { grid-template-columns: 1fr; gap: 28px; } }
+@media (max-width: 460px) { .result { grid-template-columns: 84px 1fr; padding: 16px; gap: 14px; } }
+
+/* Guía de concentraciones (dato del oficio) */
+.conc { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 520px; }
+.conc th, .conc td { text-align: left; padding: 14px 12px; border-bottom: 1px solid var(--line); }
+.conc th { font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.conc tr.ours td { color: var(--amber); font-weight: 600; }
+.table-box { overflow-x: auto; }
+
+/* Cómo pedir */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.step { padding: 22px; border: 1px solid var(--line); border-radius: var(--radius); display: grid; gap: 8px; align-content: start; }
+.step h3 { font-size: 1.3rem; }
+.step p { color: var(--muted); }
+@media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+
+/* Preguntas */
+.faq { display: grid; max-width: 820px; }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq summary { cursor: pointer; padding: 18px 0; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; color: var(--amber); font-size: 1.3rem; line-height: 1; }
+.faq details[open] summary::after { content: "–"; }
+.faq details p { color: var(--muted); padding-bottom: 18px; max-width: 65ch; }
+
+/* Pie */
+footer { border-top: 1px solid var(--line); background: #110A0C; }
+footer .wrap { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 32px; padding-block: 48px 32px; }
+footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; color: var(--muted); }
+footer h4 { margin: 0 0 12px; font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text); }
+footer a { text-decoration: none; }
+footer a:hover { color: var(--amber); }
+.legal { border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+.legal .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding-block: 18px; grid-template-columns: none; }
+@media (max-width: 760px) { footer .wrap { grid-template-columns: 1fr; } }
+
+/* WhatsApp flotante */
+.wa-float { position: fixed; right: calc(18px + env(safe-area-inset-right, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 30; width: 56px; height: 56px; border-radius: 50%; background: #25D366; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(0, 0, 0, .4); }
+.wa-float svg { width: 30px; height: 30px; fill: #fff; }
+
+/* Ficha y bolsa (ventanas) */
+dialog { border: 0; padding: 0; background: var(--case); color: var(--text); max-width: none; max-height: none; }
+dialog::backdrop { background: rgba(8, 4, 5, .72); }
+.sheet { width: min(960px, calc(100% - 24px)); margin: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+.sheet-in { display: grid; grid-template-columns: 1fr 1.1fr; max-height: calc(100dvh - 24px); overflow: auto; }
+.sheet-art { display: grid; place-items: center; padding: 40px 20px; background: radial-gradient(70% 60% at 50% 65%, var(--glow), transparent 75%), var(--case-2); min-width: 0; }
+.sheet-art .bottle { width: min(220px, 60%); }
+.sheet-info { padding: 28px; display: grid; gap: 18px; align-content: start; min-width: 0; }
+.close { position: absolute; top: 10px; right: 10px; width: 44px; height: 44px; border-radius: var(--radius); background: rgba(23, 13, 16, .7); border: 1px solid var(--line); cursor: pointer; font-size: 1.3rem; z-index: 2; }
+.sheet-info h3 { font-size: clamp(1.9rem, 4vw, 2.5rem); }
+.meta { color: var(--muted); font-size: .92rem; }
+.pyramid { display: grid; border-top: 1px solid var(--line); }
+.pyramid div { display: grid; grid-template-columns: 112px 1fr; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.pyramid dt { font-weight: 600; }
+.pyramid dt small { display: block; color: var(--muted); font-weight: 400; font-size: .78rem; }
+.pyramid dd { margin: 0; color: var(--muted); }
+.meters { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.meter { display: grid; gap: 6px; font-size: .88rem; color: var(--muted); }
+.meter i { display: flex; gap: 4px; }
+.meter i b { flex: 1; height: 5px; background: var(--line); border-radius: 1px; }
+.meter i b.on { background: var(--amber); }
+.sizes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.size { display: grid; gap: 2px; padding: 10px 6px; text-align: center; border: 1px solid var(--line); border-radius: var(--radius); background: transparent; cursor: pointer; font-variant-numeric: tabular-nums; }
+.size b { font-size: 1rem; }
+.size span { font-size: .8rem; color: var(--muted); }
+.size[aria-pressed="true"] { border-color: var(--amber); background: rgba(221, 164, 94, .1); }
+.size[aria-pressed="true"] span { color: var(--amber); }
+.buy { display: flex; gap: 10px; align-items: stretch; }
+.qty { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: var(--radius); }
+.qty button { width: 42px; min-height: 46px; background: none; border: 0; cursor: pointer; font-size: 1.1rem; }
+.qty output { min-width: 26px; text-align: center; font-variant-numeric: tabular-nums; }
+.buy .btn { flex: 1; }
+@media (max-width: 760px) {
+  .sheet-in { grid-template-columns: 1fr; }
+  .sheet-art { padding: 34px 20px 20px; }
+  .sheet-art .bottle { width: 130px; }
+  .sheet-info { padding: 20px; }
+  .sizes { grid-template-columns: repeat(2, 1fr); }
+}
+
+.drawer { margin: 0 0 0 auto; height: 100dvh; width: min(440px, 100%); border-left: 1px solid var(--line); }
+.drawer-in { display: flex; flex-direction: column; height: 100%; padding: calc(20px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) 20px; gap: 16px; }
+.drawer-head { display: flex; justify-content: space-between; align-items: center; }
+.drawer-head .close { position: static; }
+.lines { flex: 1; overflow: auto; display: grid; gap: 12px; align-content: start; }
+.line { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.line .bottle { width: 52px; }
+.line-info { min-width: 0; display: grid; gap: 2px; }
+.line-info span { color: var(--muted); font-size: .86rem; }
+.line-side { display: grid; justify-items: end; gap: 6px; font-variant-numeric: tabular-nums; }
+.line-side .qty button { width: 32px; min-height: 32px; }
+.total { display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 14px; font-variant-numeric: tabular-nums; }
+.total div { display: flex; justify-content: space-between; }
+.total .big { font-size: 1.15rem; font-weight: 700; }
+.total .note { color: var(--muted); font-size: .85rem; }
+.field { display: grid; gap: 4px; font-size: .88rem; color: var(--muted); min-width: 0; }
+.field input { width: 100%; min-width: 0; min-height: 44px; padding: 0 12px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--case-2); color: var(--text); font: inherit; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 40; background: var(--text); color: var(--ink); padding: 12px 18px; border-radius: var(--radius); font-weight: 600; box-shadow: 0 10px 30px rgba(0, 0, 0, .4); max-width: calc(100% - 32px); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#inicio">NÁRDIS<small>CASA DE PERFUMES</small></a>
+    <nav aria-label="Secciones">
+      <a href="#tienda">Tienda</a>
+      <a href="#aroma">Encuentra tu aroma</a>
+      <a href="#pedir">Cómo pedir</a>
+    </nav>
+    <button class="bag-btn" id="bag-open" type="button" aria-label="Ver bolsa de compras">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 8h14l-1.2 12.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8L5 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+      <span>Bolsa</span>
+      <span class="bag-count" id="bag-count">0</span>
+    </button>
+  </div>
+</header>
+
+<main id="inicio">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="kicker">Perfumes de autor · Eau de Parfum</p>
+        <h1>Un aroma que se queda cuando tú ya te fuiste.</h1>
+        <p class="lead">Diez perfumes inspirados en Colombia: el café, el páramo, la lluvia de Salento y la vainilla del Pacífico. Concentración del 20 % para que te dure todo el día.</p>
+        <div class="hero-actions">
+          <a class="btn" href="#tienda">Ver perfumes</a>
+          <a class="btn ghost" href="#aroma">Encuentra tu aroma</a>
+        </div>
+      </div>
+      <div class="shelf" id="shelf" aria-hidden="true"></div>
+    </div>
+    <div class="wrap">
+      <div class="facts">
+        <div><b>20 %</b><span>de esencia en cada frasco</span></div>
+        <div><b>8 a 10 h</b><span>de duración en la piel</span></div>
+        <div><b>5 ml</b><span>muestra para probar antes</span></div>
+        <div><b>$150.000</b><span>envío gratis desde este valor</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="tienda">
+    <div class="wrap">
+      <div class="band-head">
+        <div>
+          <p class="kicker">Tienda</p>
+          <h2>Nuestros perfumes</h2>
+        </div>
+        <p class="lead">Toca un perfume para ver sus notas, cuánto dura y los tamaños.</p>
+      </div>
+      <div class="filters">
+        <div class="filter-row" id="f-para"><span>Para</span></div>
+        <div class="filter-row" id="f-fam"><span>Familia</span></div>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <section class="band finder" id="aroma">
+    <div class="wrap">
+      <div style="display:grid;gap:14px;min-width:0">
+        <p class="kicker">Encuentra tu aroma</p>
+        <h2>¿No sabes cuál elegir?</h2>
+        <p class="lead">Responde tres preguntas y te recomendamos el perfume que más va contigo. Si no estás seguro, pide la muestra de 5 ml y pruébalo en tu piel.</p>
+      </div>
+      <form class="quiz" id="quiz">
+        <fieldset class="q"><legend>¿Para quién es?</legend><div class="filter-row" data-q="para"></div></fieldset>
+        <fieldset class="q"><legend>¿Cuándo lo vas a usar más?</legend><div class="filter-row" data-q="momento"></div></fieldset>
+        <fieldset class="q"><legend>¿Qué olor te gusta más?</legend><div class="filter-row" data-q="familia"></div></fieldset>
+        <div class="result" id="result" aria-live="polite"></div>
+      </form>
+    </div>
+  </section>
+
+  <section class="band" id="concentracion">
+    <div class="wrap">
+      <div class="band-head">
+        <div>
+          <p class="kicker">Antes de comprar</p>
+          <h2>¿Por qué dura más un Eau de Parfum?</h2>
+        </div>
+        <p class="lead">Lo que cambia entre un perfume y otro es cuánta esencia lleva. Todos los NÁRDIS son Eau de Parfum.</p>
+      </div>
+      <div class="table-box">
+        <table class="conc">
+          <thead><tr><th>Tipo</th><th>Esencia</th><th>Dura en la piel</th><th>Ideal para</th></tr></thead>
+          <tbody>
+            <tr><td>Splash o colonia</td><td>2 a 5 %</td><td>1 a 2 horas</td><td>Después del baño</td></tr>
+            <tr><td>Eau de Toilette</td><td>5 a 15 %</td><td>3 a 5 horas</td><td>Oficina, clima caliente</td></tr>
+            <tr class="ours"><td>Eau de Parfum (NÁRDIS)</td><td>15 a 20 %</td><td>8 a 10 horas</td><td>Todo el día, de la mañana a la noche</td></tr>
+            <tr><td>Extracto</td><td>20 a 30 %</td><td>Más de 10 horas</td><td>Ocasiones especiales</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="pedir" style="padding-top:0">
+    <div class="wrap">
+      <div class="band-head">
+        <div>
+          <p class="kicker">Cómo pedir</p>
+          <h2>Tu perfume en casa en pocos días</h2>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step"><h3>Elige</h3><p>Agrega a la bolsa los perfumes y el tamaño que quieres. Puedes empezar con la muestra de 5 ml.</p></div>
+        <div class="step"><h3>Escríbenos</h3><p>Toca «Pedir por WhatsApp». Te llega el pedido listo y te confirmamos el envío a tu ciudad.</p></div>
+        <div class="step"><h3>Recibe y paga</h3><p>Enviamos a toda Colombia. Pagas contra entrega, por transferencia o con Nequi.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="preguntas" style="padding-top:0">
+    <div class="wrap">
+      <div class="band-head"><div><p class="kicker">Preguntas frecuentes</p><h2>Lo que más nos preguntan</h2></div></div>
+      <div class="faq">
+        <details><summary>¿Cuánto dura el perfume en la piel?</summary><p>Entre 8 y 10 horas, según tu tipo de piel y el clima. Para que dure más, aplícalo en el cuello y las muñecas justo después del baño, sin frotar.</p></details>
+        <details><summary>¿Cuánto vale el envío?</summary><p>Es gratis en pedidos desde $150.000. Si tu pedido es menor, el envío cuesta entre $10.000 y $16.000 según la ciudad y te lo confirmamos por WhatsApp antes de despachar.</p></details>
+        <details><summary>¿Cuánto se demora en llegar?</summary><p>De 1 a 2 días hábiles en ciudades principales y de 3 a 5 días hábiles en el resto del país.</p></details>
+        <details><summary>¿Puedo probarlo antes de comprar el frasco grande?</summary><p>Sí. Cada perfume tiene una muestra de 5 ml por $25.000. Si después compras el frasco de 50 o 100 ml, te descontamos ese valor.</p></details>
+        <details><summary>¿Hacen cambios?</summary><p>Si el frasco llega roto o con un defecto, te lo cambiamos sin costo. Escríbenos dentro de los 3 días siguientes a la entrega con una foto.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div style="display:grid;gap:12px;min-width:0">
+      <a class="logo" href="#inicio">NÁRDIS<small>CASA DE PERFUMES</small></a>
+      <p style="color:var(--muted);max-width:40ch">Perfumes de autor hechos en Colombia. Envíos a todo el país y pago contra entrega.</p>
+    </div>
+    <div>
+      <h4>Tienda</h4>
+      <ul>
+        <li><a href="#tienda" data-para="Ella">Para ella</a></li>
+        <li><a href="#tienda" data-para="Él">Para él</a></li>
+        <li><a href="#tienda" data-para="Unisex">Unisex</a></li>
+        <li><a href="#aroma">Encuentra tu aroma</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Contacto</h4>
+      <ul>
+        <li><a class="wa-link" href="#" target="_blank" rel="noopener">WhatsApp: <span class="wa-text"></span></a></li>
+        <li><a href="https://www.instagram.com/" target="_blank" rel="noopener">Instagram: @nardis.perfumes</a></li>
+        <li>Lunes a sábado, 8:00 a. m. a 7:00 p. m.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="legal"><div class="wrap"><span>© 2026 NÁRDIS Casa de Perfumes</span><span>Página hecha por 3R Innovación</span></div></div>
+</footer>
+
+<a class="wa-float wa-link" href="#" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.4.8 3.2.6.5-.1 1.5-.6 1.8-1.2.2-.6.2-1.1.1-1.2l-.5-.2Z"/></svg>
+</a>
+
+<dialog class="sheet" id="sheet" aria-labelledby="sheet-name">
+  <div class="sheet-in" id="sheet-in">
+    <button class="close" type="button" data-close aria-label="Cerrar">×</button>
+    <div class="sheet-art" id="sheet-art"></div>
+    <div class="sheet-info">
+      <div style="display:grid;gap:8px">
+        <p class="kicker" id="sheet-fam"></p>
+        <h3 id="sheet-name"></h3>
+        <p class="meta" id="sheet-meta"></p>
+      </div>
+      <p id="sheet-desc"></p>
+      <dl class="pyramid" id="sheet-pyr" style="margin:0"></dl>
+      <div class="meters" id="sheet-meters"></div>
+      <div style="display:grid;gap:8px">
+        <p style="font-weight:600">Tamaño</p>
+        <div class="sizes" id="sheet-sizes"></div>
+      </div>
+      <div class="buy">
+        <div class="qty"><button type="button" id="q-minus" aria-label="Quitar uno">−</button><output id="q-val">1</output><button type="button" id="q-plus" aria-label="Agregar uno">+</button></div>
+        <button class="btn" type="button" id="sheet-add">Agregar a la bolsa</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="drawer" id="drawer" aria-labelledby="drawer-title">
+  <div class="drawer-in">
+    <div class="drawer-head"><h3 id="drawer-title">Tu bolsa</h3><button class="close" type="button" data-close aria-label="Cerrar">×</button></div>
+    <div class="lines" id="lines"></div>
+    <div class="total" id="total"></div>
+    <div class="fields">
+      <label class="field">Tu nombre<input id="c-name" autocomplete="name" placeholder="Ej.: Laura Gómez"></label>
+      <label class="field">Ciudad<input id="c-city" autocomplete="address-level2" placeholder="Ej.: Medellín"></label>
+    </div>
+    <a class="btn" id="send" href="#" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function () {
+  /* Cambia aquí el número de WhatsApp del cliente (con 57 adelante, sin espacios). */
+  var WA = '573000000000';
+  var WA_TEXT = '300 000 0000';
+  var FREE_SHIP = 150000;
+
+  /* Tamaños y precios por nivel (COP). */
+  var TIERS = {
+    a: [['5 ml', 25000], ['30 ml', 89000], ['50 ml', 129000], ['100 ml', 179000]],
+    b: [['5 ml', 25000], ['30 ml', 95000], ['50 ml', 139000], ['100 ml', 199000]],
+    c: [['5 ml', 25000], ['30 ml', 105000], ['50 ml', 155000], ['100 ml', 219000]]
+  };
+  var FAMILIAS = ['Floral', 'Amaderado', 'Fresco y cítrico', 'Ámbar y especias', 'Dulce'];
+  var MOMENTOS = { dia: 'De día', noche: 'De noche', todo: 'Día y noche' };
+
+  /* shape: 0 columna, 1 redondo, 2 facetado, 3 petaca */
+  var PRODUCTS = [
+    { id: 'ambar-nocturno', name: 'Ámbar Nocturno', para: 'Unisex', fam: 'Ámbar y especias', mom: 'noche', tier: 'b', shape: 2, liquid: '#C9761E', cap: '#1C1210',
+      desc: 'Cálido y envolvente. Abre con pimienta rosa y termina en ámbar y vainilla. Para las noches en que quieres que te recuerden.',
+      top: 'Bergamota, pimienta rosa', heart: 'Incienso, rosa', base: 'Ámbar, vainilla, pachulí', fix: 5, trail: 4 },
+    { id: 'flor-de-cafeto', name: 'Flor de Cafeto', para: 'Ella', fam: 'Floral', mom: 'dia', tier: 'a', shape: 1, liquid: '#F0C2AE', cap: '#D8B48A',
+      desc: 'La flor blanca del café en la mañana. Suave, limpio y femenino; perfecto para la oficina o la universidad.',
+      top: 'Mandarina, pera', heart: 'Flor de café, jazmín', base: 'Almizcle blanco, haba tonka', fix: 3, trail: 3 },
+    { id: 'cedro-de-paramo', name: 'Cedro de Páramo', para: 'Él', fam: 'Amaderado', mom: 'dia', tier: 'b', shape: 0, liquid: '#7D8A52', cap: '#2B2A22',
+      desc: 'Aire frío de montaña, eucalipto y madera. Fresco al principio y seco y elegante al final.',
+      top: 'Eucalipto, limón', heart: 'Cedro, salvia', base: 'Vetiver, musgo de roble', fix: 4, trail: 3 },
+    { id: 'guayaba-rosa', name: 'Guayaba Rosa', para: 'Ella', fam: 'Fresco y cítrico', mom: 'dia', tier: 'a', shape: 3, liquid: '#F08C8C', cap: '#F2E7E1',
+      desc: 'Frutal, alegre y jugoso. Guayaba, toronja y un fondo suave de almizcle para el día a día.',
+      top: 'Guayaba, toronja', heart: 'Peonía, frambuesa', base: 'Almizcle, madera clara', fix: 3, trail: 3 },
+    { id: 'cacao-y-tabaco', name: 'Cacao y Tabaco', para: 'Él', fam: 'Ámbar y especias', mom: 'noche', tier: 'c', shape: 2, liquid: '#7A3F1D', cap: '#C99A5B',
+      desc: 'Intenso y seguro. Cacao amargo, hoja de tabaco y especias. Pocas gotas bastan.',
+      top: 'Cardamomo, canela', heart: 'Hoja de tabaco, cacao', base: 'Cuero, haba tonka, sándalo', fix: 5, trail: 5 },
+    { id: 'lluvia-en-salento', name: 'Lluvia en Salento', para: 'Unisex', fam: 'Fresco y cítrico', mom: 'todo', tier: 'a', shape: 0, liquid: '#A9D3C4', cap: '#F2E7E1',
+      desc: 'Hoja verde mojada y té verde. Huele a limpio y a aire libre; sirve para cualquier hora y cualquier clima.',
+      top: 'Hoja verde, toronja', heart: 'Té verde, lirio de agua', base: 'Almizcle, cedro', fix: 3, trail: 2 },
+    { id: 'vainilla-de-tumaco', name: 'Vainilla de Tumaco', para: 'Ella', fam: 'Dulce', mom: 'noche', tier: 'b', shape: 1, liquid: '#E6B66A', cap: '#5A2E1B',
+      desc: 'Dulce y cremoso, con coco y vainilla del Pacífico. Se siente cerca de la piel y deja una estela suave.',
+      top: 'Coco, almendra', heart: 'Vainilla, flor de tiaré', base: 'Caramelo, sándalo', fix: 4, trail: 4 },
+    { id: 'cuero-sabanero', name: 'Cuero Sabanero', para: 'Él', fam: 'Amaderado', mom: 'noche', tier: 'c', shape: 3, liquid: '#5E3A2A', cap: '#151012',
+      desc: 'Cuero, madera ahumada y un toque de limón. Clásico y masculino para eventos y salidas.',
+      top: 'Limón, pimienta negra', heart: 'Cuero, iris', base: 'Madera ahumada, ámbar gris', fix: 5, trail: 4 },
+    { id: 'azahar-del-caribe', name: 'Azahar del Caribe', para: 'Ella', fam: 'Floral', mom: 'todo', tier: 'b', shape: 2, liquid: '#F5DE9A', cap: '#E9E2D8',
+      desc: 'Flor de naranjo y gardenia con la luz del Caribe. Luminoso de día y elegante de noche.',
+      top: 'Naranja, neroli', heart: 'Azahar, gardenia', base: 'Ámbar suave, almizcle', fix: 4, trail: 3 },
+    { id: 'cafe-de-origen', name: 'Café de Origen', para: 'Unisex', fam: 'Dulce', mom: 'todo', tier: 'b', shape: 0, liquid: '#9A5A2E', cap: '#DDA45E',
+      desc: 'Café recién tostado con un toque de cardamomo y haba tonka. Dulce sin empalagar.',
+      top: 'Cardamomo, bergamota', heart: 'Café tostado, lavanda', base: 'Haba tonka, vainilla', fix: 4, trail: 3 }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var money = function (n) { return '$' + n.toLocaleString('es-CO'); };
+  var find = function (id) { return PRODUCTS.filter(function (p) { return p.id === id; })[0]; };
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function glow(p) { return 'color-mix(in srgb, ' + p.liquid + ' 30%, transparent)'; }
+
+  /* Frasco dibujado en SVG con el color del líquido de cada perfume. */
+  var uid = 0;
+  function bottle(p) {
+    var id = 'b' + (uid++);
+    var body, cap, neck, label, fillTop;
+    if (p.shape === 1) {
+      body = '<circle cx="60" cy="122" r="48"/>';
+      neck = '<rect x="50" y="62" width="20" height="14"/>';
+      cap = '<circle cx="60" cy="44" r="20"/>';
+      label = [38, 116, 44, 16]; fillTop = 92;
+    } else if (p.shape === 2) {
+      body = '<path d="M38 62h44l20 28v68l-20 16H38l-20-16V90z"/>';
+      neck = '<rect x="50" y="50" width="20" height="14"/>';
+      cap = '<path d="M42 14h36l6 38H36z"/>';
+      label = [36, 112, 48, 16]; fillTop = 84;
+    } else if (p.shape === 3) {
+      body = '<rect x="16" y="80" width="88" height="94" rx="16"/>';
+      neck = '<rect x="48" y="68" width="24" height="14"/>';
+      cap = '<rect x="38" y="38" width="44" height="32" rx="2"/>';
+      label = [32, 120, 56, 16]; fillTop = 98;
+    } else {
+      body = '<rect x="30" y="58" width="60" height="116" rx="4"/>';
+      neck = '<rect x="50" y="46" width="20" height="14"/>';
+      cap = '<rect x="42" y="8" width="36" height="40" rx="2"/>';
+      label = [36, 110, 48, 16]; fillTop = 78;
+    }
+    return '<svg class="bottle" viewBox="0 0 120 180" role="img" aria-label="Frasco de ' + p.name + '">' +
+      '<defs><clipPath id="' + id + '">' + body + '</clipPath>' +
+      '<linearGradient id="' + id + 'g" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".28"/><stop offset=".45" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient></defs>' +
+      '<g fill="rgba(242,231,225,.10)">' + body + '</g>' +
+      '<g clip-path="url(#' + id + ')"><rect class="liquid" x="0" y="' + fillTop + '" width="120" height="' + (180 - fillTop) + '" fill="' + p.liquid + '"/>' +
+      '<rect x="0" y="0" width="120" height="180" fill="url(#' + id + 'g)"/>' +
+      '<rect x="0" y="' + fillTop + '" width="120" height="2" fill="#fff" fill-opacity=".35"/></g>' +
+      '<g fill="none" stroke="rgba(242,231,225,.55)" stroke-width="1.2">' + body + '</g>' +
+      '<g fill="rgba(242,231,225,.35)">' + neck + '</g>' +
+      '<g fill="' + p.cap + '" stroke="rgba(242,231,225,.35)" stroke-width="1">' + cap + '</g>' +
+      '<rect x="' + label[0] + '" y="' + label[1] + '" width="' + label[2] + '" height="' + label[3] + '" fill="#F2E7E1" fill-opacity=".92"/>' +
+      '<text x="60" y="' + (label[1] + 11) + '" text-anchor="middle" font-family="Bodoni Moda, Georgia, serif" font-size="8" letter-spacing="2" fill="#170D10">NÁRDIS</text>' +
+      '<path d="M' + (p.shape === 3 ? 26 : p.shape === 1 ? 28 : 36) + ' ' + (fillTop + 8) + 'v40" stroke="#fff" stroke-opacity=".28" stroke-width="3" stroke-linecap="round"/>' +
+      '</svg>';
+  }
+
+  /* Portada: tres frascos en la repisa */
+  $('shelf').innerHTML = ['flor-de-cafeto', 'ambar-nocturno', 'cedro-de-paramo'].map(function (id) { return bottle(find(id)); }).join('');
+
+  /* Filtros */
+  var fPara = 'Todos', fFam = 'Todas';
+  function chips(boxId, options, get, set) {
+    var box = $(boxId);
+    box.querySelectorAll('.chip').forEach(function (c) { c.remove(); });
+    options.forEach(function (o) {
+      var b = el('button', 'chip', o); b.type = 'button';
+      b.setAttribute('aria-pressed', String(get() === o));
+      b.addEventListener('click', function () { set(o); });
+      box.appendChild(b);
+    });
+  }
+  function renderFilters() {
+    chips('f-para', ['Todos', 'Ella', 'Él', 'Unisex'], function () { return fPara; }, function (v) { fPara = v; renderFilters(); renderGrid(); });
+    chips('f-fam', ['Todas'].concat(FAMILIAS), function () { return fFam; }, function (v) { fFam = v; renderFilters(); renderGrid(); });
+  }
+  function paraText(p) { return p.para === 'Unisex' ? 'Unisex' : 'Para ' + p.para.toLowerCase(); }
+  function card(p) {
+    var c = el('article', 'card');
+    c.style.setProperty('--glow', glow(p));
+    var art = el('button', 'card-art'); art.type = 'button'; art.setAttribute('aria-label', 'Ver ' + p.name);
+    art.innerHTML = '<span class="tag">' + paraText(p) + '</span>' + bottle(p);
+    art.addEventListener('click', function () { openSheet(p); });
+    var b = el('div', 'card-body');
+    b.appendChild(el('p', 'kicker', p.fam + ' · ' + MOMENTOS[p.mom]));
+    b.appendChild(el('h3', null, p.name));
+    b.appendChild(el('p', 'card-notes', p.heart + ', ' + p.base.split(',')[0].toLowerCase()));
+    var foot = el('div', 'card-foot');
+    var pr = el('p', 'price'); pr.innerHTML = '<small>50 ml </small>' + money(TIERS[p.tier][2][1]);
+    var go = el('button', 'link-btn', 'Ver perfume'); go.type = 'button';
+    go.addEventListener('click', function () { openSheet(p); });
+    foot.appendChild(pr); foot.appendChild(go); b.appendChild(foot);
+    c.appendChild(art); c.appendChild(b);
+    return c;
+  }
+  function renderGrid() {
+    var g = $('grid'); g.innerHTML = '';
+    var list = PRODUCTS.filter(function (p) {
+      return (fPara === 'Todos' || p.para === fPara) && (fFam === 'Todas' || p.fam === fFam);
+    });
+    if (!list.length) { g.appendChild(el('p', 'empty', 'No hay perfumes con esa combinación. Prueba con otra familia o toca «Todos».')); return; }
+    list.forEach(function (p) { g.appendChild(card(p)); });
+  }
+  document.querySelectorAll('[data-para]').forEach(function (a) {
+    a.addEventListener('click', function () { fPara = a.getAttribute('data-para'); fFam = 'Todas'; renderFilters(); renderGrid(); });
+  });
+
+  /* Encuentra tu aroma */
+  var answers = { para: 'Ella', momento: 'dia', familia: 'Floral' };
+  var QUIZ = {
+    para: [['Ella', 'Para ella'], ['Él', 'Para él'], ['Unisex', 'Me da igual']],
+    momento: [['dia', 'De día'], ['noche', 'De noche'], ['todo', 'Todo el tiempo']],
+    familia: [['Floral', 'Flores'], ['Amaderado', 'Maderas'], ['Fresco y cítrico', 'Frutas y cítricos'], ['Ámbar y especias', 'Especias'], ['Dulce', 'Dulce y vainilla']]
+  };
+  function renderQuiz() {
+    document.querySelectorAll('[data-q]').forEach(function (box) {
+      var k = box.getAttribute('data-q'); box.innerHTML = '';
+      QUIZ[k].forEach(function (o) {
+        var b = el('button', 'chip', o[1]); b.type = 'button';
+        b.setAttribute('aria-pressed', String(answers[k] === o[0]));
+        b.addEventListener('click', function () { answers[k] = o[0]; renderQuiz(); });
+        box.appendChild(b);
+      });
+    });
+    var ranked = PRODUCTS.map(function (p) {
+      var s = 0;
+      if (p.fam === answers.familia) s += 4;
+      if (answers.para === 'Unisex' || p.para === answers.para) s += 3; else if (p.para === 'Unisex') s += 2;
+      if (p.mom === answers.momento) s += 2; else if (p.mom === 'todo' || answers.momento === 'todo') s += 1;
+      return [s, p];
+    }).sort(function (a, b) { return b[0] - a[0]; }).map(function (x) { return x[1]; });
+    var best = ranked[0], r = $('result');
+    r.style.setProperty('--glow', glow(best));
+    r.innerHTML = bottle(best);
+    var body = el('div', 'result-body');
+    body.appendChild(el('p', 'kicker', 'Te recomendamos'));
+    body.appendChild(el('h3', null, best.name));
+    body.appendChild(el('p', 'card-notes', best.desc));
+    var also = el('p', 'also', 'También te pueden gustar: ');
+    ranked.slice(1, 3).forEach(function (p, i) {
+      var b = el('button', null, p.name); b.type = 'button';
+      b.addEventListener('click', function () { openSheet(p); });
+      if (i) also.appendChild(document.createTextNode(' y '));
+      also.appendChild(b);
+    });
+    body.appendChild(also);
+    var go = el('button', 'btn', 'Ver ' + best.name); go.type = 'button'; go.style.justifySelf = 'start'; go.style.marginTop = '6px';
+    go.addEventListener('click', function () { openSheet(best); });
+    body.appendChild(go);
+    r.appendChild(body);
+  }
+  $('quiz').addEventListener('submit', function (e) { e.preventDefault(); });
+
+  /* Ficha del perfume */
+  var current = null, curSize = 2, curQty = 1;
+  function openSheet(p) {
+    current = p; curSize = 2; curQty = 1;
+    $('sheet-in').style.setProperty('--glow', glow(p));
+    $('sheet-art').innerHTML = bottle(p);
+    $('sheet-fam').textContent = p.fam;
+    $('sheet-name').textContent = p.name;
+    $('sheet-meta').textContent = paraText(p) + ' · ' + MOMENTOS[p.mom] + ' · Eau de Parfum 20 %';
+    $('sheet-desc').textContent = p.desc;
+    $('sheet-pyr').innerHTML = '';
+    [['Salida', 'primeros 15 min', p.top], ['Corazón', 'de 30 min a 4 h', p.heart], ['Fondo', 'de 4 h en adelante', p.base]].forEach(function (n) {
+      var d = el('div'); var dt = el('dt', null, n[0]); dt.appendChild(el('small', null, n[1]));
+      d.appendChild(dt); d.appendChild(el('dd', null, n[2])); $('sheet-pyr').appendChild(d);
+    });
+    $('sheet-meters').innerHTML = '';
+    [['Duración', p.fix], ['Estela (cuánto se siente a tu alrededor)', p.trail]].forEach(function (m) {
+      var w = el('div', 'meter'); w.appendChild(el('span', null, m[0]));
+      var i = el('i'); i.setAttribute('aria-label', m[1] + ' de 5');
+      for (var n = 1; n <= 5; n++) i.appendChild(el('b', n <= m[1] ? 'on' : ''));
+      w.appendChild(i); $('sheet-meters').appendChild(w);
+    });
+    paintSheet();
+    var d = $('sheet'); if (!d.open) d.showModal();
+    $('sheet-in').scrollTop = 0;
+  }
+  function paintSheet() {
+    var box = $('sheet-sizes'); box.innerHTML = '';
+    TIERS[current.tier].forEach(function (s, i) {
+      var b = el('button', 'size'); b.type = 'button';
+      b.setAttribute('aria-pressed', String(i === curSize));
+      b.appendChild(el('b', null, s[0])); b.appendChild(el('span', null, i === 0 ? 'Muestra · ' + money(s[1]) : money(s[1])));
+      b.addEventListener('click', function () { curSize = i; paintSheet(); });
+      box.appendChild(b);
+    });
+    $('q-val').textContent = curQty;
+    $('sheet-add').textContent = 'Agregar a la bolsa · ' + money(TIERS[current.tier][curSize][1] * curQty);
+  }
+  $('q-minus').addEventListener('click', function () { curQty = Math.max(1, curQty - 1); paintSheet(); });
+  $('q-plus').addEventListener('click', function () { curQty = Math.min(10, curQty + 1); paintSheet(); });
+  $('sheet-add').addEventListener('click', function () {
+    addToCart(current.id, curSize, curQty);
+    $('sheet').close();
+    toast(current.name + ' (' + TIERS[current.tier][curSize][0] + ') quedó en tu bolsa');
+  });
+
+  /* Bolsa */
+  var KEY = 'nardis-bolsa-1', cart = [];
+  try { cart = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { cart = []; }
+  cart = cart.filter(function (l) { var p = find(l.id); return p && TIERS[p.tier][l.size]; });
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(cart)); } catch (e) {} }
+  function addToCart(id, size, qty) {
+    var line = cart.filter(function (l) { return l.id === id && l.size === size; })[0];
+    if (line) line.qty = Math.min(20, line.qty + qty); else cart.push({ id: id, size: size, qty: qty });
+    save(); renderBag();
+  }
+  function lineTotal(l) { return TIERS[find(l.id).tier][l.size][1] * l.qty; }
+  function renderBag() {
+    var count = cart.reduce(function (a, l) { return a + l.qty; }, 0);
+    $('bag-count').textContent = count;
+    var box = $('lines'); box.innerHTML = '';
+    if (!cart.length) {
+      box.appendChild(el('p', 'empty', 'Tu bolsa está vacía. Elige un perfume en la tienda o usa «Encuentra tu aroma».'));
+    }
+    cart.forEach(function (l, idx) {
+      var p = find(l.id), row = el('div', 'line');
+      row.innerHTML = bottle(p);
+      var info = el('div', 'line-info'); info.appendChild(el('b', null, p.name)); info.appendChild(el('span', null, TIERS[p.tier][l.size][0] + ' · ' + money(TIERS[p.tier][l.size][1]) + ' c/u'));
+      var side = el('div', 'line-side'); side.appendChild(el('b', null, money(lineTotal(l))));
+      var q = el('div', 'qty');
+      var m = el('button', null, '−'); m.type = 'button'; m.setAttribute('aria-label', 'Quitar uno de ' + p.name);
+      var o = el('output', null, l.qty);
+      var pl = el('button', null, '+'); pl.type = 'button'; pl.setAttribute('aria-label', 'Agregar uno de ' + p.name);
+      m.addEventListener('click', function () { l.qty -= 1; if (l.qty < 1) cart.splice(idx, 1); save(); renderBag(); });
+      pl.addEventListener('click', function () { l.qty = Math.min(20, l.qty + 1); save(); renderBag(); });
+      q.appendChild(m); q.appendChild(o); q.appendChild(pl); side.appendChild(q);
+      row.appendChild(info); row.appendChild(side); box.appendChild(row);
+    });
+    var sub = cart.reduce(function (a, l) { return a + lineTotal(l); }, 0);
+    var t = $('total'); t.innerHTML = '';
+    var r1 = el('div'); r1.appendChild(el('span', null, 'Subtotal')); r1.appendChild(el('span', null, money(sub)));
+    var r2 = el('div'); r2.appendChild(el('span', null, 'Envío')); r2.appendChild(el('span', null, sub >= FREE_SHIP ? 'Gratis' : sub ? 'Te lo confirmamos' : '—'));
+    var r3 = el('div', 'big'); r3.appendChild(el('span', null, 'Total')); r3.appendChild(el('span', null, money(sub)));
+    t.appendChild(r1); t.appendChild(r2); t.appendChild(r3);
+    if (sub && sub < FREE_SHIP) t.appendChild(el('p', 'note', 'Te faltan ' + money(FREE_SHIP - sub) + ' para el envío gratis.'));
+    var send = $('send');
+    if (cart.length) { send.removeAttribute('aria-disabled'); send.style.opacity = ''; send.style.pointerEvents = ''; }
+    else { send.setAttribute('aria-disabled', 'true'); send.style.opacity = '.45'; send.style.pointerEvents = 'none'; }
+    send.href = waLink(orderText(sub));
+  }
+  function orderText(sub) {
+    var name = $('c-name').value.trim(), city = $('c-city').value.trim();
+    var lines = ['Hola NÁRDIS, quiero hacer este pedido:', ''];
+    cart.forEach(function (l) { var p = find(l.id); lines.push('• ' + l.qty + ' × ' + p.name + ' ' + TIERS[p.tier][l.size][0] + ' — ' + money(lineTotal(l))); });
+    lines.push('', 'Total: ' + money(sub) + (sub >= FREE_SHIP ? ' (envío gratis)' : ' + envío'));
+    if (name) lines.push('Nombre: ' + name);
+    if (city) lines.push('Ciudad: ' + city);
+    return lines.join('\n');
+  }
+  function waLink(text) { return 'https://wa.me/' + WA + '?text=' + encodeURIComponent(text); }
+  ['c-name', 'c-city'].forEach(function (id) { $(id).addEventListener('input', renderBag); });
+
+  /* Enlaces de WhatsApp generales */
+  document.querySelectorAll('.wa-link').forEach(function (a) { a.href = waLink('Hola NÁRDIS, quiero información de sus perfumes.'); });
+  document.querySelectorAll('.wa-text').forEach(function (s) { s.textContent = WA_TEXT; });
+
+  /* Ventanas */
+  $('bag-open').addEventListener('click', function () { renderBag(); $('drawer').showModal(); });
+  document.querySelectorAll('dialog').forEach(function (d) {
+    d.addEventListener('click', function (e) { if (e.target === d) d.close(); });
+    d.querySelectorAll('[data-close]').forEach(function (b) { b.addEventListener('click', function () { d.close(); }); });
+  });
+
+  var tt;
+  function toast(msg) { var t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(tt); tt = setTimeout(function () { t.hidden = true; }, 2600); }
+
+  renderFilters(); renderGrid(); renderQuiz(); renderBag();
+})();
+</script>
+</body>
+</html>
