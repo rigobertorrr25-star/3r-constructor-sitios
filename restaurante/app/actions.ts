@@ -31,7 +31,7 @@ import { createReservation, requestReservation, seatReservation, updatePublicSet
 import { addExpense, payExpense, voidExpense, type PurchaseLine } from '@/lib/finance';
 import { addLoss, voidLoss } from '@/lib/losses';
 import { itemsForPurchase, listItems, registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
-import { addMovement, applyDiscount, closeShift, closeZeroBalance, correctClosing, moveCashPayment, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
+import { addMovement, applyDiscount, closeShift, closeZeroBalance, correctClosing, moveCashPayment, openShift, pay, reversePayment, voidDiscount, correctMovement } from '@/lib/cash';
 import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine, moveItem } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { clearInventory, clearMenu, clearSales } from '@/lib/sales-reset';
@@ -1379,4 +1379,15 @@ export async function printDayAction(_prev: FormState, formData: FormData): Prom
 export async function printBillAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff();
   return run(formData, () => printBill(staff, text(formData, 'sessionId')), [], 'Precuenta enviada a la impresora de caja.');
+}
+
+export async function correctMovementAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const remove = formData.get('remove') === 'on';
+  return run(
+    formData,
+    () => correctMovement(staff, text(formData, 'movementId'), { amount: remove ? 0 : int(formData, 'amount'), reason: text(formData, 'reason') }),
+    ['/app/caja', `/app/caja/turno/${text(formData, 'shiftId')}`, '/app/caja/dia'],
+    remove ? 'Movimiento eliminado.' : 'Movimiento corregido.',
+  );
 }

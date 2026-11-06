@@ -158,6 +158,20 @@ describe('dos turnos de caja al día', { skip: url ? false : 'sin TEST_DATABASE_
     assert.deepEqual(after.shift.cashCount, { b100000: 1, b10000: 1, b5000: 1, b2000: 1, c500: 1 });
     const audit = await store.listAudit(owner, { action: 'cash.correct' });
     assert.match(audit[0].summary, /\$112\.500 → \$117\.500 \(cuadra\)/);
+    // Corregir o eliminar una salida de un cierre ya hecho (6 nov 2026).
+    const ice = after.movements.find((m) => m.reason === 'Pago: hielo')!;
+    await assert.rejects(cash.correctMovement(lina, ice.id, { amount: 2000, reason: 'Era menos' }), { code: 'FORBIDDEN' });
+    await assert.rejects(cash.correctMovement(owner, ice.id, { amount: 2000, reason: '' }), { code: 'INVALID' });
+    await cash.correctMovement(owner, ice.id, { amount: 2000, reason: 'Era menos' });
+    let fixed = (await cash.shiftSummary(owner, second.shift.id))!;
+    assert.equal(fixed.shift.expectedCash, 120500, 'el esperado sube 3.000');
+    assert.equal(fixed.movementsOut, 2000);
+    await cash.correctMovement(owner, ice.id, { amount: 0, reason: 'No pasó' });
+    fixed = (await cash.shiftSummary(owner, second.shift.id))!;
+    assert.equal(fixed.shift.expectedCash, 122500);
+    assert.equal(fixed.movements.length, 0, 'eliminada: ya no sale');
+    await assert.rejects(cash.correctMovement(owner, ice.id, { amount: 0, reason: 'Otra vez' }), { code: 'CONFLICT' });
+    assert.match((await store.listAudit(owner, { action: 'cash.movement.correct' }))[0].summary, /Eliminó la salida de efectivo «Pago: hielo»/);
     // Una caja abierta no se corrige.
     await cash.openShift(ana, 0);
     const open = (await cash.getOpenShift(ana))!;

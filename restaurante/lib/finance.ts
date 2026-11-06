@@ -177,7 +177,7 @@ export async function addExpense(
           await db.query<{ cash: string }>(
             `SELECT $2::bigint
                   + (SELECT COALESCE(sum(CASE WHEN method = 'cash' THEN amount ELSE -tip END), 0) FROM payments WHERE shift_id = $1 AND reversed_at IS NULL)
-                  + (SELECT COALESCE(sum(CASE WHEN kind = 'in' THEN amount ELSE -amount END), 0) FROM cash_movements WHERE shift_id = $1) AS cash`,
+                  + (SELECT COALESCE(sum(CASE WHEN kind = 'in' THEN amount ELSE -amount END), 0) FROM cash_movements WHERE shift_id = $1 AND voided_at IS NULL) AS cash`,
             [shift.id, shift.opening],
           )
         ).rows[0].cash,
@@ -415,7 +415,7 @@ export async function payExpense(actor: Actor, expenseId: string, paidFromInput:
           await db.query<{ cash: string }>(
             `SELECT $2::bigint
                   + (SELECT COALESCE(sum(CASE WHEN method = 'cash' THEN amount ELSE -tip END), 0) FROM payments WHERE shift_id = $1 AND reversed_at IS NULL)
-                  + (SELECT COALESCE(sum(CASE WHEN kind = 'in' THEN amount ELSE -amount END), 0) FROM cash_movements WHERE shift_id = $1) AS cash`,
+                  + (SELECT COALESCE(sum(CASE WHEN kind = 'in' THEN amount ELSE -amount END), 0) FROM cash_movements WHERE shift_id = $1 AND voided_at IS NULL) AS cash`,
             [shift.id, shift.opening],
           )
         ).rows[0].cash,

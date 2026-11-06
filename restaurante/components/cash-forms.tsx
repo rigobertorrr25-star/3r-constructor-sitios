@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { addLossAction, cashPaidOutAction, closeShiftAction, correctClosingAction, moveCashPaymentAction, movementAction, openShiftAction, voidLossAction } from '@/app/actions';
+import { addLossAction, cashPaidOutAction, closeShiftAction, correctClosingAction, correctMovementAction, moveCashPaymentAction, movementAction, openShiftAction, voidLossAction } from '@/app/actions';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Field, Select, TextArea, inputClass, quietButton } from './ui';
@@ -379,5 +379,44 @@ export function CloseShiftForm({ expected, cashPayments = [], timeZone = 'Americ
         </>
       )}
     </ActionForm>
+  );
+}
+
+/** Corregir el valor de una entrada o salida de efectivo, o eliminarla (6 nov 2026). Dueño y administrador. */
+export function CorrectMovementForm({ id, shiftId, amount }: { id: string; shiftId: string; amount: number }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const [remove, setRemove] = useState(false);
+  return (
+    <>
+      <button type="button" className="text-[13px] text-muted-foreground hover:text-foreground" onClick={() => setOpen(!open)}>
+        {open ? t('Cancelar') : t('Corregir')}
+      </button>
+      {open ? (
+        <ActionForm action={correctMovementAction} onOk={() => setOpen(false)} className="mt-2 flex basis-full flex-wrap items-end gap-2">
+          {() => (
+            <>
+              <input type="hidden" name="movementId" value={id} />
+              <input type="hidden" name="shiftId" value={shiftId} />
+              <label className="flex basis-full items-center gap-2 text-[13.5px]">
+                <input type="checkbox" name="remove" checked={remove} onChange={(e) => setRemove(e.target.checked)} />
+                {t('Eliminar este movimiento (no pasó)')}
+              </label>
+              {!remove ? (
+                <div className="w-[150px]">
+                  <Field label={t('Valor correcto')} name="amount" inputMode="numeric" required defaultValue={String(amount)} />
+                </div>
+              ) : null}
+              <div className="min-w-[200px] flex-1">
+                <Field label={t('Motivo')} name="reason" required minLength={3} maxLength={300} placeholder={t('Se anotó mal, era otro valor…')} />
+              </div>
+              <SubmitButton tone={remove ? 'danger' : undefined} pendingText={t('Guardando…')}>
+                {remove ? t('Eliminar') : t('Guardar')}
+              </SubmitButton>
+            </>
+          )}
+        </ActionForm>
+      ) : null}
+    </>
   );
 }
