@@ -1,7 +1,6 @@
 import { aiConfigured, getBrief } from '@/lib/brief';
 import { formatTime } from '@/lib/format';
 import type { StaffSession } from '@/lib/store';
-import { RefreshBriefButton } from './brief-refresh';
 import { makeT, type Lang } from '@/lib/i18n';
 
 /** "¿Qué pasó hoy?": el resumen del día. Se carga aparte para no frenar el resto del tablero. */
@@ -13,11 +12,14 @@ export async function BriefCard({ staff, day, scope, lang }: { staff: StaffSessi
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-display text-[17px] font-bold">{t('¿Qué pasó?')}</h2>
         <span className="text-[12.5px] text-muted-foreground">
-          {brief.source === 'ia' ? t('Escrito con IA') : aiConfigured() ? t('Resumen automático (la IA no respondió)') : t('Resumen automático')} · {formatTime(brief.createdAt, staff.timezone, lang)}
+          {brief.source === 'ia'
+            ? `${t('Escrito con IA')} · ${formatTime(brief.createdAt, staff.timezone, lang)}`
+            : aiConfigured()
+              ? t('Resumen automático · la IA escribe el del día a las 7 p. m.')
+              : t('Resumen automático')}
         </span>
       </div>
       <p className="mt-2 whitespace-pre-line text-[15.5px] leading-relaxed">{brief.text}</p>
-      <RefreshBriefButton day={day} scope={scope ?? 'all'} />
     </section>
   );
 }

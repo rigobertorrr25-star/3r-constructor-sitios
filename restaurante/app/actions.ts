@@ -1156,17 +1156,6 @@ export async function requestReservationAction(_prev: FormState, formData: FormD
 // ───────── resumen con IA ─────────
 
 /** Vuelve a escribir el resumen del día (por ejemplo, al cerrar la noche con todas las ventas). */
-export async function refreshBriefAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const staff = await requireStaff();
-  if (!allow(`brief:${staff.businessId}`, 10, 60 * 60_000)) return { error: await trServer('Ya se reescribió varias veces en la última hora. Intenta más tarde.') };
-  const lang = await getLang();
-  return run(
-    formData,
-    () => getBrief(staff, { day: text(formData, 'day'), locationId: optionalId(formData, 'scope'), timeZone: staff.timezone, refresh: true, lang }),
-    ['/app/tablero'],
-  );
-}
-
 // ───────── servicios y citas ─────────
 
 export async function saveServiceAction(_prev: FormState, formData: FormData): Promise<FormState> {
