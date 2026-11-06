@@ -54,7 +54,7 @@ export default async function CashPage() {
 
       {/* Aviso para el cierre (6 nov 2026, Rigoberto: «las cajeras son muy lentas al cierre: avísales cuánto va para la
           caja y cuánto va de propina»). Las dos cifras grandes, sin cuentas. */}
-      <section className="grid gap-3 sm:grid-cols-2" aria-label={t('Para el cierre')}>
+      <section className="grid gap-3 lg:grid-cols-3" aria-label={t('Para el cierre')}>
         <div className="rounded-[22px] border-2 border-primary/60 bg-primary/10 p-5">
           <p className="text-[14px] font-semibold uppercase tracking-wide text-primary">{t('Debe haber en la caja')}</p>
           <p className="mt-1 font-display text-[40px] font-bold leading-none">{formatCop(s.expectedCash)}</p>
@@ -85,9 +85,20 @@ export default async function CashPage() {
               : t('Todavía no se ha cobrado propina.')}
           </p>
         </div>
+        {/* Lo que debe haber llegado por transferencia, en rojo y grande (6 nov 2026, pedido de Rigoberto). Con la propina:
+            es lo que se ve en la cuenta del banco. */}
+        <div className="rounded-[22px] border-2 border-[#ff6b6b] bg-[#ff6b6b]/12 p-5">
+          <p className="text-[14px] font-semibold uppercase tracking-wide text-[#ff8a8a]">{t('Debe haber en transferencias')}</p>
+          <p className="mt-1 font-display text-[40px] font-bold leading-none text-[#ff8a8a]">{formatCop(s.byMethod.transfer.amount + s.byMethod.transfer.tip)}</p>
+          <p className="mt-3 text-[15px] font-medium">
+            {s.byMethod.transfer.count === 1 ? t('1 pago') : t('{n} pagos', { n: s.byMethod.transfer.count })}
+            {s.byMethod.transfer.tip ? ` · ${t('{amount} de venta + {tip} de propina', { amount: formatCop(s.byMethod.transfer.amount), tip: formatCop(s.byMethod.transfer.tip) })}` : ''}
+          </p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{t('Revisa que esto haya llegado a la cuenta. No está en la caja.')}</p>
+        </div>
         {/* Con números: antes de entregar la propina hay las dos cosas sumadas (6 nov 2026, pregunta de Rigoberto). */}
         {s.tips ? (
-          <p className="rounded-[18px] border border-white/[0.1] bg-white/[0.03] px-5 py-3 text-[15px] sm:col-span-2">
+          <p className="rounded-[18px] border border-white/[0.1] bg-white/[0.03] px-5 py-3 text-[15px] lg:col-span-3">
             {t('Antes de entregar la propina, en la caja debe haber {before} ({cash} + {tips} de propina). Al sacar la propina quedan {cash}.', {
               before: formatCop(s.expectedCash + s.tips),
               cash: formatCop(s.expectedCash),
