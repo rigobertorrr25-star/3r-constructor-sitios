@@ -62,9 +62,9 @@ export default async function CashPage() {
           propina y di de dónde sale; la transferencia con el total y la propina descontada»). Cada peso aparece una vez. */}
       <section className="space-y-3" aria-label={t('Para el cierre')}>
         <div className={`grid gap-3 sm:grid-cols-2 ${cashOnly ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
-          <Box tone="neutral" title={t('Base')} value={formatCop(s.shift.openingAmount)} lines={[t('Con lo que se abrió la caja.')]} />
+          <Box tone="amber" title={t('Base')} value={formatCop(s.shift.openingAmount)} lines={[t('Con lo que se abrió la caja.')]} />
           <Box
-            tone="neutral"
+            tone="sky"
             title={t('Venta')}
             value={formatCop(s.sales)}
             lines={
@@ -271,14 +271,15 @@ function ShiftHistory({ shifts, timeZone, lang }: { shifts: Awaited<ReturnType<t
   );
 }
 
-function Box({ tone, title, value, lines }: { tone: 'neutral' | 'green' | 'red'; title: string; value: string; lines: string[] }) {
-  const style =
-    tone === 'green'
-      ? 'border-success/60 bg-success/10'
-      : tone === 'red'
-        ? 'border-[#ff6b6b] bg-[#ff6b6b]/12'
-        : 'border-white/[0.14] bg-white/[0.03]';
-  const head = tone === 'green' ? 'text-success' : tone === 'red' ? 'text-[#ff8a8a]' : 'text-muted-foreground';
+function Box({ tone, title, value, lines }: { tone: 'amber' | 'sky' | 'green' | 'red'; title: string; value: string; lines: string[] }) {
+  // Un color por cuadro (6 nov 2026, pedido de Rigoberto): base ámbar, venta azul claro, propina verde, transferencia roja.
+  const style = {
+    amber: 'border-[#f5b942]/70 bg-[#f5b942]/10',
+    sky: 'border-[#4cc9f0]/70 bg-[#4cc9f0]/10',
+    green: 'border-success/60 bg-success/10',
+    red: 'border-[#ff6b6b] bg-[#ff6b6b]/12',
+  }[tone];
+  const head = { amber: 'text-[#f5b942]', sky: 'text-[#4cc9f0]', green: 'text-success', red: 'text-[#ff8a8a]' }[tone];
   return (
     <div className={`rounded-[22px] border-2 p-5 ${style}`}>
       <p className={`text-[14px] font-semibold uppercase tracking-wide ${head}`}>{title}</p>
