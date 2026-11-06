@@ -97,6 +97,9 @@ describe('módulos 05 y 06: inventario y recetas', { skip: url ? false : 'sin TE
     assert.equal(await stock(whisky), 2250 - 180 - 45);
     await orders.voidItem(owner, third.id, 'No se alcanzó a hacer', false);
     assert.equal(await stock(whisky), 2250 - 180, 'no se había preparado: vuelve aunque la comanda dijera preparando');
+    // Pérdidas (6 nov 2026): solo la anulación con otro motivo («Lo devolvieron») queda como pérdida.
+    const losses = await db.query<{ description: string }>(`SELECT description FROM losses WHERE location_id = $1 ORDER BY created_at`, [owner.locationId]);
+    assert.deepEqual(losses.map((l) => l.description.replace(/\(mesa [^)]*\)/, '').replace(/\s+/g, ' ')), [`Anulación: ${order.rounds[0].items[0].quantity} × ${order.rounds[0].items[0].name} : Lo devolvieron`]);
   });
 
   it('merma y conteo de botellas: la diferencia es la fuga', async () => {
