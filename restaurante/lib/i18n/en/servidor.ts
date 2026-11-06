@@ -123,6 +123,11 @@ export const en: Record<string, string> = {
   'En caja debería haber {cash}: no alcanza para {amount}.': 'The drawer should have {cash}: not enough for {amount}.',
   'No encontramos ese gasto.': 'We couldn’t find that expense.',
   'Ese gasto ya estaba anulado.': 'That expense was already voided.',
+  'Producto pasado a la otra mesa.': 'Item moved to the other table.',
+  'Ese producto está anulado.': 'That item is voided.',
+  'Escoge la mesa a la que va.': 'Pick the table it goes to.',
+  'Escoge otra mesa.': 'Pick another table.',
+  'Esa mesa ya está cerrada.': 'That table is already closed.',
   'Solo puedes eliminar las facturas que tú registraste. Pídeselo al administrador.': 'You can only delete invoices you entered. Ask the manager.',
   'Factura anulada.': 'Invoice voided.',
   'Ese gasto salió de una caja que ya se cerró: registra una entrada en la caja actual si devolvieron la plata.':

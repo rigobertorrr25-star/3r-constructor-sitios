@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { requireStaff } from '@/lib/auth';
-import { getMenu, getSessionOrder } from '@/lib/orders';
+import { getMenu, getSessionOrder, tablesForMove } from '@/lib/orders';
 import { can } from '@/lib/permissions';
 import { canCollectSession } from '@/lib/cash';
 import { hasPrinter } from '@/lib/printing';
@@ -19,6 +19,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
     canCollectSession(staff, id),
   ]);
   if (!order) notFound();
+  const moveTables = can(staff.role, 'tables.open') ? await tablesForMove(staff, order.session.tableId) : [];
   return (
     <>
       <AutoRefresh everyMs={15_000} />
@@ -37,6 +38,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         waitersCollect={staff.waitersCollect}
         timeZone={staff.timezone}
         printBill={printBill}
+        moveTables={moveTables}
       />
     </>
   );
