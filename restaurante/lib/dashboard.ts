@@ -1,5 +1,6 @@
 // Módulo 08: tablero del dueño y radar de fugas. Todo sale de los datos reales del periodo elegido.
 // El radar arranca en 100 y cada señal de posible fuga resta puntos según qué tan grave es.
+import { NO_LOSS_VOID, NO_LOSS_VOID_SQL, isNoLossVoid } from './void-reasons';
 import { query } from './db';
 import { getStatement, type Statement } from './finance';
 import { lowStock } from './inventory';
@@ -50,9 +51,9 @@ export const isStaffDiscount = (reason: string) => STAFF_DISCOUNT.test(reason);
  * margen; a veces se avisa hablando que no va a salir y eso le está afectando a los trabajadores con los jefes»): si el
  * motivo dice equivocó / equivoco / equivocado / equivocación…, el radar no la cuenta.
  */
-export const MISTAKE_VOID = /(^|[^a-záéíóúñ])equivoc/i;
-const MISTAKE_VOID_SQL = String.raw`\mequivoc`;
-export const isMistakeVoid = (reason: string) => MISTAKE_VOID.test(reason);
+export const MISTAKE_VOID = NO_LOSS_VOID;
+const MISTAKE_VOID_SQL = NO_LOSS_VOID_SQL;
+export const isMistakeVoid = (reason: string) => isNoLossVoid(reason);
 
 export const radarScore = (signals: Pick<Signal, 'points'>[]) => Math.max(0, 100 - signals.reduce((s, x) => s + x.points, 0));
 

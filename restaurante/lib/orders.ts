@@ -4,6 +4,7 @@ import { query, transaction, type Db } from './db';
 import { consumeForRound, returnForVoid } from './inventory';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
 import { enqueueRound, enqueueVoid } from './printing';
+import { isNoLossVoid } from './void-reasons';
 import { completeChoices, describeChoices, normalizeGroups, parseOptionGroups, type OptionGroup } from './product-options';
 
 import { STATIONS, isStation, type Station } from './stations';
@@ -361,9 +362,21 @@ export async function voidItem(actor: Actor, itemId: string, reason: string, pre
     if (item.voidedAt) throw new AppError('CONFLICT', 'Ese producto ya estaba anulado.');
     const session = await lockOpenSession(db, actor, item.sessionId);
     await db.query(`UPDATE order_items SET voided_at = now(), voided_by = $2, void_reason = $3 WHERE id = $1`, [itemId, actor.id, why]);
-    // Si no se había preparado, los insumos vuelven al inventario; si ya se preparó, se quedan gastados.
-    const wasPrepared = prepared ?? item.ticketStatus !== 'sent';
+    // El motivo decide (6 nov 2026): equivocación o cambio → no se preparó, los insumos vuelven y no es pérdida;
+    // otro motivo → se preparó (los insumos quedan gastados) y el valor queda como pérdida del día.
+    const noLoss = isNoLossVoid(why);
+    const wasPrepared = !noLoss;
+    void prepared;
     if (!wasPrepared) await returnForVoid(db, actor, itemId);
+    if (!noLoss) {
+      await db.query(`INSERT INTO losses (business_id, location_id, description, amount, created_by) VALUES ($1, $2, $3, $4, $5)`, [
+        actor.businessId,
+        actor.locationId,
+        `Anulación: ${item.quantity} × ${item.name} (mesa ${session.number}): ${why}`.slice(0, 200),
+        Number(item.unitPrice) * item.quantity,
+        actor.id,
+      ]);
+    }
     // La estación recibe un papel de «ANULADO» para no prepararlo (o dejarlo de lado).
     await enqueueVoid(db, actor, itemId, why);
     const amount = Number(item.unitPrice) * item.quantity;
@@ -371,7 +384,7 @@ export async function voidItem(actor: Actor, itemId: string, reason: string, pre
       action: 'order.void',
       entity: 'order_item',
       entityId: itemId,
-      summary: `Anuló ${item.quantity} × ${item.name} ($${amount.toLocaleString('es-CO')}) de la mesa ${session.number}${wasPrepared ? ' (ya estaba preparado)' : ''}`,
+      summary: `Anuló ${item.quantity} × ${item.name} ($${amount.toLocaleString('es-CO')}) de la mesa ${session.number}${noLoss ? ' (no se preparó: los insumos volvieron)' : ' (quedó como pérdida)'}`,
       reason: why,
       data: { sessionId: item.sessionId, amount, ticketStatus: item.ticketStatus, prepared: wasPrepared },
     });
