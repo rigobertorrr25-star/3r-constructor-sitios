@@ -196,6 +196,8 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS bar_only BOOLEAN NOT NULL DEFAUL
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS track_prep BOOLEAN NOT NULL DEFAULT TRUE;
 -- Corrección de un cierre ya hecho (4 nov 2026): quién, cuándo y por qué. Lo que decía antes queda en la auditoría.
 ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS corrected_by UUID REFERENCES staff(id);
+-- Una entrada o salida de efectivo eliminada al corregir un cierre (6 nov 2026): no cuenta, pero no se borra.
+ALTER TABLE cash_movements ADD COLUMN IF NOT EXISTS voided_at TIMESTAMPTZ;
 ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS corrected_at TIMESTAMPTZ;
 ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS correction_reason VARCHAR(300);
 

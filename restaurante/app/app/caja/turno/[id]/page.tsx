@@ -6,9 +6,9 @@ import { closingInventory, dailyForm, shiftIncidents, shiftSalesByCategory, shor
 import { AREA_LABEL } from '@/lib/inventory';
 import { cashCountLines } from '@/lib/cash-count';
 import { PrintClosingButton } from '@/components/printer-forms';
-import { CorrectClosingForm } from '@/components/cash-forms';
+import { CorrectClosingForm, CorrectMovementForm } from '@/components/cash-forms';
 import { can } from '@/lib/permissions';
-import { formatCop, formatDateTime } from '@/lib/format';
+import { formatCop, formatDateTime, formatTime } from '@/lib/format';
 import { PageTitle, card, quietButton } from '@/components/ui';
 import { getLang } from '@/lib/i18n/server';
 import { makeT } from '@/lib/i18n';
@@ -108,6 +108,29 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
           </div>
         ))}
       </dl>
+
+      {/* Entradas y salidas del turno; el dueño y el administrador las corrigen o eliminan (6 nov 2026). */}
+      {s.movements.length ? (
+        <section className={`${card} max-w-xl`}>
+          <h2 className="font-display text-[18px] font-bold">{t('Entradas y salidas de efectivo')}</h2>
+          <ul className="mt-2 divide-y divide-white/[0.06] text-[14px]">
+            {s.movements.map((m) => (
+              <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <span className="min-w-0 flex-1">
+                  {m.reason}
+                  <span className="block text-[12.5px] text-muted-foreground">
+                    {formatTime(m.createdAt, staff.timezone, lang)} · {m.createdBy}
+                  </span>
+                </span>
+                <span className={`font-semibold ${m.kind === 'out' ? 'text-warning' : ''}`}>
+                  {m.kind === 'out' ? '−' : '+'} {formatCop(m.amount)}
+                </span>
+                {can(staff.role, 'cash.correct') ? <CorrectMovementForm id={m.id} shiftId={sh.id} amount={m.amount} /> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {/* Corregir el cierre (4 nov 2026): si la cajera cerró sin contar toda la plata. Dueño y administrador. */}
       {sh.closedAt && sh.countedCash !== null && can(staff.role, 'cash.correct') ? (

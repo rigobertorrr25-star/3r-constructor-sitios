@@ -174,7 +174,7 @@ export async function dailyForm(actor: Pick<Actor, 'businessId' | 'locationId'>,
     // Salidas de efectivo de la caja que no son el pago de una factura registrada.
     query<{ reason: string; amount: string }>(
       `SELECT m.reason, m.amount FROM cash_movements m
-        WHERE m.shift_id = $1 AND m.kind = 'out' AND NOT EXISTS (SELECT 1 FROM expenses e WHERE e.cash_movement_id = m.id)
+        WHERE m.shift_id = $1 AND m.kind = 'out' AND m.voided_at IS NULL AND NOT EXISTS (SELECT 1 FROM expenses e WHERE e.cash_movement_id = m.id)
         ORDER BY m.created_at`,
       [shiftId],
     ),

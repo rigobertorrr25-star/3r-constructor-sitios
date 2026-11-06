@@ -260,7 +260,7 @@ async function expectedCash(db: Db, shiftId: string, opening: number) {
     await db.query<{ sales: string; moves: string }>(
       `SELECT
          (SELECT COALESCE(sum(CASE WHEN method = 'cash' THEN amount ELSE -tip END), 0) FROM payments WHERE shift_id = $1 AND reversed_at IS NULL) AS sales,
-         (SELECT COALESCE(sum(CASE WHEN kind = 'in' THEN amount ELSE -amount END), 0) FROM cash_movements WHERE shift_id = $1) AS moves`,
+         (SELECT COALESCE(sum(CASE WHEN kind = 'in' THEN amount ELSE -amount END), 0) FROM cash_movements WHERE shift_id = $1 AND voided_at IS NULL) AS moves`,
       [shiftId],
     )
   ).rows[0];
@@ -309,7 +309,7 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
     ),
     query<{ id: string; kind: 'in' | 'out'; amount: string; reason: string; createdBy: string; createdAt: Date }>(
       `SELECT m.id, m.kind, m.amount, m.reason, s.name AS "createdBy", m.created_at AS "createdAt"
-         FROM cash_movements m JOIN staff s ON s.id = m.created_by WHERE m.shift_id = $1
+         FROM cash_movements m JOIN staff s ON s.id = m.created_by WHERE m.shift_id = $1 AND m.voided_at IS NULL
           -- Una factura eliminada no salió de la caja: su salida y la entrada que la devolvió se cancelan y no se muestran
           -- (5 nov 2026, Rigoberto: «me aparece que salió de caja 127.000 y esa plata no salió»). El esperado es el mismo.
           AND NOT EXISTS (SELECT 1 FROM expenses e WHERE e.cash_movement_id = m.id AND e.voided_at IS NOT NULL)
@@ -839,4 +839,51 @@ export async function getBill(actor: Actor, sessionId: string) {
   requirePermission(actor, 'orders.take');
   if (!isUuid(sessionId)) return null;
   return loadCheckout(pooled(), actor, sessionId);
+}
+
+/**
+ * Corrige una entrada o salida de efectivo de un turno, también de uno ya cerrado (6 nov 2026, pedido de Rigoberto:
+ * «eliminar del cierre de ayer la salida de efectivo o que se pueda modificar el valor»). Dueño y administrador
+ * (`cash.correct`), siempre con motivo. `amount` 0 la elimina (queda marcada, no se borra). Si era el pago de una factura
+ * de la caja, la factura cambia con ella (o se anula). En un turno cerrado, el efectivo esperado guardado se ajusta por la
+ * diferencia; lo de antes queda en la auditoría.
+ */
+export async function correctMovement(actor: Actor, movementId: string, input: { amount: number; reason: string }) {
+  requirePermission(actor, 'cash.correct');
+  if (!isUuid(movementId)) throw new AppError('NOT_FOUND', 'No encontramos ese movimiento.');
+  const why = requireText(input.reason, 'Motivo', 3, 300);
+  const amount = requireAmount(input.amount, 'Valor', { allowZero: true });
+  await transaction(async (db) => {
+    const m = (
+      await db.query<{ id: string; shiftId: string; kind: 'in' | 'out'; amount: string; reason: string; voided: boolean; closed: boolean }>(
+        `SELECT m.id, m.shift_id AS "shiftId", m.kind, m.amount, m.reason, (m.voided_at IS NOT NULL) AS voided, (c.closed_at IS NOT NULL) AS closed
+           FROM cash_movements m JOIN cash_shifts c ON c.id = m.shift_id
+          WHERE m.id = $1 AND m.business_id = $2 AND c.location_id = $3 FOR UPDATE OF m, c`,
+        [movementId, actor.businessId, actor.locationId],
+      )
+    ).rows[0];
+    if (!m) throw new AppError('NOT_FOUND', 'No encontramos ese movimiento.');
+    if (m.voided) throw new AppError('CONFLICT', 'Ese movimiento ya estaba eliminado.');
+    const before = Number(m.amount);
+    if (amount === before) throw new AppError('INVALID', 'El valor es el mismo.');
+    if (amount === 0) await db.query(`UPDATE cash_movements SET voided_at = now() WHERE id = $1`, [m.id]);
+    else await db.query(`UPDATE cash_movements SET amount = $2 WHERE id = $1`, [m.id, amount]);
+    // La factura pagada con esa salida va con ella.
+    const expense = (await db.query<{ id: string }>(`SELECT id FROM expenses WHERE cash_movement_id = $1 AND voided_at IS NULL`, [m.id])).rows[0];
+    if (expense) {
+      if (amount === 0) await db.query(`UPDATE expenses SET voided_at = now(), voided_by = $2, void_reason = $3 WHERE id = $1`, [expense.id, actor.id, why]);
+      else await db.query(`UPDATE expenses SET amount = $2 WHERE id = $1`, [expense.id, amount]);
+    }
+    // Una salida menor (o eliminada) deja más efectivo esperado; una entrada menor, menos.
+    const delta = m.kind === 'out' ? before - amount : amount - before;
+    if (m.closed) await db.query(`UPDATE cash_shifts SET expected_cash = expected_cash + $2 WHERE id = $1`, [m.shiftId, delta]);
+    await audit(db, actor, {
+      action: 'cash.movement.correct',
+      entity: 'cash_movement',
+      entityId: m.id,
+      summary: `${amount === 0 ? 'Eliminó' : 'Corrigió'} la ${m.kind === 'out' ? 'salida' : 'entrada'} de efectivo «${m.reason}»: ${money(before)} → ${amount === 0 ? 'eliminada' : money(amount)}${expense ? ' (y su factura)' : ''}`,
+      reason: why,
+      data: { shiftId: m.shiftId, before, after: amount, delta },
+    });
+  });
 }
