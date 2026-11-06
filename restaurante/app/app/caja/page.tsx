@@ -58,7 +58,7 @@ export default async function CashPage() {
         <div className="rounded-[22px] border-2 border-primary/60 bg-primary/10 p-5">
           <p className="text-[14px] font-semibold uppercase tracking-wide text-primary">{t('Debe haber en la caja')}</p>
           <p className="mt-1 font-display text-[40px] font-bold leading-none">{formatCop(s.expectedCash)}</p>
-          <p className="mt-2 text-[13px] text-muted-foreground">{t('Es lo que se cuenta al cerrar (ya sin la propina).')}</p>
+          <p className="mt-2 text-[13px] text-muted-foreground">{t('Es lo que queda en la caja después de entregar la propina.')}</p>
         </div>
         <div className="rounded-[22px] border-2 border-success/60 bg-success/10 p-5">
           <p className="text-[14px] font-semibold uppercase tracking-wide text-success">{t('Propina para entregar')}</p>
@@ -72,6 +72,16 @@ export default async function CashPage() {
               : t('Todavía no se ha cobrado propina.')}
           </p>
         </div>
+        {/* Con números: antes de entregar la propina hay las dos cosas sumadas (6 nov 2026, pregunta de Rigoberto). */}
+        {s.tips ? (
+          <p className="rounded-[18px] border border-white/[0.1] bg-white/[0.03] px-5 py-3 text-[15px] sm:col-span-2">
+            {t('Antes de entregar la propina, en la caja debe haber {before} ({cash} + {tips} de propina). Al sacar la propina quedan {cash}.', {
+              before: formatCop(s.expectedCash + s.tips),
+              cash: formatCop(s.expectedCash),
+              tips: formatCop(s.tips),
+            })}
+          </p>
+        ) : null}
       </section>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
