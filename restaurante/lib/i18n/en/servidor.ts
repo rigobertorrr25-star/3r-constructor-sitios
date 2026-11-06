@@ -506,4 +506,10 @@ export const en: Record<string, string> = {
   'Son demasiados insumos nuevos de una vez (hasta 60).': 'Too many new ingredients at once (up to 60).',
   'El nombre de cada insumo nuevo va de 2 a 80 letras.': 'Each new ingredient name must be 2 to 80 letters.',
   'Ya hay un insumo {name}: escribe su cantidad en la tabla.': 'There’s already an ingredient called {name}: enter its quantity in the table.',
+  'Solo puedes entrar desde el wifi del local. Conéctate al wifi y vuelve a intentar.': 'You can only sign in from the restaurant wifi. Connect to it and try again.',
+  'Listo: el equipo ya solo entra desde este wifi.': 'Done: the team can now only sign in from this wifi.',
+  'Conexión quitada.': 'Connection removed.',
+  'No pudimos ver la dirección de esta conexión.': 'We could not read this connection address.',
+  'Esta conexión ya está en la lista.': 'This connection is already listed.',
+  'Ya hay 10 conexiones: quita alguna primero.': 'There are already 10 connections: remove one first.',
 };
