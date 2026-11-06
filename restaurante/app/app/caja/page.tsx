@@ -76,14 +76,7 @@ export default async function CashPage() {
         <div className="rounded-[22px] border-2 border-success/60 bg-success/10 p-5">
           <p className="text-[14px] font-semibold uppercase tracking-wide text-success">{t('Propina para entregar')}</p>
           <p className="mt-1 font-display text-[40px] font-bold leading-none">{formatCop(s.tips)}</p>
-          <p className="mt-2 text-[13px] text-muted-foreground">
-            {s.tips
-              ? t('{cash} en efectivo + {other} de datáfono y transferencia (sale de la caja).', {
-                  cash: formatCop(s.byMethod.cash.tip),
-                  other: formatCop(s.byMethod.card.tip + s.byMethod.transfer.tip),
-                })
-              : t('Todavía no se ha cobrado propina.')}
-          </p>
+          <p className="mt-2 text-[13px] text-muted-foreground">{s.tips ? t('La de todos los medios de pago, sumada una sola vez. El detalle está en la tabla.') : t('Todavía no se ha cobrado propina.')}</p>
         </div>
         {/* Lo que debe haber llegado por transferencia, en rojo y grande (6 nov 2026, pedido de Rigoberto). Con la propina:
             es lo que se ve en la cuenta del banco. */}
@@ -96,29 +89,50 @@ export default async function CashPage() {
           </p>
           <p className="mt-1 text-[13px] text-muted-foreground">{t('Revisa que esto haya llegado a la cuenta. No está en la caja.')}</p>
         </div>
-        {/* Con números: antes de entregar la propina hay las dos cosas sumadas (6 nov 2026, pregunta de Rigoberto). */}
-        {s.tips ? (
-          <p className="rounded-[18px] border border-white/[0.1] bg-white/[0.03] px-5 py-3 text-[15px] lg:col-span-3">
-            {t('Antes de entregar la propina, en la caja debe haber {before} ({cash} + {tips} de propina). Al sacar la propina quedan {cash}.', {
-              before: formatCop(s.expectedCash + s.tips),
-              cash: formatCop(s.expectedCash),
-              tips: formatCop(s.tips),
-            })}
-          </p>
-        ) : null}
+        {/* Tabla por medio de pago: cada peso una sola vez (6 nov 2026, Rigoberto: «me suma las propinas 2 veces, se enreda»).
+            La propina de cada medio está en su fila; el total de propina es la suma de la columna. */}
+        <div className="overflow-x-auto rounded-[18px] border border-white/[0.1] bg-white/[0.03] lg:col-span-3">
+          <table className="w-full min-w-[420px] text-[15px]">
+            <thead>
+              <tr className="text-left text-[13px] text-muted-foreground">
+                <th className="px-5 py-2.5 font-medium">{t('Cobrado en')}</th>
+                <th className="px-3 py-2.5 text-right font-medium">{t('Venta')}</th>
+                <th className="px-3 py-2.5 text-right font-medium">{t('Propina')}</th>
+                <th className="px-5 py-2.5 text-right font-medium">{t('Total cobrado')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {METHODS.map((m) => (
+                <tr key={m} className={`border-t border-white/[0.06] ${m === 'transfer' ? 'text-[#ff8a8a]' : ''}`}>
+                  <td className="px-5 py-2">{t(METHOD_LABEL[m])}</td>
+                  <td className="px-3 py-2 text-right">{formatCop(s.byMethod[m].amount)}</td>
+                  <td className="px-3 py-2 text-right">{formatCop(s.byMethod[m].tip)}</td>
+                  <td className="px-5 py-2 text-right font-semibold">{formatCop(s.byMethod[m].amount + s.byMethod[m].tip)}</td>
+                </tr>
+              ))}
+              <tr className="border-t border-white/[0.15] font-bold">
+                <td className="px-5 py-2.5">{t('Total')}</td>
+                <td className="px-3 py-2.5 text-right">{formatCop(s.sales)}</td>
+                <td className="px-3 py-2.5 text-right">{formatCop(s.tips)}</td>
+                <td className="px-5 py-2.5 text-right">{formatCop(s.sales + s.tips)}</td>
+              </tr>
+            </tbody>
+          </table>
+          {s.tips ? (
+            <p className="border-t border-white/[0.06] px-5 py-2.5 text-[13.5px] text-muted-foreground">
+              {t('Toda la propina ({tips}) se entrega a los meseros desde la caja. Antes de entregarla hay {before} en la caja; después quedan {cash}.', {
+                tips: formatCop(s.tips),
+                before: formatCop(s.expectedCash + s.tips),
+                cash: formatCop(s.expectedCash),
+              })}
+            </p>
+          ) : null}
+        </div>
       </section>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={t('Ventas del turno')} value={formatCop(s.sales)} hint={s.tablesClosed === 1 ? t('1 mesa cerrada') : t('{n} mesas cerradas', { n: s.tablesClosed })} />
         <Stat label={t('Descuentos')} value={formatCop(s.discounts)} hint={s.reversed ? t('Pagos reversados: {amount}', { amount: formatCop(s.reversed) }) : undefined} />
-        {METHODS.map((m) => (
-          <Stat
-            key={m}
-            label={t(METHOD_LABEL[m])}
-            value={formatCop(s.byMethod[m].amount)}
-            hint={`${s.byMethod[m].count === 1 ? t('1 pago') : t('{n} pagos', { n: s.byMethod[m].count })}${s.byMethod[m].tip ? t(' · propina {amount}', { amount: formatCop(s.byMethod[m].tip) }) : ''}`}
-          />
-        ))}
       </div>
 
       {/* Renglón por renglón (5 nov 2026, Rigoberto: «en efectivo esperado siento que está muy enredado»). */}
