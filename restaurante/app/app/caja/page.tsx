@@ -52,12 +52,30 @@ export default async function CashPage() {
         </Link>
       </PageTitle>
 
+      {/* Aviso para el cierre (6 nov 2026, Rigoberto: «las cajeras son muy lentas al cierre: avísales cuánto va para la
+          caja y cuánto va de propina»). Las dos cifras grandes, sin cuentas. */}
+      <section className="grid gap-3 sm:grid-cols-2" aria-label={t('Para el cierre')}>
+        <div className="rounded-[22px] border-2 border-primary/60 bg-primary/10 p-5">
+          <p className="text-[14px] font-semibold uppercase tracking-wide text-primary">{t('Debe haber en la caja')}</p>
+          <p className="mt-1 font-display text-[40px] font-bold leading-none">{formatCop(s.expectedCash)}</p>
+          <p className="mt-2 text-[13px] text-muted-foreground">{t('Es lo que se cuenta al cerrar (ya sin la propina).')}</p>
+        </div>
+        <div className="rounded-[22px] border-2 border-success/60 bg-success/10 p-5">
+          <p className="text-[14px] font-semibold uppercase tracking-wide text-success">{t('Propina para entregar')}</p>
+          <p className="mt-1 font-display text-[40px] font-bold leading-none">{formatCop(s.tips)}</p>
+          <p className="mt-2 text-[13px] text-muted-foreground">
+            {s.tips
+              ? t('{cash} en efectivo + {other} de datáfono y transferencia (sale de la caja).', {
+                  cash: formatCop(s.byMethod.cash.tip),
+                  other: formatCop(s.byMethod.card.tip + s.byMethod.transfer.tip),
+                })
+              : t('Todavía no se ha cobrado propina.')}
+          </p>
+        </div>
+      </section>
+
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={t('Ventas del turno')} value={formatCop(s.sales)} hint={s.tablesClosed === 1 ? t('1 mesa cerrada') : t('{n} mesas cerradas', { n: s.tablesClosed })} />
-        <Stat label={t('Efectivo esperado en caja')} value={formatCop(s.expectedCash)} hint={t('Mira abajo de dónde sale')}
-          strong
-        />
-        <Stat label={t('Propinas')} value={formatCop(s.tips)} />
         <Stat label={t('Descuentos')} value={formatCop(s.discounts)} hint={s.reversed ? t('Pagos reversados: {amount}', { amount: formatCop(s.reversed) }) : undefined} />
         {METHODS.map((m) => (
           <Stat
