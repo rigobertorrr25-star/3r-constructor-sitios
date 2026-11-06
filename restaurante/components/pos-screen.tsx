@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
-import { sendOrderAction, setBillAction, voidItemAction } from '@/app/actions';
+import { moveItemAction, sendOrderAction, setBillAction, voidItemAction } from '@/app/actions';
 import { elapsedMinutes, formatCop, formatElapsed, formatTime } from '@/lib/format';
 import { isNetworkError, retryDelay } from '@/lib/offline';
 import type { MenuCategory, MenuProduct, OrderItemView } from '@/lib/orders';
@@ -78,6 +78,7 @@ export function PosScreen({
   waitersCollect = false,
   timeZone,
   printBill = false,
+  moveTables = [],
 }: {
   session: Session;
   rounds: Round[];
@@ -91,6 +92,8 @@ export function PosScreen({
   timeZone: string;
   /** La sede tiene impresora de caja: la precuenta se imprime allá. */
   printBill?: boolean;
+  /** Otras mesas de la sede para pasarles un producto (vacío: no se puede). */
+  moveTables?: MoveTable[];
 }) {
   const now = useNow();
   const t = useT();
@@ -363,7 +366,7 @@ export function PosScreen({
             </p>
             <ul className="mt-3 divide-y divide-white/[0.06]">
               {round.items.map((item) => (
-                <SentRow key={item.id} item={item} sessionId={session.id} canVoid={canVoid && !closed} />
+                <SentRow key={item.id} item={item} sessionId={session.id} canVoid={canVoid && !closed} moveTables={closed ? [] : moveTables} />
               ))}
             </ul>
           </div>
@@ -490,8 +493,11 @@ function CartRow({ line, groups, onChange }: { line: Line; groups: OptionGroup[]
   );
 }
 
-function SentRow({ item, sessionId, canVoid }: { item: Item; sessionId: string; canVoid: boolean }) {
+type MoveTable = { id: string; number: string; zone: string; busy: boolean };
+
+function SentRow({ item, sessionId, canVoid, moveTables }: { item: Item; sessionId: string; canVoid: boolean; moveTables: MoveTable[] }) {
   const [voiding, setVoiding] = useState(false);
+  const [moving, setMoving] = useState(false);
   const voided = Boolean(item.voidedAt);
   const t = useT();
   return (
@@ -512,14 +518,57 @@ function SentRow({ item, sessionId, canVoid }: { item: Item; sessionId: string; 
             </span>
           )}
           <span className={`text-[14px] ${voided ? 'opacity-50' : ''}`}>{formatCop(item.unitPrice * item.quantity)}</span>
+          {moveTables.length && !voided ? (
+            <button
+              type="button"
+              className="text-[13px] text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setMoving(!moving);
+                setVoiding(false);
+              }}
+            >
+              {t('Pasar a otra mesa')}
+            </button>
+          ) : null}
           {canVoid && !voided ? (
-            <button type="button" className="text-[13px] text-muted-foreground hover:text-[#ffb4b5]" onClick={() => setVoiding(!voiding)}>
+            <button type="button" className="text-[13px] text-muted-foreground hover:text-[#ffb4b5]" onClick={() => { setVoiding(!voiding); setMoving(false); }}>
               {t('Anular')}
             </button>
           ) : null}
         </div>
       </div>
       {voided && item.voidReason ? <p className="mt-1 text-[13px] text-muted-foreground">{t('Motivo: {reason}', { reason: item.voidReason })}</p> : null}
+      {moving ? (
+        // Pasar el producto (o parte) a otra mesa (6 nov 2026, pedido de Rigoberto).
+        <ActionForm action={moveItemAction} onOk={() => setMoving(false)} className="mt-2 flex flex-wrap items-end gap-2">
+          {() => (
+            <>
+              <input type="hidden" name="itemId" value={item.id} />
+              <input type="hidden" name="sessionId" value={sessionId} />
+              <label className="min-w-[180px] flex-1 text-[13px] text-muted-foreground">
+                {t('¿A qué mesa?')}
+                <select name="toTableId" required defaultValue="" className={`${inputClass} mt-1`}>
+                  <option value="" disabled>
+                    {t('Escoge la mesa')}
+                  </option>
+                  {moveTables.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {t('Mesa {n}', { n: m.number })} · {m.zone} · {m.busy ? t('ocupada') : t('libre')}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {item.quantity > 1 ? (
+                <label className="w-[110px] text-[13px] text-muted-foreground">
+                  {t('¿Cuántos?')}
+                  <input name="quantity" type="number" min={1} max={item.quantity} defaultValue={item.quantity} className={`${inputClass} mt-1`} />
+                </label>
+              ) : null}
+              <SubmitButton pendingText={t('Pasando…')}>{t('Pasar')}</SubmitButton>
+            </>
+          )}
+        </ActionForm>
+      ) : null}
       {voiding ? (
         <ActionForm action={voidItemAction} onOk={() => setVoiding(false)} className="mt-2 flex flex-wrap items-end gap-2">
           {() => (

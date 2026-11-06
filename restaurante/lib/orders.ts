@@ -475,3 +475,103 @@ export async function setCategoryStations(actor: Actor, changes: { id: string; s
     return moved;
   });
 }
+
+/** Mesas a las que se puede pasar un producto (las activas de la sede, menos la propia), con si están ocupadas. */
+export async function tablesForMove(actor: Actor, fromTableId: string) {
+  requirePermission(actor, 'tables.open');
+  return query<{ id: string; number: string; zone: string; busy: boolean }>(
+    `SELECT t.id, t.number, t.zone,
+            EXISTS (SELECT 1 FROM table_sessions ts WHERE ts.table_id = t.id AND ts.status <> 'closed' AND EXISTS (SELECT 1 FROM order_rounds r WHERE r.session_id = ts.id)) AS busy
+       FROM dining_tables t
+      WHERE t.location_id = $1 AND t.business_id = $2 AND t.is_active AND NOT t.is_blocked AND t.id <> $3
+      ORDER BY t.zone, length(t.number), t.number`,
+    [actor.locationId, actor.businessId, isUuid(fromTableId) ? fromTableId : '00000000-0000-0000-0000-000000000000'],
+  );
+}
+
+/**
+ * Pasa un producto ya pedido (o parte de él) a otra mesa (6 nov 2026, pedido de Rigoberto: «mandar un producto de la
+ * mesa 1 a la mesa 2»). Si la otra mesa está libre, se abre. En la mesa de destino queda como una ronda «Pasado de la
+ * mesa N»; no se vuelve a mandar a cocina ni a barra (ya se pidió) y el inventario no cambia. Si la mesa de origen se
+ * queda sin productos, se cierra sola. No se deja si la mesa de origen ya tiene abonos (se descuadraría lo pagado).
+ */
+export async function moveItem(actor: Actor, itemId: string, toTableId: string, quantity?: number) {
+  requirePermission(actor, 'tables.open');
+  if (!isUuid(itemId)) throw new AppError('NOT_FOUND', 'No encontramos ese producto.');
+  if (!isUuid(toTableId)) throw new AppError('INVALID', 'Escoge la mesa a la que va.');
+  return transaction(async (db) => {
+    const item = (
+      await db.query<{ id: string; sessionId: string; name: string; quantity: number; voidedAt: Date | null; notes: string | null }>(
+        `SELECT i.id, i.session_id AS "sessionId", i.name, i.quantity, i.voided_at AS "voidedAt", i.notes
+           FROM order_items i JOIN order_rounds r ON r.id = i.round_id
+          WHERE i.id = $1 AND i.business_id = $2 AND r.location_id = $3 FOR UPDATE OF i`,
+        [itemId, actor.businessId, actor.locationId],
+      )
+    ).rows[0];
+    if (!item) throw new AppError('NOT_FOUND', 'No encontramos ese producto.');
+    if (item.voidedAt) throw new AppError('CONFLICT', 'Ese producto está anulado.');
+    const qty = quantity ?? item.quantity;
+    if (!Number.isInteger(qty) || qty < 1 || qty > item.quantity) throw new AppError('INVALID', `Cantidad: de 1 a ${item.quantity}.`);
+    const from = (
+      await db.query<{ id: string; tableId: string; number: string; status: string }>(
+        `SELECT ts.id, ts.table_id AS "tableId", t.number, ts.status FROM table_sessions ts JOIN dining_tables t ON t.id = ts.table_id
+          WHERE ts.id = $1 AND ts.location_id = $2 FOR UPDATE OF ts`,
+        [item.sessionId, actor.locationId],
+      )
+    ).rows[0];
+    if (!from || from.status === 'closed') throw new AppError('CONFLICT', 'Esa mesa ya está cerrada.');
+    const paid = (await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM payments WHERE session_id = $1 AND reversed_at IS NULL`, [from.id])).rows[0].n;
+    if (paid) throw new AppError('CONFLICT', `La mesa ${from.number} ya tiene abonos: cóbrale primero lo que falta o reversa el abono.`);
+    const table = (
+      await db.query<{ id: string; number: string; isBlocked: boolean }>(
+        `SELECT id, number, is_blocked AS "isBlocked" FROM dining_tables WHERE id = $1 AND location_id = $2 AND business_id = $3 AND is_active FOR UPDATE`,
+        [toTableId, actor.locationId, actor.businessId],
+      )
+    ).rows[0];
+    if (!table) throw new AppError('NOT_FOUND', 'No encontramos esa mesa en tu sede.');
+    if (table.id === from.tableId) throw new AppError('INVALID', 'Escoge otra mesa.');
+    if (table.isBlocked) throw new AppError('CONFLICT', `La mesa ${table.number} está bloqueada.`);
+    // La cuenta de la otra mesa (la abierta, aunque esté vacía), o una nueva si está libre.
+    let toSession = (
+      await db.query<{ id: string }>(`SELECT id FROM table_sessions WHERE table_id = $1 AND status <> 'closed' ORDER BY opened_at DESC LIMIT 1 FOR UPDATE`, [table.id])
+    ).rows[0]?.id;
+    if (!toSession) {
+      toSession = (
+        await db.query<{ id: string }>(
+          `INSERT INTO table_sessions (business_id, location_id, table_id, guests, opened_by) VALUES ($1, $2, $3, 1, $4) RETURNING id`,
+          [actor.businessId, actor.locationId, table.id, actor.id],
+        )
+      ).rows[0].id;
+      await audit(db, actor, { action: 'table.open', entity: 'table_session', entityId: toSession, summary: `Abrió la mesa ${table.number} al pasarle un producto de la mesa ${from.number}` });
+    }
+    const next = (await db.query<{ n: number }>(`SELECT COALESCE(max(number), 0)::int + 1 AS n FROM order_rounds WHERE session_id = $1`, [toSession])).rows[0].n;
+    const round = (
+      await db.query<{ id: string }>(
+        `INSERT INTO order_rounds (business_id, location_id, session_id, number, client_key, sent_by) VALUES ($1, $2, $3, $4, gen_random_uuid(), $5) RETURNING id`,
+        [actor.businessId, actor.locationId, toSession, next, actor.id],
+      )
+    ).rows[0].id;
+    const note = [`Pasado de la mesa ${from.number}`, item.notes].filter(Boolean).join(' · ').slice(0, 300);
+    if (qty === item.quantity) {
+      await db.query(`UPDATE order_items SET session_id = $2, round_id = $3, notes = $4 WHERE id = $1`, [item.id, toSession, round, note]);
+    } else {
+      await db.query(`UPDATE order_items SET quantity = quantity - $2 WHERE id = $1`, [item.id, qty]);
+      await db.query(
+        `INSERT INTO order_items (business_id, session_id, round_id, ticket_id, product_id, name, unit_price, quantity, notes)
+         SELECT business_id, $2, $3, ticket_id, product_id, name, unit_price, $4, $5 FROM order_items WHERE id = $1`,
+        [item.id, toSession, round, qty, note],
+      );
+    }
+    // Si la mesa de origen quedó sin nada, se cierra (no es una mesa cerrada sin cobrar: todo se pasó a otra).
+    const left = (await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM order_items WHERE session_id = $1 AND voided_at IS NULL`, [from.id])).rows[0].n;
+    if (!left) await db.query(`UPDATE table_sessions SET status = 'closed', closed_at = now(), closed_by = $2 WHERE id = $1`, [from.id, actor.id]);
+    await audit(db, actor, {
+      action: 'order.move',
+      entity: 'order_item',
+      entityId: item.id,
+      summary: `Pasó ${qty} × ${item.name} de la mesa ${from.number} a la mesa ${table.number}${left ? '' : ` (la mesa ${from.number} quedó vacía y se cerró)`}`,
+      data: { from: from.id, to: toSession, quantity: qty },
+    });
+    return { toSession, closedFrom: !left };
+  });
+}

@@ -32,7 +32,7 @@ import { addExpense, payExpense, voidExpense, type PurchaseLine } from '@/lib/fi
 import { addLoss, voidLoss } from '@/lib/losses';
 import { itemsForPurchase, listItems, registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
 import { addMovement, applyDiscount, closeShift, closeZeroBalance, correctClosing, moveCashPayment, openShift, pay, reversePayment, voidDiscount } from '@/lib/cash';
-import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine } from '@/lib/orders';
+import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine, moveItem } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { clearInventory, clearMenu, clearSales } from '@/lib/sales-reset';
 import { removeBackground, saveBackground, setFloorBackground } from '@/lib/backgrounds';
@@ -616,6 +616,17 @@ export async function sendOrderAction(sessionId: string, lines: CartLine[], clie
   } catch (error) {
     return { error: await messageOf(error) };
   }
+}
+
+export async function moveItemAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const q = Number(text(formData, 'quantity') || '0');
+  return run(
+    formData,
+    () => moveItem(staff, text(formData, 'itemId'), text(formData, 'toTableId'), q || undefined),
+    ['/app', `/app/mesa/${text(formData, 'sessionId')}`, '/app/caja'],
+    'Producto pasado a la otra mesa.',
+  );
 }
 
 export async function voidItemAction(_prev: FormState, formData: FormData): Promise<FormState> {

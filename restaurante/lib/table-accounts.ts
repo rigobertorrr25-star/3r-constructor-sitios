@@ -105,6 +105,8 @@ export async function tableAccounts(actor: Actor, date: string, timeZone: string
             (SELECT COALESCE(sum(tip), 0) FROM payments WHERE session_id = ts.id AND reversed_at IS NULL) AS tip
        FROM table_sessions ts JOIN dining_tables t ON t.id = ts.table_id JOIN staff o ON o.id = ts.opened_by
       WHERE ts.location_id = $1 AND ts.business_id = $2 AND ${hasOrders('ts')}
+        -- Una mesa que se cerró porque se le pasaron todos sus productos a otra (6 nov 2026) no se muestra.
+        AND (ts.status <> 'closed' OR EXISTS (SELECT 1 FROM order_items i WHERE i.session_id = ts.id))
         AND (ts.status <> 'closed'
              OR (ts.closed_at >= ($3::date)::timestamp AT TIME ZONE $4 AND ts.closed_at < ($3::date + 1)::timestamp AT TIME ZONE $4))
       ORDER BY ts.closed_at DESC NULLS FIRST, (ts.status = 'bill') DESC, ts.opened_at`,
