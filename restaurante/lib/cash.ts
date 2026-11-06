@@ -161,14 +161,14 @@ export async function lockOpenShift(db: Db, actor: Actor) {
 }
 
 /** Forma de trabajo del negocio (las opciones que prende el dueño en Sedes). */
-export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean }> {
+export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean }> {
   const row = (
-    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean }>(
-      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip", track_prep AS "trackPrep" FROM businesses WHERE id = $1`,
+    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean }>(
+      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip", track_prep AS "trackPrep", cash_only AS "cashOnly" FROM businesses WHERE id = $1`,
       [businessId],
     )
   )[0];
-  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10, trackPrep: true };
+  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10, trackPrep: true, cashOnly: false };
 }
 
 /**
@@ -613,6 +613,7 @@ export async function pay(actor: Actor, sessionId: string, input: PaymentInput) 
   if (!(mode.waitersCollect && actor.role === 'waiter')) requirePermission(actor, 'cash.operate');
   if (!(METHODS as readonly string[]).includes(input.method)) throw new AppError('INVALID', 'Elige cómo paga.');
   const method = input.method as Method;
+  if (mode.cashOnly && method !== 'cash') throw new AppError('INVALID', 'Este negocio cobra solo en efectivo.');
   if (!isUuid(input.clientKey)) throw new AppError('INVALID', 'Pago sin identificador. Recarga la página.');
   requireAmount(input.amount, 'Valor a pagar');
   const tip = input.tip ? requireAmount(input.tip, 'Propina', { allowZero: true }) : 0;

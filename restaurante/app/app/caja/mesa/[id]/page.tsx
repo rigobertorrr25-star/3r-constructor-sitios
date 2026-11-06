@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { requireStaff } from '@/lib/auth';
-import { canCollectSession, getCheckout, getOpenShift } from '@/lib/cash';
+import { canCollectSession, getCheckout, getOpenShift, workMode } from '@/lib/cash';
 import { formatCop } from '@/lib/format';
 import { invoiceForSession } from '@/lib/invoices';
 import { InvoiceCustomer } from '@/components/invoice-forms';
@@ -17,7 +17,13 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   // La caja cobra cualquier mesa; en un bar sin cajero, cada mesero cobra las suyas.
   if (!can(staff.role, 'cash.operate') && !(await canCollectSession(staff, id))) redirect('/app');
-  const [checkout, shift, invoice, printBill] = await Promise.all([getCheckout(staff, id), getOpenShift(staff), invoiceForSession(staff, id), hasPrinter(staff, 'cashier')]);
+  const [checkout, shift, invoice, printBill, { cashOnly }] = await Promise.all([
+    getCheckout(staff, id),
+    getOpenShift(staff),
+    invoiceForSession(staff, id),
+    hasPrinter(staff, 'cashier'),
+    workMode(staff.businessId),
+  ]);
   if (!checkout) notFound();
   return (
     <>
@@ -42,6 +48,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
       canUnlimited={can(staff.role, 'discounts.unlimited')}
       timeZone={staff.timezone}
       printBill={printBill}
+      cashOnly={cashOnly}
     />
     </>
   );

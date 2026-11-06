@@ -33,6 +33,7 @@ export function CheckoutScreen({
   canDiscount = true,
   timeZone,
   printBill = false,
+  cashOnly = false,
 }: {
   checkout: View;
   shiftOpen: boolean;
@@ -41,6 +42,8 @@ export function CheckoutScreen({
   canDiscount?: boolean;
   timeZone: string;
   printBill?: boolean;
+  /** El negocio cobra solo en efectivo (6 nov 2026). */
+  cashOnly?: boolean;
 }) {
   const c = checkout;
   const t = useT();
@@ -287,7 +290,7 @@ export function CheckoutScreen({
               {parts > 1 ? <p className="text-[12.5px] text-muted-foreground">{t('Cada persona paga su parte; la última paga lo que falte.')}</p> : null}
             </div>
             <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label={t('Medio de pago')}>
-              {(Object.keys(METHOD_LABEL) as Method[]).map((m) => (
+              {(cashOnly ? (['cash'] as Method[]) : (Object.keys(METHOD_LABEL) as Method[])).map((m) => (
                 <button
                   key={m}
                   type="button"

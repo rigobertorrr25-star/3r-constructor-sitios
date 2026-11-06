@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/auth';
-import { METHOD_LABEL, METHODS, drawerLeftByLastShift, getOpenShift, listShifts, openAccounts, openShiftCashPayments, shiftSummary } from '@/lib/cash';
+import { METHOD_LABEL, METHODS, drawerLeftByLastShift, getOpenShift, listShifts, openAccounts, openShiftCashPayments, shiftSummary, workMode } from '@/lib/cash';
 import { elapsedMinutes, formatCop, formatDateTime, formatElapsed } from '@/lib/format';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { CloseShiftForm, LossForm, MovementForm, OpenShiftForm, VoidLossButton } from '@/components/cash-forms';
@@ -37,7 +37,13 @@ export default async function CashPage() {
     );
   }
 
-  const [summary, accounts, losses, cashPayments] = await Promise.all([shiftSummary(staff, shift.id), openAccounts(staff), listLosses(staff, shift.openedAt, null), openShiftCashPayments(staff)]);
+  const [summary, accounts, losses, cashPayments, { cashOnly }] = await Promise.all([
+    shiftSummary(staff, shift.id),
+    openAccounts(staff),
+    listLosses(staff, shift.openedAt, null),
+    openShiftCashPayments(staff),
+    workMode(staff.businessId),
+  ]);
   const s = summary!;
   const now = Date.now();
   return (
@@ -55,41 +61,51 @@ export default async function CashPage() {
       {/* Para el cierre, en cuadros separados (6 nov 2026, Rigoberto: «pon en un cuadro la base, en otro la venta; arma la
           propina y di de dónde sale; la transferencia con el total y la propina descontada»). Cada peso aparece una vez. */}
       <section className="space-y-3" aria-label={t('Para el cierre')}>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className={`grid gap-3 sm:grid-cols-2 ${cashOnly ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
           <Box tone="neutral" title={t('Base')} value={formatCop(s.shift.openingAmount)} lines={[t('Con lo que se abrió la caja.')]} />
           <Box
             tone="neutral"
             title={t('Venta')}
             value={formatCop(s.sales)}
-            lines={[
-              `${t('Efectivo')}: ${formatCop(s.byMethod.cash.amount)}`,
-              `${t('Datáfono')}: ${formatCop(s.byMethod.card.amount)}`,
-              `${t('Transferencia')}: ${formatCop(s.byMethod.transfer.amount)}`,
-              t('Sin propina.'),
-            ]}
+            lines={
+              cashOnly
+                ? [t('Todo en efectivo.'), t('Sin propina.')]
+                : [
+                    `${t('Efectivo')}: ${formatCop(s.byMethod.cash.amount)}`,
+                    `${t('Datáfono')}: ${formatCop(s.byMethod.card.amount)}`,
+                    `${t('Transferencia')}: ${formatCop(s.byMethod.transfer.amount)}`,
+                    t('Sin propina.'),
+                  ]
+            }
           />
           <Box
             tone="green"
             title={t('Propina')}
             value={formatCop(s.tips)}
-            lines={[
-              `${t('Efectivo')}: ${formatCop(s.byMethod.cash.tip)} · ${t('ya está en la caja')}`,
-              `${t('Datáfono')}: ${formatCop(s.byMethod.card.tip)} · ${t('se saca de la caja')}`,
-              `${t('Transferencia')}: ${formatCop(s.byMethod.transfer.tip)} · ${t('se saca de la caja')}`,
-              t('Se entrega toda a los meseros.'),
-            ]}
+            lines={
+              cashOnly
+                ? [t('La pagaron los clientes en efectivo: está en la caja.'), t('Se entrega toda a los meseros.')]
+                : [
+                    `${t('Efectivo')}: ${formatCop(s.byMethod.cash.tip)} · ${t('ya está en la caja')}`,
+                    `${t('Datáfono')}: ${formatCop(s.byMethod.card.tip)} · ${t('se saca de la caja')}`,
+                    `${t('Transferencia')}: ${formatCop(s.byMethod.transfer.tip)} · ${t('se saca de la caja')}`,
+                    t('Se entrega toda a los meseros.'),
+                  ]
+            }
           />
-          <Box
-            tone="red"
-            title={t('Transferencia')}
-            value={formatCop(s.byMethod.transfer.amount)}
-            lines={[
-              `${t('Total que llegó')}: ${formatCop(s.byMethod.transfer.amount + s.byMethod.transfer.tip)}`,
-              `− ${t('propina')}: ${formatCop(s.byMethod.transfer.tip)}`,
-              `= ${t('venta')}: ${formatCop(s.byMethod.transfer.amount)}`,
-              t('Revisa que haya llegado a la cuenta.'),
-            ]}
-          />
+          {cashOnly ? null : (
+            <Box
+              tone="red"
+              title={t('Transferencia')}
+              value={formatCop(s.byMethod.transfer.amount)}
+              lines={[
+                `${t('Total que llegó')}: ${formatCop(s.byMethod.transfer.amount + s.byMethod.transfer.tip)}`,
+                `− ${t('propina')}: ${formatCop(s.byMethod.transfer.tip)}`,
+                `= ${t('venta')}: ${formatCop(s.byMethod.transfer.amount)}`,
+                t('Revisa que haya llegado a la cuenta.'),
+              ]}
+            />
+          )}
         </div>
         {/* La caja: una cuenta corta, sin repetir la propina del efectivo (ya se entregó, nunca se suma). */}
         <div className="rounded-[22px] border-2 border-primary/60 bg-primary/10 p-5">

@@ -7,7 +7,19 @@ import { CheckField, Field } from './ui';
 import { useT } from './i18n';
 
 /** El dueño escoge cómo trabaja su negocio. */
-export function WorkModeForm({ waitersCollect, barOnly, suggestedTip, trackPrep }: { waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean }) {
+export function WorkModeForm({
+  waitersCollect,
+  barOnly,
+  suggestedTip,
+  trackPrep,
+  cashOnly,
+}: {
+  waitersCollect: boolean;
+  barOnly: boolean;
+  suggestedTip: number;
+  trackPrep: boolean;
+  cashOnly: boolean;
+}) {
   const t = useT();
   return (
     <ActionForm action={updateWorkModeAction} className="grid gap-3 md:grid-cols-2">
@@ -25,6 +37,12 @@ export function WorkModeForm({ waitersCollect, barOnly, suggestedTip, trackPrep 
             label={t('Cocina y barra marcan sus comandas en pantalla')}
             hint={t('Quítalo si las comandas le llegan a la cajera y ella avisa: así no se mide cuánto se demoran y el radar de fugas no las cuenta como demoradas.')}
             defaultChecked={trackPrep}
+          />
+          <CheckField
+            name="cashOnly"
+            label={t('Solo efectivo')}
+            hint={t('Al cobrar solo sale Efectivo (sin datáfono ni transferencia). Al marcarlo, los cobros por datáfono o transferencia de la caja abierta pasan a efectivo; las cajas cerradas no cambian.')}
+            defaultChecked={cashOnly}
           />
           <div className="md:col-span-2 md:max-w-[320px]">
             <Field
