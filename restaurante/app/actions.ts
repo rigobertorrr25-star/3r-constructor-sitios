@@ -737,8 +737,9 @@ export async function updateWorkModeAction(_prev: FormState, formData: FormData)
         barOnly: formData.get('barOnly') === 'on',
         suggestedTip: int(formData, 'suggestedTip'),
         trackPrep: formData.get('trackPrep') === 'on',
+        cashOnly: formData.get('cashOnly') === 'on',
       }),
-    ['/app', '/app/sedes', '/app/meseros', '/app/mi-cuenta'],
+    ['/app', '/app/sedes', '/app/meseros', '/app/mi-cuenta', '/app/caja'],
     'Guardado.',
   );
 }

@@ -10,21 +10,44 @@ import { AppError, audit, hasOrders, isUuid, requirePermission, type Actor } fro
 const money = formatCop;
 
 /** El dueño escoge la forma de trabajo del negocio. */
-export async function updateWorkMode(actor: Actor, input: { waitersCollect: boolean; barOnly: boolean; suggestedTip?: number; trackPrep?: boolean }) {
+export async function updateWorkMode(actor: Actor, input: { waitersCollect: boolean; barOnly: boolean; suggestedTip?: number; trackPrep?: boolean; cashOnly?: boolean }) {
   requirePermission(actor, 'locations.manage');
   // Propina sugerida en %; 0 = el negocio no maneja propina (no se ofrece al cobrar ni sale en la precuenta).
   const tip = input.suggestedTip ?? null;
   if (tip !== null && (!Number.isInteger(tip) || tip < 0 || tip > 30)) throw new AppError('INVALID', 'Propina sugerida: de 0 a 30 %.');
   await transaction(async (db) => {
-    const before = (await db.query<{ trackPrep: boolean }>(`SELECT track_prep AS "trackPrep" FROM businesses WHERE id = $1 FOR UPDATE`, [actor.businessId])).rows[0];
+    const before = (
+      await db.query<{ trackPrep: boolean; cashOnly: boolean }>(`SELECT track_prep AS "trackPrep", cash_only AS "cashOnly" FROM businesses WHERE id = $1 FOR UPDATE`, [actor.businessId])
+    ).rows[0];
     const trackPrep = input.trackPrep ?? before.trackPrep;
-    await db.query(`UPDATE businesses SET waiters_collect = $2, bar_only = $3, suggested_tip = COALESCE($4, suggested_tip), track_prep = $5 WHERE id = $1`, [
+    const cashOnly = input.cashOnly ?? before.cashOnly;
+    await db.query(`UPDATE businesses SET waiters_collect = $2, bar_only = $3, suggested_tip = COALESCE($4, suggested_tip), track_prep = $5, cash_only = $6 WHERE id = $1`, [
       actor.businessId,
       input.waitersCollect,
       input.barOnly,
       tip,
       trackPrep,
+      cashOnly,
     ]);
+    // Al pasar a «solo efectivo», los cobros por datáfono o transferencia de las cajas abiertas pasan a efectivo
+    // (6 nov 2026, Rigoberto: «cambia todos los pagos de transferencia a efectivo»). Las cajas cerradas no se tocan.
+    if (cashOnly && !before.cashOnly) {
+      const moved = await db.query<{ id: string }>(
+        `UPDATE payments p SET method = 'cash', received = p.amount + p.tip, change_given = 0
+           FROM cash_shifts c
+          WHERE p.shift_id = c.id AND c.closed_at IS NULL AND p.business_id = $1 AND p.method <> 'cash' AND p.reversed_at IS NULL
+          RETURNING p.id`,
+        [actor.businessId],
+      );
+      await audit(db, actor, {
+        action: 'business.cash_only',
+        entity: 'business',
+        entityId: actor.businessId,
+        summary: `Pasó a cobrar solo en efectivo${moved.rows.length ? `; ${moved.rows.length} cobros de la caja abierta pasaron de datáfono/transferencia a efectivo` : ''}`,
+      });
+    } else if (!cashOnly && before.cashOnly) {
+      await audit(db, actor, { action: 'business.cash_only', entity: 'business', entityId: actor.businessId, summary: 'Volvió a cobrar también por datáfono y transferencia' });
+    }
     if (trackPrep !== before.trackPrep) {
       await audit(db, actor, {
         action: 'business.prep',

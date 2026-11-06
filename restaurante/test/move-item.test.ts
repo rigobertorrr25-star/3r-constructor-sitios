@@ -79,9 +79,33 @@ describe('pasar un producto a otra mesa', { skip: url ? false : 'sin TEST_DATABA
     assert.ok(audit.some((x) => /Pasó 1 × Cerveza de la mesa 1 a la mesa 2/.test(x.summary)));
   });
 
+  it('solo efectivo: la transferencia de la caja abierta pasa a efectivo y ya no se cobra por banco (6 nov 2026)', async () => {
+    const waiters = await import('../lib/waiters');
+    await cash.openShift(cashier, 100000);
+    const t5 = await store.createTable(owner, { zone: 'Salón', number: '5', capacity: 4, shape: 'square' });
+    const t6 = await store.createTable(owner, { zone: 'Salón', number: '6', capacity: 4, shape: 'square' });
+    const s2 = await store.openTable(waiter, t5, { guests: 1 });
+    await orders.sendOrder(waiter, s2, [{ productId: beer, quantity: 1 }], randomUUID());
+    await cash.pay(cashier, s2, { method: 'transfer', amount: 8000, tip: 800, clientKey: randomUUID() });
+    let sum = (await cash.shiftSummary(cashier, (await cash.getOpenShift(cashier))!.id))!;
+    assert.equal(sum.expectedCash, 100000 - 800, 'antes: la propina de transferencia sale de la caja');
+    await waiters.updateWorkMode(owner, { waitersCollect: false, barOnly: false, cashOnly: true });
+    sum = (await cash.shiftSummary(cashier, (await cash.getOpenShift(cashier))!.id))!;
+    assert.deepEqual([sum.byMethod.transfer.amount, sum.byMethod.cash.amount, sum.byMethod.cash.tip], [0, 8000, 800]);
+    assert.equal(sum.expectedCash, 108000, 'ahora: base + venta en efectivo');
+    assert.equal((await cash.workMode(owner.businessId)).cashOnly, true);
+    const s3 = await store.openTable(waiter, t6, { guests: 1 });
+    await orders.sendOrder(waiter, s3, [{ productId: beer, quantity: 1 }], randomUUID());
+    await assert.rejects(cash.pay(cashier, s3, { method: 'transfer', amount: 8000, clientKey: randomUUID() }), { code: 'INVALID' });
+    await cash.pay(cashier, s3, { method: 'cash', amount: 8000, clientKey: randomUUID() });
+    await waiters.updateWorkMode(owner, { waitersCollect: false, barOnly: false, cashOnly: false });
+    await cash.closeShift(cashier, (await cash.shiftSummary(cashier, (await cash.getOpenShift(cashier))!.id))!.expectedCash, '');
+  });
+
   it('no se deja si la mesa ya tiene abonos', async () => {
     await cash.openShift(cashier, 0);
-    const s3 = await store.openTable(waiter, t3, { guests: 1 });
+    const t4 = await store.createTable(owner, { zone: 'Salón', number: '4', capacity: 4, shape: 'square' });
+    const s3 = await store.openTable(waiter, t4, { guests: 1 });
     await orders.sendOrder(waiter, s3, [{ productId: beer, quantity: 2 }], randomUUID());
     const [item] = (await orders.getSessionOrder(waiter, s3))!.rounds[0].items;
     await cash.pay(cashier, s3, { method: 'card', amount: 8000, clientKey: randomUUID() });
