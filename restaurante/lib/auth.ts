@@ -6,6 +6,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { can, homeOf, type Permission } from './permissions';
 import { getStaffSession, type StaffSession } from './store';
+import { canWorkFrom } from './local-network';
+import { clientIp } from './rate-limit';
 
 export const ADMIN_COOKIE = 'rc_admin';
 export const STAFF_COOKIE = 'rc_equipo';
@@ -85,6 +87,13 @@ export async function requireAdmin() {
 
 /** Quién del equipo está usando la app, o null (sin sesión, vencida o invalidada). */
 export async function getStaff(): Promise<StaffSession | null> {
+  const staff = await sessionStaff();
+  if (!staff) return null;
+  // Fuera del wifi del local no se trabaja (6 nov 2026), salvo el dueño y el administrador.
+  return (await canWorkFrom(staff, await clientIp())) ? staff : null;
+}
+
+async function sessionStaff(): Promise<StaffSession | null> {
   const parsed = parseStaffSession((await cookies()).get(STAFF_COOKIE)?.value);
   if (!parsed) return null;
   return getStaffSession(parsed.staffId, parsed.locationId, parsed.epoch);
@@ -92,8 +101,9 @@ export async function getStaff(): Promise<StaffSession | null> {
 
 /** Para las páginas del equipo: sin sesión, a la portada; sin permiso, a su pantalla de inicio. */
 export async function requireStaff(permission?: Permission): Promise<StaffSession> {
-  const staff = await getStaff();
+  const staff = await sessionStaff();
   if (!staff) redirect('/');
+  if (!(await canWorkFrom(staff, await clientIp()))) redirect('/?fuera=1');
   if (permission && !can(staff.role, permission)) redirect(homeOf(staff.role));
   return staff;
 }

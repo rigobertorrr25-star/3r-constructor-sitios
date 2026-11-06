@@ -194,6 +194,8 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS bar_only BOOLEAN NOT NULL DEFAUL
 -- Cocina y barra marcan sus comandas en pantalla (Preparando / Listo). En Azul Caribe no (31 oct 2026): las comandas le
 -- llegan a la cajera y ella avisa; sin marcar, el radar las veía como demoradas. Apagado, no se mide su tiempo.
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS track_prep BOOLEAN NOT NULL DEFAULT TRUE;
+-- Direcciones del wifi del local (6 nov 2026): si hay alguna, el equipo (menos dueño y administrador) solo entra desde ellas.
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS allowed_ips TEXT[] NOT NULL DEFAULT '{}';
 -- Solo efectivo (6 nov 2026, Azul Caribe): al cobrar no se ofrece datáfono ni transferencia.
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS cash_only BOOLEAN NOT NULL DEFAULT FALSE;
 -- Corrección de un cierre ya hecho (4 nov 2026): quién, cuándo y por qué. Lo que decía antes queda en la auditoría.

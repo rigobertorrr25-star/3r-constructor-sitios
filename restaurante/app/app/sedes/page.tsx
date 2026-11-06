@@ -8,12 +8,15 @@ import { getT } from '@/lib/i18n/server';
 import { WorkModeForm } from '@/components/waiter-forms';
 import { workMode } from '@/lib/cash';
 import { aiStatus } from '@/lib/brief';
+import { locationNetworks, networkKey } from '@/lib/local-network';
+import { clientIp } from '@/lib/rate-limit';
+import { NetworkForms } from '@/components/network-forms';
 
 export const dynamic = 'force-dynamic';
 
 export default async function LocationsPage() {
   const staff = await requireStaff('locations.manage');
-  const [locations, mode, ai] = await Promise.all([listLocations(staff.businessId), workMode(staff.businessId), aiStatus()]);
+  const [locations, mode, ai, networks, ip] = await Promise.all([listLocations(staff.businessId), workMode(staff.businessId), aiStatus(), locationNetworks(staff.locationId), clientIp()]);
   const t = await getT();
   return (
     <div className="space-y-6">
@@ -29,6 +32,22 @@ export default async function LocationsPage() {
         <div className="mt-4">
           <WorkModeForm waitersCollect={staff.waitersCollect} barOnly={staff.barOnly} suggestedTip={mode.suggestedTip} trackPrep={mode.trackPrep} cashOnly={mode.cashOnly} />
         </div>
+      </section>
+      {/* Entrar solo desde el wifi del local (6 nov 2026). */}
+      <section className={`${card} ${networks.length ? 'border-success/40' : ''}`}>
+        <h2 className="font-display text-[18px] font-bold">{t('Entrar solo desde el wifi del local')}</h2>
+        <p className="mt-1 text-[14.5px] text-muted-foreground">
+          {t('Meseros, cajeras, cocina y barra solo podrán usar el sistema conectados al wifi de esta sede. Tú y el administrador entran desde cualquier parte. Hazlo estando en el local, conectado a su wifi.')}
+        </p>
+        <p className={`mt-2 text-[15px] font-semibold ${networks.length ? 'text-success' : 'text-muted-foreground'}`}>
+          {networks.length ? t('Prendido: el equipo solo entra desde estas conexiones.') : t('Apagado: el equipo entra desde cualquier parte.')}
+        </p>
+        <div className="mt-3">
+          <NetworkForms networks={networks} current={networkKey(ip)} />
+        </div>
+        <p className="mt-3 text-[12.5px] text-muted-foreground">
+          {t('Si el proveedor de internet cambia la dirección del local, el equipo no podrá entrar: agrega la conexión otra vez desde el local. Con los datos del celular tampoco se puede entrar.')}
+        </p>
       </section>
       {/* ¿Funciona la IA? Facturas con foto, inventario con foto, carta desde PDF y el resumen del Tablero la usan. */}
       <section className={`${card} ${ai === 'ok' ? 'border-success/40' : 'border-warning/50'}`}>

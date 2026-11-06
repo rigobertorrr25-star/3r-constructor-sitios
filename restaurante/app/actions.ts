@@ -1,5 +1,6 @@
 'use server';
 
+import { addLocationNetwork, canWorkFrom, removeLocationNetwork } from '@/lib/local-network';
 import { importMenu, parseMenuText } from '@/lib/menu-import';
 import { importRecipes, parseRecipesText } from '@/lib/recipe-import';
 import { matchPhotosWithAi, readReceiptWithAi, readStockWithAi, readWithAi, type ReadKind } from '@/lib/ai-read';
@@ -218,6 +219,8 @@ export async function staffLoginAction(_prev: FormState, formData: FormData): Pr
     return fail(await messageOf(error), formData);
   }
   if (result.kind === 'choose-location') return { locations: result.locations, values: { code: text(formData, 'code') } };
+  if (!(await canWorkFrom({ role: result.role, locationId: result.locationId }, ip)))
+    return fail(await trServer('Solo puedes entrar desde el wifi del local. Conéctate al wifi y vuelve a intentar.'), formData);
   const jar = await cookies();
   const session = staffSessionValue(result.staffId, result.locationId, result.epoch);
   jar.set(STAFF_COOKIE, session.value, cookieOptions(session.maxAge));
@@ -1391,4 +1394,15 @@ export async function correctMovementAction(_prev: FormState, formData: FormData
     ['/app/caja', `/app/caja/turno/${text(formData, 'shiftId')}`, '/app/caja/dia'],
     remove ? 'Movimiento eliminado.' : 'Movimiento corregido.',
   );
+}
+
+export async function addNetworkAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('locations.manage');
+  const ip = await clientIp();
+  return run(formData, () => addLocationNetwork(staff, ip), ['/app/sedes'], 'Listo: el equipo ya solo entra desde este wifi.');
+}
+
+export async function removeNetworkAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff('locations.manage');
+  return run(formData, () => removeLocationNetwork(staff, text(formData, 'key')), ['/app/sedes'], 'Conexión quitada.');
 }

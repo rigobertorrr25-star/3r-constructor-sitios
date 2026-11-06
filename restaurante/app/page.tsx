@@ -10,7 +10,8 @@ import { getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ fuera?: string }> }) {
+  const { fuera } = await searchParams;
   // Ingreso de todos los restaurantes: se escoge el restaurante y se entra con código y PIN.
   // La tablet recuerda el último restaurante usado; quien ya tiene sesión abierta sigue con un toque.
   const [staff, businesses, jar] = await Promise.all([getStaff(), listActiveBusinesses().catch(() => null), cookies()]);
@@ -31,6 +32,11 @@ export default async function Home() {
             <p className="text-[14px] text-muted-foreground">{t('por 3R')}</p>
           </div>
         </div>
+        {fuera ? (
+          <p className="mt-6 rounded-2xl border border-warning/50 bg-warning/10 px-4 py-3 text-[14.5px]">
+            {t('Solo puedes usar el sistema desde el wifi del local. Conéctate al wifi del restaurante y vuelve a entrar.')}
+          </p>
+        ) : null}
         {staff ? (
           <Link
             href={homeOf(staff.role)}
