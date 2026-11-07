@@ -14,6 +14,7 @@ export function WorkModeForm({
   trackPrep,
   cashOnly,
   usdRate,
+  noBase = false,
 }: {
   waitersCollect: boolean;
   barOnly: boolean;
@@ -21,6 +22,7 @@ export function WorkModeForm({
   trackPrep: boolean;
   cashOnly: boolean;
   usdRate: number;
+  noBase?: boolean;
 }) {
   const t = useT();
   return (
@@ -45,6 +47,12 @@ export function WorkModeForm({
             label={t('Solo efectivo')}
             hint={t('Al cobrar solo sale Efectivo (sin datáfono ni transferencia). Al marcarlo, los cobros por datáfono o transferencia de la caja abierta pasan a efectivo; las cajas cerradas no cambian.')}
             defaultChecked={cashOnly}
+          />
+          <CheckField
+            name="noBase"
+            label={t('Caja sin base')}
+            hint={t('La caja abre en $0 y la base no sale en la caja, los cuadres ni el cierre: solo cuenta el efectivo de la venta. Las cajas que ya se abrieron no cambian.')}
+            defaultChecked={noBase}
           />
           <div className="md:max-w-[320px]">
             <Field

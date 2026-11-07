@@ -19,14 +19,23 @@ export default async function CashPage() {
   const closed = history.filter((h) => h.closedAt);
 
   if (!shift) {
+    const { noBase } = await workMode(staff.businessId);
     return (
       <div className="space-y-6">
-        <PageTitle title={t('Caja')} text={t('Sede {location}. La caja está cerrada: ábrela con la base en efectivo para empezar a cobrar.', { location: staff.locationName })} />
+        <PageTitle
+          title={t('Caja')}
+          text={
+            noBase
+              ? t('Sede {location}. La caja está cerrada: ábrela para empezar a cobrar.', { location: staff.locationName })
+              : t('Sede {location}. La caja está cerrada: ábrela con la base en efectivo para empezar a cobrar.', { location: staff.locationName })
+          }
+        />
         <section className={`${card} max-w-md`}>
           <OpenShiftForm
+            noBase={noBase}
             suggested={left?.amount}
             hint={
-              left
+              left && !noBase
                 ? t('Al cerrar el turno anterior ({name}, {date}) quedaron {amount} en la caja.', { name: left.closedBy, date: formatDateTime(left.closedAt, staff.timezone, lang), amount: formatCop(left.amount) })
                 : undefined
             }
@@ -51,7 +60,7 @@ export default async function CashPage() {
       <AutoRefresh everyMs={15_000} />
       <PageTitle
         title={`${t('Caja')} · ${t('Turno {n}', { n: shift.dayNumber })}`}
-        text={t('Abierta por {name} · {date} · base {amount}', { name: shift.openedBy, date: formatDateTime(shift.openedAt, staff.timezone, lang), amount: formatCop(shift.openingAmount) })}
+        text={shift.openingAmount ? t('Abierta por {name} · {date} · base {amount}', { name: shift.openedBy, date: formatDateTime(shift.openedAt, staff.timezone, lang), amount: formatCop(shift.openingAmount) }) : t('Abierta por {name} · {date}', { name: shift.openedBy, date: formatDateTime(shift.openedAt, staff.timezone, lang) })}
       >
         <Link href={`/app/caja/dia?fecha=${shift.day}`} className={quietButton}>
           {t('Cuadre del día')}
@@ -62,7 +71,7 @@ export default async function CashPage() {
           propina y di de dónde sale; la transferencia con el total y la propina descontada»). Cada peso aparece una vez. */}
       <section className="space-y-3" aria-label={t('Para el cierre')}>
         <div className={`grid gap-3 sm:grid-cols-2 ${cashOnly ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
-          <Box tone="amber" title={t('Base')} value={formatCop(s.shift.openingAmount)} lines={[t('Con lo que se abrió la caja.')]} />
+          {s.shift.openingAmount ? <Box tone="amber" title={t('Base')} value={formatCop(s.shift.openingAmount)} lines={[t('Con lo que se abrió la caja.')]} /> : null}
           <Box
             tone="sky"
             title={t('Venta')}
@@ -125,9 +134,11 @@ export default async function CashPage() {
             = {formatCop(s.expectedCash - s.shift.openingAmount)}
           </p>
           <p className="mt-1 text-[13px] text-muted-foreground">{t('Sin la base y ya con toda la propina entregada a los meseros.')}</p>
-          <p className="mt-3 rounded-2xl border border-[#f4b740]/50 bg-[#f4b740]/10 px-4 py-2.5 text-[15px] font-medium">
-            {t('Aparte, la base: {base}. Al contar la caja completa (venta + base) deben ser {total}.', { base: formatCop(s.shift.openingAmount), total: formatCop(s.expectedCash) })}
-          </p>
+          {s.shift.openingAmount ? (
+            <p className="mt-3 rounded-2xl border border-[#f4b740]/50 bg-[#f4b740]/10 px-4 py-2.5 text-[15px] font-medium">
+              {t('Aparte, la base: {base}. Al contar la caja completa (venta + base) deben ser {total}.', { base: formatCop(s.shift.openingAmount), total: formatCop(s.expectedCash) })}
+            </p>
+          ) : null}
           {s.usd.dollars ? (
             // Dólares recibidos (8 nov 2026): se cuentan aparte de los pesos.
             <p className="mt-3 rounded-2xl border border-[#4cc9f0]/50 bg-[#4cc9f0]/10 px-4 py-2.5 text-[16px] font-semibold">
@@ -225,7 +236,7 @@ export default async function CashPage() {
         <section className={card}>
           <h2 className="font-display text-[18px] font-bold">{t('Cerrar caja')}</h2>
           <p className="mt-1 text-[14px] text-muted-foreground">
-            {t('Cuenta el efectivo que hay en la caja (con la base) y escríbelo. Debería haber')} <strong className="text-foreground">{formatCop(s.expectedCash)}</strong>.
+            {s.shift.openingAmount ? t('Cuenta el efectivo que hay en la caja (con la base) y escríbelo. Debería haber') : t('Cuenta el efectivo que hay en la caja y escríbelo. Debería haber')} <strong className="text-foreground">{formatCop(s.expectedCash)}</strong>.
             {accounts.length ? t(' Ojo: quedan {n} mesas abiertas; se podrán cobrar en la siguiente caja.', { n: accounts.length }) : ''}
           </p>
           <div className="mt-4">

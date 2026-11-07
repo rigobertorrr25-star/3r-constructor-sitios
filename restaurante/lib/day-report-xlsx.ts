@@ -126,13 +126,17 @@ export async function dayReportXlsx(r: DayReport): Promise<Buffer> {
   };
   const first = r.shifts[0];
   block('Caja', [
-    ['Base con que se abrió el día', first.shift.openingAmount, 'strong'],
-    ...r.shifts.map((s): [string, number] => [`Base del turno ${s.shift.dayNumber} (${s.shift.openedBy})`, s.shift.openingAmount]),
+    ...(r.shifts.some((s) => s.shift.openingAmount)
+      ? [
+          ['Base con que se abrió el día', first.shift.openingAmount, 'strong'] as [string, number, 'strong'],
+          ...r.shifts.map((s): [string, number] => [`Base del turno ${s.shift.dayNumber} (${s.shift.openedBy})`, s.shift.openingAmount]),
+        ]
+      : []),
     ['Entradas de efectivo', totals.movementsIn],
     ['Salidas de efectivo', totals.movementsOut],
     // La base va aparte del efectivo de la venta (8 nov 2026, pedido de Rigoberto).
     ...r.shifts.map((s): [string, number, 'strong'] => [`Efectivo de la venta turno ${s.shift.dayNumber} (sin base)`, (s.shift.expectedCash ?? s.expectedCash) - s.shift.openingAmount, 'strong']),
-    ...r.shifts.map((s): [string, number] => [`Total en la caja turno ${s.shift.dayNumber} (venta + base)`, s.shift.expectedCash ?? s.expectedCash]),
+    ...r.shifts.filter((s) => s.shift.openingAmount).map((s): [string, number] => [`Total en la caja turno ${s.shift.dayNumber} (venta + base)`, s.shift.expectedCash ?? s.expectedCash]),
     ...r.shifts.filter((s) => s.shift.countedCash !== null).map((s): [string, number] => [`Efectivo contado turno ${s.shift.dayNumber}`, s.shift.countedCash!]),
   ]);
   block('Ventas', [

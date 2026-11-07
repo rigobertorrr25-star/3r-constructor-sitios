@@ -609,4 +609,9 @@ export const en: Record<string, string> = {
   'Efectivo de la venta (sin base)': 'Cash from sales (without float)',
   'Total en la caja (venta + base)': 'Total in the drawer (sales + float)',
   'Base (aparte)': 'Float (separate)',
+  'Caja sin base': 'Drawer without float',
+  'La caja abre en $0 y la base no sale en la caja, los cuadres ni el cierre: solo cuenta el efectivo de la venta. Las cajas que ya se abrieron no cambian.': 'The drawer opens at $0 and the float does not show in the till, the reconciliations or the closing: only cash from sales counts. Drawers already opened do not change.',
+  'Sede {location}. La caja está cerrada: ábrela para empezar a cobrar.': 'Location {location}. The drawer is closed: open it to start taking payments.',
+  'Cuenta el efectivo que hay en la caja y escríbelo. Debería haber': 'Count the cash in the drawer and enter it. There should be',
+  'Abierta por {name} · {date}': 'Opened by {name} · {date}',
 };

@@ -249,8 +249,8 @@ export function cierre(width: number, c: CierreInput) {
   t.line((c.title ?? 'Cierre de caja').toUpperCase(), { align: 'center', big: true })
     .line(`Abrió: ${c.openedBy} · ${c.openedAt}`)
     .line(`Cerró: ${c.closedBy} · ${c.closedAt}`)
-    .rule()
-    .row('Base', c.opening);
+    .rule();
+  if (!/^\$\s*0$/.test(c.opening)) t.row('Base', c.opening);
   for (const m of c.methods) t.row(`${m.label} (${m.count})`, m.amount);
   t.row('Ventas', c.sales, { bold: true });
   if (c.tipOfSales) t.row(`Propina (${c.tipOfSales.pct} % de ventas)`, c.tipOfSales.amount, { bold: true });
@@ -259,8 +259,11 @@ export function cierre(width: number, c: CierreInput) {
     .row('Entradas de efectivo', c.movementsIn)
     .row('Salidas de efectivo', c.movementsOut)
     .rule();
-  if (c.salesCash) t.row('Efectivo de la venta', c.salesCash, { bold: true }).row('+ Base (aparte)', c.opening);
-  t.row(c.salesCash ? 'Total en la caja' : 'Efectivo esperado', c.expected)
+  const hasBase = !/^\$\s*0$/.test(c.opening);
+  if (c.salesCash) t.row('Efectivo de la venta', c.salesCash, { bold: true });
+  if (c.salesCash && hasBase) t.row('+ Base (aparte)', c.opening);
+  if (!c.salesCash || hasBase) t.row(c.salesCash ? 'Total en la caja' : 'Efectivo esperado', c.expected);
+  t
     .row('Efectivo contado', c.counted, { bold: true });
   if (c.usd) t.row('Dolares esperados', c.usd.expected).row('Dolares contados', c.usd.counted, { bold: true });
   if (c.cashCount?.length) {
@@ -305,9 +308,9 @@ export function cuadreDia(width: number, c: CuadreDiaInput) {
       .line(`${turn.label}: ${turn.who}`, { bold: true })
       .line(turn.hours)
       .row('Ventas', turn.sales)
-      .row('Efectivo de la venta', turn.salesCash ?? '-', { bold: true })
-      .row('+ Base (aparte)', turn.opening)
-      .row('Total en la caja', turn.expected)
+      .row('Efectivo de la venta', turn.salesCash ?? '-', { bold: true });
+    if (!/^\$\s*0$/.test(turn.opening)) t.row('+ Base (aparte)', turn.opening).row('Total en la caja', turn.expected);
+    t
       .row('Efectivo contado', turn.counted)
       .line(turn.result, { bold: true });
   }
