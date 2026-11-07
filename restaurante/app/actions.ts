@@ -32,7 +32,7 @@ import { createReservation, requestReservation, seatReservation, updatePublicSet
 import { addExpense, payExpense, voidExpense, type PurchaseLine } from '@/lib/finance';
 import { addLoss, voidLoss } from '@/lib/losses';
 import { itemsForPurchase, listItems, registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
-import { addMovement, applyDiscount, closeShift, closeZeroBalance, correctClosing, moveCashPayment, openShift, pay, reversePayment, voidDiscount, correctMovement } from '@/lib/cash';
+import { addMovement, applyDiscount, closeShift, closeZeroBalance, correctClosing, moveCashPayment, openShift, pay, reversePayment, voidDiscount, correctMovement, changePaymentMethod, changeDayToCash } from '@/lib/cash';
 import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine, moveItem } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { clearInventory, clearMenu, clearSales } from '@/lib/sales-reset';
@@ -1396,4 +1396,27 @@ export async function addNetworkAction(_prev: FormState, formData: FormData): Pr
 export async function removeNetworkAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await requireStaff('locations.manage');
   return run(formData, () => removeLocationNetwork(staff, text(formData, 'key')), ['/app/sedes'], 'Conexión quitada.');
+}
+
+export async function changePaymentMethodAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  return run(
+    formData,
+    () => changePaymentMethod(staff, text(formData, 'paymentId'), text(formData, 'method')),
+    ['/app/caja', `/app/caja/mesa/${text(formData, 'sessionId')}`, '/app/caja/dia', '/app/cuentas'],
+    'Medio de pago cambiado.',
+  );
+}
+
+export async function changeDayToCashAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  try {
+    const n = await changeDayToCash(staff, text(formData, 'date'));
+    revalidatePath('/app/caja');
+    revalidatePath('/app/caja/dia');
+    revalidatePath('/app/cuentas');
+    return { ok: Date.now(), message: n ? (await trServer('Listo: {n} cobros pasaron a efectivo.')).replace('{n}', String(n)) : await trServer('No había cobros por datáfono ni transferencia ese día.') };
+  } catch (error) {
+    return { error: await messageOf(error) };
+  }
 }

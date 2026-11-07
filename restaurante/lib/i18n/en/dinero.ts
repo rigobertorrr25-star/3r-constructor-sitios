@@ -596,4 +596,10 @@ export const en: Record<string, string> = {
   'Sobran US$ {usd}': 'US$ {usd} over',
   'Faltan US$ {usd}': 'US$ {usd} short',
   'Dólares (esperados / contados)': 'Dollars (expected / counted)',
+  'Cambiar medio': 'Change method',
+  'Listo: {n} cobros pasaron a efectivo.': 'Done: {n} payments moved to cash.',
+  'No había cobros por datáfono ni transferencia ese día.': 'There were no card or transfer payments that day.',
+  '¿Pasar a efectivo todos los cobros por datáfono y transferencia de este día?': 'Move every card and transfer payment of this day to cash?',
+  'Sí, pasar a efectivo': 'Yes, move to cash',
+  'Pasar todo a efectivo': 'Move all to cash',
 };

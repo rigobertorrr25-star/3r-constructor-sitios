@@ -78,5 +78,30 @@ describe('cobro con dólares', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     const { shiftId } = await cash.closeShift(cashier, exp, '', { countedUsd: 16 });
     const closed = (await cash.shiftSummary(owner, shiftId))!;
     assert.deepEqual([closed.shift.expectedUsd, closed.shift.countedUsd], [17, 16]);
+
+    // Cambiar el medio de un cobro de una caja ya cerrada (8 nov 2026): transferencia → efectivo sube el esperado.
+    await cash.openShift(cashier, 50000);
+    const t3 = await store.createTable(owner, { zone: 'Salón', number: '3', capacity: 4, shape: 'square' });
+    const s3 = await order(t3);
+    await cash.pay(cashier, s3, { method: 'transfer', amount: 25000, tip: 2500, clientKey: randomUUID() });
+    const open = (await cash.getOpenShift(cashier))!;
+    const before = (await cash.shiftSummary(owner, open.id))!.expectedCash;
+    const { shiftId: closedId } = await cash.closeShift(cashier, before, '');
+    const [pay] = (await cash.getCheckout(owner, s3))!.payments;
+    await assert.rejects(cash.changePaymentMethod(cashier, pay.id, 'cash'), { code: 'FORBIDDEN' });
+    await cash.changePaymentMethod(owner, pay.id, 'cash');
+    const after = (await cash.shiftSummary(owner, closedId))!;
+    assert.equal(after.shift.expectedCash, before + 25000 + 2500, 'suma la venta y ya no resta la propina');
+    assert.equal(after.byMethod.cash.amount, 25000);
+    await assert.rejects(cash.changePaymentMethod(owner, pay.id, 'cash'), { code: 'INVALID' });
+
+    // Pasar todo el día a efectivo: se cambian los cobros por datáfono/transferencia; los de dólares se quedan.
+    await cash.openShift(cashier, 0);
+    const t4 = await store.createTable(owner, { zone: 'Salón', number: '4', capacity: 4, shape: 'square' });
+    await cash.pay(cashier, await order(t4), { method: 'card', amount: 25000, clientKey: randomUUID() });
+    const day = (await db.query<{ d: string }>(`SELECT to_char(now() AT TIME ZONE 'America/Bogota', 'YYYY-MM-DD') AS d`))[0].d;
+    await assert.rejects(cash.changeDayToCash(cashier, day), { code: 'FORBIDDEN' });
+    assert.equal(await cash.changeDayToCash(owner, day), 1);
+    assert.equal(await cash.changeDayToCash(owner, day), 0);
   });
 });

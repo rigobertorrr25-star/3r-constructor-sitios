@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { addLossAction, cashPaidOutAction, closeShiftAction, correctClosingAction, correctMovementAction, moveCashPaymentAction, movementAction, openShiftAction, voidLossAction } from '@/app/actions';
+import { addLossAction, cashPaidOutAction, changeDayToCashAction, closeShiftAction, correctClosingAction, correctMovementAction, moveCashPaymentAction, movementAction, openShiftAction, voidLossAction } from '@/app/actions';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Field, Select, TextArea, inputClass, quietButton } from './ui';
@@ -450,5 +450,29 @@ export function CorrectMovementForm({ id, shiftId, amount }: { id: string; shift
         </ActionForm>
       ) : null}
     </>
+  );
+}
+
+/** «Pasar todos los cobros de este día a efectivo» (8 nov 2026). Dueño y administrador. */
+export function DayToCashButton({ date }: { date: string }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  return open ? (
+    <ActionForm action={changeDayToCashAction} onOk={() => setOpen(false)} className="flex flex-wrap items-center gap-2">
+      {() => (
+        <>
+          <input type="hidden" name="date" value={date} />
+          <span className="text-[13.5px]">{t('¿Pasar a efectivo todos los cobros por datáfono y transferencia de este día?')}</span>
+          <SubmitButton pendingText={t('Pasando…')}>{t('Sí, pasar a efectivo')}</SubmitButton>
+          <button type="button" className={quietButton} onClick={() => setOpen(false)}>
+            {t('Cancelar')}
+          </button>
+        </>
+      )}
+    </ActionForm>
+  ) : (
+    <button type="button" className={quietButton} onClick={() => setOpen(true)}>
+      {t('Pasar todo a efectivo')}
+    </button>
   );
 }

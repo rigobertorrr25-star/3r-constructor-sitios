@@ -7,6 +7,8 @@ import { todayIn } from '@/lib/finance';
 import { formatCop, formatDateTime, formatTime } from '@/lib/format';
 import { addDays } from '@/lib/periods';
 import { PrintDayButton } from '@/components/printer-forms';
+import { DayToCashButton } from '@/components/cash-forms';
+import { can } from '@/lib/permissions';
 import { Empty, PageTitle, card, inputClass, quietButton } from '@/components/ui';
 import { getLang } from '@/lib/i18n/server';
 import { makeT, type T } from '@/lib/i18n';
@@ -59,6 +61,7 @@ export default async function DayClosingPage({ searchParams }: { searchParams: P
               {t('PDF')}
             </a>
             <PrintDayButton date={day} />
+            {can(staff.role, 'cash.correct') ? <DayToCashButton date={day} /> : null}
           </div>
         ) : null}
       </PageTitle>

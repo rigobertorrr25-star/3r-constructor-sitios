@@ -45,6 +45,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
       shiftOpen={staff.waitersCollect || Boolean(shift)}
       canDiscount={can(staff.role, 'cash.operate')}
       canReverse={can(staff.role, 'payments.reverse')}
+      canChangeMethod={can(staff.role, 'cash.correct')}
       canUnlimited={can(staff.role, 'discounts.unlimited')}
       timeZone={staff.timezone}
       printBill={printBill}
