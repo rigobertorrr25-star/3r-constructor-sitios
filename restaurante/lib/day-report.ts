@@ -315,12 +315,14 @@ export async function dayReportPdf(r: DayReport): Promise<Uint8Array> {
     const closedDay = sh.closedAt ? new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(sh.closedAt) : null;
     const until = !sh.closedAt ? 'sigue abierta' : closedDay === sh.day ? formatTime(sh.closedAt, tz) : formatDateTime(sh.closedAt, tz);
     w.sub(`Turno ${sh.dayNumber} · ${sh.openedBy}${sh.closedBy && sh.closedBy !== sh.openedBy ? ` / cerró ${sh.closedBy}` : ''} · ${formatTime(sh.openedAt, tz)} a ${until}`);
-    w.row('Base', formatCop(sh.openingAmount), { indent: 10 });
     for (const m of METHODS) w.row(`${METHOD_LABEL[m]} (${s.byMethod[m].count})`, `${formatCop(s.byMethod[m].amount)}${s.byMethod[m].tip ? ` + propina ${formatCop(s.byMethod[m].tip)}` : ''}`, { indent: 10 });
     w.row('Ventas', formatCop(s.sales), { indent: 10, bold: true });
     w.row('Descuentos', formatCop(s.discounts), { indent: 10 });
     w.row('Entradas / salidas de efectivo', `${formatCop(s.movementsIn)} / ${formatCop(s.movementsOut)}`, { indent: 10 });
-    w.row('Efectivo esperado', formatCop(sh.expectedCash ?? s.expectedCash), { indent: 10 });
+    // La base va aparte del efectivo de la venta (8 nov 2026, pedido de Rigoberto).
+    w.row('Efectivo de la venta (sin base)', formatCop((sh.expectedCash ?? s.expectedCash) - sh.openingAmount), { indent: 10, bold: true });
+    w.row('+ Base (aparte)', formatCop(sh.openingAmount), { indent: 10 });
+    w.row('Total en la caja (venta + base)', formatCop(sh.expectedCash ?? s.expectedCash), { indent: 10 });
     w.row('Efectivo contado', sh.countedCash === null ? '-' : formatCop(sh.countedCash), { indent: 10 });
     w.row('Resultado', resultText(diff), { indent: 10, bold: true });
     if (sh.correctedAt) w.text(`Cierre corregido por ${sh.correctedBy} el ${formatDateTime(sh.correctedAt, tz)}: ${sh.correctionReason}`, { indent: 10, size: 9, bold: true });

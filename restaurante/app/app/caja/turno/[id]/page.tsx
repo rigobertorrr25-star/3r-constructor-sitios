@@ -71,7 +71,8 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
     [t('Pagos reversados'), formatCop(s.reversed)],
     [t('Entradas de efectivo'), formatCop(s.movementsIn)],
     [t('Salidas de efectivo'), formatCop(s.movementsOut)],
-    [t('Efectivo esperado'), formatCop(s.shift.expectedCash ?? s.expectedCash)],
+    [t('Efectivo de la venta (sin base)'), formatCop((s.shift.expectedCash ?? s.expectedCash) - s.shift.openingAmount)],
+    [t('Total en la caja (venta + base)'), formatCop(s.shift.expectedCash ?? s.expectedCash)],
     [t('Efectivo contado'), s.shift.countedCash === null ? '—' : formatCop(s.shift.countedCash)],
     [t('Diferencia'), diff === null ? '—' : diff === 0 ? t('Cuadra') : diff > 0 ? t('Sobran {amount}', { amount: formatCop(diff) }) : t('Faltan {amount}', { amount: formatCop(-diff) })],
   ];
