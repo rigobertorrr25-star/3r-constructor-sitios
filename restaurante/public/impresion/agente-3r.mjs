@@ -17,7 +17,7 @@ import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 
-const VERSION = '1.2';
+const VERSION = '1.3';
 const SELF = fileURLToPath(import.meta.url);
 const EVERY_MS = 2000;
 const CONFIG = join(dirname(SELF), 'config.json');
@@ -26,14 +26,24 @@ const now = () => new Date().toLocaleTimeString('es-CO');
 const log = (msg) => console.log(`[${now()}] ${msg}`);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const MOVED = { 'https://3r-constructor-sitios-git1.vercel.app': 'https://restaurant-control.onrender.com' };
+
 async function loadConfig() {
   try {
     const c = JSON.parse(await readFile(CONFIG, 'utf8'));
+    // 1.3 (7 nov 2026): el sistema se mudó de Vercel a Render. Si apunta a la dirección vieja, se cambia sola (el
+    // código de la sede sigue sirviendo: la base es la misma).
+    const moved = MOVED[String(c.servidor ?? '').replace(/\/+$/, '')];
+    if (moved && c.codigo) {
+      c.servidor = moved;
+      await writeFile(CONFIG, JSON.stringify(c, null, 2));
+      log(`El sistema cambió de dirección: ahora es ${moved}`);
+    }
     if (c.servidor && c.codigo) return c;
   } catch {}
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   console.log('\nPrograma de impresión de Restaurant Control (3R) — configuración\n');
-  const servidor = (await rl.question('Dirección del sistema (ej. https://3r-constructor-sitios-git1.vercel.app): ')).trim().replace(/\/+$/, '');
+  const servidor = (await rl.question('Dirección del sistema (ej. https://restaurant-control.onrender.com): ')).trim().replace(/\/+$/, '');
   const codigo = (await rl.question('Código de la sede (empieza por rc_): ')).trim();
   rl.close();
   const c = { servidor, codigo };
