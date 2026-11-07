@@ -18,7 +18,6 @@ services:
     # unos 80 MB de memoria (medido: el servidor solo usa ~160 MB de los 512 MB del plan starter).
     startCommand: ./node_modules/.bin/next start -H 0.0.0.0 -p $PORT
     healthCheckPath: /api/salud
-    autoDeployTrigger: commit
     envVars:
       - key: NODE_VERSION
         value: "22"
