@@ -1,7 +1,0 @@
-# Protecciones del navegador (8 nov 2026): solo HTTPS, no adivinar tipos de archivo, no meter la página en marcos ajenos.
-/*
-  Strict-Transport-Security: max-age=63072000
-  X-Content-Type-Options: nosniff
-  X-Frame-Options: SAMEORIGIN
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
