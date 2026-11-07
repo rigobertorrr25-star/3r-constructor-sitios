@@ -34,7 +34,7 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
 - Sin réplicas de marcas, suplementos ni aparatos médicos. Fotos enlazadas del CDN de Dropi (desde la sesión no cargan; en
   el navegador sí), salvo el restaurador (`img/5417.jpg`).
 - **Publicación: Cloudflare, no Vercel** (5 nov 2026, pedido de Rigoberto), igual que ZENOVA: proyecto `llevalo`, rama
-  `main`, directorio raíz `tiendas/llevalo`, comando `mkdir -p _site && cp -r index.html img _site/`, salida `_site` (así
+  `main`, directorio raíz `tiendas/llevalo`, comando `mkdir -p _site && cp -r index.html img publico/. _site/` (desde el 8 nov 2026; antes sin `publico/.`), salida `_site` (así
   `PRODUCTOS.md` y estas notas, que tienen costos, no quedan públicos). Si se crea como Worker:
   `npx wrangler deploy --assets=./_site --name=llevalo --compatibility-date=2026-10-01`. Entró a `main` con el PR #94.
   **Publicada el 5 nov 2026** como Worker (despliegue verde): **https://llevalo.rigoberto-rrr25.workers.dev** (la sesión no
@@ -52,3 +52,5 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   porque el CDN de Dropi responde `access-control-allow-origin: *` (comprobado el 5 nov 2026); si eso cambia, solo queda la captura.
 - Cuando entre un pedido: revisar al comprador con la huella de Dropi, confirmar por WhatsApp y crear el pedido en Dropi
   solo después de que Rigoberto confirme el resumen.
+
+- **Los 20 puntos antes de publicar** (8 nov 2026, video de Rigoberto): igual que ZENOVA (ventanas legales, OG, ícono, `publico/`, `wrangler.jsonc`); botón rojo-naranja pasó a `#d4320b` y verde de texto a `#0f7400` por contraste. Comando de compilación: `mkdir -p _site && cp -r index.html img publico/. _site/`.

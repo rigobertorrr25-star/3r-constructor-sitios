@@ -37,3 +37,5 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
 ## Este proyecto
 
 - App independiente con su propio `package.json`; no es workspace del monorepo. Detalle en `asistencia/README.md`.
+
+- **Los 20 puntos antes de publicar** (8 nov 2026, video de Rigoberto): `/privacidad` y `/terminos` (es/en), enlaces en /entrar y /marcar, aviso de cookies, robots, cabeceras de seguridad.

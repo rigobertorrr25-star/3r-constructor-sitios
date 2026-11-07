@@ -4,11 +4,13 @@ import '@fontsource-variable/manrope';
 import './globals.css';
 import { LangProvider } from '@/components/i18n';
 import { getLang } from '@/lib/i18n/server';
+import { CookieNotice } from '@/components/cookie-notice';
 
 export const metadata: Metadata = {
   title: 'Restaurant Control — 3R',
   description: 'Mesas, pedidos, cocina, caja e inventario de tu restaurante o bar, en un solo lugar.',
   robots: { index: false, follow: false },
+  openGraph: { title: 'Restaurant Control — 3R', description: 'Mesas, pedidos, cocina, caja e inventario de tu restaurante o bar, en un solo lugar.', locale: 'es_CO', type: 'website' },
 };
 
 export const viewport: Viewport = { themeColor: '#000103' };
@@ -18,7 +20,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={lang}>
       <body>
-        <LangProvider lang={lang}>{children}</LangProvider>
+        <LangProvider lang={lang}>
+          {children}
+          <CookieNotice />
+        </LangProvider>
       </body>
     </html>
   );

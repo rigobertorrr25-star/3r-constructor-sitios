@@ -7,6 +7,7 @@ import { Alert, Lion, card } from '@/components/ui';
 import { t, type Lang } from '@/lib/i18n';
 import { getLang } from '@/lib/lang';
 import { formatClock, greetingKey } from '@/lib/report';
+import { LegalLinks } from '@/components/legal';
 import { AppError, getPublicBusiness, getPunchScreen } from '@/lib/store';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,6 +29,7 @@ function Shell({ title, lang, children }: { title: string; lang: Lang; children:
       </header>
       <div className={`${card} w-full max-w-[420px]`}>{children}</div>
       <p className="mt-6 max-w-[420px] text-center text-[11.5px] text-white/55">{t(lang, 'avatarCredit')}</p>
+      <LegalLinks lang={lang} className="mt-2 text-white/70" />
     </main>
   );
 }

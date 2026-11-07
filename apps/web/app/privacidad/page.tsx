@@ -147,7 +147,8 @@ export default function PrivacyPage() {
         <Section title="6. Cookies">
           <p>
             Usamos solo las cookies necesarias para mantener tu sesión abierta. No usamos cookies de publicidad ni de
-            seguimiento.
+            seguimiento. Para saber cuántas personas visitan el sitio usamos Vercel Web Analytics, que cuenta visitas
+            sin cookies y sin guardar datos que te identifiquen.
           </p>
         </Section>
 
@@ -205,7 +206,10 @@ export default function PrivacyPage() {
       </main>
 
       <footer className="border-t border-white/[0.06] py-8 text-center text-sm text-muted-foreground">
-        © 2026 3R — Páginas web para negocios
+        © 2026 3R — Páginas web para negocios ·{' '}
+        <Link href="/terminos" className="transition hover:text-foreground">
+          Términos y condiciones
+        </Link>
       </footer>
     </div>
   );

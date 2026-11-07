@@ -3,6 +3,8 @@ import '@fontsource-variable/sora';
 import '@fontsource-variable/manrope';
 import '@fontsource/bebas-neue/400.css';
 import './globals.css';
+import { Analytics } from '@vercel/analytics/next';
+import { CookieNotice } from '@/components/cookie-notice';
 
 const title = '3R — Páginas web para negocios';
 const description = 'Tu página web profesional, hecha por nosotros. Elige un paquete, cuéntanos de tu negocio y recibe tu página lista.';
@@ -19,7 +21,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        {children}
+        <CookieNotice />
+        {/* Visitas sin cookies (8 nov 2026); se activa en Vercel → proyecto → Analytics. */}
+        <Analytics />
+      </body>
     </html>
   );
 }

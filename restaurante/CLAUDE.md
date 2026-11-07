@@ -45,3 +45,5 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   3rpaginas.com ni con `asistencia/`, y no enlazarla desde la tienda.
 - Pruebas: `npm test` dentro de `restaurante/` con `TEST_DATABASE_URL` (base de prueba: `npm run dev:db -w api` en la raíz).
 - Detalle de los módulos en `restaurante/README.md`.
+
+- **Los 20 puntos antes de publicar** (8 nov 2026, video de Rigoberto): `/privacidad` y `/terminos` (español e inglés en la misma página), enlaces en la entrada, la carta y las reservas, 404 propia, aviso de cookies (no sale en /app ni /admin), robots que no deja recorrer nada, cabeceras de seguridad.

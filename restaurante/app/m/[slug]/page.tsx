@@ -5,6 +5,7 @@ import { formatCop } from '@/lib/format';
 import { productPhotoUrl } from '@/lib/product-photo-url';
 import { publicMenu } from '@/lib/reservations';
 import { LangSwitch } from '@/components/i18n';
+import { LegalLinks } from '@/components/legal-links';
 import { getLang, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
@@ -96,6 +97,7 @@ export default async function PublicMenuPage({ params, searchParams }: { params:
           </p>
         ) : null}
         <p className="text-[12px] text-muted-foreground">{t('Precios en pesos colombianos. La propina es voluntaria.')}</p>
+        <LegalLinks />
       </footer>
     </main>
   );

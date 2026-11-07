@@ -5,6 +5,7 @@ import { publicMenu } from '@/lib/reservations';
 import { PublicReservationForm } from '@/components/public-reservation';
 import { card } from '@/components/ui';
 import { LangSwitch } from '@/components/i18n';
+import { LegalLinks } from '@/components/legal-links';
 import { getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
@@ -33,6 +34,7 @@ export default async function PublicReservationPage({ params }: { params: Promis
         )}
       </div>
       <p className="mt-4 text-center text-[12px] text-muted-foreground">{t('Usamos tu nombre y teléfono solo para confirmar tu reserva.')}</p>
+      <LegalLinks className="mt-2" />
     </main>
   );
 }

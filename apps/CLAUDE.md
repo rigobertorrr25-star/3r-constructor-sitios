@@ -80,3 +80,5 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   generales aplica solo a lo que esa referencia no define.
 - La API es ESM: los imports relativos llevan extensión `.js`. TypeScript 6 (el CLI de Nest aún no funciona con 7).
 - Pruebas: `npm test -w web`, y `npm test -w api` (requiere `npm run dev:db -w api` y `npm run build -w api`).
+
+- **Los 20 puntos antes de publicar** (8 nov 2026, video de Rigoberto): `/terminos` (borrador, revisar), 404 propia (`app/not-found.tsx`), aviso de cookies (`components/cookie-notice.tsx`, no sale en /muestra ni /tienda), cabeceras de seguridad y HSTS en `next.config.ts`, Vercel Web Analytics (`@vercel/analytics`; Rigoberto debe activarlo en Vercel → Analytics), póster de la portada en WebP. Ya tenía privacidad, robots, sitemap, OG, ícono y límite de intentos.

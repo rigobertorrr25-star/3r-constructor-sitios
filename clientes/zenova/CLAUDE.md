@@ -23,3 +23,5 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
 ## Este proyecto
 
 - Página estática (un `index.html` y la carpeta `img`). Publicada en Cloudflare (ver el apartado «Hosting» del CLAUDE.md de la raíz).
+
+- **Los 20 puntos antes de publicar** (8 nov 2026, video de Rigoberto): privacidad y términos como ventanas dentro de `index.html` (se abren desde el pie o con #privacidad / #terminos), aviso del carrito guardado, OG, ícono. Archivos aparte en `publico/` (robots, sitemap, 404, `_headers`) y `wrangler.jsonc` (404). **Para que salgan, el comando de compilación de Cloudflare debe ser** `mkdir -p _site && cp -r index.html img publico/. _site/`.
