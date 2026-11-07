@@ -515,4 +515,9 @@ export const en: Record<string, string> = {
   'Dólares: escribe cuántos dólares entregó el cliente.': 'Dollars: enter how many dollars the guest handed over.',
   'Valor del dólar: escribe cuántos pesos vale un dólar.': 'Dollar value: enter how many pesos one dollar is worth.',
   'Dólares contados: escribe cuántos dólares hay en la caja.': 'Dollars counted: enter how many dollars are in the drawer.',
+  'Medio de pago cambiado.': 'Payment method changed.',
+  'Escoge el medio de pago.': 'Pick the payment method.',
+  'Ese pago está reversado.': 'That payment was reversed.',
+  'Ese cobro se hizo con dólares: no se le cambia el medio.': 'That payment was made in dollars: its method cannot be changed.',
+  'El pago ya está en ese medio.': 'The payment already uses that method.',
 };

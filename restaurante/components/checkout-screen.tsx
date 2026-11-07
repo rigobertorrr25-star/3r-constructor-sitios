@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, useTransition } from 'react';
-import { closeZeroAction, discountAction, payAction, reversePaymentAction, voidDiscountAction } from '@/app/actions';
+import { closeZeroAction, discountAction, payAction, reversePaymentAction, voidDiscountAction, changePaymentMethodAction } from '@/app/actions';
 import type { Checkout, Method } from '@/lib/cash';
 import { formatCop, formatTime } from '@/lib/format';
 import { isNetworkError, retryDelay } from '@/lib/offline';
@@ -35,6 +35,7 @@ export function CheckoutScreen({
   printBill = false,
   cashOnly = false,
   usdRate = 3000,
+  canChangeMethod = false,
 }: {
   checkout: View;
   shiftOpen: boolean;
@@ -47,6 +48,8 @@ export function CheckoutScreen({
   cashOnly?: boolean;
   /** Pesos por dólar, para cobrar con dólares (8 nov 2026). */
   usdRate?: number;
+  /** Dueño y administrador cambian el medio de un cobro hecho (8 nov 2026). */
+  canChangeMethod?: boolean;
 }) {
   const c = checkout;
   const t = useT();
@@ -226,7 +229,7 @@ export function CheckoutScreen({
               <h3 className="mt-6 font-display text-[16px] font-bold">{t('Pagos')}</h3>
               <ul className="mt-2 divide-y divide-white/[0.06] text-[14px]">
                 {c.payments.map((p) => (
-                  <PaymentRow key={p.id} payment={p} sessionId={c.session.id} canReverse={canReverse} timeZone={timeZone} />
+                  <PaymentRow key={p.id} payment={p} sessionId={c.session.id} canReverse={canReverse} canChangeMethod={canChangeMethod} timeZone={timeZone} />
                 ))}
               </ul>
             </>
@@ -459,8 +462,21 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
   );
 }
 
-function PaymentRow({ payment: p, sessionId, canReverse, timeZone }: { payment: View['payments'][number]; sessionId: string; canReverse: boolean; timeZone: string }) {
+function PaymentRow({
+  payment: p,
+  sessionId,
+  canReverse,
+  canChangeMethod,
+  timeZone,
+}: {
+  payment: View['payments'][number];
+  sessionId: string;
+  canReverse: boolean;
+  canChangeMethod: boolean;
+  timeZone: string;
+}) {
   const [reversing, setReversing] = useState(false);
+  const [changing, setChanging] = useState(false);
   const t = useT();
   const lang = useLang();
   return (
@@ -477,13 +493,46 @@ function PaymentRow({ payment: p, sessionId, canReverse, timeZone }: { payment: 
         </span>
         {p.reversed ? (
           <span className="rounded-full bg-destructive/15 px-2.5 py-0.5 text-[12px] text-[#ffb4b5]">{t('Reversado')}</span>
-        ) : canReverse ? (
-          <button type="button" className="text-[13px] text-muted-foreground hover:text-[#ffb4b5]" onClick={() => setReversing(!reversing)}>
-            {t('Reversar')}
-          </button>
-        ) : null}
+        ) : (
+          <span className="flex items-center gap-3">
+            {canChangeMethod ? (
+              <button type="button" className="text-[13px] text-muted-foreground hover:text-foreground" onClick={() => setChanging(!changing)}>
+                {t('Cambiar medio')}
+              </button>
+            ) : null}
+            {canReverse ? (
+              <button type="button" className="text-[13px] text-muted-foreground hover:text-[#ffb4b5]" onClick={() => setReversing(!reversing)}>
+                {t('Reversar')}
+              </button>
+            ) : null}
+          </span>
+        )}
       </div>
       {p.reverseReason ? <p className="text-[12.5px] text-muted-foreground">{t('Motivo: {reason}', { reason: p.reverseReason })}</p> : null}
+      {changing ? (
+        // Cambiar el medio de un cobro ya hecho (8 nov 2026): dueño y administrador, también en cajas cerradas.
+        <ActionForm action={changePaymentMethodAction} onOk={() => setChanging(false)} className="mt-2 flex flex-wrap items-end gap-2">
+          {() => (
+            <>
+              <input type="hidden" name="paymentId" value={p.id} />
+              <input type="hidden" name="sessionId" value={sessionId} />
+              <label className="text-[13px] text-muted-foreground">
+                {t('Fue por')}
+                <select name="method" defaultValue={p.method === 'cash' ? 'transfer' : 'cash'} className={`${inputClass} mt-1`}>
+                  {(Object.keys(METHOD_LABEL) as Method[])
+                    .filter((m) => m !== p.method)
+                    .map((m) => (
+                      <option key={m} value={m}>
+                        {t(METHOD_LABEL[m])}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <SubmitButton pendingText={t('Guardando…')}>{t('Cambiar')}</SubmitButton>
+            </>
+          )}
+        </ActionForm>
+      ) : null}
       {reversing ? (
         <ActionForm action={reversePaymentAction} onOk={() => setReversing(false)} className="mt-2 flex flex-wrap items-end gap-2">
           {() => (

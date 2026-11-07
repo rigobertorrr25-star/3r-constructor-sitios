@@ -911,3 +911,60 @@ export async function correctMovement(actor: Actor, movementId: string, input: {
     });
   });
 }
+
+/**
+ * Cambia el medio de un cobro ya hecho, también de una caja cerrada (8 nov 2026, Rigoberto: «la cuenta de 293.000 se pasó
+ * a transferencia, pásala a efectivo»). Dueño y administrador (`cash.correct`). En una caja cerrada, el efectivo esperado
+ * guardado se ajusta: en efectivo el cobro suma su valor; por datáfono o transferencia resta su propina (se paga de la caja).
+ * Un cobro hecho con dólares no se cambia.
+ */
+export async function changePaymentMethod(actor: Actor, paymentId: string, method: string) {
+  requirePermission(actor, 'cash.correct');
+  if (!isUuid(paymentId)) throw new AppError('NOT_FOUND', 'No encontramos ese pago.');
+  if (!(METHODS as readonly string[]).includes(method)) throw new AppError('INVALID', 'Escoge el medio de pago.');
+  const to = method as Method;
+  await transaction(async (db) => {
+    const p = (
+      await db.query<{ id: string; method: Method; amount: string; tip: string; reversed: boolean; usd: number | null; shiftId: string; closed: boolean; table: string }>(
+        `SELECT p.id, p.method, p.amount, p.tip, (p.reversed_at IS NOT NULL) AS reversed, p.usd_received AS usd, p.shift_id AS "shiftId",
+                (c.closed_at IS NOT NULL) AS closed, t.number AS table
+           FROM payments p JOIN cash_shifts c ON c.id = p.shift_id JOIN table_sessions ts ON ts.id = p.session_id JOIN dining_tables t ON t.id = ts.table_id
+          WHERE p.id = $1 AND p.business_id = $2 AND p.location_id = $3 FOR UPDATE OF p, c`,
+        [paymentId, actor.businessId, actor.locationId],
+      )
+    ).rows[0];
+    if (!p) throw new AppError('NOT_FOUND', 'No encontramos ese pago.');
+    if (p.reversed) throw new AppError('CONFLICT', 'Ese pago está reversado.');
+    if (p.usd) throw new AppError('CONFLICT', 'Ese cobro se hizo con dólares: no se le cambia el medio.');
+    if (p.method === to) throw new AppError('INVALID', 'El pago ya está en ese medio.');
+    const amount = Number(p.amount);
+    const tip = Number(p.tip);
+    const inDrawer = (m: Method) => (m === 'cash' ? amount : -tip);
+    const delta = inDrawer(to) - inDrawer(p.method);
+    await db.query(
+      `UPDATE payments SET method = $2::varchar, received = CASE WHEN $2::varchar = 'cash' THEN amount + tip ELSE NULL END, change_given = CASE WHEN $2::varchar = 'cash' THEN 0 ELSE NULL END WHERE id = $1`,
+      [p.id, to],
+    );
+    if (p.closed) await db.query(`UPDATE cash_shifts SET expected_cash = expected_cash + $2 WHERE id = $1`, [p.shiftId, delta]);
+    await audit(db, actor, {
+      action: 'payment.method',
+      entity: 'payment',
+      entityId: p.id,
+      summary: `Cambió el cobro de ${money(amount)} de la mesa ${p.table}: de ${METHOD_LABEL[p.method].toLowerCase()} a ${METHOD_LABEL[to].toLowerCase()}${p.closed ? ` (caja ya cerrada: el esperado cambió ${delta >= 0 ? '+' : '−'}${money(Math.abs(delta))})` : ''}`,
+      data: { from: p.method, to, delta },
+    });
+  });
+}
+
+/** Pasa a efectivo todos los cobros por datáfono o transferencia de los turnos de un día (8 nov 2026, pedido de Rigoberto). */
+export async function changeDayToCash(actor: Actor, date: string) {
+  requirePermission(actor, 'cash.correct');
+  const shifts = await dayShifts(actor, date);
+  if (!shifts.length) throw new AppError('NOT_FOUND', 'Ese día no hubo caja.');
+  const rows = await query<{ id: string }>(
+    `SELECT id FROM payments WHERE shift_id = ANY($1::uuid[]) AND method <> 'cash' AND reversed_at IS NULL AND usd_received IS NULL`,
+    [shifts.map((s) => s.shift.id)],
+  );
+  for (const r of rows) await changePaymentMethod(actor, r.id, 'cash');
+  return rows.length;
+}
