@@ -12,7 +12,8 @@
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_CO">
 <meta name="theme-color" content="#E9786C">
-<link rel="icon" href="img/lore.webp">
+<link rel="icon" href="img/icono-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="img/icono-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -49,9 +50,8 @@ button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
 /* Barra de arriba */
 header{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--linea)}
 .barra{display:flex;align-items:center;justify-content:space-between;height:66px}
-.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:.2px}
-.logo img{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--coral)}
-.logo b{color:var(--coral)}
+.logo{display:flex;align-items:center}
+.logo img{height:34px;width:auto}
 nav.menu{display:flex;gap:28px;font-weight:600;font-size:14px;color:var(--gris)}
 nav.menu a:hover{color:var(--coral-osc)}
 .barra .btn{padding:10px 16px;font-size:14px}
@@ -89,7 +89,7 @@ h1 span{color:var(--coral)}
   .datos{display:none}
   .acciones .btn{flex:1}
   .barra .btn{padding:9px 12px}
-  .logo{font-size:17px}
+  .logo img{height:28px}
 }
 
 /* Títulos de sección */
@@ -174,7 +174,9 @@ textarea{resize:vertical;min-height:70px}
 .redes svg{width:18px;height:18px}
 
 footer{background:var(--tinta);color:#B8C0C3;padding:28px 0;font-size:13px}
-footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+footer .marca{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+footer .marca img{height:26px;width:auto}
 footer a{color:#fff;font-weight:600}
 
 /* Barra flotante del plan */
@@ -207,7 +209,7 @@ body.con-plan .wa{bottom:88px}
 
 <header>
   <div class="wrap barra">
-    <a class="logo" href="#inicio"><img src="img/lore.webp" alt="">Lore <b>TRAVEL</b></a>
+    <a class="logo" href="#inicio"><img src="img/logo-horizontal.svg" alt="Lore TRAVEL"></a>
     <nav class="menu" aria-label="Menú">
       <a href="#planes">Planes</a>
       <a href="#armar">Arma tu plan</a>
@@ -325,7 +327,7 @@ body.con-plan .wa{bottom:88px}
 
 <footer>
   <div class="wrap">
-    <span>© <span id="anio"></span> Lore TRAVEL · Cartagena, Colombia</span>
+    <span class="marca"><img src="img/logo-horizontal-blanco.svg" alt="Lore TRAVEL"><span>© <span id="anio"></span> · Cartagena, Colombia</span></span>
     <span>Página hecha por <a href="https://3rpaginas.com" target="_blank" rel="noopener">3R</a></span>
   </div>
 </footer>

@@ -24,3 +24,10 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   `npx wrangler deploy --assets=./_site --name=loretravel --compatibility-date=2026-10-01`. Dirección esperada:
   **https://loretravel.rigoberto-rrr25.workers.dev** (ya puesta en `og:image`/`og:url`; si el nombre cambia, cambiarla ahí).
   El proyecto de Cloudflare lo crea Rigoberto (la sesión no entra a Cloudflare).
+- **Logo (7 nov 2026, pedido de Rigoberto «crea un logo para Lore TRAVEL»)**: 3 propuestas (A sol con olas al lado del
+  nombre, B monograma «L» con ola, C la «o» de Lore es un sol sobre el mar). Claude recomendó y aplicó la **C** (menú,
+  pie e ícono de la pestaña); falta que Rigoberto/Lore escojan. Archivos en `clientes/lore-travel/logo/` (SVG que se
+  pueden agrandar sin perder calidad + PNG con fondo transparente: `logo` (TRAVEL debajo), `logo-horizontal`, versiones
+  `-blanco` para fondos oscuros, `icono` azul y `icono-coral` para foto de perfil). La página usa las copias de `img/`
+  (`logo-horizontal*.svg`, `icono-32.png`, `icono-180.png`), porque Cloudflare solo sube `index.html` e `img`.
+  Letras convertidas a dibujo (Montserrat ExtraBold 800 y SemiBold 600): no hace falta tener la letra instalada.
