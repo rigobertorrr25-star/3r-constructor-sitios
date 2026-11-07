@@ -198,6 +198,8 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS track_prep BOOLEAN NOT NULL DEFA
 ALTER TABLE locations ADD COLUMN IF NOT EXISTS allowed_ips TEXT[] NOT NULL DEFAULT '{}';
 -- Solo efectivo (6 nov 2026, Azul Caribe): al cobrar no se ofrece datáfono ni transferencia.
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS cash_only BOOLEAN NOT NULL DEFAULT FALSE;
+-- Caja sin base (8 nov 2026, Rigoberto para Azul Caribe: «elimíname la base»): la caja abre en $0 y la base no se muestra.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS no_base BOOLEAN NOT NULL DEFAULT FALSE;
 -- Cobro en dólares (8 nov 2026, pedido de Rigoberto: «agrega la opción de montar dólares, al cambio a 3000»).
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS usd_rate INT NOT NULL DEFAULT 3000;
 -- Un pago en efectivo que el cliente hizo con dólares: cuántos dólares entregó y a qué cambio. Las vueltas salen en pesos.

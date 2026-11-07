@@ -10,12 +10,16 @@ import { DENOMINATIONS, cashCountTotal, cleanCashCount, denominationKey } from '
 import { useLang, useT } from './i18n';
 
 /** Abrir caja. `suggested`: lo que dejó en la caja el turno anterior (dos cajeras al día, 30 oct 2026). */
-export function OpenShiftForm({ suggested, hint }: { suggested?: number; hint?: string }) {
+export function OpenShiftForm({ suggested, hint, noBase = false }: { suggested?: number; hint?: string; noBase?: boolean }) {
   const t = useT();
   return (
     <ActionForm action={openShiftAction}>
       {(state) => (
         <>
+          {noBase ? (
+            // Caja sin base (8 nov 2026, Azul Caribe): abre en $0.
+            <input type="hidden" name="openingAmount" value="0" />
+          ) : (
           <Field
             label={t('Base en efectivo')}
             name="openingAmount"
@@ -24,6 +28,7 @@ export function OpenShiftForm({ suggested, hint }: { suggested?: number; hint?: 
             defaultValue={state?.values?.openingAmount ?? (suggested !== undefined ? String(suggested) : undefined)}
             hint={hint ? `${hint} ${t('Cuéntala y corrígela si no es así.')}` : t('La plata con la que arranca la caja (para dar vueltas).')}
           />
+          )}
           <SubmitButton pendingText={t('Abriendo…')}>{t('Abrir caja')}</SubmitButton>
         </>
       )}

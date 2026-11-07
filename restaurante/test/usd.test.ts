@@ -103,5 +103,12 @@ describe('cobro con dólares', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     await assert.rejects(cash.changeDayToCash(cashier, day), { code: 'FORBIDDEN' });
     assert.equal(await cash.changeDayToCash(owner, day), 1);
     assert.equal(await cash.changeDayToCash(owner, day), 0);
+
+    // Caja sin base (8 nov 2026, Azul Caribe): abre en $0 aunque se escriba una base.
+    await cash.closeShift(cashier, (await cash.shiftSummary(owner, (await cash.getOpenShift(cashier))!.id))!.expectedCash, '');
+    await waiters.updateWorkMode(owner, { waitersCollect: false, barOnly: false, noBase: true });
+    assert.equal((await cash.workMode(owner.businessId)).noBase, true);
+    await cash.openShift(cashier, 200000);
+    assert.equal((await cash.getOpenShift(cashier))!.openingAmount, 0);
   });
 });

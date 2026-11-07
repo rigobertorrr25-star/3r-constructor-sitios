@@ -138,6 +138,8 @@ export async function dayShifts(actor: Actor, date: string): Promise<ShiftSummar
 export async function openShift(actor: Actor, openingAmount: number) {
   requirePermission(actor, 'cash.operate');
   requireAmount(openingAmount, 'Base de caja', { allowZero: true });
+  // Negocio con «Caja sin base» (Azul Caribe, 8 nov 2026): siempre abre en $0.
+  if ((await workMode(actor.businessId)).noBase) openingAmount = 0;
   try {
     return await transaction(async (db) => {
       const res = await db.query<{ id: string }>(
@@ -165,14 +167,14 @@ export async function lockOpenShift(db: Db, actor: Actor) {
 }
 
 /** Forma de trabajo del negocio (las opciones que prende el dueño en Sedes). */
-export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean; usdRate: number }> {
+export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean; usdRate: number; noBase: boolean }> {
   const row = (
-    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean; usdRate: number }>(
-      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip", track_prep AS "trackPrep", cash_only AS "cashOnly", usd_rate AS "usdRate" FROM businesses WHERE id = $1`,
+    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean; usdRate: number; noBase: boolean }>(
+      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip", track_prep AS "trackPrep", cash_only AS "cashOnly", usd_rate AS "usdRate", no_base AS "noBase" FROM businesses WHERE id = $1`,
       [businessId],
     )
   )[0];
-  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10, trackPrep: true, cashOnly: false, usdRate: 3000 };
+  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10, trackPrep: true, cashOnly: false, usdRate: 3000, noBase: false };
 }
 
 /**

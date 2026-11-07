@@ -56,7 +56,7 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
   const rows: [string, string][] = [
     [t('Abrió'), `${s.shift.openedBy} · ${formatDateTime(s.shift.openedAt, staff.timezone, lang)}`],
     [t('Cerró'), s.shift.closedAt ? `${s.shift.closedBy} · ${formatDateTime(s.shift.closedAt, staff.timezone, lang)}` : t('Sigue abierta')],
-    [t('Base'), formatCop(s.shift.openingAmount)],
+    ...(s.shift.openingAmount ? [[t('Base'), formatCop(s.shift.openingAmount)] as [string, string]] : []),
     ...METHODS.map((m): [string, string] => [
       t(METHOD_LABEL[m]),
       `${t('{amount} ({n} pagos)', { amount: formatCop(s.byMethod[m].amount), n: s.byMethod[m].count })}${s.byMethod[m].tip ? t(' + propina {amount}', { amount: formatCop(s.byMethod[m].tip) }) : ''}`,
@@ -72,7 +72,7 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
     [t('Entradas de efectivo'), formatCop(s.movementsIn)],
     [t('Salidas de efectivo'), formatCop(s.movementsOut)],
     [t('Efectivo de la venta (sin base)'), formatCop((s.shift.expectedCash ?? s.expectedCash) - s.shift.openingAmount)],
-    [t('Total en la caja (venta + base)'), formatCop(s.shift.expectedCash ?? s.expectedCash)],
+    ...(s.shift.openingAmount ? [[t('Total en la caja (venta + base)'), formatCop(s.shift.expectedCash ?? s.expectedCash)] as [string, string]] : []),
     [t('Efectivo contado'), s.shift.countedCash === null ? '—' : formatCop(s.shift.countedCash)],
     [t('Diferencia'), diff === null ? '—' : diff === 0 ? t('Cuadra') : diff > 0 ? t('Sobran {amount}', { amount: formatCop(diff) }) : t('Faltan {amount}', { amount: formatCop(-diff) })],
   ];
