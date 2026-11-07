@@ -108,9 +108,10 @@ export default async function DayClosingPage({ searchParams }: { searchParams: P
                         : t('Sigue abierta')}
                     </p>
                     <dl className="mt-3 space-y-1 text-[14px]">
-                      <Row label={t('Base')} value={formatCop(s.shift.openingAmount)} />
                       <Row label={t('Ventas')} value={formatCop(s.sales)} />
-                      <Row label={t('Efectivo esperado')} value={formatCop(s.shift.expectedCash ?? s.expectedCash)} />
+                      <Row label={t('Efectivo de la venta (sin base)')} value={formatCop((s.shift.expectedCash ?? s.expectedCash) - s.shift.openingAmount)} />
+                      <Row label={t('Base (aparte)')} value={formatCop(s.shift.openingAmount)} />
+                      <Row label={t('Total en la caja (venta + base)')} value={formatCop(s.shift.expectedCash ?? s.expectedCash)} />
                       <Row label={t('Efectivo contado')} value={s.shift.countedCash === null ? '—' : formatCop(s.shift.countedCash)} />
                     </dl>
                     <p className={`mt-2 text-[15px] font-semibold ${diff === null ? 'text-muted-foreground' : diff === 0 ? 'text-success' : 'text-warning'}`}>

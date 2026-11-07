@@ -602,4 +602,11 @@ export const en: Record<string, string> = {
   '¿Pasar a efectivo todos los cobros por datáfono y transferencia de este día?': 'Move every card and transfer payment of this day to cash?',
   'Sí, pasar a efectivo': 'Yes, move to cash',
   'Pasar todo a efectivo': 'Move all to cash',
+  'Efectivo de la venta': 'Cash from sales',
+  'Venta en efectivo': 'Cash sales',
+  'Sin la base y ya con toda la propina entregada a los meseros.': 'Without the float, and with all tips already handed to the servers.',
+  'Aparte, la base: {base}. Al contar la caja completa (venta + base) deben ser {total}.': 'The float is separate: {base}. Counting the whole drawer (sales + float) it should be {total}.',
+  'Efectivo de la venta (sin base)': 'Cash from sales (without float)',
+  'Total en la caja (venta + base)': 'Total in the drawer (sales + float)',
+  'Base (aparte)': 'Float (separate)',
 };

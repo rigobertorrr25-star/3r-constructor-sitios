@@ -130,7 +130,9 @@ export async function dayReportXlsx(r: DayReport): Promise<Buffer> {
     ...r.shifts.map((s): [string, number] => [`Base del turno ${s.shift.dayNumber} (${s.shift.openedBy})`, s.shift.openingAmount]),
     ['Entradas de efectivo', totals.movementsIn],
     ['Salidas de efectivo', totals.movementsOut],
-    ...r.shifts.map((s): [string, number] => [`Efectivo esperado turno ${s.shift.dayNumber}`, s.shift.expectedCash ?? s.expectedCash]),
+    // La base va aparte del efectivo de la venta (8 nov 2026, pedido de Rigoberto).
+    ...r.shifts.map((s): [string, number, 'strong'] => [`Efectivo de la venta turno ${s.shift.dayNumber} (sin base)`, (s.shift.expectedCash ?? s.expectedCash) - s.shift.openingAmount, 'strong']),
+    ...r.shifts.map((s): [string, number] => [`Total en la caja turno ${s.shift.dayNumber} (venta + base)`, s.shift.expectedCash ?? s.expectedCash]),
     ...r.shifts.filter((s) => s.shift.countedCash !== null).map((s): [string, number] => [`Efectivo contado turno ${s.shift.dayNumber}`, s.shift.countedCash!]),
   ]);
   block('Ventas', [
@@ -180,7 +182,8 @@ export async function dayReportXlsx(r: DayReport): Promise<Buffer> {
     ['Propinas cobradas', (s) => s.tips, 'money'],
     ['Entradas de efectivo', (s) => s.movementsIn, 'money'],
     ['Salidas de efectivo', (s) => s.movementsOut, 'money'],
-    ['Efectivo esperado', (s) => s.shift.expectedCash ?? s.expectedCash, 'strong'],
+    ['Efectivo de la venta (sin base)', (s) => (s.shift.expectedCash ?? s.expectedCash) - s.shift.openingAmount, 'strong'],
+    ['Total en la caja (venta + base)', (s) => s.shift.expectedCash ?? s.expectedCash, 'money'],
     ['Efectivo contado', (s) => s.shift.countedCash, 'strong'],
     ['Diferencia', (_s, i) => diffs[i], 'money'],
     ['Resultado', (_s, i) => result(diffs[i]), 'result'],

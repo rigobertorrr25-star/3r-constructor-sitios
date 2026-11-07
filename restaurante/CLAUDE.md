@@ -47,3 +47,5 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
 - Detalle de los módulos en `restaurante/README.md`.
 
 - **Los 20 puntos antes de publicar** (8 nov 2026, video de Rigoberto): `/privacidad` y `/terminos` (español e inglés en la misma página), enlaces en la entrada, la carta y las reservas, 404 propia, aviso de cookies (no sale en /app ni /admin), robots que no deja recorrer nada, cabeceras de seguridad.
+
+- **La base aparte del efectivo de la venta** (8 nov 2026, Rigoberto: «no metas la base en la venta, déjala aparte para que el efectivo de la venta quede libre»): en Caja el cuadro grande ahora es «Efectivo de la venta» (= esperado − base: venta en efectivo + entradas − salidas − dólares − propina de datáfono/transferencia) y debajo, aparte, la base y el total al contar la caja completa. Lo mismo en el cuadre del turno y del día, papel del cierre y del cuadre del día, PDF y Excel («Efectivo de la venta (sin base)», «+ Base (aparte)», «Total en la caja (venta + base)»). El conteo al cerrar sigue siendo de toda la caja.

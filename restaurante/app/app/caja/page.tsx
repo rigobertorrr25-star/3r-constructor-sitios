@@ -107,14 +107,14 @@ export default async function CashPage() {
             />
           )}
         </div>
-        {/* La caja: una cuenta corta, sin repetir la propina del efectivo (ya se entregó, nunca se suma). */}
+        {/* La base va totalmente aparte del efectivo de la venta (8 nov 2026, Rigoberto: «no metas la base en la venta,
+            déjala aparte, para que el efectivo de la venta quede libre y no se enrede»). */}
         <div className="rounded-[22px] border-2 border-primary/60 bg-primary/10 p-5">
-          <p className="text-[14px] font-semibold uppercase tracking-wide text-primary">{t('Debe haber en la caja al cerrar')}</p>
-          <p className="mt-1 font-display text-[44px] font-bold leading-none">{formatCop(s.expectedCash)}</p>
+          <p className="text-[14px] font-semibold uppercase tracking-wide text-primary">{t('Efectivo de la venta')}</p>
+          <p className="mt-1 font-display text-[44px] font-bold leading-none">{formatCop(s.expectedCash - s.shift.openingAmount)}</p>
           <p className="mt-3 text-[15px] font-medium">
             {[
-              `${t('Base')} ${formatCop(s.shift.openingAmount)}`,
-              `+ ${t('venta en efectivo')} ${formatCop(s.byMethod.cash.amount)}`,
+              `${t('Venta en efectivo')} ${formatCop(s.byMethod.cash.amount)}`,
               s.movementsIn ? `+ ${t('entradas')} ${formatCop(s.movementsIn)}` : '',
               s.movementsOut ? `− ${t('salidas')} ${formatCop(s.movementsOut)}` : '',
               s.usd.pesos ? `− ${t('pagado en dólares')} ${formatCop(s.usd.pesos)}` : '',
@@ -122,9 +122,12 @@ export default async function CashPage() {
             ]
               .filter(Boolean)
               .join(' ')}{' '}
-            = {formatCop(s.expectedCash)}
+            = {formatCop(s.expectedCash - s.shift.openingAmount)}
           </p>
-          <p className="mt-1 text-[13px] text-muted-foreground">{t('Ya con toda la propina entregada a los meseros.')}</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{t('Sin la base y ya con toda la propina entregada a los meseros.')}</p>
+          <p className="mt-3 rounded-2xl border border-[#f4b740]/50 bg-[#f4b740]/10 px-4 py-2.5 text-[15px] font-medium">
+            {t('Aparte, la base: {base}. Al contar la caja completa (venta + base) deben ser {total}.', { base: formatCop(s.shift.openingAmount), total: formatCop(s.expectedCash) })}
+          </p>
           {s.usd.dollars ? (
             // Dólares recibidos (8 nov 2026): se cuentan aparte de los pesos.
             <p className="mt-3 rounded-2xl border border-[#4cc9f0]/50 bg-[#4cc9f0]/10 px-4 py-2.5 text-[16px] font-semibold">

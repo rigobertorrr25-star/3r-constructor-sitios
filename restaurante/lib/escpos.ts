@@ -222,6 +222,8 @@ export type CierreInput = {
   movementsIn: string;
   movementsOut: string;
   expected: string;
+  /** Efectivo de la venta, sin la base (8 nov 2026, Rigoberto: «deja la base totalmente aparte»). */
+  salesCash?: string;
   counted: string;
   result: string;
   tables: number;
@@ -256,8 +258,9 @@ export function cierre(width: number, c: CierreInput) {
     .row('Descuentos', c.discounts)
     .row('Entradas de efectivo', c.movementsIn)
     .row('Salidas de efectivo', c.movementsOut)
-    .rule()
-    .row('Efectivo esperado', c.expected)
+    .rule();
+  if (c.salesCash) t.row('Efectivo de la venta', c.salesCash, { bold: true }).row('+ Base (aparte)', c.opening);
+  t.row(c.salesCash ? 'Total en la caja' : 'Efectivo esperado', c.expected)
     .row('Efectivo contado', c.counted, { bold: true });
   if (c.usd) t.row('Dolares esperados', c.usd.expected).row('Dolares contados', c.usd.counted, { bold: true });
   if (c.cashCount?.length) {
@@ -276,7 +279,7 @@ export type CuadreDiaInput = {
   business: string;
   location: string | null;
   date: string;
-  turns: { label: string; who: string; hours: string; opening: string; sales: string; expected: string; counted: string; result: string }[];
+  turns: { label: string; who: string; hours: string; opening: string; sales: string; salesCash?: string; expected: string; counted: string; result: string }[];
   methods: { label: string; amount: string; count: number }[];
   sales: string;
   tipOfSales: { pct: number; amount: string } | null;
@@ -301,9 +304,10 @@ export function cuadreDia(width: number, c: CuadreDiaInput) {
     t.rule()
       .line(`${turn.label}: ${turn.who}`, { bold: true })
       .line(turn.hours)
-      .row('Base', turn.opening)
       .row('Ventas', turn.sales)
-      .row('Efectivo esperado', turn.expected)
+      .row('Efectivo de la venta', turn.salesCash ?? '-', { bold: true })
+      .row('+ Base (aparte)', turn.opening)
+      .row('Total en la caja', turn.expected)
       .row('Efectivo contado', turn.counted)
       .line(turn.result, { bold: true });
   }
