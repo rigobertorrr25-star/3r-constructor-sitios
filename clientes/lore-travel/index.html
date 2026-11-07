@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lore TRAVEL · Planes en Cartagena</title>
+<meta name="description" content="¡Escápate con nosotros! Planes de playa, islas, restaurantes, rumba, spa y aventura en Cartagena. Arma tu plan y resérvalo por WhatsApp con Lore TRAVEL.">
+<meta property="og:title" content="Lore TRAVEL · Planes en Cartagena">
+<meta property="og:description" content="Crea recuerdos inolvidables en tus próximas vacaciones. Arma tu plan y resérvalo por WhatsApp.">
+<meta property="og:image" content="img/cholon.webp">
+<meta name="theme-color" content="#E9786C">
+<link rel="icon" href="img/lore.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --coral:#E9786C;      /* color de su marca (linkbio #F59E95 / #EF877D), un poco más fuerte para que se lea */
+  --coral-claro:#FCE3DF;
+  --coral-osc:#B9473C;
+  --mar:#0D3940;        /* azul mar para contrastar */
+  --mar-2:#14525B;
+  --tinta:#1D2326;
+  --gris:#5B6569;
+  --linea:#ECE7E6;
+  --blanco:#FFFFFF;
+  --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Montserrat,system-ui,sans-serif;color:var(--tinta);background:var(--blanco);line-height:1.55;-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+
+/* Botones */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 22px;border-radius:var(--r);font-weight:700;font-size:15px;transition:transform .15s,background .2s,color .2s}
+.btn:active{transform:scale(.98)}
+.btn-coral{background:var(--coral);color:#fff}
+.btn-coral:hover{background:#DC6559}
+.btn-borde{border:2px solid currentColor}
+.btn-blanco{background:#fff;color:var(--mar)}
+.btn svg{width:20px;height:20px;flex:none}
+
+/* Barra de arriba */
+header{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--linea)}
+.barra{display:flex;align-items:center;justify-content:space-between;height:66px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:.2px}
+.logo img{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--coral)}
+.logo b{color:var(--coral)}
+nav.menu{display:flex;gap:28px;font-weight:600;font-size:14px;color:var(--gris)}
+nav.menu a:hover{color:var(--coral-osc)}
+.barra .btn{padding:10px 16px;font-size:14px}
+@media (max-width:820px){nav.menu{display:none}}
+
+/* Portada */
+.portada{padding:56px 0 72px;overflow:hidden}
+.portada .wrap{display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:center}
+.lugar{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--coral-osc);margin-bottom:18px}
+.lugar svg{width:18px;height:18px}
+h1{font-size:clamp(36px,5.4vw,62px);line-height:1.04;font-weight:800;letter-spacing:-1.2px}
+h1 span{color:var(--coral)}
+.portada p.sub{font-size:18px;color:var(--gris);margin:20px 0 30px;max-width:30em}
+.acciones{display:flex;flex-wrap:wrap;gap:12px}
+.acciones .btn-borde{color:var(--mar)}
+.datos{display:flex;gap:28px;margin-top:36px;flex-wrap:wrap}
+.datos div{font-size:13px;color:var(--gris);font-weight:500}
+.datos strong{display:block;font-size:24px;color:var(--tinta);font-weight:800}
+
+.mosaico{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:170px 170px 170px;gap:12px;position:relative}
+.mosaico img{width:100%;height:100%;object-fit:cover;border-radius:14px}
+.mosaico .a{grid-row:1/3}
+.mosaico .d{grid-column:1/3;grid-row:3}
+.mosaico .d{object-position:center 60%}
+.sello{position:absolute;left:-18px;bottom:150px;background:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 12px 30px rgba(13,57,64,.18);display:flex;gap:10px;align-items:center;font-size:13px;font-weight:600;max-width:230px}
+.sello img{width:42px;height:42px;border-radius:50%;object-fit:cover;flex:none}
+@media (max-width:900px){
+  .portada{padding:32px 0 56px}
+  .portada .wrap{grid-template-columns:1fr;gap:36px}
+  .mosaico{grid-template-rows:130px 130px 150px}
+  .sello{left:10px;bottom:-14px}
+}
+@media (max-width:600px){
+  .portada p.sub{font-size:16px;margin:16px 0 24px}
+  .datos{display:none}
+  .acciones .btn{flex:1}
+  .barra .btn{padding:9px 12px}
+  .logo{font-size:17px}
+}
+
+/* Títulos de sección */
+.sec{padding:80px 0}
+.cabeza{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:30px;flex-wrap:wrap}
+h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;line-height:1.1;letter-spacing:-.6px}
+.cabeza p{color:var(--gris);max-width:34em;margin-top:10px}
+
+/* Filtros */
+.filtros{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+.filtros button{padding:10px 16px;border-radius:8px;border:1.5px solid var(--linea);font-weight:600;font-size:14px;color:var(--gris);background:#fff;transition:all .15s}
+.filtros button:hover{border-color:var(--coral)}
+.filtros button[aria-pressed="true"]{background:var(--mar);border-color:var(--mar);color:#fff}
+
+/* Tarjetas de planes */
+.planes{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+@media (max-width:960px){.planes{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:600px){.planes{grid-template-columns:1fr}}
+.plan{border:1px solid var(--linea);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;background:#fff;transition:box-shadow .2s,transform .2s}
+.plan:hover{box-shadow:0 16px 36px rgba(13,57,64,.12);transform:translateY(-3px)}
+.plan[hidden]{display:none}
+.foto{position:relative;aspect-ratio:4/3;overflow:hidden}
+.foto img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.plan:hover .foto img{transform:scale(1.04)}
+.cat{position:absolute;left:12px;top:12px;background:rgba(255,255,255,.95);color:var(--mar);font-size:12px;font-weight:700;padding:6px 10px;border-radius:6px}
+.plan .info{padding:18px 18px 20px;display:flex;flex-direction:column;gap:6px;flex:1}
+.plan h3{font-size:20px;font-weight:800}
+.plan p{color:var(--gris);font-size:14.5px;flex:1}
+.plan .botones{display:flex;gap:8px;margin-top:14px}
+.plan .botones .btn{flex:1;padding:12px 10px;font-size:14px}
+.agregar{border:2px solid var(--coral);color:var(--coral-osc)}
+.agregar[aria-pressed="true"]{background:var(--coral);color:#fff}
+.ig{width:48px;flex:none!important;border:2px solid var(--linea);color:var(--gris)}
+.ig:hover{border-color:var(--coral);color:var(--coral-osc)}
+
+/* Arma tu plan */
+.armar{background:var(--mar);color:#fff}
+.armar .wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:48px;align-items:start}
+.armar h2{color:#fff}
+.armar .lead{color:#C9DCDE;margin:14px 0 26px;font-size:17px}
+.pasos{display:grid;gap:18px}
+.paso{display:flex;gap:14px;align-items:flex-start}
+.paso .ic{width:44px;height:44px;border-radius:10px;background:var(--mar-2);display:grid;place-items:center;flex:none;color:var(--coral-claro)}
+.paso .ic svg{width:22px;height:22px}
+.paso strong{display:block;font-size:16px}
+.paso span{color:#C9DCDE;font-size:14.5px}
+.form{background:#fff;color:var(--tinta);border-radius:16px;padding:26px}
+.form h3{font-size:20px;font-weight:800;margin-bottom:4px}
+.form .ayuda{color:var(--gris);font-size:14px;margin-bottom:18px}
+.elegidos{display:flex;flex-wrap:wrap;gap:8px;min-height:42px;padding:10px;border:1.5px dashed var(--linea);border-radius:10px;margin-bottom:16px}
+.elegidos .vacio{color:var(--gris);font-size:14px;align-self:center}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--coral-claro);color:var(--coral-osc);font-weight:700;font-size:13px;padding:6px 8px 6px 10px;border-radius:6px}
+.chip button{width:20px;height:20px;border-radius:4px;display:grid;place-items:center;font-size:16px;line-height:1}
+.chip button:hover{background:rgba(185,71,60,.15)}
+.campos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.campos .full{grid-column:1/3}
+label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+input,select,textarea{width:100%;font:inherit;font-size:15px;padding:12px 12px;border:1.5px solid var(--linea);border-radius:8px;background:#fff;color:var(--tinta)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--coral)}
+textarea{resize:vertical;min-height:70px}
+.form .btn{width:100%;margin-top:16px}
+@media (max-width:900px){.armar .wrap{grid-template-columns:1fr}}
+@media (max-width:480px){.campos{grid-template-columns:1fr}.campos .full{grid-column:auto}}
+
+/* Sobre Lore */
+.sobre .wrap{display:grid;grid-template-columns:.8fr 1.2fr;gap:56px;align-items:center}
+.sobre .retrato{border-radius:16px;overflow:hidden;aspect-ratio:4/5;max-width:420px}
+.sobre .retrato img{width:100%;height:100%;object-fit:cover;object-position:center 30%}
+.sobre p{color:var(--gris);font-size:17px;margin-top:16px}
+.lista{margin-top:22px;display:grid;gap:12px}
+.lista div{display:flex;gap:10px;align-items:flex-start;font-weight:600}
+.lista svg{width:22px;height:22px;color:var(--coral);flex:none;margin-top:1px}
+@media (max-width:820px){.sobre .wrap{grid-template-columns:1fr;gap:28px}.sobre .retrato{max-width:none;aspect-ratio:1/1}}
+
+/* Contacto */
+.contacto{background:var(--coral-claro)}
+.contacto .caja{display:flex;justify-content:space-between;align-items:center;gap:30px;flex-wrap:wrap}
+.contacto p{color:#6E3A35;margin-top:10px;font-size:17px}
+.redes{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.redes a{display:inline-flex;align-items:center;gap:8px;background:#fff;padding:10px 14px;border-radius:8px;font-weight:700;font-size:14px;color:var(--coral-osc)}
+.redes a:hover{background:var(--coral);color:#fff}
+.redes svg{width:18px;height:18px}
+
+footer{background:var(--tinta);color:#B8C0C3;padding:28px 0;font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer a{color:#fff;font-weight:600}
+
+/* Barra flotante del plan */
+.flota{position:fixed;left:50%;bottom:18px;transform:translate(-50%,140%);z-index:40;background:var(--mar);color:#fff;border-radius:12px;padding:10px 10px 10px 18px;display:flex;align-items:center;gap:16px;box-shadow:0 14px 40px rgba(0,0,0,.25);transition:transform .3s;width:max-content;max-width:calc(100% - 32px)}
+.flota:not(.ver){visibility:hidden;transition:transform .3s,visibility 0s .3s}
+.flota.ver{transform:translate(-50%,0)}
+.flota span{font-weight:600;font-size:14px}
+.flota .btn{padding:10px 14px;font-size:14px}
+.wa{position:fixed;right:18px;bottom:18px;z-index:39;width:58px;height:58px;border-radius:50%;background:#25D366;color:#fff;display:grid;place-items:center;box-shadow:0 10px 26px rgba(0,0,0,.22);transition:bottom .3s}
+.wa svg{width:30px;height:30px}
+body.con-plan .wa{bottom:88px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-wa" viewBox="0 0 24 24"><path fill="currentColor" d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.87 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35M12.05 21.5h-.01a9.4 9.4 0 0 1-4.8-1.32l-.34-.2-3.57.94.95-3.48-.22-.36a9.4 9.4 0 0 1-1.44-5.01c0-5.2 4.23-9.43 9.44-9.43 2.52 0 4.89.98 6.67 2.77a9.37 9.37 0 0 1 2.76 6.67c0 5.2-4.23 9.43-9.44 9.43m8.03-17.46A11.27 11.27 0 0 0 12.05.72C5.8.72.7 5.81.7 12.07c0 2 .52 3.95 1.52 5.67L.6 23.62l6.02-1.58a11.3 11.3 0 0 0 5.43 1.38h.01c6.26 0 11.35-5.09 11.35-11.35 0-3.03-1.18-5.88-3.33-8.03"/></symbol>
+  <symbol id="i-ig" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6" fill="currentColor"/></g></symbol>
+  <symbol id="i-tt" viewBox="0 0 24 24"><path fill="currentColor" d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5 2.6 2.6 0 0 1-2.6-2.6 2.6 2.6 0 0 1 3.37-2.48V9.66A5.7 5.7 0 0 0 4.17 15.3 5.69 5.69 0 0 0 9.86 21a5.69 5.69 0 0 0 5.69-5.69V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3a4.3 4.3 0 0 1-3.25-1.48"/></symbol>
+  <symbol id="i-fb" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5 21v-7.5h2.55l.38-2.96H13.5V8.66c0-.86.24-1.44 1.47-1.44h1.57V4.57A21 21 0 0 0 14.25 4.46c-2.27 0-3.82 1.38-3.82 3.93v2.15H7.87v2.96h2.56V21z"/></symbol>
+  <symbol id="i-pp" viewBox="0 0 24 24"><path fill="currentColor" d="M7.1 21.3H3.6a.5.5 0 0 1-.5-.6L5.9 3.1A.9.9 0 0 1 6.8 2.3h6.6c3.4 0 5.4 1.7 4.9 4.9-.5 3.6-2.9 5.4-6.4 5.4H9.6a.8.8 0 0 0-.8.7zm12.4-12.6c.2 2.9-1.8 6-6.1 6h-1.6a.8.8 0 0 0-.8.7l-.8 5.2a.5.5 0 0 1-.5.4H7.7l.2-1.1h2.6l1-5.8h1.7c4.2 0 6.3-2.4 6.3-5.4z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></g></symbol>
+  <symbol id="i-ok" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.7 2.7L16.5 9.5"/></g></symbol>
+  <symbol id="i-lista" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></g></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></g></symbol>
+  <symbol id="i-sol" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></g></symbol>
+</svg>
+
+<header>
+  <div class="wrap barra">
+    <a class="logo" href="#inicio"><img src="img/lore.webp" alt="">Lore <b>TRAVEL</b></a>
+    <nav class="menu" aria-label="Menú">
+      <a href="#planes">Planes</a>
+      <a href="#armar">Arma tu plan</a>
+      <a href="#lore">Quién soy</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+    <a class="btn btn-coral" href="https://wa.me/573148918445?text=Hola%20Lore%2C%20quiero%20informaci%C3%B3n%20de%20tus%20planes" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>Escríbeme</a>
+  </div>
+</header>
+
+<main id="inicio">
+  <section class="portada">
+    <div class="wrap">
+      <div>
+        <div class="lugar"><svg><use href="#i-pin"/></svg>Cartagena · Barú · Islas</div>
+        <h1>¡Escápate con nosotros! <span>Tus vacaciones, listas.</span></h1>
+        <p class="sub">Crea recuerdos inolvidables en tus próximas vacaciones. Playa, islas, buena comida, rumba, spa y aventura: tú escoges qué quieres vivir y yo me encargo de las reservas.</p>
+        <div class="acciones">
+          <a class="btn btn-coral" href="#planes">Ver los planes</a>
+          <a class="btn btn-borde" href="#armar">Arma tu plan</a>
+        </div>
+        <div class="datos">
+          <div><strong>9</strong>planes para escoger</div>
+          <div><strong>1</strong>solo chat para reservar</div>
+          <div><strong>WhatsApp</strong>respuesta directa</div>
+        </div>
+      </div>
+      <div class="mosaico">
+        <img class="a" src="img/cholon.webp" alt="Lancha llegando a Cholón, aguas verdes y casas sobre el agua">
+        <img class="b" src="img/delirium.webp" alt="Rumba en Delirium con DJ">
+        <img class="c" src="img/baruco.webp" alt="Plato y coctel en Baruco by Cuzco">
+        <img class="d" src="img/cuatrimotos.webp" alt="Recorrido en cuatrimoto por la playa">
+        <div class="sello"><img src="img/lore.webp" alt="">Hola, soy Lore. Te ayudo a armar tu viaje.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="planes" style="padding-top:40px">
+    <div class="wrap">
+      <div class="cabeza">
+        <div>
+          <h2>Planes para vivir Cartagena</h2>
+          <p>Toca «Agregar» en los que te gusten y al final me mandas todo en un solo mensaje. Precios y disponibilidad te los doy por WhatsApp.</p>
+        </div>
+      </div>
+      <div class="filtros" role="group" aria-label="Filtrar planes">
+        <button aria-pressed="true" data-f="todos">Todos</button>
+        <button aria-pressed="false" data-f="playa">Playa e islas</button>
+        <button aria-pressed="false" data-f="comida">Restaurantes</button>
+        <button aria-pressed="false" data-f="rumba">Rumba</button>
+        <button aria-pressed="false" data-f="relax">Spa y celebraciones</button>
+        <button aria-pressed="false" data-f="aventura">Aventura</button>
+      </div>
+      <div class="planes" id="lista"></div>
+    </div>
+  </section>
+
+  <section class="sec armar" id="armar">
+    <div class="wrap">
+      <div>
+        <h2>Arma tu plan en un minuto</h2>
+        <p class="lead">Sin llamadas ni vueltas: me cuentas qué quieres hacer y cuándo, y te respondo con precios y reservas.</p>
+        <div class="pasos">
+          <div class="paso"><div class="ic"><svg><use href="#i-lista"/></svg></div><div><strong>Escoge tus planes</strong><span>Agrega los que te gusten: playa, cena, rumba, spa o aventura.</span></div></div>
+          <div class="paso"><div class="ic"><svg><use href="#i-cal"/></svg></div><div><strong>Dime la fecha y cuántos son</strong><span>Así reviso la disponibilidad de cada lugar.</span></div></div>
+          <div class="paso"><div class="ic"><svg><use href="#i-sol"/></svg></div><div><strong>Confirma y disfruta</strong><span>Te mando el valor y la reserva. Puedes pagar también por PayPal.</span></div></div>
+        </div>
+      </div>
+      <form class="form" id="form">
+        <h3>Tu plan</h3>
+        <p class="ayuda">Esto se envía a mi WhatsApp.</p>
+        <div class="elegidos" id="elegidos"><span class="vacio">Aún no has agregado planes. Agrégalos arriba o escríbeme igual.</span></div>
+        <div class="campos">
+          <div class="full"><label for="nombre">Tu nombre</label><input id="nombre" autocomplete="name" placeholder="Ej.: Laura"></div>
+          <div><label for="fecha">Fecha de llegada</label><input id="fecha" type="date"></div>
+          <div><label for="personas">Personas</label><select id="personas"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10 o más</option></select></div>
+          <div class="full"><label for="nota">¿Algo más? (opcional)</label><textarea id="nota" placeholder="Cumpleaños, despedida, luna de miel, hotel donde te quedas…"></textarea></div>
+        </div>
+        <button class="btn btn-coral" type="submit"><svg><use href="#i-wa"/></svg>Enviar mi plan por WhatsApp</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="sec sobre" id="lore">
+    <div class="wrap">
+      <div class="retrato"><img src="img/lore.webp" alt="Lore, de Lore TRAVEL" loading="lazy"></div>
+      <div>
+        <h2>Hola, soy Lore</h2>
+        <p>Con Lore TRAVEL organizo planes en Cartagena para que tú solo te preocupes por disfrutar. Conozco los lugares, hago las reservas y te acompaño por WhatsApp desde que escribes hasta que regresas a casa.</p>
+        <div class="lista">
+          <div><svg><use href="#i-ok"/></svg>Un solo contacto para todo tu viaje</div>
+          <div><svg><use href="#i-ok"/></svg>Planes para parejas, amigos, familia y celebraciones</div>
+          <div><svg><use href="#i-ok"/></svg>Pago fácil, también por PayPal si vienes de fuera</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec contacto" id="contacto">
+    <div class="wrap caja">
+      <div>
+        <h2>¿Lista tu escapada?</h2>
+        <p>Escríbeme y armamos juntos tu próximo viaje a Cartagena.</p>
+        <div class="redes">
+          <a href="https://www.instagram.com/ldelcfo?igsh=OThkMWM0cWVmaWU1" target="_blank" rel="noopener"><svg><use href="#i-ig"/></svg>Instagram</a>
+          <a href="https://www.tiktok.com/@ldelcf?_t=ZS-902k1mFPyyo&_r=1" target="_blank" rel="noopener"><svg><use href="#i-tt"/></svg>TikTok</a>
+          <a href="https://www.facebook.com/share/1A3r3DhFEr/?mibextid=wwXIfr" target="_blank" rel="noopener"><svg><use href="#i-fb"/></svg>Facebook</a>
+          <a href="https://www.paypal.me/LoreinysFernandez" target="_blank" rel="noopener"><svg><use href="#i-pp"/></svg>Pagar con PayPal</a>
+        </div>
+      </div>
+      <a class="btn btn-coral" href="https://wa.me/573148918445?text=Hola%20Lore%2C%20quiero%20armar%20un%20plan%20en%20Cartagena" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>+57 314 891 8445</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="anio"></span> Lore TRAVEL · Cartagena, Colombia</span>
+    <span>Página hecha por <a href="https://3rpaginas.com" target="_blank" rel="noopener">3R</a></span>
+  </div>
+</footer>
+
+<div class="flota" id="flota" aria-live="polite"><span id="flotaTxt">Tu plan: 0</span><a class="btn btn-coral" href="#armar">Enviar</a></div>
+<a class="wa" href="https://wa.me/573148918445?text=Hola%20Lore%2C%20quiero%20informaci%C3%B3n%20de%20tus%20planes" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><svg><use href="#i-wa"/></svg></a>
+
+<script>
+const WA = '573148918445';
+// Los planes salen del linkbio de Lore (mismo orden). Para agregar uno: copiar una línea.
+const PLANES = [
+  {n:'Baruco by Cuzco', f:'comida', c:'Restaurante', img:'baruco', d:'Cocina y coctelería de autor para una noche especial.', ig:'https://www.instagram.com/barucobycuzco?igsh=MXc1Mm9leWltdHNrYg=='},
+  {n:'Delirium', f:'rumba', c:'Rumba', img:'delirium', d:'Social club con DJ, buena música y ambiente hasta tarde.', ig:'https://www.instagram.com/deliriumsocialclub?igsh=eWNhZHFweWNkbWEy'},
+  {n:'Cholón', f:'playa', c:'Playa e islas', img:'cholon', d:'Paseo en lancha por las islas: agua cristalina, sol y fiesta.', ig:'https://www.instagram.com/reel/DLurzAbutSC/?igsh=cnF0MXdkbmpoaGdl'},
+  {n:'Quebracho', f:'comida', c:'Restaurante', img:'quebracho', d:'Restaurante clásico de Cartagena para cenar con calma.', ig:'https://www.instagram.com/quebrachorestaurante?igsh=MXdtaWZvanQ2MzAxNQ=='},
+  {n:'Playa Tranquila', f:'playa', c:'Playa e islas', img:'playa-tranquila', d:'Día de playa con pescado frito, patacón y mar en calma.', ig:'https://www.instagram.com/p/BnE55-vjCxK/?igsh=MTQ0b3J2ZmllZ3RoNQ=='},
+  {n:'Spa', f:'relax', c:'Spa y celebraciones', img:'spa', d:'Sublime Premium Spa: relajación y celebraciones de cumpleaños o despedidas.', ig:'https://www.instagram.com/sublimepremiumspa?igsh=MWxubzdueTY0dHdtdw=='},
+  {n:'Niku', f:'comida', c:'Restaurante', img:'niku', d:'Cocina de autor preparada frente a ti.', ig:'https://www.instagram.com/nikurestaurante?igsh=NTN3ZWJxZGoyZ3Z3'},
+  {n:'Cuatrimotos', f:'aventura', c:'Aventura', img:'cuatrimotos', d:'Recorrido en cuatrimoto por la playa con Cartagena ATV.', ig:'https://www.instagram.com/cartagena_atv?igsh=NTZkYW94b3I3aDk4'},
+  {n:'Morena', f:'comida', c:'Restaurante', img:'morena', d:'Morena Orígenes: sabores y ambiente con raíces del Caribe.', ig:'https://www.instagram.com/morenaorigenes?igsh=cmJ0NncxbWJwYnNn'},
+];
+const wa = t => `https://wa.me/${WA}?text=${encodeURIComponent(t)}`;
+const elegidos = new Set();
+const lista = document.getElementById('lista');
+
+lista.innerHTML = PLANES.map((p,i)=>`
+  <article class="plan" data-f="${p.f}">
+    <div class="foto"><img src="img/${p.img}.webp" alt="${p.n}" loading="lazy"><span class="cat">${p.c}</span></div>
+    <div class="info">
+      <h3>${p.n}</h3>
+      <p>${p.d}</p>
+      <div class="botones">
+        <button class="btn agregar" aria-pressed="false" data-i="${i}">Agregar</button>
+        <a class="btn btn-coral" href="${wa('Hola Lore, quiero información del plan ' + p.n)}" target="_blank" rel="noopener">Reservar</a>
+        <a class="btn ig" href="${p.ig}" target="_blank" rel="noopener" aria-label="Ver ${p.n} en Instagram"><svg><use href="#i-ig"/></svg></a>
+      </div>
+    </div>
+  </article>`).join('');
+
+function pintar(){
+  const caja = document.getElementById('elegidos');
+  caja.innerHTML = elegidos.size
+    ? [...elegidos].map(i=>`<span class="chip">${PLANES[i].n}<button type="button" data-quitar="${i}" aria-label="Quitar ${PLANES[i].n}">×</button></span>`).join('')
+    : '<span class="vacio">Aún no has agregado planes. Agrégalos arriba o escríbeme igual.</span>';
+  document.querySelectorAll('.agregar').forEach(b=>{
+    const on = elegidos.has(+b.dataset.i);
+    b.setAttribute('aria-pressed', on); b.textContent = on ? 'Agregado ✓' : 'Agregar';
+  });
+  const n = elegidos.size;
+  document.getElementById('flotaTxt').textContent = `Tu plan: ${n} ${n===1?'lugar':'lugares'}`;
+  document.getElementById('flota').classList.toggle('ver', n>0);
+  document.body.classList.toggle('con-plan', n>0);
+}
+lista.addEventListener('click', e=>{
+  const b = e.target.closest('.agregar'); if(!b) return;
+  const i = +b.dataset.i; elegidos.has(i) ? elegidos.delete(i) : elegidos.add(i); pintar();
+});
+document.getElementById('elegidos').addEventListener('click', e=>{
+  const b = e.target.closest('[data-quitar]'); if(!b) return;
+  elegidos.delete(+b.dataset.quitar); pintar();
+});
+
+document.querySelectorAll('.filtros button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.filtros button').forEach(x=>x.setAttribute('aria-pressed', x===b));
+  const f = b.dataset.f;
+  document.querySelectorAll('.plan').forEach(c=>c.hidden = !(f==='todos' || c.dataset.f===f));
+}));
+
+const hoy = new Date(); hoy.setMinutes(hoy.getMinutes()-hoy.getTimezoneOffset());
+document.getElementById('fecha').min = hoy.toISOString().slice(0,10);
+document.getElementById('anio').textContent = new Date().getFullYear();
+
+document.getElementById('form').addEventListener('submit', e=>{
+  e.preventDefault();
+  const v = id => document.getElementById(id).value.trim();
+  let t = `Hola Lore${v('nombre') ? ', soy ' + v('nombre') : ''}. Quiero armar un plan en Cartagena.`;
+  if (elegidos.size) t += `\n\nPlanes:\n` + [...elegidos].map(i=>'• ' + PLANES[i].n).join('\n');
+  if (v('fecha')) { const [a,m,d] = v('fecha').split('-'); t += `\n\nLlegada: ${d}/${m}/${a}`; }
+  t += `\nPersonas: ${v('personas')}`;
+  if (v('nota')) t += `\n\n${v('nota')}`;
+  window.open(wa(t), '_blank', 'noopener');
+});
+</script>
+</body>
+</html>
