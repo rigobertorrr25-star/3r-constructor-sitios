@@ -18,4 +18,9 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
 - Para agregar o quitar un plan: lista `PLANES` en el script + foto en `img/`.
 - Fotos del linkbio: 400×400 (baja resolución); para una portada grande hacen falta fotos originales.
 - Vista previa: https://claude.ai/artifact/8q9SegTdBuz6EaFUomCKC8 (ahí el botón «Enviar mi plan» puede no abrir WhatsApp; en la página real sí).
-- Sin publicar todavía. Si se publica: Cloudflare gratis como ZENOVA (ver «Hosting» en el CLAUDE.md de la raíz).
+- **7 nov 2026, Rigoberto: «Quiero que todo se vuelva una página web»** → publicarla. Va a Cloudflare gratis como ZENOVA
+  (ver «Hosting» en el CLAUDE.md de la raíz): proyecto `loretravel` (Worker conectado al repo), rama `main`, sin vistas
+  previas, directorio raíz `clientes/lore-travel`, comando `mkdir -p _site && cp -r index.html img _site/`, despliegue
+  `npx wrangler deploy --assets=./_site --name=loretravel --compatibility-date=2026-10-01`. Dirección esperada:
+  **https://loretravel.rigoberto-rrr25.workers.dev** (ya puesta en `og:image`/`og:url`; si el nombre cambia, cambiarla ahí).
+  El proyecto de Cloudflare lo crea Rigoberto (la sesión no entra a Cloudflare).
