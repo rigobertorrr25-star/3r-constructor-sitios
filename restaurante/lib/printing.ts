@@ -349,6 +349,7 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
         movementsOut: formatCop(s.movementsOut),
         expected: formatCop(s.shift.expectedCash ?? 0),
         counted: formatCop(counted),
+        usd: s.shift.expectedUsd !== null || s.shift.countedUsd !== null ? { expected: `US$ ${s.shift.expectedUsd ?? 0}`, counted: `US$ ${s.shift.countedUsd ?? 0}` } : null,
         cashCount: cashCountLines(s.shift.cashCount).map((x) => ({
           label: `${x.kind === 'bill' ? 'Billetes' : 'Monedas'} de ${formatCop(x.value)}`,
           quantity: x.quantity,

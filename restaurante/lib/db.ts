@@ -203,6 +203,9 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS usd_rate INT NOT NULL DEFAULT 30
 -- Un pago en efectivo que el cliente hizo con dólares: cuántos dólares entregó y a qué cambio. Las vueltas salen en pesos.
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS usd_received INT;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS usd_rate INT;
+-- Dólares al cerrar la caja (8 nov 2026): los que debían estar (los recibidos en el turno) y los que se contaron.
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS expected_usd INT;
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS counted_usd INT;
 -- Corrección de un cierre ya hecho (4 nov 2026): quién, cuándo y por qué. Lo que decía antes queda en la auditoría.
 ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS corrected_by UUID REFERENCES staff(id);
 -- Una entrada o salida de efectivo eliminada al corregir un cierre (6 nov 2026): no cuenta, pero no se borra.

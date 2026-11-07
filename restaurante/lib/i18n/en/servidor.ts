@@ -514,4 +514,5 @@ export const en: Record<string, string> = {
   'Ya hay 10 conexiones: quita alguna primero.': 'There are already 10 connections: remove one first.',
   'Dólares: escribe cuántos dólares entregó el cliente.': 'Dollars: enter how many dollars the guest handed over.',
   'Valor del dólar: escribe cuántos pesos vale un dólar.': 'Dollar value: enter how many pesos one dollar is worth.',
+  'Dólares contados: escribe cuántos dólares hay en la caja.': 'Dollars counted: enter how many dollars are in the drawer.',
 };

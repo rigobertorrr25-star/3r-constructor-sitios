@@ -54,6 +54,9 @@ export type Shift = {
   correctedBy: string | null;
   correctedAt: Date | null;
   correctionReason: string | null;
+  /** Dólares que debían estar al cerrar y los que se contaron (8 nov 2026); null sin dólares. */
+  expectedUsd: number | null;
+  countedUsd: number | null;
 };
 
 const SHIFT_SELECT = `SELECT c.id, c.opened_at AS "openedAt", o.name AS "openedBy", c.opening_amount AS "openingAmount", c.closed_at AS "closedAt",
@@ -63,7 +66,8 @@ const SHIFT_SELECT = `SELECT c.id, c.opened_at AS "openedAt", o.name AS "openedB
        (SELECT count(*)::int FROM cash_shifts y
          WHERE y.location_id = c.location_id AND y.staff_id IS NOT DISTINCT FROM c.staff_id AND y.opened_at <= c.opened_at
            AND (y.opened_at AT TIME ZONE b.timezone)::date = (c.opened_at AT TIME ZONE b.timezone)::date) AS "dayNumber",
-       z.name AS "correctedBy", c.corrected_at AS "correctedAt", c.correction_reason AS "correctionReason"
+       z.name AS "correctedBy", c.corrected_at AS "correctedAt", c.correction_reason AS "correctionReason",
+       c.expected_usd AS "expectedUsd", c.counted_usd AS "countedUsd"
   FROM cash_shifts c JOIN businesses b ON b.id = c.business_id JOIN staff o ON o.id = c.opened_by LEFT JOIN staff x ON x.id = c.closed_by
   LEFT JOIN staff z ON z.id = c.corrected_by`;
 
@@ -409,9 +413,11 @@ export async function closeShift(
   actor: Actor,
   countedCash: number,
   notes?: string,
-  split: { envelopeKitchen?: number; envelopeBar?: number; safeAmount?: number; cashCount?: unknown } = {},
+  split: { envelopeKitchen?: number; envelopeBar?: number; safeAmount?: number; cashCount?: unknown; countedUsd?: number | null } = {},
 ) {
   requirePermission(actor, 'cash.operate');
+  if (split.countedUsd != null && (!Number.isInteger(split.countedUsd) || split.countedUsd < 0 || split.countedUsd > 1_000_000))
+    throw new AppError('INVALID', 'Dólares contados: escribe cuántos dólares hay en la caja.');
   requireAmount(countedCash, 'Efectivo contado', { allowZero: true });
   const why = notes?.trim() ? requireText(notes, 'Observaciones', 2, 1500) : null;
   // El efectivo contado se reparte en sobres y caja fuerte; lo que sobra queda en la caja. No se puede repartir más de lo contado.
@@ -431,16 +437,22 @@ export async function closeShift(
     const shift = await lockOpenShift(db, actor);
     const expected = await expectedCash(db, shift.id, Number(shift.openingAmount));
     const diff = countedCash - expected;
+    // Dólares recibidos en el turno: si hubo, se cuentan aparte (8 nov 2026).
+    const usdIn = Number(
+      (await db.query<{ usd: string }>(`SELECT COALESCE(sum(usd_received), 0) AS usd FROM payments WHERE shift_id = $1 AND reversed_at IS NULL`, [shift.id])).rows[0].usd,
+    );
+    if (usdIn && split.countedUsd == null) throw new AppError('INVALID', `En este turno se recibieron US$ ${usdIn}: escribe cuántos dólares hay en la caja.`);
+    const countedUsd = usdIn || split.countedUsd ? (split.countedUsd ?? 0) : null;
     await db.query(
       `UPDATE cash_shifts SET closed_at = now(), closed_by = $2, expected_cash = $3, counted_cash = $4, notes = $5,
-              envelope_kitchen = $6, envelope_bar = $7, safe_amount = $8, cash_count = $9 WHERE id = $1`,
-      [shift.id, actor.id, expected, countedCash, why, envelopeKitchen, envelopeBar, safeAmount, cashCount ? JSON.stringify(cashCount) : null],
+              envelope_kitchen = $6, envelope_bar = $7, safe_amount = $8, cash_count = $9, expected_usd = $10, counted_usd = $11 WHERE id = $1`,
+      [shift.id, actor.id, expected, countedCash, why, envelopeKitchen, envelopeBar, safeAmount, cashCount ? JSON.stringify(cashCount) : null, usdIn || countedUsd ? usdIn : null, countedUsd],
     );
     await audit(db, actor, {
       action: 'cash.close',
       entity: 'cash_shift',
       entityId: shift.id,
-      summary: `Cerró la caja: esperado ${money(expected)}, contado ${money(countedCash)}${diff === 0 ? ' (cuadra)' : diff > 0 ? ` (sobran ${money(diff)})` : ` (faltan ${money(-diff)})`}`,
+      summary: `Cerró la caja: esperado ${money(expected)}, contado ${money(countedCash)}${diff === 0 ? ' (cuadra)' : diff > 0 ? ` (sobran ${money(diff)})` : ` (faltan ${money(-diff)})`}${countedUsd !== null ? `; dólares: esperados US$ ${usdIn}, contados US$ ${countedUsd}` : ''}`,
       reason: why,
       data: { expected, counted: countedCash, difference: diff },
     });

@@ -72,5 +72,11 @@ describe('cobro con dólares', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     const p2 = await cash.pay(cashier, s2, { method: 'cash', amount: 25000, usdReceived: 7, clientKey: randomUUID() });
     assert.equal(p2.change, 3000);
     await assert.rejects(waiters.updateWorkMode(owner, { waitersCollect: false, barOnly: false, usdRate: 5 }), { code: 'INVALID' });
+    // Al cerrar: hay US$ 17 (10 + 7). Sin contarlos no deja cerrar; se guardan esperados y contados.
+    const exp = (await cash.shiftSummary(cashier, (await cash.getOpenShift(cashier))!.id))!.expectedCash;
+    await assert.rejects(cash.closeShift(cashier, exp, ''), { code: 'INVALID' });
+    const { shiftId } = await cash.closeShift(cashier, exp, '', { countedUsd: 16 });
+    const closed = (await cash.shiftSummary(owner, shiftId))!;
+    assert.deepEqual([closed.shift.expectedUsd, closed.shift.countedUsd], [17, 16]);
   });
 });

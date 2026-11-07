@@ -62,6 +62,9 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
       `${t('{amount} ({n} pagos)', { amount: formatCop(s.byMethod[m].amount), n: s.byMethod[m].count })}${s.byMethod[m].tip ? t(' + propina {amount}', { amount: formatCop(s.byMethod[m].tip) }) : ''}`,
     ]),
     [t('Ventas'), formatCop(s.sales)],
+    ...(s.shift.expectedUsd || s.usd.dollars
+      ? [[t('Dólares (esperados / contados)'), `US$ ${s.shift.expectedUsd ?? s.usd.dollars} / ${s.shift.countedUsd === null ? '—' : `US$ ${s.shift.countedUsd}`}`] as [string, string]]
+      : []),
     [t('Propinas cobradas'), formatCop(s.tips)],
     [t('Descuentos'), formatCop(s.discounts)],
     [t('Anulado en cuentas cobradas'), formatCop(s.voids)],

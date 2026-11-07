@@ -203,6 +203,8 @@ export function precuenta(width: number, p: PrecuentaInput) {
 }
 
 export type CierreInput = {
+  /** Dólares al cerrar (8 nov 2026). */
+  usd?: { expected: string; counted: string } | null;
   /** Título del papel; sin título, «Cierre de caja». */
   title?: string;
   business: string;
@@ -257,6 +259,7 @@ export function cierre(width: number, c: CierreInput) {
     .rule()
     .row('Efectivo esperado', c.expected)
     .row('Efectivo contado', c.counted, { bold: true });
+  if (c.usd) t.row('Dolares esperados', c.usd.expected).row('Dolares contados', c.usd.counted, { bold: true });
   if (c.cashCount?.length) {
     t.line('Arqueo:', { bold: true });
     for (const x of c.cashCount) t.row(`  ${x.label} x ${x.quantity}`, x.total);
