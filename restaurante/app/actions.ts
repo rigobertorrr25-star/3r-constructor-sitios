@@ -710,6 +710,7 @@ export async function closeShiftAction(_prev: FormState, formData: FormData): Pr
           envelopeKitchen: optional('envelopeKitchen'),
           envelopeBar: optional('envelopeBar'),
           safeAmount: optional('safeAmount'),
+          countedUsd: text(formData, 'countedUsd') ? Number(text(formData, 'countedUsd').replace(/[^\d]/g, '')) : null,
           cashCount: (() => {
             try {
               return JSON.parse(text(formData, 'cashCount') || 'null');

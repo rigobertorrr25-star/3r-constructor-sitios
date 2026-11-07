@@ -226,7 +226,7 @@ export default async function CashPage() {
             {accounts.length ? t(' Ojo: quedan {n} mesas abiertas; se podrán cobrar en la siguiente caja.', { n: accounts.length }) : ''}
           </p>
           <div className="mt-4">
-            <CloseShiftForm expected={s.expectedCash} cashPayments={cashPayments.map((p) => ({ ...p, createdAt: p.createdAt.toISOString() }))} timeZone={staff.timezone} />
+            <CloseShiftForm expected={s.expectedCash} expectedUsd={s.usd.dollars} cashPayments={cashPayments.map((p) => ({ ...p, createdAt: p.createdAt.toISOString() }))} timeZone={staff.timezone} />
           </div>
         </section>
       </div>

@@ -329,7 +329,20 @@ export function CorrectClosingForm({
   );
 }
 
-export function CloseShiftForm({ expected, cashPayments = [], timeZone = 'America/Bogota' }: { expected?: number; cashPayments?: CashPaymentRow[]; timeZone?: string }) {
+export function CloseShiftForm({
+  expected,
+  expectedUsd = 0,
+  cashPayments = [],
+  timeZone = 'America/Bogota',
+}: {
+  expected?: number;
+  /** Dólares recibidos en el turno (8 nov 2026): si hay, se cuentan aparte. */
+  expectedUsd?: number;
+  cashPayments?: CashPaymentRow[];
+  timeZone?: string;
+}) {
+  const [usd, setUsd] = useState('');
+  const usdDiff = expectedUsd && usd !== '' ? Number(usd) - expectedUsd : null;
   const t = useT();
   // Arqueo (28 oct 2026): cuántos billetes y monedas de cada uno; si se llena, el efectivo contado es su suma.
   const [counts, setCounts] = useState<Record<string, string>>({});
@@ -360,6 +373,25 @@ export function CloseShiftForm({ expected, cashPayments = [], timeZone = 'Americ
             </p>
           ) : null}
           {diff !== null && diff < 0 ? <ShortageHelper payments={cashPayments} timeZone={timeZone} /> : null}
+          {expectedUsd ? (
+            // Los dólares se cuentan aparte de los pesos (8 nov 2026, pedido de Rigoberto).
+            <div className="space-y-1.5 rounded-2xl border border-[#4cc9f0]/50 bg-[#4cc9f0]/10 p-4">
+              <Field
+                label={t('Dólares contados (US$)')}
+                name="countedUsd"
+                inputMode="numeric"
+                required
+                value={usd}
+                onChange={(e) => setUsd(e.target.value.replace(/[^\d]/g, ''))}
+                hint={t('En este turno se recibieron US$ {usd}. Cuenta los billetes de dólar que hay en la caja.', { usd: expectedUsd })}
+              />
+              {usdDiff !== null ? (
+                <p className={`text-[14px] font-semibold ${usdDiff === 0 ? 'text-success' : 'text-warning'}`}>
+                  {usdDiff === 0 ? t('Cuadra') : usdDiff > 0 ? t('Sobran US$ {usd}', { usd: usdDiff }) : t('Faltan US$ {usd}', { usd: -usdDiff })}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           <p className="mt-3 text-[13.5px] text-muted-foreground">{t('¿Cómo se reparte el efectivo? Lo que no vaya en sobres ni en la caja fuerte queda en la caja.')}</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label={t('Sobre para la cocina')} name="envelopeKitchen" inputMode="numeric" placeholder="0" defaultValue={state?.values?.envelopeKitchen} />

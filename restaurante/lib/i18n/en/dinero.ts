@@ -591,4 +591,9 @@ export const en: Record<string, string> = {
   'US$ {usd} × {rate} = {cop}': 'US$ {usd} × {rate} = {cop}',
   'Valor del dólar (pesos)': 'Dollar value (pesos)',
   'Al cobrar en efectivo se puede recibir dólares: se pasan a pesos con este valor y las vueltas salen en pesos.': 'Cash payments can be taken in dollars: they are converted at this value and change is given in pesos.',
+  'Dólares contados (US$)': 'Dollars counted (US$)',
+  'En este turno se recibieron US$ {usd}. Cuenta los billetes de dólar que hay en la caja.': 'US$ {usd} were received this shift. Count the dollar bills in the drawer.',
+  'Sobran US$ {usd}': 'US$ {usd} over',
+  'Faltan US$ {usd}': 'US$ {usd} short',
+  'Dólares (esperados / contados)': 'Dollars (expected / counted)',
 };
