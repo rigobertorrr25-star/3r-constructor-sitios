@@ -1,7 +1,0 @@
-// Configuración de Cloudflare para ZENOVA (8 nov 2026). El comando de despliegue ya dice la carpeta (--assets=./_site);
-// esto agrega que una dirección que no existe muestre 404.html en vez de una página en blanco.
-{
-  "name": "zenovaoficial",
-  "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./_site", "not_found_handling": "404-page" }
-}
