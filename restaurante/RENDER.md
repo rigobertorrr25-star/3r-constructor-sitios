@@ -1,7 +1,7 @@
 # Pasar Restaurant Control a Render (plan B)
 
-Preparado el 24 oct 2026 a pedido de Rigoberto. Hoy el sistema sigue en Vercel
-(https://3r-constructor-sitios-git1.vercel.app); esta guía es para el día que se decida pasarlo a Render.
+Preparado el 24 oct 2026 a pedido de Rigoberto. **Hecho el 7 nov 2026: el sistema está en https://restaurant-control.onrender.com**
+(antes en https://3r-constructor-sitios-git1.vercel.app).
 La base de datos **no se mueve**: sigue en Neon, y Vercel y Render pueden usarla al mismo tiempo mientras se prueba.
 
 ## Qué está listo
