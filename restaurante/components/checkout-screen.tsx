@@ -34,6 +34,7 @@ export function CheckoutScreen({
   timeZone,
   printBill = false,
   cashOnly = false,
+  usdRate = 3000,
 }: {
   checkout: View;
   shiftOpen: boolean;
@@ -44,6 +45,8 @@ export function CheckoutScreen({
   printBill?: boolean;
   /** El negocio cobra solo en efectivo (6 nov 2026). */
   cashOnly?: boolean;
+  /** Pesos por dólar, para cobrar con dólares (8 nov 2026). */
+  usdRate?: number;
 }) {
   const c = checkout;
   const t = useT();
@@ -57,6 +60,8 @@ export function CheckoutScreen({
   const [tipOn, setTipOn] = useState(c.suggestedTipPercent > 0);
   const [tip, setTip] = useState('');
   const [received, setReceived] = useState('');
+  const [usdOn, setUsdOn] = useState(false);
+  const [usd, setUsd] = useState('');
   const [reference, setReference] = useState('');
   const [clientKey, setClientKey] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +78,9 @@ export function CheckoutScreen({
   const value = toInt(amount);
   const suggestedTip = tipFor(value, c.suggestedTipPercent);
   const tipValue = tipOn ? (tip === '' ? suggestedTip : toInt(tip)) : 0;
-  const receivedValue = toInt(received);
+  const usdValue = usdOn ? toInt(usd) : 0;
+  // Con dólares, lo recibido en pesos es dólares × el valor del dólar; las vueltas salen en pesos.
+  const receivedValue = usdOn ? usdValue * usdRate : toInt(received);
   const change = method === 'cash' && receivedValue ? receivedValue - value - tipValue : null;
 
   // Pago que no alcanzó a llegar por falta de conexión: se reintenta tal cual (mismo identificador = sin cobro doble).
@@ -93,6 +100,8 @@ export function CheckoutScreen({
       // Pagó una de las partes: quedan las demás.
       setParts((n) => Math.max(1, n - 1));
       setReceived('');
+      setUsd('');
+      setUsdOn(false);
       setReference('');
       setTip('');
       const paid = result.closed ? t('Cuenta pagada y mesa cerrada.') : t('Pago registrado.');
@@ -110,6 +119,7 @@ export function CheckoutScreen({
         amount: value,
         tip: tipValue,
         received: method === 'cash' && receivedValue ? receivedValue : null,
+        usdReceived: method === 'cash' && usdOn && usdValue ? usdValue : null,
         reference,
         clientKey,
       }),
@@ -323,6 +333,44 @@ export function CheckoutScreen({
                   <p className="text-[13px] text-muted-foreground">{t('Total a cobrar')}</p>
                   <p className="font-display text-[40px] font-bold leading-tight">{formatCop(value + tipValue)}</p>
                 </div>
+                {/* Pagar con dólares (8 nov 2026, pedido de Rigoberto): al cambio del negocio, vueltas en pesos. */}
+                <label className="flex items-center gap-2 text-[14.5px] font-medium">
+                  <input type="checkbox" className="size-4 accent-[#8a9bff]" checked={usdOn} onChange={(e) => setUsdOn(e.target.checked)} />
+                  {t('Paga en dólares (1 dólar = {rate})', { rate: formatCop(usdRate) })}
+                </label>
+                {usdOn ? (
+                  <div className="space-y-1.5">
+                    <label htmlFor="usd" className="text-sm font-medium">
+                      {t('¿Cuántos dólares entrega? (debe ser al menos {usd})', { usd: `US$ ${Math.ceil((value + tipValue) / usdRate)}` })}
+                    </label>
+                    <input
+                      id="usd"
+                      className={`${inputClass} py-3 font-display text-[24px] font-bold`}
+                      inputMode="numeric"
+                      placeholder="US$"
+                      value={usd}
+                      onChange={(e) => setUsd(e.target.value.replace(/[^\d]/g, ''))}
+                    />
+                    <div className="flex flex-wrap gap-1.5">
+                      {[1, 5, 10, 20, 50, 100].map((b) => (
+                        <button
+                          key={b}
+                          type="button"
+                          onClick={() => setUsd(String(usdValue + b))}
+                          className="rounded-xl border border-white/[0.1] px-3 py-1.5 text-[14px] text-muted-foreground hover:text-foreground"
+                        >
+                          + US$ {b}
+                        </button>
+                      ))}
+                      {usd ? (
+                        <button type="button" onClick={() => setUsd('')} className="rounded-xl px-3 py-1.5 text-[14px] text-muted-foreground hover:text-foreground">
+                          {t('Borrar')}
+                        </button>
+                      ) : null}
+                    </div>
+                    {usdValue ? <p className="text-[14.5px]">{t('US$ {usd} × {rate} = {cop}', { usd: usdValue, rate: formatCop(usdRate), cop: formatCop(usdValue * usdRate) })}</p> : null}
+                  </div>
+                ) : (
                 <div className="space-y-1.5">
                   <label htmlFor="received" className="text-sm font-medium">
                     {t('¿Con cuánto paga el cliente?')}
@@ -349,6 +397,7 @@ export function CheckoutScreen({
                     ))}
                   </div>
                 </div>
+                )}
                 {change !== null ? (
                   <div className={`rounded-2xl px-4 py-3 ${change < 0 ? 'bg-destructive/15' : 'bg-success/15'}`} role="status">
                     <p className="text-[13px] text-muted-foreground">{change < 0 ? t('Faltan') : t('Vueltas para el cliente')}</p>

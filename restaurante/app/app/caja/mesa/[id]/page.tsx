@@ -17,7 +17,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   // La caja cobra cualquier mesa; en un bar sin cajero, cada mesero cobra las suyas.
   if (!can(staff.role, 'cash.operate') && !(await canCollectSession(staff, id))) redirect('/app');
-  const [checkout, shift, invoice, printBill, { cashOnly }] = await Promise.all([
+  const [checkout, shift, invoice, printBill, { cashOnly, usdRate }] = await Promise.all([
     getCheckout(staff, id),
     getOpenShift(staff),
     invoiceForSession(staff, id),
@@ -49,6 +49,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
       timeZone={staff.timezone}
       printBill={printBill}
       cashOnly={cashOnly}
+      usdRate={usdRate}
     />
     </>
   );

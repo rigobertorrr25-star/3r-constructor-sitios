@@ -10,7 +10,9 @@ import { AppError, audit, hasOrders, isUuid, requirePermission, type Actor } fro
 const money = formatCop;
 
 /** El dueño escoge la forma de trabajo del negocio. */
-export async function updateWorkMode(actor: Actor, input: { waitersCollect: boolean; barOnly: boolean; suggestedTip?: number; trackPrep?: boolean; cashOnly?: boolean }) {
+export async function updateWorkMode(actor: Actor, input: { waitersCollect: boolean; barOnly: boolean; suggestedTip?: number; trackPrep?: boolean; cashOnly?: boolean; usdRate?: number }) {
+  const usdRate = input.usdRate ?? null;
+  if (usdRate !== null && (!Number.isInteger(usdRate) || usdRate < 100 || usdRate > 100_000)) throw new AppError('INVALID', 'Valor del dólar: escribe cuántos pesos vale un dólar.');
   requirePermission(actor, 'locations.manage');
   // Propina sugerida en %; 0 = el negocio no maneja propina (no se ofrece al cobrar ni sale en la precuenta).
   const tip = input.suggestedTip ?? null;
@@ -21,13 +23,14 @@ export async function updateWorkMode(actor: Actor, input: { waitersCollect: bool
     ).rows[0];
     const trackPrep = input.trackPrep ?? before.trackPrep;
     const cashOnly = input.cashOnly ?? before.cashOnly;
-    await db.query(`UPDATE businesses SET waiters_collect = $2, bar_only = $3, suggested_tip = COALESCE($4, suggested_tip), track_prep = $5, cash_only = $6 WHERE id = $1`, [
+    await db.query(`UPDATE businesses SET waiters_collect = $2, bar_only = $3, suggested_tip = COALESCE($4, suggested_tip), track_prep = $5, cash_only = $6, usd_rate = COALESCE($7, usd_rate) WHERE id = $1`, [
       actor.businessId,
       input.waitersCollect,
       input.barOnly,
       tip,
       trackPrep,
       cashOnly,
+      usdRate,
     ]);
     // Al pasar a «solo efectivo», los cobros por datáfono o transferencia de las cajas abiertas pasan a efectivo
     // (6 nov 2026, Rigoberto: «cambia todos los pagos de transferencia a efectivo»). Las cajas cerradas no se tocan.
