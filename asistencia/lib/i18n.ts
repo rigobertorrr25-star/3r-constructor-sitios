@@ -280,7 +280,14 @@ const es = {
   avatarMale: 'Hombre',
   avatarFemale: 'Mujer',
   avatarGuessed: 'Adivinado por el nombre',
-  avatarCredit: 'Avatares: «Adventurer» de Lisa Wischofsky (CC BY 4.0), vía DiceBear.',
+  avatarCredit: 'Avatares: «Adventurer» de Lisa Wischofsky (CC BY 4.0), vía DiceBear.',  // Privacidad, términos y aviso de cookies (8 nov 2026).
+  privacyLink: 'Política de privacidad',
+  termsLink: 'Términos y condiciones',
+  cookieRegion: 'Aviso de cookies',
+  cookieText: 'Solo usamos cookies necesarias para tu sesión y tu idioma.',
+  cookieMore: 'Más información',
+  cookieOk: 'Entendido',
+  back: 'Volver',
 };
 
 export type MessageKey = keyof typeof es;
@@ -539,7 +546,13 @@ const en: Record<MessageKey, string> = {
   avatarMale: 'Man',
   avatarFemale: 'Woman',
   avatarGuessed: 'Guessed from the name',
-  avatarCredit: 'Avatars: “Adventurer” by Lisa Wischofsky (CC BY 4.0), via DiceBear.',
+  avatarCredit: 'Avatars: “Adventurer” by Lisa Wischofsky (CC BY 4.0), via DiceBear.',  privacyLink: 'Privacy policy',
+  termsLink: 'Terms and conditions',
+  cookieRegion: 'Cookie notice',
+  cookieText: 'We only use the cookies needed for your session and your language.',
+  cookieMore: 'Learn more',
+  cookieOk: 'Got it',
+  back: 'Back',
 };
 
 const messages: Record<Lang, Record<MessageKey, string>> = { es, en };

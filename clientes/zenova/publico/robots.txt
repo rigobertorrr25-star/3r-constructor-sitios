@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://zenovaoficial.rigoberto-rrr25.workers.dev/sitemap.xml

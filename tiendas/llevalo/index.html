@@ -7,6 +7,16 @@
 <meta name="description" content="Productos para la moto, el carro, la cocina, el hogar y para regalar. Pago contra entrega y envío gratis a toda Colombia.">
 <meta property="og:title" content="3R Market — Pagas cuando te llega">
 <meta property="og:description" content="Productos para la moto, la casa y para regalar. Pago contra entrega en toda Colombia.">
+<link rel="canonical" href="https://llevalo.rigoberto-rrr25.workers.dev/">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#111827">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111827'/%3E%3Ctext x='32' y='44' font-family='Arial Black,Arial,sans-serif' font-size='30' font-weight='900' text-anchor='middle' fill='%2339ff14'%3E3R%3C/text%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_CO">
+<meta property="og:site_name" content="3R Market">
+<meta property="og:url" content="https://llevalo.rigoberto-rrr25.workers.dev/">
+<meta property="og:image" content="https://llevalo.rigoberto-rrr25.workers.dev/img/5417.jpg">
+<meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600;700&display=swap">
@@ -20,9 +30,9 @@
     --accent: #39ff14;
     --accent-ink: #0b0b0b;
     --accent-soft: #eaffe4;
-    --accent-text: #138a00;
+    --accent-text: #0f7400;
     --wall: #ececec;
-    --cta: #e8380d;
+    --cta: #d4320b; /* antes #e8380d: oscurecido un tono por contraste (8 nov 2026) */
     --cta-ink: #ffffff;
     --dark: #111827;
     --ok: #25d366;
@@ -233,6 +243,29 @@
   .cap-btns .btn:only-child { grid-column: 1 / -1; }
   .btn.dl { background: #111; color: #fff; }
   .cap pre { margin: 0; white-space: pre-wrap; font: 500 .92rem/1.45 "Archivo", sans-serif; color: #111; }
+
+/* Privacidad, términos y aviso del navegador (8 nov 2026, pedido de Rigoberto: los 20 puntos antes de publicar). */
+dialog.legal { width: min(680px, calc(100% - 32px)); max-height: min(86vh, 900px); padding: 0; border: 0; border-radius: 16px;
+  background: #ffffff; color: #111827; box-shadow: 0 30px 80px rgba(0,0,0,.35); }
+dialog.legal::backdrop { background: rgba(0,0,0,.55); }
+dialog.legal .legal-in { padding: 28px 24px 24px; overflow: auto; max-height: inherit; font-size: 15px; line-height: 1.6; }
+dialog.legal h2 { font-family: 'Archivo Black', 'Archivo', sans-serif; font-size: 24px; line-height: 1.2; margin: 0 40px 4px 0; }
+dialog.legal h3 { font-size: 16px; margin: 20px 0 4px; }
+dialog.legal p, dialog.legal ul { margin: 6px 0; }
+dialog.legal ul { padding-left: 20px; }
+dialog.legal a { color: inherit; text-decoration: underline; }
+dialog.legal .legal-x { position: sticky; float: right; top: 0; margin: -12px -8px 0 0; width: 40px; height: 40px; border: 0;
+  border-radius: 10px; background: transparent; color: inherit; font-size: 26px; line-height: 1; cursor: pointer; }
+dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
+.legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; }
+.legal-links button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+.storage-note { position: fixed; z-index: 60; left: 12px; bottom: 12px; right: 84px; max-width: 440px; display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 14px; background: #111827; color: #ffffff; font-size: 13px; line-height: 1.4;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+.storage-note[hidden] { display: none; }
+.storage-note button { flex: none; padding: 7px 12px; border: 0; border-radius: 10px; background: #39ff14; color: #0b0b0b;
+  font: inherit; font-weight: 600; cursor: pointer; }
+.storage-note .lk { padding: 0; background: none; color: inherit; font-weight: 400; text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -288,6 +321,7 @@
   <div class="wrap">
     <p><b style="color:var(--text)">3R Market</b> · Pedidos contra entrega a toda Colombia · WhatsApp 310 790 7194</p>
     <p style="margin-top:6px">Tus datos se usan solo para entregar tu pedido.</p>
+    <p class="legal-links" style="margin-top:10px;justify-content:flex-start"><button type="button" data-legal="privacidad">Política de privacidad</button><button type="button" data-legal="terminos">Términos y condiciones</button></p>
   </div>
 </footer>
 
@@ -678,6 +712,71 @@
     } catch (err) { b.textContent = "No se pudo, toma captura"; }
     setTimeout(() => (b.textContent = "Descargar imagen"), 2500);
   });
+</script>
+
+<dialog class="legal" id="legal-privacidad" aria-labelledby="legal-privacidad-t">
+  <div class="legal-in">
+    <button class="legal-x" type="button" aria-label="Cerrar" data-close>×</button>
+    <h2 id="legal-privacidad-t">Política de privacidad</h2>
+    <p>Vigente desde el 8 de noviembre de 2026. Cumple la Ley 1581 de 2012 y el Decreto 1377 de 2013 de Colombia.</p>
+    <h3>1. Quién es el responsable</h3>
+<p>Rigoberto Rincón, bajo la marca 3R Market, Cartagena, Colombia. Contacto: <a href="https://wa.me/573107907194" target="_blank" rel="noopener">WhatsApp 310 790 7194</a>.</p>
+<h3>2. Qué datos recogemos</h3>
+<p>Cuando pides un producto: nombre, apellido, celular, departamento, ciudad, dirección y barrio. La página no los guarda: se arman en un mensaje que tú mismo envías por WhatsApp.</p>
+<h3>3. Para qué los usamos</h3>
+<p>Solo para confirmar y entregar tu pedido. Los compartimos con el proveedor y la transportadora que lo llevan a tu casa. No los vendemos ni los usamos para publicidad sin tu permiso.</p>
+<h3>4. Cookies</h3>
+<p>No usamos cookies ni guardamos nada en tu navegador. Las letras de la página se cargan desde Google Fonts y las fotos desde el proveedor.</p>
+<h3>5. Tus derechos</h3>
+<p>Puedes pedirnos sin costo que te digamos qué datos tuyos tenemos, que los corrijamos o que los borremos, por WhatsApp. Respondemos en máximo 10 días hábiles (consultas) o 15 (reclamos). También puedes acudir a la Superintendencia de Industria y Comercio.</p>
+<h3>6. Cuánto tiempo los guardamos</h3>
+<p>Lo necesario para entregar el pedido y atender cambios o garantías, y lo que la ley obligue a conservar.</p>
+
+  </div>
+</dialog>
+<dialog class="legal" id="legal-terminos" aria-labelledby="legal-terminos-t">
+  <div class="legal-in">
+    <button class="legal-x" type="button" aria-label="Cerrar" data-close>×</button>
+    <h2 id="legal-terminos-t">Términos y condiciones</h2>
+    <p>Vigentes desde el 8 de noviembre de 2026.</p>
+    <h3>1. Cómo comprar</h3>
+<p>Escoges un producto, llenas tus datos y envías el pedido por WhatsApp. Te confirmamos antes de enviarlo.</p>
+<h3>2. Pago contra entrega y envío</h3>
+<p>Pagas en efectivo cuando el producto llega. El envío es gratis: el precio que ves es lo único que pagas. Precios en pesos colombianos; vale el que te confirmamos por WhatsApp.</p>
+<h3>3. Fotos</h3>
+<p>Las fotos son del proveedor. Si tienes dudas de color, tamaño o contenido, pregúntanos antes de pedir.</p>
+<h3>4. Retracto y garantía</h3>
+<ul><li>Retracto: por la Ley 1480 de 2011, en compras a distancia tienes 5 días hábiles desde que recibes el producto para devolverlo sin usar y recibir tu dinero.</li><li>Garantía: si llega con un defecto, te lo cambiamos o te devolvemos el dinero, según la garantía legal.</li><li>Para pedirlo, escríbenos por WhatsApp con una foto.</li></ul>
+<h3>5. Tus datos</h3>
+<p>Cómo tratamos tus datos está en la <a href="#privacidad" data-legal="privacidad">política de privacidad</a>.</p>
+<h3>6. Ley que aplica</h3>
+<p>Estos términos se rigen por las leyes de Colombia.</p>
+
+  </div>
+</dialog>
+<div class="storage-note" id="storage-note" role="region" aria-label="Aviso de cookies" hidden>
+  <span>No usamos cookies. Tus datos solo viajan por WhatsApp cuando haces un pedido. <button type="button" class="lk" data-legal="privacidad">Más información</button></span>
+  <button type="button" id="storage-ok">Entendido</button>
+</div>
+<script>
+(function () {
+  // Privacidad y términos: se abren con los enlaces del pie o con #privacidad / #terminos en la dirección.
+  function open(which) { var d = document.getElementById('legal-' + which); if (d && !d.open) d.showModal(); }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-legal]'); if (b) { e.preventDefault(); open(b.getAttribute('data-legal')); return; }
+    var x = e.target.closest('[data-close]'); if (x) x.closest('dialog').close();
+  });
+  document.querySelectorAll('dialog.legal').forEach(function (d) {
+    d.addEventListener('click', function (e) { if (e.target === d) d.close(); });
+  });
+  var h = location.hash.slice(1); if (h === 'privacidad' || h === 'terminos') open(h);
+  // Aviso: sale una vez por navegador.
+  var KEY = '3rmarket-aviso-ok', note = document.getElementById('storage-note');
+  try { if (!localStorage.getItem(KEY)) note.hidden = false; } catch (e) {}
+  document.getElementById('storage-ok').addEventListener('click', function () {
+    note.hidden = true; try { localStorage.setItem(KEY, '1'); } catch (e) {}
+  });
+})();
 </script>
 </body>
 </html>

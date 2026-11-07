@@ -272,7 +272,7 @@ export default async function HomePage() {
                 loop
                 muted
                 playsInline
-                poster="/hero-lion.png"
+                poster="/hero-lion.webp"
                 // El video es vertical con mucho negro arriba y abajo: el recorte cuadrado deja al león
                 // completo y centrado, sin empujarlo fuera de la primera pantalla del celular.
                 className="aspect-square w-full object-cover"
@@ -732,6 +732,9 @@ export default async function HomePage() {
             © 2026 3R — Páginas web para negocios ·{' '}
             <Link href="/privacidad" className="transition hover:text-foreground">
               Política de privacidad
+            </Link> ·{' '}
+            <Link href="/terminos" className="transition hover:text-foreground">
+              Términos y condiciones
             </Link>
           </p>
         </div>

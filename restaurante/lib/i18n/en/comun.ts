@@ -46,4 +46,13 @@ export const en: Record<string, string> = {
 
   // General
   'Algo salió mal. Intenta otra vez.': 'Something went wrong. Please try again.',
+  'Aviso de cookies': 'Cookie notice',
+  'Solo usamos cookies necesarias para tu sesión y tu idioma.': 'We only use the cookies needed for your session and your language.',
+  'Más información': 'Learn more',
+  'Entendido': 'Got it',
+  'Política de privacidad': 'Privacy policy',
+  'Términos y condiciones': 'Terms and conditions',
+  'Esta página no existe': "This page doesn't exist",
+  'Puede que el enlace esté mal escrito o que la página ya no esté.': 'The link may be mistyped or the page may no longer exist.',
+  'Ir al inicio': 'Go to the start',
 };

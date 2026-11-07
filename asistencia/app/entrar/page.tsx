@@ -6,6 +6,7 @@ import { LoginForm } from '@/components/login-form';
 import { card } from '@/components/ui';
 import { getViewer } from '@/lib/auth';
 import { t } from '@/lib/i18n';
+import { LegalLinks } from '@/components/legal';
 import { getLang } from '@/lib/lang';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -33,6 +34,7 @@ export default async function LoginPage() {
           <p className="mt-1 mb-6 text-center text-[15px] text-muted-foreground">{t(lang, 'signInSubtitle')}</p>
           <LoginForm lang={lang} />
         </div>
+        <LegalLinks lang={lang} className="mt-5 text-white/80" />
       </div>
     </main>
   );

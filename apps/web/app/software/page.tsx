@@ -464,6 +464,9 @@ export default async function SoftwarePage() {
             © 2026 3R — Páginas web y software para empresas ·{' '}
             <Link href="/privacidad" className="transition hover:text-foreground">
               Política de privacidad
+            </Link> ·{' '}
+            <Link href="/terminos" className="transition hover:text-foreground">
+              Términos y condiciones
             </Link>
           </p>
         </div>

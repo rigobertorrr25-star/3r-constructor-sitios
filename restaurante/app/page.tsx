@@ -7,6 +7,7 @@ import { FindBusinessForm, RestaurantLogin } from '@/components/login-forms';
 import { Lion, glassCard } from '@/components/ui';
 import { LangSwitch } from '@/components/i18n';
 import { getT } from '@/lib/i18n/server';
+import { LegalLinks } from '@/components/legal-links';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,6 +66,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
             {t('Administración')}
           </Link>
         </p>
+        <LegalLinks className="mt-3" />
       </div>
     </main>
   );
