@@ -161,14 +161,14 @@ export async function lockOpenShift(db: Db, actor: Actor) {
 }
 
 /** Forma de trabajo del negocio (las opciones que prende el dueño en Sedes). */
-export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean }> {
+export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean; usdRate: number }> {
   const row = (
-    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean }>(
-      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip", track_prep AS "trackPrep", cash_only AS "cashOnly" FROM businesses WHERE id = $1`,
+    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean; usdRate: number }>(
+      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip", track_prep AS "trackPrep", cash_only AS "cashOnly", usd_rate AS "usdRate" FROM businesses WHERE id = $1`,
       [businessId],
     )
   )[0];
-  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10, trackPrep: true, cashOnly: false };
+  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10, trackPrep: true, cashOnly: false, usdRate: 3000 };
 }
 
 /**
@@ -259,7 +259,7 @@ async function expectedCash(db: Db, shiftId: string, opening: number) {
   const row = (
     await db.query<{ sales: string; moves: string }>(
       `SELECT
-         (SELECT COALESCE(sum(CASE WHEN method = 'cash' THEN amount ELSE -tip END), 0) FROM payments WHERE shift_id = $1 AND reversed_at IS NULL) AS sales,
+         (SELECT COALESCE(sum(CASE WHEN method = 'cash' THEN amount - COALESCE(usd_received::bigint * usd_rate, 0) ELSE -tip END), 0) FROM payments WHERE shift_id = $1 AND reversed_at IS NULL) AS sales,
          (SELECT COALESCE(sum(CASE WHEN kind = 'in' THEN amount ELSE -amount END), 0) FROM cash_movements WHERE shift_id = $1 AND voided_at IS NULL) AS moves`,
       [shiftId],
     )
@@ -278,6 +278,8 @@ export type ShiftSummary = {
   movementsIn: number;
   movementsOut: number;
   expectedCash: number;
+  /** Dólares recibidos en efectivo en el turno y lo que valían en pesos al cobrar (8 nov 2026). */
+  usd: { dollars: number; pesos: number };
   tablesClosed: number;
   movements: { id: string; kind: 'in' | 'out'; amount: number; reason: string; createdBy: string; createdAt: Date }[];
 };
@@ -295,8 +297,10 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
   if (!row) return null;
   const shift = toShift(row);
   const [methods, extra, movements] = await Promise.all([
-    query<{ method: Method; amount: string; tip: string; count: number }>(
-      `SELECT method, sum(amount) AS amount, sum(tip) AS tip, count(*)::int AS count FROM payments WHERE shift_id = $1 AND reversed_at IS NULL GROUP BY method`,
+    query<{ method: Method; amount: string; tip: string; count: number; usd: string; usdPesos: string }>(
+      `SELECT method, sum(amount) AS amount, sum(tip) AS tip, count(*)::int AS count,
+              COALESCE(sum(usd_received), 0) AS usd, COALESCE(sum(usd_received::bigint * usd_rate), 0) AS "usdPesos"
+         FROM payments WHERE shift_id = $1 AND reversed_at IS NULL GROUP BY method`,
       [shiftId],
     ),
     query<{ discounts: string; voids: string; reversed: string; tables: number }>(
@@ -320,6 +324,7 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
   ]);
   const byMethod = Object.fromEntries(METHODS.map((m) => [m, { amount: 0, tip: 0, count: 0 }])) as ShiftSummary['byMethod'];
   for (const m of methods) byMethod[m.method] = { amount: Number(m.amount), tip: Number(m.tip), count: m.count };
+  const usd = { dollars: methods.reduce((s, m) => s + Number(m.usd), 0), pesos: methods.reduce((s, m) => s + Number(m.usdPesos), 0) };
   const moves = movements.map((m) => ({ ...m, amount: Number(m.amount) }));
   const movementsIn = moves.filter((m) => m.kind === 'in').reduce((s, m) => s + m.amount, 0);
   const movementsOut = moves.filter((m) => m.kind === 'out').reduce((s, m) => s + m.amount, 0);
@@ -335,7 +340,9 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
     movementsOut,
     // La propina se les entrega a los meseros de la caja: toda la cobrada (en efectivo, datáfono o transferencia) se
     // descuenta de lo esperado (5 nov 2026, pedido de Rigoberto).
-    expectedCash: shift.openingAmount + byMethod.cash.amount - (byMethod.card.tip + byMethod.transfer.tip) + movementsIn - movementsOut,
+    // Los pagos con dólares dejan dólares, no pesos: su valor en pesos se resta de los pesos esperados (8 nov 2026).
+    expectedCash: shift.openingAmount + byMethod.cash.amount - usd.pesos - (byMethod.card.tip + byMethod.transfer.tip) + movementsIn - movementsOut,
+    usd,
     tablesClosed: extra[0].tables,
     movements: moves,
   };
@@ -601,7 +608,7 @@ export async function voidDiscount(actor: Actor, discountId: string) {
   });
 }
 
-export type PaymentInput = { method: string; amount: number; tip?: number; received?: number | null; reference?: string; clientKey: string };
+export type PaymentInput = { method: string; amount: number; tip?: number; received?: number | null; reference?: string; clientKey: string; usdReceived?: number | null };
 
 /**
  * Registra un pago (puede ser una parte de la cuenta). Cuando la cuenta queda en cero, la mesa se cierra sola.
@@ -614,6 +621,10 @@ export async function pay(actor: Actor, sessionId: string, input: PaymentInput) 
   if (!(METHODS as readonly string[]).includes(input.method)) throw new AppError('INVALID', 'Elige cómo paga.');
   const method = input.method as Method;
   if (mode.cashOnly && method !== 'cash') throw new AppError('INVALID', 'Este negocio cobra solo en efectivo.');
+  // Pago con dólares: solo en efectivo; se pasan a pesos al cambio del negocio y las vueltas salen en pesos.
+  const usd = input.usdReceived ? Number(input.usdReceived) : 0;
+  if (usd && (method !== 'cash' || !Number.isInteger(usd) || usd < 1 || usd > 100_000)) throw new AppError('INVALID', 'Dólares: escribe cuántos dólares entregó el cliente.');
+  const usdRate = usd ? mode.usdRate : null;
   if (!isUuid(input.clientKey)) throw new AppError('INVALID', 'Pago sin identificador. Recarga la página.');
   requireAmount(input.amount, 'Valor a pagar');
   const tip = input.tip ? requireAmount(input.tip, 'Propina', { allowZero: true }) : 0;
@@ -621,7 +632,7 @@ export async function pay(actor: Actor, sessionId: string, input: PaymentInput) 
   let received: number | null = null;
   let change: number | null = null;
   if (method === 'cash') {
-    received = input.received ? requireAmount(input.received, 'Efectivo recibido') : input.amount + tip;
+    received = usd ? usd * mode.usdRate : input.received ? requireAmount(input.received, 'Efectivo recibido') : input.amount + tip;
     if (received < input.amount + tip) throw new AppError('INVALID', `Recibiste ${money(received)}: no alcanza para ${money(input.amount + tip)}.`);
     change = received - input.amount - tip;
   }
@@ -645,15 +656,15 @@ export async function pay(actor: Actor, sessionId: string, input: PaymentInput) 
       if (checkout.balance <= 0) throw new AppError('CONFLICT', 'Esta cuenta no tiene nada por pagar.');
       if (input.amount > checkout.balance) throw new AppError('INVALID', `Falta por pagar ${money(checkout.balance)}: el pago no puede ser mayor.`);
       const res = await db.query<{ id: string }>(
-        `INSERT INTO payments (business_id, location_id, session_id, shift_id, method, amount, tip, received, change_given, reference, client_key, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
-        [actor.businessId, actor.locationId, sessionId, shift.id, method, input.amount, tip, received, change, reference, input.clientKey, actor.id],
+        `INSERT INTO payments (business_id, location_id, session_id, shift_id, method, amount, tip, received, change_given, reference, client_key, created_by, usd_received, usd_rate)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
+        [actor.businessId, actor.locationId, sessionId, shift.id, method, input.amount, tip, received, change, reference, input.clientKey, actor.id, usd || null, usdRate],
       );
       await audit(db, actor, {
         action: 'payment.create',
         entity: 'payment',
         entityId: res.rows[0].id,
-        summary: `Cobró ${money(input.amount)} en ${METHOD_LABEL[method].toLowerCase()} de la mesa ${session.number}${tip ? ` + propina ${money(tip)}` : ''}`,
+        summary: `Cobró ${money(input.amount)} en ${METHOD_LABEL[method].toLowerCase()} de la mesa ${session.number}${tip ? ` + propina ${money(tip)}` : ''}${usd ? ` (pagó US$ ${usd} a ${money(usdRate!)})` : ''}`,
       });
       const closed = input.amount === checkout.balance;
       if (closed) {

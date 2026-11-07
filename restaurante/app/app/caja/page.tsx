@@ -117,6 +117,7 @@ export default async function CashPage() {
               `+ ${t('venta en efectivo')} ${formatCop(s.byMethod.cash.amount)}`,
               s.movementsIn ? `+ ${t('entradas')} ${formatCop(s.movementsIn)}` : '',
               s.movementsOut ? `− ${t('salidas')} ${formatCop(s.movementsOut)}` : '',
+              s.usd.pesos ? `− ${t('pagado en dólares')} ${formatCop(s.usd.pesos)}` : '',
               s.byMethod.card.tip + s.byMethod.transfer.tip ? `− ${t('propina de datáfono y transferencia')} ${formatCop(s.byMethod.card.tip + s.byMethod.transfer.tip)}` : '',
             ]
               .filter(Boolean)
@@ -124,6 +125,12 @@ export default async function CashPage() {
             = {formatCop(s.expectedCash)}
           </p>
           <p className="mt-1 text-[13px] text-muted-foreground">{t('Ya con toda la propina entregada a los meseros.')}</p>
+          {s.usd.dollars ? (
+            // Dólares recibidos (8 nov 2026): se cuentan aparte de los pesos.
+            <p className="mt-3 rounded-2xl border border-[#4cc9f0]/50 bg-[#4cc9f0]/10 px-4 py-2.5 text-[16px] font-semibold">
+              {t('Además, en dólares: US$ {usd} (recibidos por {cop})', { usd: s.usd.dollars, cop: formatCop(s.usd.pesos) })}
+            </p>
+          ) : null}
         </div>
       </section>
 

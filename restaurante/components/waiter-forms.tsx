@@ -13,12 +13,14 @@ export function WorkModeForm({
   suggestedTip,
   trackPrep,
   cashOnly,
+  usdRate,
 }: {
   waitersCollect: boolean;
   barOnly: boolean;
   suggestedTip: number;
   trackPrep: boolean;
   cashOnly: boolean;
+  usdRate: number;
 }) {
   const t = useT();
   return (
@@ -44,6 +46,18 @@ export function WorkModeForm({
             hint={t('Al cobrar solo sale Efectivo (sin datáfono ni transferencia). Al marcarlo, los cobros por datáfono o transferencia de la caja abierta pasan a efectivo; las cajas cerradas no cambian.')}
             defaultChecked={cashOnly}
           />
+          <div className="md:max-w-[320px]">
+            <Field
+              label={t('Valor del dólar (pesos)')}
+              name="usdRate"
+              type="number"
+              min={100}
+              max={100000}
+              required
+              defaultValue={usdRate}
+              hint={t('Al cobrar en efectivo se puede recibir dólares: se pasan a pesos con este valor y las vueltas salen en pesos.')}
+            />
+          </div>
           <div className="md:col-span-2 md:max-w-[320px]">
             <Field
               label={t('Propina sugerida (%)')}

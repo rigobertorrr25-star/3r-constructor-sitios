@@ -584,4 +584,11 @@ export const en: Record<string, string> = {
   'Agregar la conexión de aquí': 'Add this connection',
   'Conexión de ahora: {ip}': 'Current connection: {ip}',
   'Quitando…': 'Removing…',
+  'pagado en dólares': 'paid in dollars',
+  'Además, en dólares: US$ {usd} (recibidos por {cop})': 'Also, in dollars: US$ {usd} (taken as {cop})',
+  'Paga en dólares (1 dólar = {rate})': 'Pays in dollars (1 dollar = {rate})',
+  '¿Cuántos dólares entrega? (debe ser al menos {usd})': 'How many dollars does the guest hand over? (at least {usd})',
+  'US$ {usd} × {rate} = {cop}': 'US$ {usd} × {rate} = {cop}',
+  'Valor del dólar (pesos)': 'Dollar value (pesos)',
+  'Al cobrar en efectivo se puede recibir dólares: se pasan a pesos con este valor y las vueltas salen en pesos.': 'Cash payments can be taken in dollars: they are converted at this value and change is given in pesos.',
 };

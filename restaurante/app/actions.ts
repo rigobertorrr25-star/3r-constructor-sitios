@@ -741,6 +741,7 @@ export async function updateWorkModeAction(_prev: FormState, formData: FormData)
         suggestedTip: int(formData, 'suggestedTip'),
         trackPrep: formData.get('trackPrep') === 'on',
         cashOnly: formData.get('cashOnly') === 'on',
+        usdRate: formData.get('usdRate') ? int(formData, 'usdRate') : undefined,
       }),
     ['/app', '/app/sedes', '/app/meseros', '/app/mi-cuenta', '/app/caja'],
     'Guardado.',
@@ -828,7 +829,7 @@ export async function voidDiscountAction(_prev: FormState, formData: FormData): 
 /** Cobro (no es un formulario simple: lleva su identificador para no cobrar dos veces). */
 export async function payAction(
   sessionId: string,
-  input: { method: string; amount: number; tip: number; received: number | null; reference: string; clientKey: string },
+  input: { method: string; amount: number; tip: number; received: number | null; reference: string; clientKey: string; usdReceived?: number | null },
 ): Promise<{ error?: string; change?: number | null; closed?: boolean }> {
   const staff = await requireStaff();
   try {

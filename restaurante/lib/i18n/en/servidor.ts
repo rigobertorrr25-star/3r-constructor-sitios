@@ -512,4 +512,6 @@ export const en: Record<string, string> = {
   'No pudimos ver la dirección de esta conexión.': 'We could not read this connection address.',
   'Esta conexión ya está en la lista.': 'This connection is already listed.',
   'Ya hay 10 conexiones: quita alguna primero.': 'There are already 10 connections: remove one first.',
+  'Dólares: escribe cuántos dólares entregó el cliente.': 'Dollars: enter how many dollars the guest handed over.',
+  'Valor del dólar: escribe cuántos pesos vale un dólar.': 'Dollar value: enter how many pesos one dollar is worth.',
 };
