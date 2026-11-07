@@ -32,7 +32,8 @@ function safeEqual(a: string, b: string) {
 
 export function checkAdminPassword(input: string): boolean {
   if (!authConfigured()) return false;
-  return timingSafeEqual(sha256(input), sha256(process.env.ADMIN_PASSWORD!));
+  // Sin espacios ni saltos de línea al principio o al final (7 nov 2026: al pegar la clave en Render se cuela uno).
+  return timingSafeEqual(sha256(input.trim()), sha256(process.env.ADMIN_PASSWORD!.trim()));
 }
 
 // La firma de 3R depende también de la clave: si se cambia ADMIN_PASSWORD, se cierran sus sesiones.
