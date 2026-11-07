@@ -17,4 +17,5 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   nota) los manda en un solo mensaje a su WhatsApp; «Reservar» abre WhatsApp con el nombre del plan.
 - Para agregar o quitar un plan: lista `PLANES` en el script + foto en `img/`.
 - Fotos del linkbio: 400×400 (baja resolución); para una portada grande hacen falta fotos originales.
+- Vista previa: https://claude.ai/artifact/8q9SegTdBuz6EaFUomCKC8 (ahí el botón «Enviar mi plan» puede no abrir WhatsApp; en la página real sí).
 - Sin publicar todavía. Si se publica: Cloudflare gratis como ZENOVA (ver «Hosting» en el CLAUDE.md de la raíz).
