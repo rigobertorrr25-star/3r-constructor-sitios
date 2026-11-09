@@ -626,4 +626,7 @@ export const en: Record<string, string> = {
   'Cuenta todo el efectivo de la caja (con la propina adentro) y escríbelo. Debería haber': 'Count all the cash in the drawer (with the tips inside) and enter it. There should be',
   'Debe haber al contar (con propina)': 'Should be there when counting (with tips)',
   '− Propina para entregar': '− Tips to hand out',
+  'Total cobrado (con propina)': 'Total collected (with tips)',
+  '− Propina': '− Tips',
+  '= Venta': '= Sales',
 };

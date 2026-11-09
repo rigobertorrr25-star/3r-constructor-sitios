@@ -216,6 +216,8 @@ export type CierreInput = {
   opening: string;
   methods: { label: string; amount: string; count: number }[];
   sales: string;
+  /** Total cobrado = venta + propina (9 nov 2026): el cierre muestra «total cobrado − propina = venta». */
+  collected?: string;
   tips: string;
   discounts: string;
   voids: string;
@@ -254,10 +256,14 @@ export function cierre(width: number, c: CierreInput) {
     .rule();
   if (!/^\$\s*0$/.test(c.opening)) t.row('Base', c.opening);
   for (const m of c.methods) t.row(`${m.label} (${m.count})`, m.amount);
-  t.row('Ventas', c.sales, { bold: true });
-  if (c.tipOfSales) t.row(`Propina (${c.tipOfSales.pct} % de ventas)`, c.tipOfSales.amount, { bold: true });
-  t.row('Propinas cobradas', c.tips)
-    .row('Descuentos', c.discounts)
+  // Total cobrado − propina = venta (9 nov 2026, Rigoberto: «se vendieron 100 mil, menos la propina, y da el resultado»).
+  if (c.collected) t.row('Total cobrado', c.collected).row('- Propina', c.tips).row('= Venta', c.sales, { bold: true });
+  else {
+    t.row('Ventas', c.sales, { bold: true });
+    if (c.tipOfSales) t.row(`Propina (${c.tipOfSales.pct} % de ventas)`, c.tipOfSales.amount, { bold: true });
+    t.row('Propinas cobradas', c.tips);
+  }
+  t.row('Descuentos', c.discounts)
     .row('Entradas de efectivo', c.movementsIn)
     .row('Salidas de efectivo', c.movementsOut)
     .rule();
@@ -290,9 +296,10 @@ export type CuadreDiaInput = {
   business: string;
   location: string | null;
   date: string;
-  turns: { label: string; who: string; hours: string; opening: string; sales: string; salesCash?: string; tipToDeliver?: string | null; expected: string; counted: string; result: string }[];
+  turns: { label: string; who: string; hours: string; opening: string; sales: string; collected?: string; tips?: string; salesCash?: string; tipToDeliver?: string | null; expected: string; counted: string; result: string }[];
   methods: { label: string; amount: string; count: number }[];
   sales: string;
+  collected?: string;
   tipOfSales: { pct: number; amount: string } | null;
   tips: string;
   discounts: string;
@@ -314,8 +321,9 @@ export function cuadreDia(width: number, c: CuadreDiaInput) {
   for (const turn of c.turns) {
     t.rule()
       .line(`${turn.label}: ${turn.who}`, { bold: true })
-      .line(turn.hours)
-      .row('Ventas', turn.sales);
+      .line(turn.hours);
+    if (turn.collected) t.row('Total cobrado', turn.collected).row('- Propina', turn.tips ?? '-').row('= Venta', turn.sales, { bold: true });
+    else t.row('Ventas', turn.sales);
     if (turn.tipToDeliver) t.row('Debe haber al contar', turn.expected).row('- Propina para entregar', turn.tipToDeliver);
     t.row('Efectivo de la venta', turn.salesCash ?? '-', { bold: true });
     if (!/^\$\s*0$/.test(turn.opening)) {
@@ -328,10 +336,14 @@ export function cuadreDia(width: number, c: CuadreDiaInput) {
   }
   t.rule('=').line('TOTAL DEL DIA', { bold: true });
   for (const m of c.methods) t.row(`${m.label} (${m.count})`, m.amount);
-  t.row('Ventas', c.sales, { bold: true });
-  if (c.tipOfSales) t.row(`Propina (${c.tipOfSales.pct} % de ventas)`, c.tipOfSales.amount, { bold: true });
-  t.row('Propinas cobradas', c.tips)
-    .row('Descuentos', c.discounts)
+  // Total cobrado − propina = venta (9 nov 2026, Rigoberto: «se vendieron 100 mil, menos la propina, y da el resultado»).
+  if (c.collected) t.row('Total cobrado', c.collected).row('- Propina', c.tips).row('= Venta', c.sales, { bold: true });
+  else {
+    t.row('Ventas', c.sales, { bold: true });
+    if (c.tipOfSales) t.row(`Propina (${c.tipOfSales.pct} % de ventas)`, c.tipOfSales.amount, { bold: true });
+    t.row('Propinas cobradas', c.tips);
+  }
+  t.row('Descuentos', c.discounts)
     .row('Entradas de efectivo', c.movementsIn)
     .row('Salidas de efectivo', c.movementsOut)
     .row('Sobre para la cocina', c.envelopeKitchen)
