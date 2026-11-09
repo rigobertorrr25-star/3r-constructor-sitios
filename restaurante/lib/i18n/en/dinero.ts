@@ -629,4 +629,8 @@ export const en: Record<string, string> = {
   'Total cobrado (con propina)': 'Total collected (with tips)',
   '− Propina': '− Tips',
   '= Venta': '= Sales',
+  'De lo cobrado, propina ({percent} % sugerido: {amount})': 'Tip out of the amount collected ({percent} % suggested: {amount})',
+  'De eso, propina': 'Of which, tip',
+  'La propina va incluida en lo que paga el cliente': 'The tip is included in what the customer pays',
+  'Al cobrar no se suma la propina: el cliente paga la cuenta y de ahí sale la propina. La venta es lo cobrado menos la propina. Al marcarlo, los cobros de la caja abierta pasan a esta regla.': 'When charging, the tip is not added: the customer pays the bill and the tip comes out of it. Sales are what was collected minus the tip. When checked, payments in the open drawer switch to this rule.',
 };

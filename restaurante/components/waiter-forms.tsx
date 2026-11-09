@@ -15,6 +15,7 @@ export function WorkModeForm({
   cashOnly,
   usdRate,
   noBase = false,
+  tipsIncluded = false,
 }: {
   waitersCollect: boolean;
   barOnly: boolean;
@@ -23,6 +24,7 @@ export function WorkModeForm({
   cashOnly: boolean;
   usdRate: number;
   noBase?: boolean;
+  tipsIncluded?: boolean;
 }) {
   const t = useT();
   return (
@@ -47,6 +49,12 @@ export function WorkModeForm({
             label={t('Solo efectivo')}
             hint={t('Al cobrar solo sale Efectivo (sin datáfono ni transferencia). Al marcarlo, los cobros por datáfono o transferencia de la caja abierta pasan a efectivo; las cajas cerradas no cambian.')}
             defaultChecked={cashOnly}
+          />
+          <CheckField
+            name="tipsIncluded"
+            label={t('La propina va incluida en lo que paga el cliente')}
+            hint={t('Al cobrar no se suma la propina: el cliente paga la cuenta y de ahí sale la propina. La venta es lo cobrado menos la propina. Al marcarlo, los cobros de la caja abierta pasan a esta regla.')}
+            defaultChecked={tipsIncluded}
           />
           <CheckField
             name="noBase"

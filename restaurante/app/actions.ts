@@ -743,6 +743,7 @@ export async function updateWorkModeAction(_prev: FormState, formData: FormData)
         trackPrep: formData.get('trackPrep') === 'on',
         cashOnly: formData.get('cashOnly') === 'on',
         noBase: formData.get('noBase') === 'on',
+        tipsIncluded: formData.get('tipsIncluded') === 'on',
         usdRate: formData.get('usdRate') ? int(formData, 'usdRate') : undefined,
       }),
     ['/app', '/app/sedes', '/app/meseros', '/app/mi-cuenta', '/app/caja'],

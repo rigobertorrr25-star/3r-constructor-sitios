@@ -2,7 +2,7 @@
 // Las fechas son días del negocio (hora de Colombia por defecto), no del servidor.
 import { imageMime } from './backgrounds';
 import { formatCop } from './format';
-import { payInDrawerSql } from './drawer-sql';
+import { netAmountSql, payInDrawerSql } from './drawer-sql';
 import { query, transaction } from './db';
 import { UNITS, purchaseInTx, type Unit } from './inventory';
 import { AppError, audit, isUuid, requirePermission, type Actor } from './store';
@@ -497,7 +497,7 @@ export async function getStatement(actor: Actor, range: { from: string; to: stri
 
   const [money1, inv, exp, tables, methods, top, days] = await Promise.all([
     query<{ sales: string; tips: string }>(
-      `SELECT COALESCE(sum(amount), 0) AS sales, COALESCE(sum(tip), 0) AS tips FROM payments
+      `SELECT COALESCE(sum(${netAmountSql()}), 0) AS sales, COALESCE(sum(tip), 0) AS tips FROM payments
         WHERE business_id = $1 AND reversed_at IS NULL AND ${inRange('created_at')} AND ${loc('location_id')}`,
       p,
     ),
@@ -520,8 +520,8 @@ export async function getStatement(actor: Actor, range: { from: string; to: stri
       p,
     ),
     query<{ method: string; amount: string }>(
-      `SELECT method, sum(amount) AS amount FROM payments
-        WHERE business_id = $1 AND reversed_at IS NULL AND ${inRange('created_at')} AND ${loc('location_id')} GROUP BY method ORDER BY sum(amount) DESC`,
+      `SELECT method, sum(${netAmountSql()}) AS amount FROM payments
+        WHERE business_id = $1 AND reversed_at IS NULL AND ${inRange('created_at')} AND ${loc('location_id')} GROUP BY method ORDER BY 2 DESC`,
       p,
     ),
     query<{ name: string; quantity: string; total: string }>(
@@ -532,7 +532,7 @@ export async function getStatement(actor: Actor, range: { from: string; to: stri
       p,
     ),
     query<{ day: string; sales: string }>(
-      `SELECT to_char((created_at AT TIME ZONE $4)::date, 'YYYY-MM-DD') AS day, sum(amount) AS sales FROM payments
+      `SELECT to_char((created_at AT TIME ZONE $4)::date, 'YYYY-MM-DD') AS day, sum(${netAmountSql()}) AS sales FROM payments
         WHERE business_id = $1 AND reversed_at IS NULL AND ${inRange('created_at')} AND ${loc('location_id')}
         GROUP BY 1 ORDER BY 1`,
       p,
