@@ -31,6 +31,12 @@ export default async function MenuPage() {
             : t('Marca aquí lo que se acabó: los meseros ya no lo podrán pedir hasta que vuelva a haber.')
         }
       />
+      {menu.products.length && (canEdit || canRecipe) ? (
+        // Recetario en PDF con la foto de cada plato (9 nov 2026, pedido de Rigoberto).
+        <a href="/app/carta/recetario" className="inline-flex rounded-xl border border-white/[0.12] px-4 py-2.5 text-[15px] font-medium hover:bg-white/[0.06]">
+          {t('Descargar recetario (PDF)')}
+        </a>
+      ) : null}
       {canEdit ? <MenuImport barOnly={staff.barOnly} open={menu.categories.length === 0} /> : null}
       {canEdit && !staff.barOnly && menu.categories.length ? (
         <CategoryStations

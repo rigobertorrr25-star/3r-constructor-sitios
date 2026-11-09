@@ -96,4 +96,5 @@ export const en: Record<string, string> = {
   'No había nada que cambiar.': 'There was nothing to change.',
   '{name} ahora va a cocina': '{name} now goes to the kitchen',
   '{name} ahora va a barra': '{name} now goes to the bar',
+  'Descargar recetario (PDF)': 'Download recipe book (PDF)',
 };
