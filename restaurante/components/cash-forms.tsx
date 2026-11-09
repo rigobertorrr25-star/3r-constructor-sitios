@@ -106,7 +106,7 @@ export function VoidLossButton({ lossId }: { lossId: string }) {
 }
 
 /** Un cobro en efectivo de la caja abierta, para corregir su medio si se marcó mal (fechas ya en texto). */
-export type CashPaymentRow = { id: string; tableNumber: string | null; amount: number; tip: number; createdBy: string; createdAt: string };
+export type CashPaymentRow = { id: string; tableNumber: string | null; amount: number; tip: number; total: number; createdBy: string; createdAt: string };
 
 const digits = (v: string) => Number(v.replace(/[^\d]/g, '') || 0);
 // Estas casillas van dentro del formulario del cierre: un Enter en ellas no debe cerrar la caja.
@@ -169,7 +169,7 @@ function ShortageHelper({ payments, timeZone }: { payments: CashPaymentRow[]; ti
             <p className="mt-1 text-[13px] text-muted-foreground">{t('Busca el cobro, escoge cómo se pagó de verdad y cuánto (todo o una parte).')}</p>
             <ul className="mt-2 divide-y divide-white/[0.06]">
               {payments.map((p) => {
-                const total = p.amount + p.tip;
+                const total = p.total;
                 const m = moves[p.id] ?? { method: 'transfer', amount: String(total) };
                 const set = (patch: Partial<typeof m>) => setMoves((all) => ({ ...all, [p.id]: { ...m, ...patch } }));
                 return (

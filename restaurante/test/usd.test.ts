@@ -121,5 +121,15 @@ describe('cobro con dólares', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     assert.equal(p5.closed, true);
     const inc = (await cash.shiftSummary(owner, (await cash.getOpenShift(cashier))!.id))!;
     assert.deepEqual([inc.sales, inc.tips, inc.sales + inc.tips, inc.expectedCash, inc.salesCash], [22500, 2500, 25000, 25000, 22500]);
+    // La factura es por la cuenta menos la propina que venía adentro.
+    const [inv] = await db.query<{ total: string; tip: string }>(`SELECT total, tip FROM invoices WHERE session_id = $1`, [s5]);
+    assert.deepEqual([Number(inv.total), Number(inv.tip)], [22500, 2500]);
+    // «¿Por qué falta?»: el cobro fue de 25.000 en total (no 27.500); todo pasa a transferencia.
+    const [row] = (await cash.openShiftCashPayments(cashier)).filter((x) => x.tableNumber === '5');
+    assert.equal(row.total, 25000);
+    await assert.rejects(cash.moveCashPayment(cashier, row.id, { method: 'transfer', amount: 27500 }), { code: 'INVALID' });
+    await cash.moveCashPayment(cashier, row.id, { method: 'transfer', amount: 25000 });
+    const moved = (await cash.shiftSummary(owner, (await cash.getOpenShift(cashier))!.id))!;
+    assert.deepEqual([moved.byMethod.transfer.amount, moved.byMethod.transfer.tip, moved.expectedCash], [22500, 2500, 0]);
   });
 });
