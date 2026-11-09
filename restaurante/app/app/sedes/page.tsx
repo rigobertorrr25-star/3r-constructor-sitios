@@ -33,22 +33,7 @@ export default async function LocationsPage() {
           <WorkModeForm waitersCollect={staff.waitersCollect} barOnly={staff.barOnly} suggestedTip={mode.suggestedTip} trackPrep={mode.trackPrep} cashOnly={mode.cashOnly} usdRate={mode.usdRate} noBase={mode.noBase} />
         </div>
       </section>
-      {/* Entrar solo desde el wifi del local (6 nov 2026). */}
-      <section className={`${card} ${networks.length ? 'border-success/40' : ''}`}>
-        <h2 className="font-display text-[18px] font-bold">{t('Entrar solo desde el wifi del local')}</h2>
-        <p className="mt-1 text-[14.5px] text-muted-foreground">
-          {t('Meseros, cajeras, cocina y barra solo podrán usar el sistema conectados al wifi de esta sede. Tú y el administrador entran desde cualquier parte. Hazlo estando en el local, conectado a su wifi.')}
-        </p>
-        <p className={`mt-2 text-[15px] font-semibold ${networks.length ? 'text-success' : 'text-muted-foreground'}`}>
-          {networks.length ? t('Prendido: el equipo solo entra desde estas conexiones.') : t('Apagado: el equipo entra desde cualquier parte.')}
-        </p>
-        <div className="mt-3">
-          <NetworkForms networks={networks} current={networkKey(ip)} />
-        </div>
-        <p className="mt-3 text-[12.5px] text-muted-foreground">
-          {t('Si el proveedor de internet cambia la dirección del local, el equipo no podrá entrar: agrega la conexión otra vez desde el local. Con los datos del celular tampoco se puede entrar.')}
-        </p>
-      </section>
+      {/* «Entrar solo desde el wifi del local» se quitó el 9 nov 2026 (pedido de Rigoberto). */}
       {/* ¿Funciona la IA? Facturas con foto, inventario con foto, carta desde PDF y el resumen del Tablero la usan. */}
       <section className={`${card} ${ai === 'ok' ? 'border-success/40' : 'border-warning/50'}`}>
         <h2 className="font-display text-[18px] font-bold">{t('Lectura con IA')}</h2>

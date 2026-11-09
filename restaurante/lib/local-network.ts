@@ -35,8 +35,12 @@ export async function locationNetworks(locationId: string): Promise<string[]> {
 }
 
 /** ¿Puede esta persona trabajar desde esta dirección? */
+// Quitado (9 nov 2026, Rigoberto: «elimina lo del wifi»): todos entran desde cualquier conexión. Las conexiones guardadas
+// siguen en la base (no se borra nada) pero ya no se revisan. Para volver a prenderlo, poner WIFI_LOCK = true.
+const WIFI_LOCK = false;
+
 export async function canWorkFrom(staff: { role: Role; locationId: string }, ip: string): Promise<boolean> {
-  if (ANYWHERE_ROLES.includes(staff.role)) return true;
+  if (!WIFI_LOCK || ANYWHERE_ROLES.includes(staff.role)) return true;
   return allowedFrom(ip, await locationNetworks(staff.locationId));
 }
 
