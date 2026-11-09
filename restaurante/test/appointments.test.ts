@@ -79,7 +79,9 @@ describe('módulo 13: servicios y citas', { skip: url ? false : 'sin TEST_DATABA
     const shift = (await cash.getOpenShift(owner))!;
     const s = (await cash.shiftSummary(owner, shift.id))!;
     assert.equal(s.sales, 40000);
-    assert.equal(s.expectedCash, 50000 + 25000, 'la propina en efectivo se entrega: no queda en la caja');
+    assert.equal(s.expectedCash, 50000 + 25000 + 5000, 'se cuenta con la propina adentro (9 nov 2026)');
+    assert.equal(s.tipToDeliver, 5000);
+    assert.equal(s.salesCash, 25000, 'después de sacar la propina queda la venta');
 
     const all = await appt.commissions(owner, { from: tomorrow, to: tomorrow }, tz);
     assert.deepEqual(all.map((c) => [c.name, c.services, c.sales, c.commission, c.tips]), [['Juan Barbero', 2, 40000, 25000 * 0.4 + 15000 * 0.5, 5000]]);

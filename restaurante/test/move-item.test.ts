@@ -88,11 +88,11 @@ describe('pasar un producto a otra mesa', { skip: url ? false : 'sin TEST_DATABA
     await orders.sendOrder(waiter, s2, [{ productId: beer, quantity: 1 }], randomUUID());
     await cash.pay(cashier, s2, { method: 'transfer', amount: 8000, tip: 800, clientKey: randomUUID() });
     let sum = (await cash.shiftSummary(cashier, (await cash.getOpenShift(cashier))!.id))!;
-    assert.equal(sum.expectedCash, 100000 - 800, 'antes: la propina de transferencia sale de la caja');
+    assert.equal(sum.expectedCash, 100000, 'al contar, la propina de transferencia todavía no ha salido (9 nov 2026)');
     await waiters.updateWorkMode(owner, { waitersCollect: false, barOnly: false, cashOnly: true });
     sum = (await cash.shiftSummary(cashier, (await cash.getOpenShift(cashier))!.id))!;
     assert.deepEqual([sum.byMethod.transfer.amount, sum.byMethod.cash.amount, sum.byMethod.cash.tip], [0, 8000, 800]);
-    assert.equal(sum.expectedCash, 108000, 'ahora: base + venta en efectivo');
+    assert.equal(sum.expectedCash, 108800, 'ahora: base + venta en efectivo + su propina (se cuenta adentro)');
     assert.equal((await cash.workMode(owner.businessId)).cashOnly, true);
     const s3 = await store.openTable(waiter, t6, { guests: 1 });
     await orders.sendOrder(waiter, s3, [{ productId: beer, quantity: 1 }], randomUUID());

@@ -320,10 +320,14 @@ export async function dayReportPdf(r: DayReport): Promise<Uint8Array> {
     w.row('Descuentos', formatCop(s.discounts), { indent: 10 });
     w.row('Entradas / salidas de efectivo', `${formatCop(s.movementsIn)} / ${formatCop(s.movementsOut)}`, { indent: 10 });
     // La base va aparte del efectivo de la venta (8 nov 2026, pedido de Rigoberto).
-    w.row('Efectivo de la venta (sin base)', formatCop((sh.expectedCash ?? s.expectedCash) - sh.openingAmount), { indent: 10, bold: true });
+    if (s.tipToDeliver) {
+      w.row('Debe haber al contar (con propina)', formatCop(sh.expectedCash ?? s.expectedCash), { indent: 10 });
+      w.row('- Propina para entregar', formatCop(s.tipToDeliver), { indent: 10 });
+    }
+    w.row('Efectivo de la venta (sin base)', formatCop(s.salesCash), { indent: 10, bold: true });
     if (sh.openingAmount) {
       w.row('+ Base (aparte)', formatCop(sh.openingAmount), { indent: 10 });
-      w.row('Total en la caja (venta + base)', formatCop(sh.expectedCash ?? s.expectedCash), { indent: 10 });
+      if (!s.tipToDeliver) w.row('Total en la caja (venta + base)', formatCop(sh.expectedCash ?? s.expectedCash), { indent: 10 });
     }
     w.row('Efectivo contado', sh.countedCash === null ? '-' : formatCop(sh.countedCash), { indent: 10 });
     w.row('Resultado', resultText(diff), { indent: 10, bold: true });

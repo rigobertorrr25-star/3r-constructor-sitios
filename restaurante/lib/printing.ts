@@ -348,7 +348,8 @@ export async function enqueueClosing(actor: Actor, shiftId: string, waiter?: str
         movementsIn: formatCop(s.movementsIn),
         movementsOut: formatCop(s.movementsOut),
         expected: formatCop(s.shift.expectedCash ?? 0),
-        salesCash: formatCop((s.shift.expectedCash ?? 0) - s.shift.openingAmount),
+        salesCash: formatCop(s.salesCash),
+        tipToDeliver: s.tipToDeliver ? formatCop(s.tipToDeliver) : null,
         counted: formatCop(counted),
         usd: s.shift.expectedUsd !== null || s.shift.countedUsd !== null ? { expected: `US$ ${s.shift.expectedUsd ?? 0}`, counted: `US$ ${s.shift.countedUsd ?? 0}` } : null,
         cashCount: cashCountLines(s.shift.cashCount).map((x) => ({
@@ -450,7 +451,8 @@ export async function enqueueDayClosing(actor: Actor, date: string) {
             opening: formatCop(s.shift.openingAmount),
             sales: formatCop(s.sales),
             expected: formatCop(s.shift.expectedCash ?? s.expectedCash),
-            salesCash: formatCop((s.shift.expectedCash ?? s.expectedCash) - s.shift.openingAmount),
+            salesCash: formatCop(s.salesCash),
+            tipToDeliver: s.tipToDeliver ? formatCop(s.tipToDeliver) : null,
             counted: s.shift.countedCash === null ? '-' : formatCop(s.shift.countedCash),
             result: diff === null ? 'SIGUE ABIERTA' : cuadreResult(diff),
           };

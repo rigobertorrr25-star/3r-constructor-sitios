@@ -58,7 +58,7 @@ describe('faltante al cerrar la caja', { skip: url ? false : 'sin TEST_DATABASE_
     await cash.pay(cashier, s2, { method: 'cash', amount: 60000, received: 60000, clientKey: randomUUID() });
     const shiftId = (await cash.getOpenShift(cashier))!.id;
     const expected = async () => (await cash.shiftSummary(cashier, shiftId))!.expectedCash;
-    assert.equal(await expected(), 190000, 'la propina en efectivo se entrega');
+    assert.equal(await expected(), 193000, 'se cuenta con la propina adentro (9 nov 2026)');
 
     const list = await cash.openShiftCashPayments(cashier);
     assert.deepEqual(list.map((p) => [p.tableNumber, p.amount, p.tip]).sort(), [['1', 30000, 3000], ['2', 60000, 0]]);
@@ -71,12 +71,12 @@ describe('faltante al cerrar la caja', { skip: url ? false : 'sin TEST_DATABASE_
 
     // Mesa 1: todo fue por transferencia (con la propina).
     await cash.moveCashPayment(cashier, p1.id, { method: 'transfer', amount: 33000 });
-    assert.equal(await expected(), 157000, 'y la de transferencia sale de la caja');
+    assert.equal(await expected(), 160000, 'la mesa 1 ya no está en la caja (la propina de transferencia sale después de contar)');
     await assert.rejects(cash.moveCashPayment(cashier, p1.id, { method: 'card', amount: 33000 }), { code: 'CONFLICT' }, 'ya no está en efectivo');
 
     // Mesa 2: 20.000 fueron por datáfono y el resto sí en efectivo.
     await cash.moveCashPayment(cashier, p2.id, { method: 'card', amount: 20000 });
-    assert.equal(await expected(), 137000);
+    assert.equal(await expected(), 140000);
     const sum = (await cash.shiftSummary(cashier, shiftId))!;
     assert.deepEqual(
       [sum.byMethod.cash.amount, sum.byMethod.transfer.amount, sum.byMethod.transfer.tip, sum.byMethod.card.amount],
@@ -88,8 +88,8 @@ describe('faltante al cerrar la caja', { skip: url ? false : 'sin TEST_DATABASE_
 
     // La plata que se sacó para pagar algo.
     await cash.addMovement(cashier, { kind: 'out', amount: 15000, reason: 'Pago: hielo' });
-    assert.equal(await expected(), 122000);
-    const closed = await cash.closeShift(cashier, 122000, '', {});
+    assert.equal(await expected(), 125000);
+    const closed = await cash.closeShift(cashier, 125000, '', {});
     assert.ok(closed);
     void shift;
   });

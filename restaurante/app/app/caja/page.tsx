@@ -116,27 +116,51 @@ export default async function CashPage() {
             />
           )}
         </div>
-        {/* La base va totalmente aparte del efectivo de la venta (8 nov 2026, Rigoberto: «no metas la base en la venta,
-            déjala aparte, para que el efectivo de la venta quede libre y no se enrede»). */}
+        {/* Se cuenta con la propina adentro y después se descuenta (9 nov 2026, Azul Caribe por Rigoberto: «la propina debe
+            descontarse del total de la venta para que al momento del arqueo todo cuadre»). La base sigue aparte. */}
         <div className="rounded-[22px] border-2 border-primary/60 bg-primary/10 p-5">
-          <p className="text-[14px] font-semibold uppercase tracking-wide text-primary">{t('Efectivo de la venta')}</p>
-          <p className="mt-1 font-display text-[44px] font-bold leading-none">{formatCop(s.expectedCash - s.shift.openingAmount)}</p>
+          <p className="text-[14px] font-semibold uppercase tracking-wide text-primary">{t('Debe haber en la caja al contar')}</p>
+          <p className="mt-1 font-display text-[44px] font-bold leading-none">{formatCop(s.expectedCash)}</p>
           <p className="mt-3 text-[15px] font-medium">
             {[
+              s.shift.openingAmount ? `${t('Base')} ${formatCop(s.shift.openingAmount)} +` : '',
               `${t('Venta en efectivo')} ${formatCop(s.byMethod.cash.amount)}`,
+              s.shift.tipsInDrawer && s.byMethod.cash.tip ? `+ ${t('propina en efectivo')} ${formatCop(s.byMethod.cash.tip)}` : '',
               s.movementsIn ? `+ ${t('entradas')} ${formatCop(s.movementsIn)}` : '',
               s.movementsOut ? `− ${t('salidas')} ${formatCop(s.movementsOut)}` : '',
               s.usd.pesos ? `− ${t('pagado en dólares')} ${formatCop(s.usd.pesos)}` : '',
-              s.byMethod.card.tip + s.byMethod.transfer.tip ? `− ${t('propina de datáfono y transferencia')} ${formatCop(s.byMethod.card.tip + s.byMethod.transfer.tip)}` : '',
+              !s.shift.tipsInDrawer && s.byMethod.card.tip + s.byMethod.transfer.tip
+                ? `− ${t('propina de datáfono y transferencia')} ${formatCop(s.byMethod.card.tip + s.byMethod.transfer.tip)}`
+                : '',
             ]
               .filter(Boolean)
               .join(' ')}{' '}
-            = {formatCop(s.expectedCash - s.shift.openingAmount)}
+            = {formatCop(s.expectedCash)}
           </p>
-          <p className="mt-1 text-[13px] text-muted-foreground">{t('Sin la base y ya con toda la propina entregada a los meseros.')}</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            {s.shift.tipsInDrawer ? t('Cuenta todo junto, con la propina adentro.') : t('Ya con toda la propina entregada a los meseros.')}
+          </p>
+          {s.tipToDeliver ? (
+            <div className="mt-3 rounded-2xl border border-success/50 bg-success/10 px-4 py-3 text-[15px]">
+              <p className="font-semibold">
+                {t('Después de contar, saca la propina: {tip}', { tip: formatCop(s.tipToDeliver) })}
+              </p>
+              {s.byMethod.card.tip + s.byMethod.transfer.tip ? (
+                <p className="text-[13.5px] text-muted-foreground">
+                  {t('Efectivo {cash} + datáfono y transferencia {other} (esta parte también sale de la caja).', {
+                    cash: formatCop(s.byMethod.cash.tip),
+                    other: formatCop(s.byMethod.card.tip + s.byMethod.transfer.tip),
+                  })}
+                </p>
+              ) : null}
+              <p className="mt-1 text-[17px] font-bold">{t('Queda la venta en efectivo: {sales}', { sales: formatCop(s.salesCash) })}</p>
+            </div>
+          ) : (
+            <p className="mt-3 text-[16px] font-bold">{t('Venta en efectivo: {sales}', { sales: formatCop(s.salesCash) })}</p>
+          )}
           {s.shift.openingAmount ? (
             <p className="mt-3 rounded-2xl border border-[#f4b740]/50 bg-[#f4b740]/10 px-4 py-2.5 text-[15px] font-medium">
-              {t('Aparte, la base: {base}. Al contar la caja completa (venta + base) deben ser {total}.', { base: formatCop(s.shift.openingAmount), total: formatCop(s.expectedCash) })}
+              {t('Y aparte queda la base: {base}.', { base: formatCop(s.shift.openingAmount) })}
             </p>
           ) : null}
           {s.usd.dollars ? (
@@ -236,7 +260,7 @@ export default async function CashPage() {
         <section className={card}>
           <h2 className="font-display text-[18px] font-bold">{t('Cerrar caja')}</h2>
           <p className="mt-1 text-[14px] text-muted-foreground">
-            {s.shift.openingAmount ? t('Cuenta el efectivo que hay en la caja (con la base) y escríbelo. Debería haber') : t('Cuenta el efectivo que hay en la caja y escríbelo. Debería haber')} <strong className="text-foreground">{formatCop(s.expectedCash)}</strong>.
+            {s.shift.tipsInDrawer ? (s.shift.openingAmount ? t('Cuenta todo el efectivo de la caja (con la base y la propina adentro) y escríbelo. Debería haber') : t('Cuenta todo el efectivo de la caja (con la propina adentro) y escríbelo. Debería haber')) : s.shift.openingAmount ? t('Cuenta el efectivo que hay en la caja (con la base) y escríbelo. Debería haber') : t('Cuenta el efectivo que hay en la caja y escríbelo. Debería haber')} <strong className="text-foreground">{formatCop(s.expectedCash)}</strong>.
             {accounts.length ? t(' Ojo: quedan {n} mesas abiertas; se podrán cobrar en la siguiente caja.', { n: accounts.length }) : ''}
           </p>
           <div className="mt-4">

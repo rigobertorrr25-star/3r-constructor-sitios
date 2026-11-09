@@ -1,5 +1,7 @@
 // Módulo 04: caja y pagos. Turnos de caja, cobro en partes y con varios medios, propina, descuentos y cierre de caja.
 // Nada se borra: un pago equivocado se reversa con motivo, un descuento se anula, una salida de plata se registra.
+import { payInDrawerSql } from './drawer-sql';
+export { payInDrawerSql };
 import { randomUUID } from 'node:crypto';
 import { formatCop } from './format';
 import { cashCountTotal, cleanCashCount, type CashCount } from './cash-count';
@@ -57,7 +59,10 @@ export type Shift = {
   /** Dólares que debían estar al cerrar y los que se contaron (8 nov 2026); null sin dólares. */
   expectedUsd: number | null;
   countedUsd: number | null;
+  /** Se cuenta con la propina adentro y después se descuenta (9 nov 2026); false en las cajas de antes. */
+  tipsInDrawer: boolean;
 };
+
 
 const SHIFT_SELECT = `SELECT c.id, c.opened_at AS "openedAt", o.name AS "openedBy", c.opening_amount AS "openingAmount", c.closed_at AS "closedAt",
        x.name AS "closedBy", c.expected_cash AS "expectedCash", c.counted_cash AS "countedCash", c.notes,
@@ -67,7 +72,7 @@ const SHIFT_SELECT = `SELECT c.id, c.opened_at AS "openedAt", o.name AS "openedB
          WHERE y.location_id = c.location_id AND y.staff_id IS NOT DISTINCT FROM c.staff_id AND y.opened_at <= c.opened_at
            AND (y.opened_at AT TIME ZONE b.timezone)::date = (c.opened_at AT TIME ZONE b.timezone)::date) AS "dayNumber",
        z.name AS "correctedBy", c.corrected_at AS "correctedAt", c.correction_reason AS "correctionReason",
-       c.expected_usd AS "expectedUsd", c.counted_usd AS "countedUsd"
+       c.expected_usd AS "expectedUsd", c.counted_usd AS "countedUsd", c.tips_in_drawer AS "tipsInDrawer"
   FROM cash_shifts c JOIN businesses b ON b.id = c.business_id JOIN staff o ON o.id = c.opened_by LEFT JOIN staff x ON x.id = c.closed_by
   LEFT JOIN staff z ON z.id = c.corrected_by`;
 
@@ -143,7 +148,7 @@ export async function openShift(actor: Actor, openingAmount: number) {
   try {
     return await transaction(async (db) => {
       const res = await db.query<{ id: string }>(
-        `INSERT INTO cash_shifts (business_id, location_id, opened_by, opening_amount) VALUES ($1, $2, $3, $4) RETURNING id`,
+        `INSERT INTO cash_shifts (business_id, location_id, opened_by, opening_amount, tips_in_drawer) VALUES ($1, $2, $3, $4, TRUE) RETURNING id`,
         [actor.businessId, actor.locationId, actor.id, openingAmount],
       );
       await audit(db, actor, { action: 'cash.open', entity: 'cash_shift', entityId: res.rows[0].id, summary: `Abrió la caja con base de ${money(openingAmount)}` });
@@ -265,7 +270,7 @@ async function expectedCash(db: Db, shiftId: string, opening: number) {
   const row = (
     await db.query<{ sales: string; moves: string }>(
       `SELECT
-         (SELECT COALESCE(sum(CASE WHEN method = 'cash' THEN amount - COALESCE(usd_received::bigint * usd_rate, 0) ELSE -tip END), 0) FROM payments WHERE shift_id = $1 AND reversed_at IS NULL) AS sales,
+         (SELECT COALESCE(sum(${payInDrawerSql('(SELECT tips_in_drawer FROM cash_shifts WHERE id = $1)')}), 0) FROM payments WHERE shift_id = $1 AND reversed_at IS NULL) AS sales,
          (SELECT COALESCE(sum(CASE WHEN kind = 'in' THEN amount ELSE -amount END), 0) FROM cash_movements WHERE shift_id = $1 AND voided_at IS NULL) AS moves`,
       [shiftId],
     )
@@ -284,6 +289,10 @@ export type ShiftSummary = {
   movementsIn: number;
   movementsOut: number;
   expectedCash: number;
+  /** Propina que se saca de la caja después de contar (toda la cobrada si la caja cuenta con la propina adentro; si no, 0). */
+  tipToDeliver: number;
+  /** Lo que queda de la venta en efectivo, sin base y ya sin propina: esperado − base − propina para entregar. */
+  salesCash: number;
   /** Dólares recibidos en efectivo en el turno y lo que valían en pesos al cobrar (8 nov 2026). */
   usd: { dollars: number; pesos: number };
   tablesClosed: number;
@@ -334,11 +343,15 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
   const moves = movements.map((m) => ({ ...m, amount: Number(m.amount) }));
   const movementsIn = moves.filter((m) => m.kind === 'in').reduce((s, m) => s + m.amount, 0);
   const movementsOut = moves.filter((m) => m.kind === 'out').reduce((s, m) => s + m.amount, 0);
+  const tips = METHODS.reduce((s, m) => s + byMethod[m].tip, 0);
+  const expectedCash =
+    shift.openingAmount + byMethod.cash.amount - usd.pesos + (shift.tipsInDrawer ? byMethod.cash.tip : -(byMethod.card.tip + byMethod.transfer.tip)) + movementsIn - movementsOut;
+  const tipToDeliver = shift.tipsInDrawer ? tips : 0;
   return {
     shift,
     byMethod,
     sales: METHODS.reduce((s, m) => s + byMethod[m].amount, 0),
-    tips: METHODS.reduce((s, m) => s + byMethod[m].tip, 0),
+    tips,
     discounts: Number(extra[0].discounts),
     voids: Number(extra[0].voids),
     reversed: Number(extra[0].reversed),
@@ -347,7 +360,11 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
     // La propina se les entrega a los meseros de la caja: toda la cobrada (en efectivo, datáfono o transferencia) se
     // descuenta de lo esperado (5 nov 2026, pedido de Rigoberto).
     // Los pagos con dólares dejan dólares, no pesos: su valor en pesos se resta de los pesos esperados (8 nov 2026).
-    expectedCash: shift.openingAmount + byMethod.cash.amount - usd.pesos - (byMethod.card.tip + byMethod.transfer.tip) + movementsIn - movementsOut,
+    // Desde el 9 nov 2026 (tipsInDrawer) se cuenta con la propina adentro: la de efectivo está en la caja y la de datáfono y
+    // transferencia todavía no ha salido; después de contar se saca toda (tipToDeliver) y queda la venta (salesCash).
+    expectedCash,
+    tipToDeliver,
+    salesCash: (shift.expectedCash ?? expectedCash) - shift.openingAmount - tipToDeliver,
     usd,
     tablesClosed: extra[0].tables,
     movements: moves,
@@ -927,9 +944,9 @@ export async function changePaymentMethod(actor: Actor, paymentId: string, metho
   const to = method as Method;
   await transaction(async (db) => {
     const p = (
-      await db.query<{ id: string; method: Method; amount: string; tip: string; reversed: boolean; usd: number | null; shiftId: string; closed: boolean; table: string }>(
+      await db.query<{ id: string; method: Method; amount: string; tip: string; reversed: boolean; usd: number | null; shiftId: string; closed: boolean; table: string; tipsIn: boolean }>(
         `SELECT p.id, p.method, p.amount, p.tip, (p.reversed_at IS NOT NULL) AS reversed, p.usd_received AS usd, p.shift_id AS "shiftId",
-                (c.closed_at IS NOT NULL) AS closed, t.number AS table
+                (c.closed_at IS NOT NULL) AS closed, t.number AS table, c.tips_in_drawer AS "tipsIn"
            FROM payments p JOIN cash_shifts c ON c.id = p.shift_id JOIN table_sessions ts ON ts.id = p.session_id JOIN dining_tables t ON t.id = ts.table_id
           WHERE p.id = $1 AND p.business_id = $2 AND p.location_id = $3 FOR UPDATE OF p, c`,
         [paymentId, actor.businessId, actor.locationId],
@@ -941,7 +958,7 @@ export async function changePaymentMethod(actor: Actor, paymentId: string, metho
     if (p.method === to) throw new AppError('INVALID', 'El pago ya está en ese medio.');
     const amount = Number(p.amount);
     const tip = Number(p.tip);
-    const inDrawer = (m: Method) => (m === 'cash' ? amount : -tip);
+    const inDrawer = (m: Method) => (p.tipsIn ? (m === 'cash' ? amount + tip : 0) : m === 'cash' ? amount : -tip);
     const delta = inDrawer(to) - inDrawer(p.method);
     await db.query(
       `UPDATE payments SET method = $2::varchar, received = CASE WHEN $2::varchar = 'cash' THEN amount + tip ELSE NULL END, change_given = CASE WHEN $2::varchar = 'cash' THEN 0 ELSE NULL END WHERE id = $1`,
