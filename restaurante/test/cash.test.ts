@@ -137,8 +137,11 @@ describe('módulo 04: caja y pagos', { skip: url ? false : 'sin TEST_DATABASE_UR
     const shift = (await cash.getOpenShift(cashier))!;
     const summary = (await cash.shiftSummary(cashier, shift.id))!;
     // base 100.000 + efectivo (42.000 + 4.200 propina + 30.000) + 20.000 − 15.000
-    // La propina se entrega de la caja: la de efectivo no cuenta y la del datáfono se descuenta (5 nov 2026).
-    assert.equal(summary.expectedCash, 100000 + 42000 - 4200 + 30000 + 20000 - 15000);
+    // Desde el 9 nov 2026 se cuenta con la propina adentro: la de efectivo está en la caja y la del datáfono todavía no ha
+    // salido; después de contar se saca toda (8.400) y queda la venta.
+    assert.equal(summary.expectedCash, 100000 + 42000 + 4200 + 30000 + 20000 - 15000);
+    assert.equal(summary.tipToDeliver, 8400);
+    assert.equal(summary.salesCash, summary.expectedCash - 100000 - 8400);
     assert.equal(summary.byMethod.card.amount, 42000);
     assert.equal(summary.byMethod.transfer.amount, 0, 'la transferencia reversada no cuenta');
     assert.equal(summary.reversed, 30000);

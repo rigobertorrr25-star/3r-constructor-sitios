@@ -76,11 +76,11 @@ describe('módulo 07: gastos y finanzas', { skip: url ? false : 'sin TEST_DATABA
     await assert.rejects(fin.addExpense(owner, { category: 'other', description: 'Mucho', amount: 50_000_000, spentOn: today, paidFromCash: true }), { code: 'CONFLICT' });
     const shift = (await cash.getOpenShift(owner))!;
     const s0 = (await cash.shiftSummary(owner, shift.id))!;
-    const paidTips = s0.byMethod.card.tip + s0.byMethod.transfer.tip; // se entregan de la caja
-    assert.equal(s0.expectedCash, 100000 - 20000 - paidTips);
+    // Se cuenta con la propina en efectivo adentro (9 nov 2026).
+    assert.equal(s0.expectedCash, 100000 - 20000 + s0.byMethod.cash.tip);
     const dup = await fin.addExpense(owner, { category: 'other', description: 'Registrado dos veces', amount: 7000, spentOn: today, paidFromCash: true });
     await fin.voidExpense(owner, dup, 'Duplicado');
-    assert.equal((await cash.shiftSummary(owner, shift.id))!.expectedCash, 100000 - 20000 - paidTips, 'la plata volvió a la caja');
+    assert.equal((await cash.shiftSummary(owner, shift.id))!.expectedCash, 100000 - 20000 + s0.byMethod.cash.tip, 'la plata volvió a la caja');
     const list = await fin.listExpenses(owner, { from: today, to: today });
     assert.equal(list.length, 3);
     assert.equal(list.find((e) => e.id === iceId)!.paidFromCash, true);

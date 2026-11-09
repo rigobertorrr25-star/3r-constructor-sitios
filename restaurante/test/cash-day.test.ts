@@ -84,8 +84,9 @@ describe('dos turnos de caja al día', { skip: url ? false : 'sin TEST_DATABASE_
     const today = finance.todayIn('America/Bogota');
     let shifts = await cash.dayShifts(lina, today);
     assert.equal(day.dayTotals(shifts).open, 1, 'el turno 2 sigue abierto');
-    // Esperado: 100.000 + 25.000 en efectivo − 2.500 de propina del datáfono (se entrega de la caja) − 5.000 = 117.500.
-    await cash.closeShift(lina, 112500, 'Faltaron 5.000');
+    // Esperado al contar (9 nov 2026, con la propina adentro): 100.000 + 25.000 en efectivo − 5.000 = 120.000 (la propina
+    // del datáfono todavía no ha salido; se saca después de contar).
+    await cash.closeShift(lina, 115000, 'Faltaron 5.000');
 
     shifts = await cash.dayShifts(lina, today);
     assert.deepEqual(shifts.map((s) => [s.shift.dayNumber, s.shift.openedBy, day.shiftDifference(s)]), [
@@ -149,26 +150,26 @@ describe('dos turnos de caja al día', { skip: url ? false : 'sin TEST_DATABASE_
     await assert.rejects(cash.correctClosing(owner, second.shift.id, { countedCash: 120000, reason: '' }), { code: 'INVALID' }, 'siempre con motivo');
     await assert.rejects(cash.correctClosing(owner, second.shift.id, { countedCash: 120000, reason: 'Faltó contar', safeAmount: 130000 }), { code: 'INVALID' });
     await assert.rejects(cash.correctClosing(owner, second.shift.id, { countedCash: 120000, reason: 'Faltó contar', cashCount: { b100000: 1 } }), { code: 'INVALID' });
-    await cash.correctClosing(owner, second.shift.id, { countedCash: 117500, reason: 'Faltó contar el cajón de abajo', cashCount: { b100000: 1, b10000: 1, b5000: 1, b2000: 1, c500: 1 } });
+    await cash.correctClosing(owner, second.shift.id, { countedCash: 120000, reason: 'Faltó contar el cajón de abajo', cashCount: { b100000: 1, b10000: 2 } });
     const after = (await cash.shiftSummary(owner, second.shift.id))!;
-    assert.equal(after.shift.countedCash, 117500);
+    assert.equal(after.shift.countedCash, 120000);
     assert.equal(day.shiftDifference(after), 0, 'ahora cuadra (lo esperado no cambió)');
     assert.equal(after.shift.correctedBy, 'Dueña');
     assert.equal(after.shift.correctionReason, 'Faltó contar el cajón de abajo');
-    assert.deepEqual(after.shift.cashCount, { b100000: 1, b10000: 1, b5000: 1, b2000: 1, c500: 1 });
+    assert.deepEqual(after.shift.cashCount, { b100000: 1, b10000: 2 });
     const audit = await store.listAudit(owner, { action: 'cash.correct' });
-    assert.match(audit[0].summary, /\$112\.500 → \$117\.500 \(cuadra\)/);
+    assert.match(audit[0].summary, /\$115\.000 → \$120\.000 \(cuadra\)/);
     // Corregir o eliminar una salida de un cierre ya hecho (6 nov 2026).
     const ice = after.movements.find((m) => m.reason === 'Pago: hielo')!;
     await assert.rejects(cash.correctMovement(lina, ice.id, { amount: 2000, reason: 'Era menos' }), { code: 'FORBIDDEN' });
     await assert.rejects(cash.correctMovement(owner, ice.id, { amount: 2000, reason: '' }), { code: 'INVALID' });
     await cash.correctMovement(owner, ice.id, { amount: 2000, reason: 'Era menos' });
     let fixed = (await cash.shiftSummary(owner, second.shift.id))!;
-    assert.equal(fixed.shift.expectedCash, 120500, 'el esperado sube 3.000');
+    assert.equal(fixed.shift.expectedCash, 123000, 'el esperado sube 3.000');
     assert.equal(fixed.movementsOut, 2000);
     await cash.correctMovement(owner, ice.id, { amount: 0, reason: 'No pasó' });
     fixed = (await cash.shiftSummary(owner, second.shift.id))!;
-    assert.equal(fixed.shift.expectedCash, 122500);
+    assert.equal(fixed.shift.expectedCash, 125000);
     assert.equal(fixed.movements.length, 0, 'eliminada: ya no sale');
     await assert.rejects(cash.correctMovement(owner, ice.id, { amount: 0, reason: 'Otra vez' }), { code: 'CONFLICT' });
     assert.match((await store.listAudit(owner, { action: 'cash.movement.correct' }))[0].summary, /Eliminó la salida de efectivo «Pago: hielo»/);

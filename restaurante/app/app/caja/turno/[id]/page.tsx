@@ -71,8 +71,15 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
     [t('Pagos reversados'), formatCop(s.reversed)],
     [t('Entradas de efectivo'), formatCop(s.movementsIn)],
     [t('Salidas de efectivo'), formatCop(s.movementsOut)],
-    [t('Efectivo de la venta (sin base)'), formatCop((s.shift.expectedCash ?? s.expectedCash) - s.shift.openingAmount)],
-    ...(s.shift.openingAmount ? [[t('Total en la caja (venta + base)'), formatCop(s.shift.expectedCash ?? s.expectedCash)] as [string, string]] : []),
+    // Con la propina adentro (9 nov 2026): lo que debía haber al contar, la propina que se saca y lo que queda de venta.
+    ...(s.tipToDeliver
+      ? ([
+          [t('Debe haber al contar (con propina)'), formatCop(s.shift.expectedCash ?? s.expectedCash)],
+          [t('− Propina para entregar'), formatCop(s.tipToDeliver)],
+        ] as [string, string][])
+      : []),
+    [t('Efectivo de la venta (sin base)'), formatCop(s.salesCash)],
+    ...(s.shift.openingAmount && !s.tipToDeliver ? [[t('Total en la caja (venta + base)'), formatCop(s.shift.expectedCash ?? s.expectedCash)] as [string, string]] : []),
     [t('Efectivo contado'), s.shift.countedCash === null ? '—' : formatCop(s.shift.countedCash)],
     [t('Diferencia'), diff === null ? '—' : diff === 0 ? t('Cuadra') : diff > 0 ? t('Sobran {amount}', { amount: formatCop(diff) }) : t('Faltan {amount}', { amount: formatCop(-diff) })],
   ];

@@ -224,6 +224,8 @@ export type CierreInput = {
   expected: string;
   /** Efectivo de la venta, sin la base (8 nov 2026, Rigoberto: «deja la base totalmente aparte»). */
   salesCash?: string;
+  /** Propina que se saca después de contar (9 nov 2026); null si la caja se contaba ya sin propina. */
+  tipToDeliver?: string | null;
   counted: string;
   result: string;
   tables: number;
@@ -260,9 +262,15 @@ export function cierre(width: number, c: CierreInput) {
     .row('Salidas de efectivo', c.movementsOut)
     .rule();
   const hasBase = !/^\$\s*0$/.test(c.opening);
-  if (c.salesCash) t.row('Efectivo de la venta', c.salesCash, { bold: true });
-  if (c.salesCash && hasBase) t.row('+ Base (aparte)', c.opening);
-  if (!c.salesCash || hasBase) t.row(c.salesCash ? 'Total en la caja' : 'Efectivo esperado', c.expected);
+  if (c.tipToDeliver) {
+    // Se cuenta con la propina adentro y después se saca (9 nov 2026).
+    t.row('Debe haber al contar', c.expected).row('- Propina para entregar', c.tipToDeliver).row('= Efectivo de la venta', c.salesCash ?? '-', { bold: true });
+    if (hasBase) t.row('  (aparte, la base)', c.opening);
+  } else {
+    if (c.salesCash) t.row('Efectivo de la venta', c.salesCash, { bold: true });
+    if (c.salesCash && hasBase) t.row('+ Base (aparte)', c.opening);
+    if (!c.salesCash || hasBase) t.row(c.salesCash ? 'Total en la caja' : 'Efectivo esperado', c.expected);
+  }
   t
     .row('Efectivo contado', c.counted, { bold: true });
   if (c.usd) t.row('Dolares esperados', c.usd.expected).row('Dolares contados', c.usd.counted, { bold: true });
@@ -282,7 +290,7 @@ export type CuadreDiaInput = {
   business: string;
   location: string | null;
   date: string;
-  turns: { label: string; who: string; hours: string; opening: string; sales: string; salesCash?: string; expected: string; counted: string; result: string }[];
+  turns: { label: string; who: string; hours: string; opening: string; sales: string; salesCash?: string; tipToDeliver?: string | null; expected: string; counted: string; result: string }[];
   methods: { label: string; amount: string; count: number }[];
   sales: string;
   tipOfSales: { pct: number; amount: string } | null;
@@ -307,9 +315,13 @@ export function cuadreDia(width: number, c: CuadreDiaInput) {
     t.rule()
       .line(`${turn.label}: ${turn.who}`, { bold: true })
       .line(turn.hours)
-      .row('Ventas', turn.sales)
-      .row('Efectivo de la venta', turn.salesCash ?? '-', { bold: true });
-    if (!/^\$\s*0$/.test(turn.opening)) t.row('+ Base (aparte)', turn.opening).row('Total en la caja', turn.expected);
+      .row('Ventas', turn.sales);
+    if (turn.tipToDeliver) t.row('Debe haber al contar', turn.expected).row('- Propina para entregar', turn.tipToDeliver);
+    t.row('Efectivo de la venta', turn.salesCash ?? '-', { bold: true });
+    if (!/^\$\s*0$/.test(turn.opening)) {
+      t.row('+ Base (aparte)', turn.opening);
+      if (!turn.tipToDeliver) t.row('Total en la caja', turn.expected);
+    }
     t
       .row('Efectivo contado', turn.counted)
       .line(turn.result, { bold: true });

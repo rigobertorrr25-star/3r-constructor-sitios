@@ -208,6 +208,11 @@ ALTER TABLE payments ADD COLUMN IF NOT EXISTS usd_rate INT;
 -- Dólares al cerrar la caja (8 nov 2026): los que debían estar (los recibidos en el turno) y los que se contaron.
 ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS expected_usd INT;
 ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS counted_usd INT;
+-- Contar la caja con la propina adentro (9 nov 2026, pedido de Azul Caribe por Rigoberto: «la propina debe descontarse del
+-- total de la venta para que al momento del arqueo todo cuadre»). Las cajas viejas quedan con la cuenta de antes (propina ya
+-- entregada); la caja abierta y las nuevas cuentan todo junto y después se descuenta la propina.
+ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS tips_in_drawer BOOLEAN NOT NULL DEFAULT FALSE;
+UPDATE cash_shifts SET tips_in_drawer = TRUE WHERE closed_at IS NULL AND staff_id IS NULL AND NOT tips_in_drawer;
 -- Corrección de un cierre ya hecho (4 nov 2026): quién, cuándo y por qué. Lo que decía antes queda en la auditoría.
 ALTER TABLE cash_shifts ADD COLUMN IF NOT EXISTS corrected_by UUID REFERENCES staff(id);
 -- Una entrada o salida de efectivo eliminada al corregir un cierre (6 nov 2026): no cuenta, pero no se borra.

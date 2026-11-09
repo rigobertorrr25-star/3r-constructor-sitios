@@ -1,6 +1,7 @@
 // Módulo 08: tablero del dueño y radar de fugas. Todo sale de los datos reales del periodo elegido.
 // El radar arranca en 100 y cada señal de posible fuga resta puntos según qué tan grave es.
 import { NO_LOSS_VOID, NO_LOSS_VOID_SQL, isNoLossVoid } from './void-reasons';
+import { payInDrawerSql } from './drawer-sql';
 import { query } from './db';
 import { getStatement, type Statement } from './finance';
 import { lowStock } from './inventory';
@@ -79,7 +80,7 @@ export async function getDashboard(actor: Actor, range: { from: string; to: stri
     // Efectivo esperado en las cajas abiertas.
     query<{ cash: string | null; n: number }>(
       `SELECT count(*)::int AS n, sum(c.opening_amount
-              + (SELECT COALESCE(sum(CASE WHEN method = 'cash' THEN amount - COALESCE(usd_received::bigint * usd_rate, 0) ELSE -tip END), 0) FROM payments WHERE shift_id = c.id AND reversed_at IS NULL)
+              + (SELECT COALESCE(sum(${payInDrawerSql('c.tips_in_drawer')}), 0) FROM payments WHERE shift_id = c.id AND reversed_at IS NULL)
               + (SELECT COALESCE(sum(CASE WHEN kind = 'in' THEN amount ELSE -amount END), 0) FROM cash_movements WHERE shift_id = c.id AND voided_at IS NULL)) AS cash
          FROM cash_shifts c WHERE c.business_id = $1 AND c.closed_at IS NULL AND ($2::uuid IS NULL OR c.location_id = $2)`,
       [actor.businessId, scope],
