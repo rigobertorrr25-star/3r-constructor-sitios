@@ -72,20 +72,21 @@ export default async function CashPage() {
       <section className="space-y-3" aria-label={t('Para el cierre')}>
         <div className={`grid gap-3 sm:grid-cols-2 ${cashOnly ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
           {s.shift.openingAmount ? <Box tone="amber" title={t('Base')} value={formatCop(s.shift.openingAmount)} lines={[t('Con lo que se abrió la caja.')]} /> : null}
+          {/* Total cobrado − propina = venta (9 nov 2026, Rigoberto: «se vendieron 100 mil, menos la propina, y da el resultado»). */}
           <Box
             tone="sky"
             title={t('Venta')}
             value={formatCop(s.sales)}
-            lines={
-              cashOnly
-                ? [t('Todo en efectivo.'), t('Sin propina.')]
+            lines={[
+              `${t('Total cobrado')}: ${formatCop(s.sales + s.tips)}`,
+              `− ${t('propina')}: ${formatCop(s.tips)}`,
+              `= ${t('venta')}: ${formatCop(s.sales)}`,
+              ...(cashOnly
+                ? [t('Todo en efectivo.')]
                 : [
-                    `${t('Efectivo')}: ${formatCop(s.byMethod.cash.amount)}`,
-                    `${t('Datáfono')}: ${formatCop(s.byMethod.card.amount)}`,
-                    `${t('Transferencia')}: ${formatCop(s.byMethod.transfer.amount)}`,
-                    t('Sin propina.'),
-                  ]
-            }
+                    `${t('Efectivo')}: ${formatCop(s.byMethod.cash.amount)} · ${t('Datáfono')}: ${formatCop(s.byMethod.card.amount)} · ${t('Transferencia')}: ${formatCop(s.byMethod.transfer.amount)}`,
+                  ]),
+            ]}
           />
           <Box
             tone="green"

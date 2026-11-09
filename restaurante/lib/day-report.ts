@@ -289,8 +289,10 @@ export async function dayReportPdf(r: DayReport): Promise<Uint8Array> {
 
   // 1. Resumen
   w.heading('Resumen del día');
-  w.row('Ventas cobradas', formatCop(totals.sales), { bold: true });
-  w.row(r.tipPercent > 0 ? 'Propinas cobradas (marcadas al cobrar)' : 'Propinas', formatCop(totals.tips));
+  // Total cobrado − propina = venta (9 nov 2026, pedido de Rigoberto).
+  w.row('Total cobrado (con propina)', formatCop(totals.sales + totals.tips));
+  w.row('- Propina', formatCop(totals.tips));
+  w.row('= Venta', formatCop(totals.sales), { bold: true });
   for (const m of METHODS) {
     const b = totals.byMethod[m];
     w.row(`${METHOD_LABEL[m]} (${b.count} ${b.count === 1 ? 'pago' : 'pagos'})`, `${formatCop(b.amount)}${b.tip ? ` + propina ${formatCop(b.tip)}` : ''}`, { indent: 10 });
@@ -316,7 +318,9 @@ export async function dayReportPdf(r: DayReport): Promise<Uint8Array> {
     const until = !sh.closedAt ? 'sigue abierta' : closedDay === sh.day ? formatTime(sh.closedAt, tz) : formatDateTime(sh.closedAt, tz);
     w.sub(`Turno ${sh.dayNumber} · ${sh.openedBy}${sh.closedBy && sh.closedBy !== sh.openedBy ? ` / cerró ${sh.closedBy}` : ''} · ${formatTime(sh.openedAt, tz)} a ${until}`);
     for (const m of METHODS) w.row(`${METHOD_LABEL[m]} (${s.byMethod[m].count})`, `${formatCop(s.byMethod[m].amount)}${s.byMethod[m].tip ? ` + propina ${formatCop(s.byMethod[m].tip)}` : ''}`, { indent: 10 });
-    w.row('Ventas', formatCop(s.sales), { indent: 10, bold: true });
+    w.row('Total cobrado (con propina)', formatCop(s.sales + s.tips), { indent: 10 });
+    w.row('- Propina', formatCop(s.tips), { indent: 10 });
+    w.row('= Venta', formatCop(s.sales), { indent: 10, bold: true });
     w.row('Descuentos', formatCop(s.discounts), { indent: 10 });
     w.row('Entradas / salidas de efectivo', `${formatCop(s.movementsIn)} / ${formatCop(s.movementsOut)}`, { indent: 10 });
     // La base va aparte del efectivo de la venta (8 nov 2026, pedido de Rigoberto).

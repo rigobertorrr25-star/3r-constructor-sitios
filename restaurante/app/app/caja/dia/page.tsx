@@ -33,9 +33,10 @@ export default async function DayClosingPage({ searchParams }: { searchParams: P
   const result = (diff: number) => (diff === 0 ? t('Cuadra') : diff > 0 ? t('Sobran {amount}', { amount: formatCop(diff) }) : t('Faltan {amount}', { amount: formatCop(-diff) }));
   const rows: [string, string, boolean?][] = [
     ...METHODS.map((m): [string, string] => [`${t(METHOD_LABEL[m])} (${totals.byMethod[m].count})`, formatCop(totals.byMethod[m].amount)]),
-    [t('Ventas'), formatCop(totals.sales), true],
-    // Solo la propina cobrada (5 nov 2026, pedido de Rigoberto).
-    [t('Propinas cobradas'), formatCop(totals.tips), true],
+    // Total cobrado − propina = venta (9 nov 2026, pedido de Rigoberto).
+    [t('Total cobrado (con propina)'), formatCop(totals.sales + totals.tips)],
+    [t('− Propina'), formatCop(totals.tips)],
+    [t('= Venta'), formatCop(totals.sales), true],
     [t('Descuentos'), formatCop(totals.discounts)],
     [t('Entradas de efectivo'), formatCop(totals.movementsIn)],
     [t('Salidas de efectivo'), formatCop(totals.movementsOut)],
@@ -108,7 +109,9 @@ export default async function DayClosingPage({ searchParams }: { searchParams: P
                         : t('Sigue abierta')}
                     </p>
                     <dl className="mt-3 space-y-1 text-[14px]">
-                      <Row label={t('Ventas')} value={formatCop(s.sales)} />
+                      <Row label={t('Total cobrado (con propina)')} value={formatCop(s.sales + s.tips)} />
+                      <Row label={t('− Propina')} value={formatCop(s.tips)} />
+                      <Row label={t('= Venta')} value={formatCop(s.sales)} />
                       {s.tipToDeliver ? (
                         <>
                           <Row label={t('Debe haber al contar (con propina)')} value={formatCop(s.shift.expectedCash ?? s.expectedCash)} />

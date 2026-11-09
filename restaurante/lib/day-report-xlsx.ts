@@ -149,8 +149,9 @@ export async function dayReportXlsx(r: DayReport): Promise<Buffer> {
   ]);
   block('Ventas', [
     ...METHODS.map((m): [string, number] => [`${METHOD_LABEL[m]} (${totals.byMethod[m].count} ${totals.byMethod[m].count === 1 ? 'pago' : 'pagos'})`, totals.byMethod[m].amount]),
-    ['Total vendido', totals.sales, 'strong'],
-    ['Propinas cobradas', totals.tips, 'strong'],
+    ['Total cobrado (con propina)', totals.sales + totals.tips],
+    ['− Propina', -totals.tips],
+    ['= Venta', totals.sales, 'strong'],
     ['Descuentos', totals.discounts],
     ['Mesas cerradas', `${totals.tablesClosed}`],
   ]);
@@ -190,8 +191,9 @@ export async function dayReportXlsx(r: DayReport): Promise<Buffer> {
     ['Hasta', (s) => (s.shift.closedAt ? formatDateTime(s.shift.closedAt, tz) : 'Sigue abierta')],
     ['Base', (s) => s.shift.openingAmount, 'strong'],
     ...METHODS.map((m): [string, (s: (typeof r.shifts)[number]) => number, 'money'] => [METHOD_LABEL[m], (s) => s.byMethod[m].amount, 'money']),
-    ['Ventas', (s) => s.sales, 'strong'],
-    ['Propinas cobradas', (s) => s.tips, 'money'],
+    ['Total cobrado (con propina)', (s) => s.sales + s.tips, 'money'],
+    ['− Propina', (s) => -s.tips, 'money'],
+    ['= Venta', (s) => s.sales, 'strong'],
     ['Entradas de efectivo', (s) => s.movementsIn, 'money'],
     ['Salidas de efectivo', (s) => s.movementsOut, 'money'],
     ['Debe haber al contar (con propina)', (s) => (s.tipToDeliver ? (s.shift.expectedCash ?? s.expectedCash) : null), 'money'],

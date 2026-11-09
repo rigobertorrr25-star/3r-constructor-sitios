@@ -256,7 +256,7 @@ describe('cola de impresión', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     for (const s of ['Arqueo:', 'Billetes de $100.000 x 1', 'Billetes de $10.000 x 3', 'Monedas de $1.000 x 3', 'Monedas de $500 x 4']) assert.ok(paper.includes(s), s);
     assert.ok(!paper.includes('Monedas de $200'), 'lo que no se contó no sale');
     for (const s of ['CIERRE DE CAJA', 'Efectivo (1)', '$60.000', 'CUADRA']) assert.ok(paper.includes(s), s);
-    assert.ok(paper.includes('Propinas cobradas'));
+    assert.ok(paper.includes('Total cobrado') && paper.includes('- Propina') && paper.includes('= Venta'), 'total cobrado − propina = venta (9 nov 2026)');
     assert.ok(!paper.includes('% de ventas'), 'solo la propina cobrada (5 nov 2026)');
     // Sin inventario ni anulaciones en el papel (5 nov 2026, pedido de Rigoberto).
     for (const s of ['INVENTARIO QUE QUEDA', 'SE ACABÓ', 'POR COMPRAR PARA MAÑANA', 'Anulaciones']) assert.ok(!paper.includes(s), s);
