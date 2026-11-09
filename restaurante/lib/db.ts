@@ -200,6 +200,10 @@ ALTER TABLE locations ADD COLUMN IF NOT EXISTS allowed_ips TEXT[] NOT NULL DEFAU
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS cash_only BOOLEAN NOT NULL DEFAULT FALSE;
 -- Caja sin base (8 nov 2026, Rigoberto para Azul Caribe: «elimíname la base»): la caja abre en $0 y la base no se muestra.
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS no_base BOOLEAN NOT NULL DEFAULT FALSE;
+-- La propina va incluida en lo que paga el cliente (9 nov 2026, Azul Caribe: «en 370.400 ya están las propinas, no lo sumes»):
+-- el cobro no suma la propina; la venta es lo cobrado menos la propina. Cada pago guarda cómo se cobró.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS tips_included BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS tip_included BOOLEAN NOT NULL DEFAULT FALSE;
 -- Cobro en dólares (8 nov 2026, pedido de Rigoberto: «agrega la opción de montar dólares, al cambio a 3000»).
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS usd_rate INT NOT NULL DEFAULT 3000;
 -- Un pago en efectivo que el cliente hizo con dólares: cuántos dólares entregó y a qué cambio. Las vueltas salen en pesos.

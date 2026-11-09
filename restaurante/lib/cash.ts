@@ -1,6 +1,6 @@
 // Módulo 04: caja y pagos. Turnos de caja, cobro en partes y con varios medios, propina, descuentos y cierre de caja.
 // Nada se borra: un pago equivocado se reversa con motivo, un descuento se anula, una salida de plata se registra.
-import { payInDrawerSql } from './drawer-sql';
+import { netAmountSql, payInDrawerSql } from './drawer-sql';
 export { payInDrawerSql };
 import { randomUUID } from 'node:crypto';
 import { formatCop } from './format';
@@ -172,14 +172,14 @@ export async function lockOpenShift(db: Db, actor: Actor) {
 }
 
 /** Forma de trabajo del negocio (las opciones que prende el dueño en Sedes). */
-export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean; usdRate: number; noBase: boolean }> {
+export async function workMode(businessId: string): Promise<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean; usdRate: number; noBase: boolean; tipsIncluded: boolean }> {
   const row = (
-    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean; usdRate: number; noBase: boolean }>(
-      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip", track_prep AS "trackPrep", cash_only AS "cashOnly", usd_rate AS "usdRate", no_base AS "noBase" FROM businesses WHERE id = $1`,
+    await query<{ waitersCollect: boolean; barOnly: boolean; suggestedTip: number; trackPrep: boolean; cashOnly: boolean; usdRate: number; noBase: boolean; tipsIncluded: boolean }>(
+      `SELECT waiters_collect AS "waitersCollect", bar_only AS "barOnly", suggested_tip AS "suggestedTip", track_prep AS "trackPrep", cash_only AS "cashOnly", usd_rate AS "usdRate", no_base AS "noBase", tips_included AS "tipsIncluded" FROM businesses WHERE id = $1`,
       [businessId],
     )
   )[0];
-  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10, trackPrep: true, cashOnly: false, usdRate: 3000, noBase: false };
+  return row ?? { waitersCollect: false, barOnly: false, suggestedTip: 10, trackPrep: true, cashOnly: false, usdRate: 3000, noBase: false, tipsIncluded: false };
 }
 
 /**
@@ -313,7 +313,7 @@ export async function loadShiftSummary(actor: Actor, shiftId: string): Promise<S
   const shift = toShift(row);
   const [methods, extra, movements] = await Promise.all([
     query<{ method: Method; amount: string; tip: string; count: number; usd: string; usdPesos: string }>(
-      `SELECT method, sum(amount) AS amount, sum(tip) AS tip, count(*)::int AS count,
+      `SELECT method, sum(${netAmountSql()}) AS amount, sum(tip) AS tip, count(*)::int AS count,
               COALESCE(sum(usd_received), 0) AS usd, COALESCE(sum(usd_received::bigint * usd_rate), 0) AS "usdPesos"
          FROM payments WHERE shift_id = $1 AND reversed_at IS NULL GROUP BY method`,
       [shiftId],
@@ -659,13 +659,17 @@ export async function pay(actor: Actor, sessionId: string, input: PaymentInput) 
   if (!isUuid(input.clientKey)) throw new AppError('INVALID', 'Pago sin identificador. Recarga la página.');
   requireAmount(input.amount, 'Valor a pagar');
   const tip = input.tip ? requireAmount(input.tip, 'Propina', { allowZero: true }) : 0;
+  // Propina incluida en lo que paga el cliente (9 nov 2026): no se suma al cobro; sale de adentro.
+  const included = mode.tipsIncluded;
+  if (included && tip > input.amount) throw new AppError('INVALID', 'La propina no puede ser mayor que lo que se cobra.');
+  const extra = included ? 0 : tip;
   const reference = input.reference?.trim() ? requireText(input.reference, 'Referencia', 2, 60) : null;
   let received: number | null = null;
   let change: number | null = null;
   if (method === 'cash') {
-    received = usd ? usd * mode.usdRate : input.received ? requireAmount(input.received, 'Efectivo recibido') : input.amount + tip;
-    if (received < input.amount + tip) throw new AppError('INVALID', `Recibiste ${money(received)}: no alcanza para ${money(input.amount + tip)}.`);
-    change = received - input.amount - tip;
+    received = usd ? usd * mode.usdRate : input.received ? requireAmount(input.received, 'Efectivo recibido') : input.amount + extra;
+    if (received < input.amount + extra) throw new AppError('INVALID', `Recibiste ${money(received)}: no alcanza para ${money(input.amount + extra)}.`);
+    change = received - input.amount - extra;
   }
 
   const previous = await query<{ id: string }>(`SELECT id FROM payments WHERE business_id = $1 AND client_key = $2`, [actor.businessId, input.clientKey]);
@@ -687,9 +691,9 @@ export async function pay(actor: Actor, sessionId: string, input: PaymentInput) 
       if (checkout.balance <= 0) throw new AppError('CONFLICT', 'Esta cuenta no tiene nada por pagar.');
       if (input.amount > checkout.balance) throw new AppError('INVALID', `Falta por pagar ${money(checkout.balance)}: el pago no puede ser mayor.`);
       const res = await db.query<{ id: string }>(
-        `INSERT INTO payments (business_id, location_id, session_id, shift_id, method, amount, tip, received, change_given, reference, client_key, created_by, usd_received, usd_rate)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
-        [actor.businessId, actor.locationId, sessionId, shift.id, method, input.amount, tip, received, change, reference, input.clientKey, actor.id, usd || null, usdRate],
+        `INSERT INTO payments (business_id, location_id, session_id, shift_id, method, amount, tip, received, change_given, reference, client_key, created_by, usd_received, usd_rate, tip_included)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`,
+        [actor.businessId, actor.locationId, sessionId, shift.id, method, input.amount, tip, received, change, reference, input.clientKey, actor.id, usd || null, usdRate, included],
       );
       await audit(db, actor, {
         action: 'payment.create',
@@ -944,9 +948,9 @@ export async function changePaymentMethod(actor: Actor, paymentId: string, metho
   const to = method as Method;
   await transaction(async (db) => {
     const p = (
-      await db.query<{ id: string; method: Method; amount: string; tip: string; reversed: boolean; usd: number | null; shiftId: string; closed: boolean; table: string; tipsIn: boolean }>(
+      await db.query<{ id: string; method: Method; amount: string; tip: string; reversed: boolean; usd: number | null; shiftId: string; closed: boolean; table: string; tipsIn: boolean; tipIncluded: boolean }>(
         `SELECT p.id, p.method, p.amount, p.tip, (p.reversed_at IS NOT NULL) AS reversed, p.usd_received AS usd, p.shift_id AS "shiftId",
-                (c.closed_at IS NOT NULL) AS closed, t.number AS table, c.tips_in_drawer AS "tipsIn"
+                (c.closed_at IS NOT NULL) AS closed, t.number AS table, c.tips_in_drawer AS "tipsIn", p.tip_included AS "tipIncluded"
            FROM payments p JOIN cash_shifts c ON c.id = p.shift_id JOIN table_sessions ts ON ts.id = p.session_id JOIN dining_tables t ON t.id = ts.table_id
           WHERE p.id = $1 AND p.business_id = $2 AND p.location_id = $3 FOR UPDATE OF p, c`,
         [paymentId, actor.businessId, actor.locationId],
@@ -956,8 +960,9 @@ export async function changePaymentMethod(actor: Actor, paymentId: string, metho
     if (p.reversed) throw new AppError('CONFLICT', 'Ese pago está reversado.');
     if (p.usd) throw new AppError('CONFLICT', 'Ese cobro se hizo con dólares: no se le cambia el medio.');
     if (p.method === to) throw new AppError('INVALID', 'El pago ya está en ese medio.');
-    const amount = Number(p.amount);
     const tip = Number(p.tip);
+    // Con la propina incluida en lo cobrado (9 nov 2026), la venta es lo cobrado menos la propina.
+    const amount = Number(p.amount) - (p.tipIncluded ? tip : 0);
     const inDrawer = (m: Method) => (p.tipsIn ? (m === 'cash' ? amount + tip : 0) : m === 'cash' ? amount : -tip);
     const delta = inDrawer(to) - inDrawer(p.method);
     await db.query(

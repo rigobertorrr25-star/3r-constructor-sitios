@@ -30,7 +30,7 @@ export default async function LocationsPage() {
         <h2 className="font-display text-[18px] font-bold">{t('Forma de trabajo')}</h2>
         <p className="mt-1 text-[14.5px] text-muted-foreground">{t('Cómo se cobra y qué se prepara en tu negocio. Vale para todas las sedes.')}</p>
         <div className="mt-4">
-          <WorkModeForm waitersCollect={staff.waitersCollect} barOnly={staff.barOnly} suggestedTip={mode.suggestedTip} trackPrep={mode.trackPrep} cashOnly={mode.cashOnly} usdRate={mode.usdRate} noBase={mode.noBase} />
+          <WorkModeForm waitersCollect={staff.waitersCollect} barOnly={staff.barOnly} suggestedTip={mode.suggestedTip} trackPrep={mode.trackPrep} cashOnly={mode.cashOnly} usdRate={mode.usdRate} noBase={mode.noBase} tipsIncluded={mode.tipsIncluded} />
         </div>
       </section>
       {/* «Entrar solo desde el wifi del local» se quitó el 9 nov 2026 (pedido de Rigoberto). */}

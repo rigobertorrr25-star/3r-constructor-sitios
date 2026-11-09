@@ -34,6 +34,7 @@ export function CheckoutScreen({
   timeZone,
   printBill = false,
   cashOnly = false,
+  tipsIncluded = false,
   usdRate = 3000,
   canChangeMethod = false,
 }: {
@@ -46,6 +47,8 @@ export function CheckoutScreen({
   printBill?: boolean;
   /** El negocio cobra solo en efectivo (6 nov 2026). */
   cashOnly?: boolean;
+  /** La propina va incluida en lo que paga el cliente (9 nov 2026). */
+  tipsIncluded?: boolean;
   /** Pesos por dólar, para cobrar con dólares (8 nov 2026). */
   usdRate?: number;
   /** Dueño y administrador cambian el medio de un cobro hecho (8 nov 2026). */
@@ -81,10 +84,12 @@ export function CheckoutScreen({
   const value = toInt(amount);
   const suggestedTip = tipFor(value, c.suggestedTipPercent);
   const tipValue = tipOn ? (tip === '' ? suggestedTip : toInt(tip)) : 0;
+  // Propina incluida en lo que paga el cliente (9 nov 2026, Azul Caribe): no se suma al cobro.
+  const extra = tipsIncluded ? 0 : tipValue;
   const usdValue = usdOn ? toInt(usd) : 0;
   // Con dólares, lo recibido en pesos es dólares × el valor del dólar; las vueltas salen en pesos.
   const receivedValue = usdOn ? usdValue * usdRate : toInt(received);
-  const change = method === 'cash' && receivedValue ? receivedValue - value - tipValue : null;
+  const change = method === 'cash' && receivedValue ? receivedValue - value - extra : null;
 
   // Pago que no alcanzó a llegar por falta de conexión: se reintenta tal cual (mismo identificador = sin cobro doble).
   type Payload = Parameters<typeof payAction>[1];
@@ -321,7 +326,9 @@ export function CheckoutScreen({
             <div className="space-y-1.5">
               <label className="flex items-center gap-2 text-sm font-medium">
                 <input type="checkbox" className="size-4 accent-[#8a9bff]" checked={tipOn} onChange={(e) => setTipOn(e.target.checked)} />
-                {t('Propina voluntaria ({percent} % sugerido: {amount})', { percent: c.suggestedTipPercent, amount: formatCop(suggestedTip) })}
+                {tipsIncluded
+                  ? t('De lo cobrado, propina ({percent} % sugerido: {amount})', { percent: c.suggestedTipPercent, amount: formatCop(suggestedTip) })
+                  : t('Propina voluntaria ({percent} % sugerido: {amount})', { percent: c.suggestedTipPercent, amount: formatCop(suggestedTip) })}
               </label>
               {tipOn ? (
                 <input className={inputClass} inputMode="numeric" placeholder={String(suggestedTip)} value={tip} onChange={(e) => setTip(e.target.value)} aria-label={t('Valor de la propina')} />
@@ -334,7 +341,7 @@ export function CheckoutScreen({
               <div className="space-y-3 rounded-2xl border border-white/[0.1] bg-white/[0.03] p-4">
                 <div>
                   <p className="text-[13px] text-muted-foreground">{t('Total a cobrar')}</p>
-                  <p className="font-display text-[40px] font-bold leading-tight">{formatCop(value + tipValue)}</p>
+                  <p className="font-display text-[40px] font-bold leading-tight">{formatCop(value + extra)}</p>
                 </div>
                 {/* Pagar con dólares (8 nov 2026, pedido de Rigoberto): al cambio del negocio, vueltas en pesos. */}
                 <label className="flex items-center gap-2 text-[14.5px] font-medium">
@@ -344,7 +351,7 @@ export function CheckoutScreen({
                 {usdOn ? (
                   <div className="space-y-1.5">
                     <label htmlFor="usd" className="text-sm font-medium">
-                      {t('¿Cuántos dólares entrega? (debe ser al menos {usd})', { usd: `US$ ${Math.ceil((value + tipValue) / usdRate)}` })}
+                      {t('¿Cuántos dólares entrega? (debe ser al menos {usd})', { usd: `US$ ${Math.ceil((value + extra) / usdRate)}` })}
                     </label>
                     <input
                       id="usd"
@@ -383,12 +390,12 @@ export function CheckoutScreen({
                     name="received"
                     className={`${inputClass} py-3 font-display text-[24px] font-bold`}
                     inputMode="numeric"
-                    placeholder={formatCop(value + tipValue)}
+                    placeholder={formatCop(value + extra)}
                     value={received}
                     onChange={(e) => setReceived(e.target.value.replace(/[^\d]/g, ''))}
                   />
                   <div className="flex flex-wrap gap-1.5">
-                    {cashSuggestions(value + tipValue).map((v, i) => (
+                    {cashSuggestions(value + extra).map((v, i) => (
                       <button
                         key={v}
                         type="button"
@@ -413,8 +420,8 @@ export function CheckoutScreen({
             )}
             <div className="rounded-2xl bg-white/[0.04] p-3 text-[14.5px]">
               <Row label={t('Abona a la cuenta')} value={formatCop(value)} />
-              {c.suggestedTipPercent > 0 ? <Row label={t('Propina')} value={formatCop(tipValue)} /> : null}
-              <Row label={t('Total a cobrar')} value={formatCop(value + tipValue)} strong />
+              {c.suggestedTipPercent > 0 ? <Row label={tipsIncluded ? t('De eso, propina') : t('Propina')} value={formatCop(tipValue)} /> : null}
+              <Row label={t('Total a cobrar')} value={formatCop(value + extra)} strong />
             </div>
             {queued ? (
               <div role="status" className="space-y-2 rounded-2xl border border-warning/40 bg-warning/10 px-4 py-3 text-[14px] text-warning">

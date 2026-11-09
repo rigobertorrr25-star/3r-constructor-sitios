@@ -10,7 +10,7 @@ import { AppError, audit, hasOrders, isUuid, requirePermission, type Actor } fro
 const money = formatCop;
 
 /** El dueño escoge la forma de trabajo del negocio. */
-export async function updateWorkMode(actor: Actor, input: { waitersCollect: boolean; barOnly: boolean; suggestedTip?: number; trackPrep?: boolean; cashOnly?: boolean; usdRate?: number; noBase?: boolean }) {
+export async function updateWorkMode(actor: Actor, input: { waitersCollect: boolean; barOnly: boolean; suggestedTip?: number; trackPrep?: boolean; cashOnly?: boolean; usdRate?: number; noBase?: boolean; tipsIncluded?: boolean }) {
   const usdRate = input.usdRate ?? null;
   if (usdRate !== null && (!Number.isInteger(usdRate) || usdRate < 100 || usdRate > 100_000)) throw new AppError('INVALID', 'Valor del dólar: escribe cuántos pesos vale un dólar.');
   requirePermission(actor, 'locations.manage');
@@ -19,12 +19,13 @@ export async function updateWorkMode(actor: Actor, input: { waitersCollect: bool
   if (tip !== null && (!Number.isInteger(tip) || tip < 0 || tip > 30)) throw new AppError('INVALID', 'Propina sugerida: de 0 a 30 %.');
   await transaction(async (db) => {
     const before = (
-      await db.query<{ trackPrep: boolean; cashOnly: boolean; noBase: boolean }>(`SELECT track_prep AS "trackPrep", cash_only AS "cashOnly", no_base AS "noBase" FROM businesses WHERE id = $1 FOR UPDATE`, [actor.businessId])
+      await db.query<{ trackPrep: boolean; cashOnly: boolean; noBase: boolean; tipsIncluded: boolean }>(`SELECT track_prep AS "trackPrep", cash_only AS "cashOnly", no_base AS "noBase", tips_included AS "tipsIncluded" FROM businesses WHERE id = $1 FOR UPDATE`, [actor.businessId])
     ).rows[0];
     const trackPrep = input.trackPrep ?? before.trackPrep;
     const cashOnly = input.cashOnly ?? before.cashOnly;
     const noBase = input.noBase ?? before.noBase;
-    await db.query(`UPDATE businesses SET waiters_collect = $2, bar_only = $3, suggested_tip = COALESCE($4, suggested_tip), track_prep = $5, cash_only = $6, usd_rate = COALESCE($7, usd_rate), no_base = $8 WHERE id = $1`, [
+    const tipsIncluded = input.tipsIncluded ?? before.tipsIncluded;
+    await db.query(`UPDATE businesses SET waiters_collect = $2, bar_only = $3, suggested_tip = COALESCE($4, suggested_tip), track_prep = $5, cash_only = $6, usd_rate = COALESCE($7, usd_rate), no_base = $8, tips_included = $9 WHERE id = $1`, [
       actor.businessId,
       input.waitersCollect,
       input.barOnly,
@@ -33,6 +34,7 @@ export async function updateWorkMode(actor: Actor, input: { waitersCollect: bool
       cashOnly,
       usdRate,
       noBase,
+      tipsIncluded,
     ]);
     // Al pasar a «solo efectivo», los cobros por datáfono o transferencia de las cajas abiertas pasan a efectivo
     // (6 nov 2026, Rigoberto: «cambia todos los pagos de transferencia a efectivo»). Las cajas cerradas no se tocan.
@@ -52,6 +54,20 @@ export async function updateWorkMode(actor: Actor, input: { waitersCollect: bool
       });
     } else if (!cashOnly && before.cashOnly) {
       await audit(db, actor, { action: 'business.cash_only', entity: 'business', entityId: actor.businessId, summary: 'Volvió a cobrar también por datáfono y transferencia' });
+    }
+    if (tipsIncluded !== before.tipsIncluded) {
+      // Los cobros de la caja abierta pasan a la regla nueva (9 nov 2026: en Azul los de ese día ya traían la propina adentro).
+      const changed = await db.query(
+        `UPDATE payments p SET tip_included = $2 FROM cash_shifts c
+          WHERE p.shift_id = c.id AND c.closed_at IS NULL AND c.staff_id IS NULL AND p.business_id = $1 AND p.tip_included <> $2 RETURNING p.id`,
+        [actor.businessId, tipsIncluded],
+      );
+      await audit(db, actor, {
+        action: 'business.tips_included',
+        entity: 'business',
+        entityId: actor.businessId,
+        summary: `${tipsIncluded ? 'La propina va incluida en lo que paga el cliente' : 'La propina se suma a lo que paga el cliente'}${changed.rows.length ? `; ${changed.rows.length} cobros de la caja abierta pasaron a esa regla` : ''}`,
+      });
     }
     if (noBase !== before.noBase) {
       await audit(db, actor, { action: 'business.no_base', entity: 'business', entityId: actor.businessId, summary: noBase ? 'La caja ya no maneja base: abre en $0' : 'La caja vuelve a abrir con base' });

@@ -110,5 +110,16 @@ describe('cobro con dólares', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     assert.equal((await cash.workMode(owner.businessId)).noBase, true);
     await cash.openShift(cashier, 200000);
     assert.equal((await cash.getOpenShift(cashier))!.openingAmount, 0);
+
+    // Propina incluida en lo que paga el cliente (9 nov 2026, Azul Caribe): una cuenta de 25.000 se cobra 25.000 y de ahí
+    // 2.500 son propina. En la caja hay 25.000; la venta es 22.500.
+    await waiters.updateWorkMode(owner, { waitersCollect: false, barOnly: false, noBase: true, tipsIncluded: true });
+    const t5 = await store.createTable(owner, { zone: 'Salón', number: '5', capacity: 4, shape: 'square' });
+    const s5 = await order(t5);
+    const p5 = await cash.pay(cashier, s5, { method: 'cash', amount: 25000, tip: 2500, received: 30000, clientKey: randomUUID() });
+    assert.equal(p5.change, 5000, 'las vueltas no cuentan la propina aparte');
+    assert.equal(p5.closed, true);
+    const inc = (await cash.shiftSummary(owner, (await cash.getOpenShift(cashier))!.id))!;
+    assert.deepEqual([inc.sales, inc.tips, inc.sales + inc.tips, inc.expectedCash, inc.salesCash], [22500, 2500, 25000, 25000, 22500]);
   });
 });
