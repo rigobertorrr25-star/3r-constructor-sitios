@@ -706,7 +706,11 @@ export async function pay(actor: Actor, sessionId: string, input: PaymentInput) 
         await db.query(`UPDATE table_sessions SET status = 'closed', closed_at = now(), closed_by = $2 WHERE id = $1`, [sessionId, actor.id]);
         // Una factura por la venta completa (sin propinas, que no son ingreso del negocio).
         const tips = checkout.tips + tip;
-        await createInvoice(db, actor, { sessionId, total: checkout.total, tip: tips });
+        // Con la propina incluida en lo que pagó el cliente (9 nov 2026), la factura es por la cuenta menos esa propina.
+        const inside = Number(
+          (await db.query<{ t: string }>(`SELECT COALESCE(sum(tip) FILTER (WHERE tip_included), 0) AS t FROM payments WHERE session_id = $1 AND reversed_at IS NULL`, [sessionId])).rows[0].t,
+        );
+        await createInvoice(db, actor, { sessionId, total: checkout.total - inside, tip: tips });
         await audit(db, actor, {
           action: 'table.close',
           entity: 'table_session',
@@ -785,13 +789,14 @@ export async function reversePayment(actor: Actor, paymentId: string, reason: st
 // agarró para pagar, y las diferencias que pagaron en transferencia pero que marcaron en efectivo». Lo primero es una
 // salida de caja (`addMovement`); lo segundo cambia el medio de un cobro en efectivo de la caja abierta.
 
-export type CashPayment = { id: string; tableNumber: string | null; amount: number; tip: number; createdBy: string; createdAt: Date };
+/** `total`: lo que pagó el cliente (con la propina, esté incluida o sumada; 9 nov 2026). */
+export type CashPayment = { id: string; tableNumber: string | null; amount: number; tip: number; total: number; createdBy: string; createdAt: Date };
 
 /** Los cobros en efectivo (sin reversar) de la caja abierta, lo más nuevo primero. */
 export async function openShiftCashPayments(actor: Actor): Promise<CashPayment[]> {
   requirePermission(actor, 'cash.operate');
-  const rows = await query<{ id: string; tableNumber: string | null; amount: string; tip: string; createdBy: string; createdAt: Date }>(
-    `SELECT p.id, t.number AS "tableNumber", p.amount, p.tip, s.name AS "createdBy", p.created_at AS "createdAt"
+  const rows = await query<{ id: string; tableNumber: string | null; amount: string; tip: string; included: boolean; createdBy: string; createdAt: Date }>(
+    `SELECT p.id, t.number AS "tableNumber", p.amount, p.tip, p.tip_included AS included, s.name AS "createdBy", p.created_at AS "createdAt"
        FROM payments p
        JOIN cash_shifts c ON c.id = p.shift_id AND c.closed_at IS NULL AND c.staff_id IS NULL
        JOIN staff s ON s.id = p.created_by
@@ -806,6 +811,7 @@ export async function openShiftCashPayments(actor: Actor): Promise<CashPayment[]
     tableNumber: r.tableNumber,
     amount: Number(r.amount),
     tip: Number(r.tip),
+    total: Number(r.amount) + (r.included ? 0 : Number(r.tip)),
     createdBy: r.createdBy,
     createdAt: r.createdAt,
   }));
@@ -825,8 +831,8 @@ export async function moveCashPayment(actor: Actor, paymentId: string, input: { 
   return transaction(async (db) => {
     const shift = await lockOpenShift(db, actor);
     const p = (
-      await db.query<{ id: string; sessionId: string | null; appointmentId: string | null; amount: string; tip: string; method: Method; reversed: boolean; shiftId: string; createdBy: string; createdAt: Date; tableNumber: string | null }>(
-        `SELECT p.id, p.session_id AS "sessionId", p.appointment_id AS "appointmentId", p.amount, p.tip, p.method, (p.reversed_at IS NOT NULL) AS reversed,
+      await db.query<{ id: string; sessionId: string | null; appointmentId: string | null; amount: string; tip: string; included: boolean; method: Method; reversed: boolean; shiftId: string; createdBy: string; createdAt: Date; tableNumber: string | null }>(
+        `SELECT p.id, p.session_id AS "sessionId", p.appointment_id AS "appointmentId", p.amount, p.tip, p.tip_included AS included, p.method, (p.reversed_at IS NOT NULL) AS reversed,
                 p.shift_id AS "shiftId", p.created_by AS "createdBy", p.created_at AS "createdAt", t.number AS "tableNumber"
            FROM payments p LEFT JOIN table_sessions ts ON ts.id = p.session_id LEFT JOIN dining_tables t ON t.id = ts.table_id
           WHERE p.id = $1 AND p.business_id = $2 AND p.location_id = $3 FOR UPDATE OF p`,
@@ -836,8 +842,9 @@ export async function moveCashPayment(actor: Actor, paymentId: string, input: { 
     if (!p || p.reversed) throw new AppError('NOT_FOUND', 'No encontramos ese cobro.');
     if (p.shiftId !== shift.id) throw new AppError('CONFLICT', 'Ese cobro no es de la caja abierta.');
     if (p.method !== 'cash') throw new AppError('CONFLICT', 'Ese cobro ya no está en efectivo.');
-    const amount = Number(p.amount);
-    const total = amount + Number(p.tip);
+    // Con la propina incluida (9 nov 2026) el cliente pagó `amount`, con la propina adentro; una parte solo puede ser de la venta.
+    const amount = Number(p.amount) - (p.included ? Number(p.tip) : 0);
+    const total = Number(p.amount) + (p.included ? 0 : Number(p.tip));
     const where = p.tableNumber ? `de la mesa ${p.tableNumber}` : 'de una cita';
     const label = METHOD_LABEL[method].toLowerCase();
     if (input.amount === total) {

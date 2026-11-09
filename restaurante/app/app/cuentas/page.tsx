@@ -46,6 +46,8 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   const pendingTotal = pending.reduce((s, a) => s + a.balance, 0);
   const collectedTotal = collected.reduce((s, a) => s + a.paid, 0);
   const tipsMarked = collected.reduce((s, a) => s + a.tip, 0);
+  // Con la propina incluida en lo cobrado (9 nov 2026): cobrado − propina = venta.
+  const tipsInside = collected.reduce((s, a) => s + a.tipInside, 0);
   const now = Date.now();
   const chip = (active: boolean) =>
     `rounded-full px-4 py-1.5 text-[14px] ${active ? 'bg-primary text-primary-foreground' : 'border border-white/[0.1] text-muted-foreground hover:text-foreground'}`;
@@ -79,6 +81,13 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
         <Stat label={t('Por cobrar')} value={formatCop(pendingTotal)} hint={pending.length === 1 ? t('1 mesa') : t('{n} mesas', { n: pending.length })} strong={pending.length > 0} />
         <Stat label={t('Cobradas')} value={formatCop(collectedTotal)} hint={collected.length === 1 ? t('1 mesa') : t('{n} mesas', { n: collected.length })} />
         <Stat label={t('Propinas cobradas')} value={formatCop(tipsMarked)} />
+        {tipsInside ? (
+          <Stat
+            label={t('Venta (cobrado − propina)')}
+            value={formatCop(collectedTotal - tipsInside)}
+            hint={t('{collected} − {tip}', { collected: formatCop(collectedTotal), tip: formatCop(tipsInside) })}
+          />
+        ) : null}
       </div>
 
       {data.waiters.length > 0 ? (

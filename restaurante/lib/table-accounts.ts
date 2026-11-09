@@ -23,6 +23,8 @@ export type TableAccount = {
   total: number;
   paid: number;
   tip: number;
+  /** Propina que venía incluida en lo cobrado (9 nov 2026); la venta de la mesa es `paid − tipInside`. */
+  tipInside: number;
   balance: number;
 };
 
@@ -45,6 +47,7 @@ type Row = {
   discounts: string;
   paid: string;
   tip: string;
+  tipInside?: string;
 };
 
 export function toAccount(r: Row): TableAccount {
@@ -66,6 +69,7 @@ export function toAccount(r: Row): TableAccount {
     total,
     paid,
     tip: Number(r.tip),
+    tipInside: Number(r.tipInside ?? 0),
     balance: Math.max(0, total - paid),
   };
 }
@@ -102,7 +106,9 @@ export async function tableAccounts(actor: Actor, date: string, timeZone: string
             (SELECT COALESCE(sum(unit_price * quantity), 0) FROM order_items WHERE session_id = ts.id AND voided_at IS NULL) AS subtotal,
             (SELECT COALESCE(sum(amount), 0) FROM session_discounts WHERE session_id = ts.id AND voided_at IS NULL) AS discounts,
             (SELECT COALESCE(sum(amount), 0) FROM payments WHERE session_id = ts.id AND reversed_at IS NULL) AS paid,
-            (SELECT COALESCE(sum(tip), 0) FROM payments WHERE session_id = ts.id AND reversed_at IS NULL) AS tip
+            (SELECT COALESCE(sum(tip), 0) FROM payments WHERE session_id = ts.id AND reversed_at IS NULL) AS tip,
+            -- Propina que venía incluida en lo cobrado (9 nov 2026): la venta de la mesa es lo cobrado menos esto.
+            (SELECT COALESCE(sum(tip) FILTER (WHERE tip_included), 0) FROM payments WHERE session_id = ts.id AND reversed_at IS NULL) AS "tipInside"
        FROM table_sessions ts JOIN dining_tables t ON t.id = ts.table_id JOIN staff o ON o.id = ts.opened_by
       WHERE ts.location_id = $1 AND ts.business_id = $2 AND ${hasOrders('ts')}
         -- Una mesa que se cerró porque se le pasaron todos sus productos a otra (6 nov 2026) no se muestra.
