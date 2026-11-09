@@ -49,13 +49,13 @@ describe('solo desde el wifi del local', { skip: url ? false : 'sin TEST_DATABAS
     await db.closePool();
   });
 
-  it('el mesero solo trabaja desde el wifi; la dueña desde cualquier parte', async () => {
+  it('el bloqueo por wifi se quitó (9 nov 2026): el mesero trabaja desde cualquier parte aunque haya conexiones guardadas', async () => {
     assert.equal(await net.canWorkFrom(waiter, '9.9.9.9'), true, 'apagado: desde cualquier parte');
     await assert.rejects(net.addLocationNetwork(waiter, '181.52.10.4'), { code: 'FORBIDDEN' });
     await net.addLocationNetwork(owner, '181.52.10.4');
     await assert.rejects(net.addLocationNetwork(owner, '181.52.10.4'), { code: 'CONFLICT' });
     assert.equal(await net.canWorkFrom(waiter, '181.52.10.4'), true);
-    assert.equal(await net.canWorkFrom(waiter, '9.9.9.9'), false, 'desde la casa no');
+    assert.equal(await net.canWorkFrom(waiter, '9.9.9.9'), true, 'desde la casa también (bloqueo quitado)');
     assert.equal(await net.canWorkFrom(owner, '9.9.9.9'), true, 'la dueña sí');
     await net.removeLocationNetwork(owner, '181.52.10.4');
     assert.equal(await net.canWorkFrom(waiter, '9.9.9.9'), true, 'sin conexiones vuelve a desde cualquier parte');
