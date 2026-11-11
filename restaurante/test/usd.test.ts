@@ -131,5 +131,17 @@ describe('cobro con dólares', { skip: url ? false : 'sin TEST_DATABASE_URL' }, 
     await cash.moveCashPayment(cashier, row.id, { method: 'transfer', amount: 25000 });
     const moved = (await cash.shiftSummary(owner, (await cash.getOpenShift(cashier))!.id))!;
     assert.deepEqual([moved.byMethod.transfer.amount, moved.byMethod.transfer.tip, moved.expectedCash], [22500, 2500, 0]);
+
+    // Corregir la base (11 nov 2026): abierta sube lo que debe haber; cerrada ajusta el esperado guardado.
+    const openId = (await cash.getOpenShift(cashier))!.id;
+    await assert.rejects(cash.correctOpening(cashier, openId, { amount: 50000, reason: 'Vueltas' }), { code: 'FORBIDDEN' });
+    await assert.rejects(cash.correctOpening(owner, openId, { amount: 50000, reason: '' }), { code: 'INVALID' });
+    await cash.correctOpening(owner, openId, { amount: 50000, reason: 'Se trajo plata para vueltas' });
+    const withBase = (await cash.shiftSummary(owner, openId))!;
+    assert.deepEqual([withBase.shift.openingAmount, withBase.expectedCash, withBase.salesCash], [50000, 50000, -2500], 'la propina de la transferencia también sale de la caja');
+    await cash.closeShift(cashier, 50000, '');
+    await cash.correctOpening(owner, openId, { amount: 40000, reason: 'Era 40.000' });
+    const fixedBase = (await cash.shiftSummary(owner, openId))!;
+    assert.deepEqual([fixedBase.shift.openingAmount, fixedBase.shift.expectedCash], [40000, 40000]);
   });
 });

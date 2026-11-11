@@ -635,4 +635,9 @@ export const en: Record<string, string> = {
   'Al cobrar no se suma la propina: el cliente paga la cuenta y de ahí sale la propina. La venta es lo cobrado menos la propina. Al marcarlo, los cobros de la caja abierta pasan a esta regla.': 'When charging, the tip is not added: the customer pays the bill and the tip comes out of it. Sales are what was collected minus the tip. When checked, payments in the open drawer switch to this rule.',
   'Venta (cobrado − propina)': 'Sales (collected − tips)',
   '{collected} − {tip}': '{collected} − {tip}',
+  'Corregir la base': 'Correct the float',
+  'Base correcta': 'Correct float',
+  'Se escribió mal la base, se agregó plata para vueltas…': 'The float was entered wrong, cash for change was added…',
+  'Base de esta caja: {amount}': 'Float of this drawer: {amount}',
+  'Si la base quedó mal escrita, corrígela aquí. Queda quién la cambió y el motivo.': 'If the float was entered wrong, correct it here. Who changed it and why is recorded.',
 };

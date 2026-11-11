@@ -3,7 +3,8 @@ import { requireStaff } from '@/lib/auth';
 import { METHOD_LABEL, METHODS, drawerLeftByLastShift, getOpenShift, listShifts, openAccounts, openShiftCashPayments, shiftSummary, workMode } from '@/lib/cash';
 import { elapsedMinutes, formatCop, formatDateTime, formatElapsed } from '@/lib/format';
 import { AutoRefresh } from '@/components/auto-refresh';
-import { CloseShiftForm, LossForm, MovementForm, OpenShiftForm, VoidLossButton } from '@/components/cash-forms';
+import { CloseShiftForm, CorrectOpeningForm, LossForm, MovementForm, OpenShiftForm, VoidLossButton } from '@/components/cash-forms';
+import { can } from '@/lib/permissions';
 import { listLosses } from '@/lib/losses';
 import { Empty, PageTitle, card, quietButton } from '@/components/ui';
 import { getLang } from '@/lib/i18n/server';
@@ -69,6 +70,13 @@ export default async function CashPage() {
 
       {/* Para el cierre, en cuadros separados (6 nov 2026, Rigoberto: «pon en un cuadro la base, en otro la venta; arma la
           propina y di de dónde sale; la transferencia con el total y la propina descontada»). Cada peso aparece una vez. */}
+      {can(staff.role, 'cash.correct') ? (
+        // Corregir la base de la caja abierta (11 nov 2026, pedido de Rigoberto). Dueño y administrador.
+        <div className="flex flex-wrap items-start gap-3 text-[14.5px]">
+          <span className="pt-2 text-muted-foreground">{t('Base de esta caja: {amount}', { amount: formatCop(s.shift.openingAmount) })}</span>
+          <CorrectOpeningForm shiftId={s.shift.id} amount={s.shift.openingAmount} />
+        </div>
+      ) : null}
       <section className="space-y-3" aria-label={t('Para el cierre')}>
         <div className={`grid gap-3 sm:grid-cols-2 ${cashOnly ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
           {s.shift.openingAmount ? <Box tone="amber" title={t('Base')} value={formatCop(s.shift.openingAmount)} lines={[t('Con lo que se abrió la caja.')]} /> : null}

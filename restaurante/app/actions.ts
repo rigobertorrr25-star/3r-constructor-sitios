@@ -32,7 +32,7 @@ import { createReservation, requestReservation, seatReservation, updatePublicSet
 import { addExpense, payExpense, voidExpense, type PurchaseLine } from '@/lib/finance';
 import { addLoss, voidLoss } from '@/lib/losses';
 import { itemsForPurchase, listItems, registerCount, registerPurchase, registerWaste, saveItem, saveRecipe } from '@/lib/inventory';
-import { addMovement, applyDiscount, closeShift, closeZeroBalance, correctClosing, moveCashPayment, openShift, pay, reversePayment, voidDiscount, correctMovement, changePaymentMethod, changeDayToCash } from '@/lib/cash';
+import { addMovement, applyDiscount, closeShift, closeZeroBalance, correctClosing, moveCashPayment, openShift, pay, reversePayment, voidDiscount, correctMovement, changePaymentMethod, changeDayToCash, correctOpening } from '@/lib/cash';
 import { getMenu, saveCategory, setCategoryStations, saveProduct, sendOrder, setProductAvailable, voidItem, type CartLine, moveItem } from '@/lib/orders';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { clearInventory, clearMenu, clearSales } from '@/lib/sales-reset';
@@ -1421,4 +1421,16 @@ export async function changeDayToCashAction(_prev: FormState, formData: FormData
   } catch (error) {
     return { error: await messageOf(error) };
   }
+}
+
+/** Corregir la base de una caja (11 nov 2026). Dueño y administrador. */
+export async function correctOpeningAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const shiftId = text(formData, 'shiftId');
+  return run(
+    formData,
+    () => correctOpening(staff, shiftId, { amount: pesos(formData, 'amount'), reason: text(formData, 'reason') }),
+    ['/app/caja', `/app/caja/turno/${shiftId}`, '/app/caja/dia'],
+    'Base corregida.',
+  );
 }

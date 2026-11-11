@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { addLossAction, cashPaidOutAction, changeDayToCashAction, closeShiftAction, correctClosingAction, correctMovementAction, moveCashPaymentAction, movementAction, openShiftAction, voidLossAction } from '@/app/actions';
+import { addLossAction, cashPaidOutAction, changeDayToCashAction, correctOpeningAction, closeShiftAction, correctClosingAction, correctMovementAction, moveCashPaymentAction, movementAction, openShiftAction, voidLossAction } from '@/app/actions';
 import { ActionForm } from './form-state';
 import { SubmitButton } from './submit-button';
 import { Field, Select, TextArea, inputClass, quietButton } from './ui';
@@ -479,5 +479,34 @@ export function DayToCashButton({ date }: { date: string }) {
     <button type="button" className={quietButton} onClick={() => setOpen(true)}>
       {t('Pasar todo a efectivo')}
     </button>
+  );
+}
+
+/** «Corregir la base» de una caja abierta o cerrada (11 nov 2026, pedido de Rigoberto). Dueño y administrador. */
+export function CorrectOpeningForm({ shiftId, amount }: { shiftId: string; amount: number }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button type="button" className={quietButton} onClick={() => setOpen(!open)}>
+        {open ? t('Cancelar') : t('Corregir la base')}
+      </button>
+      {open ? (
+        <ActionForm action={correctOpeningAction} onOk={() => setOpen(false)} className="mt-3 flex flex-wrap items-end gap-2">
+          {() => (
+            <>
+              <input type="hidden" name="shiftId" value={shiftId} />
+              <div className="w-[170px]">
+                <Field label={t('Base correcta')} name="amount" inputMode="numeric" required defaultValue={String(amount)} />
+              </div>
+              <div className="min-w-[200px] flex-1">
+                <Field label={t('Motivo')} name="reason" required minLength={3} maxLength={300} placeholder={t('Se escribió mal la base, se agregó plata para vueltas…')} />
+              </div>
+              <SubmitButton pendingText={t('Guardando…')}>{t('Guardar')}</SubmitButton>
+            </>
+          )}
+        </ActionForm>
+      ) : null}
+    </div>
   );
 }
