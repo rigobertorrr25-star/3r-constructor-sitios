@@ -999,3 +999,40 @@ export async function changeDayToCash(actor: Actor, date: string) {
   for (const r of rows) await changePaymentMethod(actor, r.id, 'cash');
   return rows.length;
 }
+
+/**
+ * Corrige la base de una caja (11 nov 2026, Rigoberto: «¿cómo modifico la base que tengo el día de hoy?»). Dueño y
+ * administrador (`cash.correct`), con motivo; sirve con la caja abierta o ya cerrada. En una caja cerrada el efectivo
+ * esperado guardado se ajusta por la diferencia, así el cuadra/sobra/falta se recalcula. Queda en la auditoría.
+ */
+export async function correctOpening(actor: Actor, shiftId: string, input: { amount: number; reason: string }) {
+  requirePermission(actor, 'cash.correct');
+  if (!isUuid(shiftId)) throw new AppError('NOT_FOUND', 'No encontramos esa caja.');
+  requireAmount(input.amount, 'Base', { allowZero: true });
+  const why = requireText(input.reason, 'Motivo', 3, 300);
+  await transaction(async (db) => {
+    const c = (
+      await db.query<{ opening: string; closed: boolean }>(
+        `SELECT opening_amount AS opening, (closed_at IS NOT NULL) AS closed FROM cash_shifts
+          WHERE id = $1 AND business_id = $2 AND location_id = $3 AND staff_id IS NULL FOR UPDATE`,
+        [shiftId, actor.businessId, actor.locationId],
+      )
+    ).rows[0];
+    if (!c) throw new AppError('NOT_FOUND', 'No encontramos esa caja.');
+    const before = Number(c.opening);
+    if (before === input.amount) throw new AppError('INVALID', 'La base ya tiene ese valor.');
+    const delta = input.amount - before;
+    await db.query(
+      `UPDATE cash_shifts SET opening_amount = $2, expected_cash = CASE WHEN closed_at IS NULL THEN expected_cash ELSE expected_cash + $3 END WHERE id = $1`,
+      [shiftId, input.amount, delta],
+    );
+    await audit(db, actor, {
+      action: 'cash.base',
+      entity: 'cash_shift',
+      entityId: shiftId,
+      summary: `Corrigió la base de la caja: de ${money(before)} a ${money(input.amount)}${c.closed ? ' (caja ya cerrada: el esperado cambió igual)' : ''}`,
+      reason: why,
+      data: { before, after: input.amount },
+    });
+  });
+}

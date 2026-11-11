@@ -6,7 +6,7 @@ import { closingInventory, dailyForm, shiftIncidents, shiftSalesByCategory, shor
 import { AREA_LABEL } from '@/lib/inventory';
 import { cashCountLines } from '@/lib/cash-count';
 import { PrintClosingButton } from '@/components/printer-forms';
-import { CorrectClosingForm, CorrectMovementForm } from '@/components/cash-forms';
+import { CorrectClosingForm, CorrectMovementForm, CorrectOpeningForm } from '@/components/cash-forms';
 import { can } from '@/lib/permissions';
 import { formatCop, formatDateTime, formatTime } from '@/lib/format';
 import { PageTitle, card, quietButton } from '@/components/ui';
@@ -145,6 +145,14 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
         </section>
       ) : null}
 
+      {/* Corregir la base (11 nov 2026, pedido de Rigoberto). Dueño y administrador; en una caja cerrada ajusta lo esperado. */}
+      {can(staff.role, 'cash.correct') ? (
+        <section className={`${card} max-w-xl space-y-2`}>
+          <h2 className="font-display text-[17px] font-bold">{t('Base de esta caja: {amount}', { amount: formatCop(sh.openingAmount) })}</h2>
+          <p className="text-[13.5px] text-muted-foreground">{t('Si la base quedó mal escrita, corrígela aquí. Queda quién la cambió y el motivo.')}</p>
+          <CorrectOpeningForm shiftId={sh.id} amount={sh.openingAmount} />
+        </section>
+      ) : null}
       {/* Corregir el cierre (4 nov 2026): si la cajera cerró sin contar toda la plata. Dueño y administrador. */}
       {sh.closedAt && sh.countedCash !== null && can(staff.role, 'cash.correct') ? (
         <details className={`${card} max-w-xl`}>
