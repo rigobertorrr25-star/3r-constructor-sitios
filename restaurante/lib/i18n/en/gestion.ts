@@ -376,4 +376,6 @@ export const en: Record<string, string> = {
   'La IA leyó {a} insumos y {b} que no están en tu inventario. Revisa las cantidades abajo, corrige lo que haga falta y toca «Guardar todo».':
     'AI read {a} ingredients and {b} that are not in your inventory. Check the quantities below, fix anything needed and tap "Save all".',
   'Insumos nuevos: {a}.': 'New ingredients: {a}.',
+  'Vale lo que hay': 'Value on hand',
+  'Total del inventario': 'Total inventory value',
 };
