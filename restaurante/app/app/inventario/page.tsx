@@ -100,6 +100,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                   <th className="px-4 py-3 font-medium">{t('Hay')}</th>
                   <th className="px-4 py-3 font-medium">{t('Mínimo')}</th>
                   {manage ? <th className="px-4 py-3 font-medium">{t('Costo')}</th> : null}
+                  {manage ? <th className="px-4 py-3 text-right font-medium">{t('Vale lo que hay')}</th> : null}
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.06]">
@@ -121,10 +122,22 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                           {formatCop(i.unitCost * (i.bottleSize ?? (i.unit === 'und' ? 1 : 1000)))} / {i.bottleSize ? t('botella') : i.unit === 'und' ? t('und') : i.unit === 'g' ? 'kg' : 'L'}
                         </td>
                       ) : null}
+                      {/* Lo que vale lo que hay (existencia × costo), al lado del costo (15 nov 2026, pedido de Rigoberto). */}
+                      {manage ? <td className="px-4 py-2.5 text-right font-medium">{i.unitCost ? formatCop(Math.round(Math.max(0, i.stock) * i.unitCost)) : '—'}</td> : null}
                     </tr>
                   );
                 })}
               </tbody>
+              {manage ? (
+                <tfoot>
+                  <tr className="border-t border-white/[0.1] text-[14px] font-semibold">
+                    <td className="px-4 py-3" colSpan={4}>
+                      {t('Total del inventario')}
+                    </td>
+                    <td className="px-4 py-3 text-right">{formatCop(Math.round(value))}</td>
+                  </tr>
+                </tfoot>
+              ) : null}
             </table>
           </div>
         )}
