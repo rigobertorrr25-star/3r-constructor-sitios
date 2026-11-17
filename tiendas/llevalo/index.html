@@ -69,9 +69,9 @@
   .steps b { color: #ffb48a; }
 
   /* Barra de secciones: fija arriba al bajar, cada sección con foto y cuántos productos tiene */
-  .chips { position: sticky; top: 0; z-index: 20; display: flex; gap: 10px; overflow-x: auto; padding: 8px 16px 9px; margin: 0 -16px 16px; background: var(--bg); border-bottom: 1px solid var(--line); scrollbar-width: none; scroll-snap-type: x proximity; }
+  .chips { position: sticky; top: 0; z-index: 20; display: flex; gap: 10px; overflow-x: auto; padding: 8px 16px 9px; margin: 0 -16px 16px; background: var(--bg); border-bottom: 1px solid var(--line); scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
-  .chip { flex: none; width: 84px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px 7px; border-radius: 14px; border: 1px solid var(--line); background: #fff; font: 700 .76rem/1.12 "Archivo", sans-serif; cursor: pointer; color: var(--text); text-align: center; scroll-snap-align: start; }
+  .chip { flex: none; width: 84px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px 7px; border-radius: 14px; border: 1px solid var(--line); background: #fff; font: 700 .76rem/1.12 "Archivo", sans-serif; cursor: pointer; color: var(--text); text-align: center; }
   .chip .ic { width: 46px; height: 46px; border-radius: 50%; background: #fff; border: 2px solid var(--line); display: grid; place-items: center; overflow: hidden; }
   .chip .ic img { width: 84%; height: 84%; object-fit: contain; }
   .chip .ic svg { width: 22px; height: 22px; fill: var(--text); }
@@ -470,6 +470,27 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
       return `<button class="chip" type="button" data-cat="${c.id}" aria-pressed="${c.id === cat}"><span class="ic">${ic}</span><span class="lb">${c.name}</span><span class="n">${items.length} productos</span></button>`;
     }).join("");
   }
+  // La barra de secciones se desliza sola de lado a lado (pedido de Rigoberto, 17 nov 2026).
+  // Se detiene 6 s cuando el cliente la toca o la mueve; no se mueve si el sistema pide menos movimiento.
+  (function slideChips() {
+    const bar = document.getElementById("chips");
+    if (!bar || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let dir = 1, wait = performance.now() + 1500, last = performance.now(), x = 0;
+    const stop = () => { wait = performance.now() + 6000; };
+    ["pointerdown", "touchstart", "wheel"].forEach((ev) => bar.addEventListener(ev, stop, { passive: true }));
+    (function step(now) {
+      const dt = Math.min(now - last, 50); last = now;
+      const max = bar.scrollWidth - bar.clientWidth;
+      if (max > 4 && now > wait) {
+        if (Math.abs(bar.scrollLeft - x) > 2) x = bar.scrollLeft;
+        x += dir * dt * 0.035;
+        if (x >= max) { x = max; dir = -1; wait = now + 1500; }
+        else if (x <= 0) { x = 0; dir = 1; wait = now + 1500; }
+        bar.scrollLeft = x;
+      }
+      requestAnimationFrame(step);
+    })(last);
+  })();
   function renderGrid() {
     const list = PRODUCTS.filter((p) => cat === "todo" || p.cat === cat);
     document.getElementById("grid").innerHTML = list.map((p) => `
