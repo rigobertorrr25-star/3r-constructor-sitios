@@ -10,6 +10,8 @@ cotizar en Dropi antes del primer pedido de cada uno.
 | Producto | Dropi id | Te cuesta | Precio de venta | Envío estimado | Te queda (aprox.) |
 |---|---|---|---|---|---|
 | Luces LED para espejo de maquillaje | 1411936 | $10.900 | $45.700 | $16.000 | $18.800 |
+| Carillas dentales removibles (en Dropi «Implantes dentales») | 2322158 | $8.100 | $42.300 | $18.200 | $16.000 |
+| Amua Vital Drops (suplemento en gotas) | 2312645 | $13.500 | $47.300 | $18.200 | $15.600 |
 | Espejo redondo de pared 70 cm | 375183 (var. 2508514) | $190.000 | $268.400 | $26.000 | $52.400 |
 | Espejo redondo de pared 90 cm | 375183 (var. 2508515) | $260.000 | $367.300 | $30.000 | $77.300 |
 | Restaurador de partes negras 250 ml | 5417 | $9.990 | $48.700 | $19.000 | $19.710 |
@@ -39,4 +41,9 @@ ranking, cambiar por 1894472 (10 focos, $37.000, 300 unidades) y subir el precio
 confirmar bien cada pedido antes de despachar.
 
 Cada pedido es de un solo producto porque cada uno sale de una bodega distinta y paga su propio envío.
-Sin réplicas de marcas, suplementos ni aparatos médicos.
+Más vendidos según Dropdata (17 nov 2026): Amua Vital Drops (784 ventas en 7 días, 469 el 16 nov; proveedor Dluxia) y carillas
+dentales (1.068 ventas en 7 días; proveedor Jorge). Envío de estos dos estimado como el restaurador (paquete pequeño), no cotizado.
+Amua: hay copias de otros proveedores (2332145 es el mismo proveedor en paquete x2 a $24.500). Antes del primer pedido, mirar en
+Dropi que tenga registro INVIMA.
+
+Sin réplicas de marcas. Suplementos y productos de salud: sin prometer curas y, si es suplemento, con registro INVIMA.
