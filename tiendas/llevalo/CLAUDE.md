@@ -79,6 +79,9 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   (`herramientas/catalogo-meta.mjs`, fotos en `img/catalogo/`, pasos en `herramientas/LEEME.md`). Amua no va (suplemento). No es
   seguro que todas las cuentas de la app WhatsApp Business dejen conectar un catálogo de Commerce Manager; si no, cargar a mano
   con el PDF de WhatsApp.
+- **Píxel de Meta** (17 nov 2026): Meta le dio a Rigoberto el píxel `1624806965361371` al crear el catálogo. No se instaló: no hace
+  falta para el catálogo y la página dice «No usamos cookies»; instalarlo obliga a cambiar ese aviso por uno que pida permiso
+  (Ley 1581). Instalar solo cuando haga anuncios pagados, con aviso y consentimiento.
 - Cuando entre un pedido: revisar al comprador con la huella de Dropi, confirmar por WhatsApp y crear el pedido en Dropi
   solo después de que Rigoberto confirme el resumen.
 
