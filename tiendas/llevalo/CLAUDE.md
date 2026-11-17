@@ -69,7 +69,7 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   Rigoberto dijo (17 nov) que «hay muchos productos que no me gustan» pero no dijo cuáles: preguntarle antes de quitar.
 - **Cambios por paquetes** (17 nov 2026, Rigoberto: «recuerda hacer cambio en la página después de [~10] cambios o cuando yo te
   diga»): los cambios a la tienda se juntan en un solo PR en borrador (título «paquete de cambios (N de ~10)») y se le pide unirlo
-  solo al llegar a ~10 cambios o cuando él lo pida. La cuenta va en `PENDIENTES.md`. Paquete en curso: PR #140.
+  solo al llegar a ~10 cambios o cuando él lo pida. La cuenta va en `PENDIENTES.md`. Último paquete: PR #141 (unido 17 nov).
 - **Barra de secciones** (17 nov 2026, Rigoberto pidió mejorar «el banner donde dice perfume y lo demás» y luego «quiero que se
   deslice»; dijo «me gusta»): cada sección en tarjeta con foto redonda de un producto y «N productos», la escogida en negro con
   verde neón, fija arriba al bajar (`position: sticky`), y se desliza sola de lado a lado (`slideChips`, se detiene 6 s al
@@ -78,7 +78,12 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   manejar la app de WhatsApp. Se armó un archivo para subir todo de una vez en Meta Commerce Manager y conectarlo a WhatsApp
   (`herramientas/catalogo-meta.mjs`, fotos en `img/catalogo/`, pasos en `herramientas/LEEME.md`). Amua no va (suplemento). No es
   seguro que todas las cuentas de la app WhatsApp Business dejen conectar un catálogo de Commerce Manager; si no, cargar a mano
-  con el PDF de WhatsApp.
+  con el PDF de WhatsApp. **Resultado (17 nov):** Rigoberto subió el CSV a Commerce Manager (portafolio «3R», catálogo «3R Market»;
+  no pudo crear portafolio propio: límite de Meta). Ese catálogo solo se conecta a WhatsApp por la API (WhatsApp Manager), no a la
+  app; queda para tienda de Facebook/Instagram y anuncios. Para la app se publicó una página privada «copiar y pegar»:
+  https://claude.ai/artifact/4QZrSHaz9of1V14bSryD1J (foto, botones Copiar, casilla «Ya lo subí»; `herramientas/pagina-whatsapp.mjs`,
+  republicar el mismo archivo `catalogo/wpp-copiar.html` para no cambiar el enlace). El `.gitignore` es `/catalogo/` (antes
+  `catalogo/` ignoraba también `img/catalogo/` y las fotos no se subieron en el PR #140).
 - **Píxel de Meta** (17 nov 2026, Rigoberto: «sí quiero ponerlo»): píxel `1624806965361371`, instalado **solo con permiso**: el
   aviso de abajo pregunta «¿Aceptas cookies de Meta…?» con «No, gracias» / «Aceptar» (se guarda en `localStorage`
   `3rmarket-cookies` = si/no); el enlace «Cookies» del pie lo vuelve a mostrar. Si acepta: PageView, `ViewContent` al abrir un
