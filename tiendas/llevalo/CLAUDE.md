@@ -74,6 +74,11 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   deslice»; dijo «me gusta»): cada sección en tarjeta con foto redonda de un producto y «N productos», la escogida en negro con
   verde neón, fija arriba al bajar (`position: sticky`), y se desliza sola de lado a lado (`slideChips`, se detiene 6 s al
   tocarla, quieta con «reducir movimiento»). Mantener así.
+- **Catálogo en Meta / WhatsApp** (17 nov 2026, Rigoberto: «cómo hago para que tú montes todo en WhatsApp»): Claude no puede
+  manejar la app de WhatsApp. Se armó un archivo para subir todo de una vez en Meta Commerce Manager y conectarlo a WhatsApp
+  (`herramientas/catalogo-meta.mjs`, fotos en `img/catalogo/`, pasos en `herramientas/LEEME.md`). Amua no va (suplemento). No es
+  seguro que todas las cuentas de la app WhatsApp Business dejen conectar un catálogo de Commerce Manager; si no, cargar a mano
+  con el PDF de WhatsApp.
 - Cuando entre un pedido: revisar al comprador con la huella de Dropi, confirmar por WhatsApp y crear el pedido en Dropi
   solo después de que Rigoberto confirme el resumen.
 
