@@ -47,3 +47,42 @@ Amua: hay copias de otros proveedores (2332145 es el mismo proveedor en paquete 
 Dropi que tenga registro INVIMA.
 
 Sin réplicas de marcas. Suplementos y productos de salud: sin prometer curas y, si es suplemento, con registro INVIMA.
+
+## Agregados el 17 nov 2026 (pedido de Rigoberto: más productos, con buena ganancia, y bastantes perfumes)
+
+Para la tienda y el catálogo de WhatsApp Business. Señal de venta usada: muchos proveedores con el mismo producto o mucho
+inventario. Meta: que cada venta deje unos $20.000 o más. Envío estimado $18.200 (no cotizado).
+Perfumes: solo Lattafa con precio y código de barras de original ($70.000–$95.000 de costo); se dejaron por fuera los que dicen
+«1.1» o cuestan $39.000–$55.000 (réplicas). Preguntar al proveedor si son originales antes del primer pedido.
+
+| Producto | Dropi id | Te cuesta | Precio de venta | Envío estimado | Te queda (aprox.) |
+|---|---|---|---|---|---|
+| Perfume Her Confession Lattafa EDP | 1920476 | $95.000 | $159.700 | $18.200 | $46.500 |
+| Perfume Fakhar Black Lattafa EDP (hombre) | 1742178 | $90.000 | $149.800 | $18.200 | $41.600 |
+| Perfume Khamrah Lattafa (caja de lujo) | 1208548 | $95.000 | $154.300 | $18.200 | $41.100 |
+| Perfume Bade'e Al Oud Amethyst Lattafa | 711970 | $95.000 | $154.300 | $18.200 | $41.100 |
+| Perfume Honor & Glory Lattafa 100 ml | 2189135 | $75.000 | $134.600 | $18.200 | $41.400 |
+| Perfume Art of Universe Lattafa 100 ml | 2264777 | $75.000 | $134.600 | $18.200 | $41.400 |
+| Perfume Afeef Lattafa | 2251092 | $85.000 | $144.700 | $18.200 | $41.500 |
+| Perfume Sehr Lattafa | 2258836 | $80.000 | $139.800 | $18.200 | $41.600 |
+| Perfume The Kingdom Lattafa (hombre) | 2095833 | $80.000 | $139.800 | $18.200 | $41.600 |
+| Perfume Vanilla Freak Lattafa | 2093420 | $70.000 | $129.700 | $18.200 | $41.500 |
+| Perfume Eclaire Lattafa 100 ml | 2187734 | $75.000 | $134.600 | $18.200 | $41.400 |
+| Perfume árabe Najah | 1287929 | $19.999 | $59.800 | $18.200 | $21.601 |
+| Perfume árabe Nafsi | 1862648 | $20.000 | $59.800 | $18.200 | $21.600 |
+| Proyector astronauta galaxia con parlante | 499112 | $50.000 | $99.700 | $18.200 | $31.500 |
+| Audífonos bluetooth inalámbricos | 2182173 | $25.000 | $64.800 | $18.200 | $21.600 |
+| Audífonos de diadema bluetooth P9 | 770644 | $27.000 | $69.300 | $18.200 | $24.100 |
+| Smartwatch X10 con 7 pulsos | 2241020 | $28.000 | $69.800 | $18.200 | $23.600 |
+| Cámara wifi tipo bombillo | 2082633 | $40.000 | $89.700 | $18.200 | $31.500 |
+| Mini cámara wifi recargable M10 | 1986084 | $60.000 | $119.700 | $18.200 | $41.500 |
+| Depiladora de luz pulsada IPL | 2273035 | $51.333 | $109.800 | $18.200 | $40.267 |
+| Cepillo alisador eléctrico | 907616 | $20.000 | $59.800 | $18.200 | $21.600 |
+| Depiladora eléctrica 4 en 1 | 559250 | $35.000 | $77.300 | $18.200 | $24.100 |
+| Masajeador de cuello y espalda | 1121099 | $78.000 | $139.700 | $18.200 | $43.500 |
+| Plancha vaporizadora de ropa | 2305230 | $54.800 | $109.700 | $18.200 | $36.700 |
+| Humidificador volcán con luz | 2185816 | $25.000 | $69.800 | $18.200 | $26.600 |
+| Humidificador luna | 1831225 | $30.000 | $74.600 | $18.200 | $26.400 |
+| Picatodo eléctrico 2 litros | 2195772 | $33.000 | $77.800 | $18.200 | $26.600 |
+| Picatodo eléctrico 4 en 1 recargable | 679131 | $38.900 | $84.700 | $18.200 | $27.600 |
+| Luces de Navidad solares con control | 2279551 | $25.000 | $64.800 | $18.200 | $21.600 |

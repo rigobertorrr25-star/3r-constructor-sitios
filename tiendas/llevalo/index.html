@@ -375,11 +375,13 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
   const IMG = "https://d39ru7awumhhs2.cloudfront.net/colombia/products/";
   const CATS = [
     { id: "todo", name: "Todo" },
+    { id: "perfumes", name: "Perfumes" },
+    { id: "belleza", name: "Belleza y bienestar" },
+    { id: "tecnologia", name: "Tecnología" },
     { id: "moto", name: "Moto y carro" },
     { id: "hogar", name: "Cocina y hogar" },
     { id: "herramientas", name: "Herramientas" },
-    { id: "belleza", name: "Belleza y bienestar" },
-    { id: "regalos", name: "Regalos" },
+    { id: "regalos", name: "Regalos y Navidad" },
     { id: "mascotas", name: "Mascotas" },
   ];
   // dropi: id del producto en Dropi (para crear el pedido)
@@ -388,12 +390,41 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
     { dropi: 375183, cat: "hogar", top: true, name: "Espejo redondo de pared (luna)", desc: "Espejo grande para la sala, la entrada o el baño.", price: 268400, sizes: [{ name: "70 cm", price: 268400, ref: 2508514 }, { name: "90 cm", price: 367300, ref: 2508515 }], img: IMG + "375183/1781792061IMG_2729.jpg" },
     { dropi: 2322158, cat: "belleza", top: true, name: "Carillas dentales removibles", desc: "Se ponen sobre tus dientes para lucir una sonrisa pareja en fotos y eventos. Te las quitas cuando quieras.", price: 42300, img: IMG + "2322158/b943ad57-7ca1-4a67-a2fd-8e0645d84d6f.png" },
     { dropi: 2312645, cat: "belleza", top: true, name: "Amua Vital Drops", desc: "Suplemento en gotas, en frasco con gotero. De lo más pedido esta semana.", price: 47300, img: IMG + "2312645/f1f995ac-203e-4865-a63b-1a5cb16cb092.jpg" },
+    { dropi: 1920476, vitrina: true, cat: "perfumes", name: "Perfume Her Confession Lattafa EDP", desc: "Perfume árabe Lattafa, eau de parfum. Dulce y elegante, de larga duración.", price: 159700, img: IMG + "1920476/1760619290Perfume_Her_Confession_Lattafa_EDP_tusaludybelleza.co_Tu_Salud_&_Belleza_01.jpg" },
+    { dropi: 1742178, cat: "perfumes", name: "Perfume Fakhar Black Lattafa EDP (hombre)", desc: "Perfume árabe Lattafa para hombre, eau de parfum. Fresco y amaderado.", price: 149800, img: IMG + "1742178/1743729624Perfume_Fakhar_Black_Lattafa_EDP_envioacasa.com_envio_a_casa_2.png" },
+    { dropi: 1208548, vitrina: true, cat: "perfumes", name: "Perfume Khamrah Lattafa (caja de lujo)", desc: "Perfume árabe Lattafa unisex, cálido y especiado. Viene en caja de lujo, listo para regalar.", price: 154300, img: IMG + "1208548/17794931311757532289Captura-dropicup.png" },
+    { dropi: 711970, cat: "perfumes", name: "Perfume Bade'e Al Oud Amethyst Lattafa", desc: "Perfume árabe Lattafa unisex, floral y amaderado.", price: 154300, img: IMG + "711970/1710454524badee-al-oud-amethyst-lattafa-.webp" },
+    { dropi: 2189135, vitrina: true, cat: "perfumes", name: "Perfume Honor & Glory Lattafa 100 ml", desc: "Perfume árabe Bade'e Al Oud Honor & Glory, 100 ml. Unisex, dulce y especiado.", price: 134600, img: IMG + "2189135/1782830065HONOR1.JPG" },
+    { dropi: 2264777, cat: "perfumes", name: "Perfume Art of Universe Lattafa 100 ml", desc: "Perfume árabe Lattafa unisex de 100 ml, frutal y moderno.", price: 134600, img: IMG + "2264777/a2bc95eb-e3e9-47fd-864d-7cacd6c910eb.jpg" },
+    { dropi: 2251092, cat: "perfumes", name: "Perfume Afeef Lattafa", desc: "Perfume árabe Lattafa unisex, suave y floral.", price: 144700, img: IMG + "2251092/dc98f7b0-fe4e-4bbc-995d-9cb32886b870.jpg" },
+    { dropi: 2258836, cat: "perfumes", name: "Perfume Sehr Lattafa", desc: "Perfume árabe Lattafa unisex, fresco y elegante.", price: 139800, img: IMG + "2258836/4c68e520-e28c-4eba-b094-191c9f346544.png" },
+    { dropi: 2095833, cat: "perfumes", name: "Perfume The Kingdom Lattafa (hombre)", desc: "Perfume árabe Lattafa para hombre, intenso y de larga duración.", price: 139800, img: IMG + "2095833/1772195921132.png" },
+    { dropi: 2093420, cat: "perfumes", name: "Perfume Vanilla Freak Lattafa", desc: "Perfume árabe Lattafa con notas de vainilla, dulce y cálido.", price: 129700, img: IMG + "2093420/1771970388vanilla%20lattafa.jpg" },
+    { dropi: 2187734, cat: "perfumes", name: "Perfume Eclaire Lattafa 100 ml", desc: "Perfume árabe Lattafa de 100 ml, dulce tipo postre, para mujer.", price: 134600, img: IMG + "2187734/1782511067shopping%20-%202026-06-26T165722.796.webp" },
+    { dropi: 1287929, vitrina: true, cat: "perfumes", name: "Perfume árabe Najah", desc: "Perfume árabe concentrado, aroma intenso que dura todo el día.", price: 59800, img: IMG + "1287929/1776168959641384200_2149176329185921_8696290083962438714_n.jpg" },
+    { dropi: 1862648, cat: "perfumes", name: "Perfume árabe Nafsi", desc: "Perfume árabe concentrado, aroma intenso y elegante.", price: 59800, img: IMG + "1862648/1751065534ChatGPT%20Image%2027%20jun%202025,%2006_04_38%20p.m..png" },
+    { dropi: 499112, vitrina: true, cat: "tecnologia", name: "Proyector astronauta galaxia con parlante", desc: "Llena el cuarto de estrellas y nebulosas. Con parlante bluetooth. Ideal para niños y regalo.", price: 99700, img: IMG + "499112/16999915132.jpg" },
+    { dropi: 2182173, cat: "tecnologia", name: "Audífonos bluetooth inalámbricos", desc: "Audífonos inalámbricos con estuche de carga. Para música y llamadas.", price: 64800, img: IMG + "2182173/1781976551GGGG.jpg" },
+    { dropi: 770644, cat: "tecnologia", name: "Audífonos de diadema bluetooth P9", desc: "Audífonos de diadema inalámbricos, plegables, con micrófono.", price: 69300, img: IMG + "770644/1712890413gsc_121751346_3168857_3.webp" },
+    { dropi: 2241020, vitrina: true, cat: "tecnologia", name: "Smartwatch X10 con 7 pulsos", desc: "Reloj inteligente con 7 pulsos para cambiarle el estilo. Notificaciones y actividad.", price: 69800, img: IMG + "2241020/b73d1f5a-13df-4fdc-ab00-0071f52a4620.jpeg" },
+    { dropi: 2082633, vitrina: true, cat: "tecnologia", name: "Cámara wifi tipo bombillo", desc: "Se enrosca como un bombillo y ves tu casa desde el celular.", price: 89700, img: IMG + "2082633/1770924899D_NQ_NP_2X_879816-MLA92458755680_092025-F.webp" },
+    { dropi: 1986084, cat: "tecnologia", name: "Mini cámara wifi recargable M10", desc: "Cámara pequeña y recargable que ves desde el celular. Para la casa o el negocio.", price: 119700, img: IMG + "1986084/1762495100Image_2025-11-07_00-57-46.png" },
+    { dropi: 2273035, vitrina: true, cat: "belleza", name: "Depiladora de luz pulsada IPL", desc: "Depiladora de luz pulsada para usar en casa.", price: 109800, img: IMG + "2273035/426fb5b7-ea02-4db0-a4ab-8f1dca1afda6.jpg" },
+    { dropi: 907616, cat: "belleza", name: "Cepillo alisador eléctrico", desc: "Alisa el cabello mientras lo peinas.", price: 59800, img: IMG + "907616/1717729594410073238_6957053364389729_5131444626954844667_n.jpg" },
+    { dropi: 559250, cat: "belleza", name: "Depiladora eléctrica 4 en 1", desc: "Con cabezales para cuerpo, cejas, nariz y rostro. Recargable.", price: 77300, img: IMG + "559250/1702492946Dise%C3%B1o%20sin%20t%C3%ADtulo%20-%202023-12-12T135221.877.png" },
+    { dropi: 1121099, vitrina: true, cat: "belleza", name: "Masajeador de cuello y espalda", desc: "Masaje para cuello, hombros y espalda en casa o en la oficina.", price: 139700, img: IMG + "1121099/1724723714WhatsApp%20Image%202024-08-26%20at%203.03.42%20PM.jpeg" },
+    { dropi: 2305230, vitrina: true, cat: "hogar", name: "Plancha vaporizadora de ropa", desc: "Quita las arrugas con vapor sin tabla de planchar. Rápida y fácil.", price: 109700, img: IMG + "2305230/5828af41-14e6-434e-b044-eaade0be8d83.jpeg" },
+    { dropi: 2185816, cat: "hogar", name: "Humidificador volcán con luz", desc: "Humidificador y lámpara con efecto de volcán. Ambienta y decora.", price: 69800, img: IMG + "2185816/17824162126451a6d2-3574-4fd3-901f-c7139f2695a7%20(1).webp" },
+    { dropi: 1831225, cat: "hogar", name: "Humidificador luna", desc: "Humidificador con luz en forma de luna. Decora y ambienta el cuarto.", price: 74600, img: IMG + "1831225/1748142648Captura%20de%20pantalla%202025-05-24%20214051.png" },
+    { dropi: 2195772, cat: "hogar", name: "Picatodo eléctrico 2 litros", desc: "Pica carne, verduras y cebolla en segundos.", price: 77800, img: IMG + "2195772/1783546079Captura%20de%20pantalla%202026-07-07%20113628.png" },
+    { dropi: 679131, cat: "hogar", name: "Picatodo eléctrico 4 en 1 recargable", desc: "Pica, tritura y ralla sin cable. Recargable.", price: 84700, img: IMG + "679131/1709148907picatodo-electrico-4-en-1-recargable-vanidades-am-1634809986.webp" },
+    { dropi: 2279551, cat: "regalos", name: "Luces de Navidad solares con control", desc: "Luces que se cargan con el sol, con control para cambiar el efecto.", price: 64800, img: IMG + "2279551/f1d20302-119c-4de8-b4fe-af798ebef495.webp" },
     { dropi: 5417, cat: "moto", name: "Restaurador de partes negras 250 ml", desc: "Devuelve el negro a plásticos opacos de moto y carro.", price: 48700, refPhoto: true, img: "img/5417.jpg" },
-    { dropi: 2155730, cat: "moto", name: "Hidrolavadora 6 chorros + mini aspiradora", desc: "Lava la moto o el carro y aspira por dentro.", price: 107300, img: IMG + "2155730/1779374038Hidrolavadora%206%20chorros%20mas%20Aspiradora.jpg" },
+    { dropi: 2155730, vitrina: true, cat: "moto", name: "Hidrolavadora 6 chorros + mini aspiradora", desc: "Lava la moto o el carro y aspira por dentro.", price: 107300, img: IMG + "2155730/1779374038Hidrolavadora%206%20chorros%20mas%20Aspiradora.jpg" },
     { dropi: 1947192, cat: "moto", name: "Compresor de aire inalámbrico", desc: "Infla llantas de moto, carro y bicicleta donde estés.", price: 97400, img: IMG + "1947192/175936901671.webp" },
     { dropi: 2135050, cat: "moto", name: "Intercomunicador para casco Q58", desc: "Habla y escucha música en la moto con manos libres.", price: 117600, img: IMG + "2135050/17768278971000628221.jpg" },
     { dropi: 1427314, cat: "moto", name: "Candado para moto", desc: "Asegura tu moto cuando la dejas parqueada.", price: 67300, img: IMG + "1427314/1734546511Simple%20Instagram%20Frame%20Template%20Instagram%20Post%20%20(17).png" },
-    { dropi: 931275, cat: "hogar", name: "Set de 7 cuchillos con base y tabla", desc: "Cuchillos en acero, base y tabla para picar.", price: 77400, colors: ["Rosado", "Azul", "Verde"], img: IMG + "931275/1734719133Simple%20Instagram%20Frame%20Template%20Instagram%20Post%20%20(33).png" },
+    { dropi: 931275, vitrina: true, cat: "hogar", name: "Set de 7 cuchillos con base y tabla", desc: "Cuchillos en acero, base y tabla para picar.", price: 77400, colors: ["Rosado", "Azul", "Verde"], img: IMG + "931275/1734719133Simple%20Instagram%20Frame%20Template%20Instagram%20Post%20%20(33).png" },
     { dropi: 2162882, cat: "hogar", name: "Juego de ollas 13 piezas", desc: "Ollas, tapas y utensilios para la cocina.", price: 96800, img: IMG + "2162882/1780078054JUEGO%20DE%20OLLAS%2013%20NEGRO.webp" },
     { dropi: 2316315, cat: "hogar", name: "Organizador de cocina 2 niveles", desc: "Bandejas deslizables para debajo del lavaplatos o la alacena.", price: 126700, img: IMG + "2316315/fd28f061-20d0-4a33-b68c-80a83ef86e56.webp" },
     { dropi: 2222432, cat: "hogar", name: "Colador escurridor giratorio", desc: "Lava y escurre frutas y verduras sin mojarte.", price: 63300, img: IMG + "2222432/4647368b-f427-462f-802d-bede2f9e28ea.webp" },
@@ -401,14 +432,16 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
     { dropi: 2139745, cat: "hogar", name: "Licuadora portátil recargable", desc: "Batidos y jugos donde estés. Trae dos vasos.", price: 53600, img: IMG + "2139745/1777331143image-9b408f73f74b4889ab322346ae215a85.webp" },
     { dropi: 2055149, cat: "herramientas", name: "Destornillador inalámbrico con accesorios", desc: "Arma, ajusta y repara sin esfuerzo. Buen regalo para papá.", price: 76300, img: IMG + "2055149/1769551538images%20(25).jpg" },
     { dropi: 2238229, cat: "herramientas", name: "Adaptador angular para taladro", desc: "Llega a tornillos en rincones donde el taladro no cabe.", price: 57800, img: IMG + "2238229/3286b4b1-9fa2-48eb-a0b3-fc26d4969a14.gif", cardImg: "img/2238229.jpg" },
-    { dropi: 1915585, cat: "belleza", name: "Tina spa para pies plegable", desc: "Hidromasaje para pies en casa. Se pliega para guardarla.", price: 136400, img: IMG + "1915585/1763231417TINA%20PARA%20PIES%20PLEGABLE%20SML%20SQ-806%209.JPG" },
+    { dropi: 1915585, vitrina: true, cat: "belleza", name: "Tina spa para pies plegable", desc: "Hidromasaje para pies en casa. Se pliega para guardarla.", price: 136400, img: IMG + "1915585/1763231417TINA%20PARA%20PIES%20PLEGABLE%20SML%20SQ-806%209.JPG" },
     { dropi: 1885151, cat: "belleza", name: "Masajeador de percusión 4 en 1", desc: "Relaja espalda, piernas y cuello. Trae 4 cabezales.", price: 87300, img: IMG + "1885151/1753893446Masajeador4-1.jpg" },
     { dropi: 2151602, cat: "belleza", name: "Cepillo secador térmico", desc: "Seca y peina al mismo tiempo.", price: 62700, img: IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%C2%A0m..png", imgTry: [IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%C2%A0m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%E2%80%AFm..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%C2%A0p.%C2%A0m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%20p.%C2%A0m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%20m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%20p.%20m..png", IMG + "1771574/1745604025CEPILLO%20SECADOR%20AGUACATE.jpg"] },
-    { dropi: 2237413, cat: "regalos", name: "Micrófono de solapa inalámbrico doble", desc: "Para grabar videos y en vivo con buen sonido.", price: 97300, img: IMG + "2237413/dca89646-f164-47fb-b9b3-8e339b6f9847.jpg" },
-    { dropi: 2209683, cat: "regalos", name: "Lámpara LED con parlante bluetooth", desc: "Lámpara, parlante y cargador inalámbrico en uno.", price: 156300, img: IMG + "2209683/1784761240w=1200,h=1200,fit=pad.jpg" },
+    { dropi: 2237413, cat: "tecnologia", name: "Micrófono de solapa inalámbrico doble", desc: "Para grabar videos y en vivo con buen sonido.", price: 97300, img: IMG + "2237413/dca89646-f164-47fb-b9b3-8e339b6f9847.jpg" },
+    { dropi: 2209683, cat: "tecnologia", name: "Lámpara LED con parlante bluetooth", desc: "Lámpara, parlante y cargador inalámbrico en uno.", price: 156300, img: IMG + "2209683/1784761240w=1200,h=1200,fit=pad.jpg" },
     { dropi: 2286139, cat: "regalos", name: "Tren navideño eléctrico 30 piezas", desc: "El regalo de diciembre para los niños de la casa.", price: 146300, img: IMG + "2286139/9eca0a30-b00f-4281-ae1e-862c40ea5418.png" },
     { dropi: 1634168, cat: "mascotas", name: "Cepillo de vapor para mascotas + removedor", desc: "Quita el pelo suelto de tu perro o gato y de la ropa.", price: 58300, img: IMG + "1634168/17373953061725037036COMBO.png" },
   ];
+  // Vitrina de arriba: solo los más vendidos y una selección (vitrina: true); la lista completa va abajo.
+  const SHOW = PRODUCTS.filter((p) => p.top || p.vitrina);
 
   const cop = (n) => "$" + n.toLocaleString("es-CO");
   const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -512,7 +545,7 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   function buildShow() {
     const show = document.getElementById("show");
-    show.insertAdjacentHTML("beforeend", PRODUCTS.map((p, i) => `
+    show.insertAdjacentHTML("beforeend", SHOW.map((p, i) => `
       <div class="it" data-it="${i}" role="button" tabindex="-1" aria-label="${esc(p.name)}">
         <div class="card3"><img src="${p.img}" alt="${esc(p.name)}" loading="${i < 4 ? "eager" : "lazy"}" onerror="noImg(this)">${p.top ? '<span class="badge">Más vendido</span>' : ""}</div>
       </div>`).join(""));
@@ -520,7 +553,7 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
     requestAnimationFrame(tick);
   }
   function place() {
-    const n = PRODUCTS.length, w = Math.min(document.getElementById("show").clientWidth || innerWidth, 900);
+    const n = SHOW.length, w = Math.min(document.getElementById("show").clientWidth || innerWidth, 900);
     document.querySelectorAll(".it").forEach((el) => {
       let d = Number(el.dataset.it) - pos;
       d = ((d % n) + n) % n; if (d > n / 2) d -= n;
@@ -549,7 +582,7 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
     requestAnimationFrame(tick);
   }
   function renderInfo() {
-    const p = PRODUCTS[cur];
+    const p = SHOW[cur];
     const opts = p.sizes ? p.sizes.map((z) => z.name) : (p.colors || []);
     const price = p.sizes ? p.sizes[opt].price : p.price;
     document.getElementById("info").innerHTML = `<div class="fade" style="display:grid;gap:8px;justify-items:center">
@@ -558,11 +591,11 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
       <p class="fdesc">${esc(p.desc)} Envío gratis.</p>
       <button class="btn btn-main" type="button" data-order="${cur}">Pedir · pagas al recibir</button>
       <p class="assure">Te confirmamos por WhatsApp antes de enviar.</p>
-      <div class="dots">${PRODUCTS.map((_, i) => `<i class="${i === cur ? "on" : ""}"></i>`).join("")}</div></div>`;
+      <div class="dots">${SHOW.map((_, i) => `<i class="${i === cur ? "on" : ""}"></i>`).join("")}</div></div>`;
   }
   // ir a un producto (al tocarlo, con flechas o deslizando) y pausar un rato para que lo vean
   function go(i) {
-    const n = PRODUCTS.length; let d = ((i - pos) % n + n) % n; if (d > n / 2) d -= n;
+    const n = SHOW.length; let d = ((i - pos) % n + n) % n; if (d > n / 2) d -= n;
     target = Math.round(pos + d);
     pauseUntil = performance.now() + 7000;
   }
@@ -582,7 +615,7 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
     else if (t.dataset.step) go(Math.round(pos) + Number(t.dataset.step));
     else if (t.dataset.opt) { opt = Number(t.dataset.opt); hold(); renderInfo(); }
     else if (t.dataset.order !== undefined) {
-      const p = PRODUCTS[Number(t.dataset.order)];
+      const p = SHOW[Number(t.dataset.order)];
       hold();
       openSheet(p);
       if (p.sizes) { document.getElementById("size").value = String(opt); renderQty(); }
