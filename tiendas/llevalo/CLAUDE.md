@@ -54,5 +54,11 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
 - **Descargar imágenes** (5 nov 2026): en `#publicar`, `#historias` y `#top5` cada tarjeta tiene «Descargar imagen», que la
   dibuja en un canvas (1080×1080 o 1080×1920) y la guarda; en el celular abre el menú de compartir (galería, WhatsApp). Funciona
   porque el CDN de Dropi responde `access-control-allow-origin: *` (comprobado el 5 nov 2026); si eso cambia, solo queda la captura.
+- **Catálogo para publicar** (17 nov 2026, pedido de Rigoberto): PDF `3R-Market-catalogo-para-publicar.pdf` (guía para publicar en
+  otras ciudades, plan semanal por ciudad, mensajes y cada producto con imagen, título, precio y texto) y ZIP con las imágenes
+  cuadradas y verticales. Se arma en `catalogo/` (ignorado por git) con scripts de Playwright que usan `drawCard` de la tienda.
+  Desde el 17 nov la sesión usa el entorno «3r-constructor-sitios», que deja bajar las fotos del CDN de Dropi
+  (`d39ru7awumhhs2.cloudfront.net`) y abrir la tienda. El adaptador angular es un GIF que empieza en negro: para las imágenes
+  descargables usa `cardImg: "img/2238229.jpg"`. Si cambian productos o precios, rehacer el catálogo.
 - Cuando entre un pedido: revisar al comprador con la huella de Dropi, confirmar por WhatsApp y crear el pedido en Dropi
   solo después de que Rigoberto confirme el resumen.

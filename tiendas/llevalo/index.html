@@ -366,7 +366,7 @@
     { dropi: 1925861, cat: "hogar", name: "Trapero autoescurrible de microfibra", desc: "Trapea y escurre sin tocar el agua sucia.", price: 58400, img: IMG + "1925861/1757957144D_NQ_NP_2X_933805-MCO78179304008_082024-F.webp" },
     { dropi: 2139745, cat: "hogar", name: "Licuadora portátil recargable", desc: "Batidos y jugos donde estés. Trae dos vasos.", price: 53600, img: IMG + "2139745/1777331143image-9b408f73f74b4889ab322346ae215a85.webp" },
     { dropi: 2055149, cat: "herramientas", name: "Destornillador inalámbrico con accesorios", desc: "Arma, ajusta y repara sin esfuerzo. Buen regalo para papá.", price: 76300, img: IMG + "2055149/1769551538images%20(25).jpg" },
-    { dropi: 2238229, cat: "herramientas", name: "Adaptador angular para taladro", desc: "Llega a tornillos en rincones donde el taladro no cabe.", price: 57800, img: IMG + "2238229/3286b4b1-9fa2-48eb-a0b3-fc26d4969a14.gif" },
+    { dropi: 2238229, cat: "herramientas", name: "Adaptador angular para taladro", desc: "Llega a tornillos en rincones donde el taladro no cabe.", price: 57800, img: IMG + "2238229/3286b4b1-9fa2-48eb-a0b3-fc26d4969a14.gif", cardImg: "img/2238229.jpg" },
     { dropi: 1915585, cat: "belleza", name: "Tina spa para pies plegable", desc: "Hidromasaje para pies en casa. Se pliega para guardarla.", price: 136400, img: IMG + "1915585/1763231417TINA%20PARA%20PIES%20PLEGABLE%20SML%20SQ-806%209.JPG" },
     { dropi: 1885151, cat: "belleza", name: "Masajeador de percusión 4 en 1", desc: "Relaja espalda, piernas y cuello. Trae 4 cabezales.", price: 87300, img: IMG + "1885151/1753893446Masajeador4-1.jpg" },
     { dropi: 2151602, cat: "belleza", name: "Cepillo secador térmico", desc: "Seca y peina al mismo tiempo.", price: 62700, img: IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%C2%A0m..png", imgTry: [IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%C2%A0m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%E2%80%AFm..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%C2%A0p.%C2%A0m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%20p.%C2%A0m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%20m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%20p.%20m..png", IMG + "1771574/1745604025CEPILLO%20SECADOR%20AGUACATE.jpg"] },
@@ -661,16 +661,17 @@
     x.font = '64px "Archivo Black"'; x.fillStyle = "#fff"; x.fillText("3R", 70, 60);
     const w3 = x.measureText("3R ").width; x.font = '800 40px Archivo'; x.fillStyle = G; x.fillText("MARKET", 70 + w3, 80);
     if (p.top) { x.font = '800 34px Archivo'; const t = "Más vendido", tw = x.measureText(t).width + 40; rr(x, W - 70 - tw, 62, tw, 60, 12); x.fill(); x.fillStyle = "#0b0b0b"; x.fillText(t, W - 70 - tw + 20, 74); }
-    const ps = story ? W - 140 : 460, px = 70, py = story ? 200 : (H - band - ps) / 2 + 40;
+    const ps = story ? 820 : 460, px = story ? (W - ps) / 2 : 70, py = story ? 190 : (H - band - ps) / 2 + 40;
     x.fillStyle = "#fff"; rr(x, px, py, ps, ps, 28); x.fill();
-    const im = await loadImg(p.img);
+    const im = await loadImg(p.cardImg || p.img);
     if (im) { const s = Math.min((ps * 0.9) / im.width, (ps * 0.9) / im.height), iw = im.width * s, ih = im.height * s; x.drawImage(im, px + (ps - iw) / 2, py + (ps - ih) / 2, iw, ih); }
     if (p.refPhoto) { x.font = '600 26px Archivo'; const t = "Imagen de referencia", tw = x.measureText(t).width + 24; x.fillStyle = "rgba(0,0,0,.72)"; rr(x, px + 16, py + ps - 58, tw, 42, 8); x.fill(); x.fillStyle = "#fff"; x.fillText(t, px + 28, py + ps - 50); }
     let tx = story ? 70 : px + ps + 50, ty = story ? py + ps + 70 : py + 10, tw = story ? W - 140 : W - tx - 60;
-    x.fillStyle = "#fff"; x.font = (story ? 84 : 62) + 'px "Archivo Black"';
-    ty = wrap(x, p.name, tx, ty, tw, story ? 92 : 68, 4) + 20;
+    let nf = story ? 84 : 62; x.fillStyle = "#fff";
+    do { x.font = nf + 'px "Archivo Black"'; } while (Math.max(...p.name.split(" ").map((w) => x.measureText(w).width)) > tw && (nf -= 4) > 30);
+    ty = wrap(x, p.name, tx, ty, tw, Math.round(nf * 1.1), 4) + 20;
     x.fillStyle = "#d1d5db"; x.font = '500 ' + (story ? 40 : 32) + 'px Archivo';
-    ty = wrap(x, p.desc, tx, ty, tw, story ? 54 : 44, 3) + 26;
+    ty = wrap(x, p.desc, tx, ty, tw, story ? 54 : 44, 4) + 26;
     if (p.sizes) { x.fillStyle = "#fff"; x.font = '700 ' + (story ? 38 : 30) + 'px Archivo'; x.fillText(p.sizes.map((z) => z.name + ": " + cop(z.price)).join("  ·  "), tx, ty); ty += story ? 60 : 46; }
     x.fillStyle = G; x.font = (story ? 120 : 92) + 'px "Archivo Black"'; x.fillText((p.sizes ? "Desde " : "") + cop(p.price), tx, ty, tw);
     x.fillStyle = G; x.fillRect(0, H - band, W, band);
@@ -686,7 +687,7 @@
     try {
       const c = await drawCard(p, story);
       const blob = await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.92));
-      const name = "3r-market-" + p.name.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + (story ? "-historia" : "") + ".jpg";
+      const name = "3r-market-" + p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + (story ? "-historia" : "") + ".jpg";
       const file = new File([blob], name, { type: "image/jpeg" });
       if (navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia("(pointer: coarse)").matches) {
         await navigator.share({ files: [file], title: p.name }).catch(() => {});
