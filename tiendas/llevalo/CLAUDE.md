@@ -70,6 +70,10 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
 - **Cambios por paquetes** (17 nov 2026, Rigoberto: «recuerda hacer cambio en la página después de [~10] cambios o cuando yo te
   diga»): los cambios a la tienda se juntan en un solo PR en borrador (título «paquete de cambios (N de ~10)») y se le pide unirlo
   solo al llegar a ~10 cambios o cuando él lo pida. La cuenta va en `PENDIENTES.md`. Paquete en curso: PR #140.
+- **Barra de secciones** (17 nov 2026, Rigoberto pidió mejorar «el banner donde dice perfume y lo demás» y luego «quiero que se
+  deslice»; dijo «me gusta»): cada sección en tarjeta con foto redonda de un producto y «N productos», la escogida en negro con
+  verde neón, fija arriba al bajar (`position: sticky`), y se desliza sola de lado a lado (`slideChips`, se detiene 6 s al
+  tocarla, quieta con «reducir movimiento»). Mantener así.
 - Cuando entre un pedido: revisar al comprador con la huella de Dropi, confirmar por WhatsApp y crear el pedido en Dropi
   solo después de que Rigoberto confirme el resumen.
 
