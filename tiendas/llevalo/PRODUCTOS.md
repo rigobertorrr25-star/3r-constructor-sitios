@@ -64,7 +64,6 @@ Perfumes: solo Lattafa con precio y código de barras de original ($70.000–$95
 | Perfume The Kingdom Lattafa (hombre) | 2095833 | $80.000 | $139.800 | $18.200 | $41.600 |
 | Perfume Vanilla Freak Lattafa | 2093420 | $70.000 | $129.700 | $18.200 | $41.500 |
 | Perfume Eclaire Lattafa 100 ml | 2187734 | $75.000 | $134.600 | $18.200 | $41.400 |
-| Perfume árabe Najah | 1287929 | $19.999 | $59.800 | $18.200 | $21.601 |
 | Perfume árabe Nafsi | 1862648 | $20.000 | $59.800 | $18.200 | $21.600 |
 | Proyector astronauta galaxia con parlante | 499112 | $50.000 | $99.700 | $18.200 | $31.500 |
 | Audífonos bluetooth inalámbricos | 2182173 | $25.000 | $64.800 | $18.200 | $21.600 |
@@ -83,4 +82,4 @@ Perfumes: solo Lattafa con precio y código de barras de original ($70.000–$95
 | Picatodo eléctrico 4 en 1 recargable | 679131 | $38.900 | $84.700 | $18.200 | $27.600 |
 | Luces de Navidad solares con control | 2279551 | $25.000 | $64.800 | $18.200 | $21.600 |
 
-Quitados por Rigoberto (17 nov 2026, no le gustaron): colador escurridor giratorio (2222432) y trapero autoescurrible (1925861); adaptador angular para taladro (2238229); cepillo secador térmico (2151602).
+Quitados por Rigoberto (17 nov 2026, no le gustaron): colador escurridor giratorio (2222432) y trapero autoescurrible (1925861); adaptador angular para taladro (2238229); cepillo secador térmico (2151602); perfume árabe Najah (1287929).
