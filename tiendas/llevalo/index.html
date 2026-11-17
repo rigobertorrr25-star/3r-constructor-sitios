@@ -68,10 +68,19 @@
   .steps div { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 12px 14px; }
   .steps b { color: #ffb48a; }
 
-  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 18px; scrollbar-width: none; }
+  /* Barra de secciones: fija arriba al bajar, cada sección con foto y cuántos productos tiene */
+  .chips { position: sticky; top: 0; z-index: 20; display: flex; gap: 10px; overflow-x: auto; padding: 8px 16px 9px; margin: 0 -16px 16px; background: var(--bg); border-bottom: 1px solid var(--line); scrollbar-width: none; scroll-snap-type: x proximity; }
   .chips::-webkit-scrollbar { display: none; }
-  .chip { flex: none; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--line); background: #fff; font: 600 .95rem "Archivo", sans-serif; cursor: pointer; color: var(--text); }
+  .chip { flex: none; width: 84px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px 7px; border-radius: 14px; border: 1px solid var(--line); background: #fff; font: 700 .76rem/1.12 "Archivo", sans-serif; cursor: pointer; color: var(--text); text-align: center; scroll-snap-align: start; }
+  .chip .ic { width: 46px; height: 46px; border-radius: 50%; background: #fff; border: 2px solid var(--line); display: grid; place-items: center; overflow: hidden; }
+  .chip .ic img { width: 84%; height: 84%; object-fit: contain; }
+  .chip .ic svg { width: 22px; height: 22px; fill: var(--text); }
+  .chip .lb { min-height: 2.25em; display: flex; align-items: center; }
+  .chip .n { font-weight: 600; font-size: .68rem; color: var(--muted); }
   .chip[aria-pressed="true"] { background: var(--dark); color: #fff; border-color: var(--dark); }
+  .chip[aria-pressed="true"] .ic { border-color: var(--accent); }
+  .chip[aria-pressed="true"] .n { color: var(--accent); }
+  @media (min-width: 700px) { .chips { margin-inline: 0; padding-inline: 0; } .chip { width: 104px; } }
 
   .grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 48px; }
   @media (min-width: 700px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
@@ -452,8 +461,14 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
     box.innerHTML = `<div class="noimg">${esc(img.alt)}</div>`;
   }
   function renderChips() {
-    document.getElementById("chips").innerHTML = CATS.map((c) =>
-      `<button class="chip" type="button" data-cat="${c.id}" aria-pressed="${c.id === cat}">${c.name}</button>`).join("");
+    document.getElementById("chips").innerHTML = CATS.map((c) => {
+      const items = c.id === "todo" ? PRODUCTS : PRODUCTS.filter((p) => p.cat === c.id);
+      const pic = items.find((p) => p.top || p.vitrina) || items[0];
+      const ic = c.id === "todo"
+        ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>'
+        : `<img src="${pic.cardImg || pic.img}" alt="" loading="lazy">`;
+      return `<button class="chip" type="button" data-cat="${c.id}" aria-pressed="${c.id === cat}"><span class="ic">${ic}</span><span class="lb">${c.name}</span><span class="n">${items.length} productos</span></button>`;
+    }).join("");
   }
   function renderGrid() {
     const list = PRODUCTS.filter((p) => cat === "todo" || p.cat === cat);
@@ -494,7 +509,11 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
   document.addEventListener("click", (e) => {
     const t = e.target.closest("[data-cat],[data-pedir],[data-qty],#close");
     if (!t) return;
-    if (t.dataset.cat) { cat = t.dataset.cat; renderChips(); renderGrid(); }
+    if (t.dataset.cat) {
+      cat = t.dataset.cat; renderChips(); renderGrid();
+      const bar = document.getElementById("chips"), g = document.getElementById("grid");
+      if (g.getBoundingClientRect().top < bar.offsetHeight) scrollTo({ top: scrollY + g.getBoundingClientRect().top - bar.offsetHeight - 8, behavior: "smooth" });
+    }
     else if (t.dataset.pedir) openSheet(PRODUCTS.find((p) => String(p.dropi) === t.dataset.pedir));
     else if (t.dataset.qty) { qty = Number(t.dataset.qty); renderQty(); }
     else if (t.id === "close") document.getElementById("dlg").close();
