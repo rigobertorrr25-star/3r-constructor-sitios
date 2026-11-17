@@ -60,6 +60,13 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   Desde el 17 nov la sesión usa el entorno «3r-constructor-sitios», que deja bajar las fotos del CDN de Dropi
   (`d39ru7awumhhs2.cloudfront.net`) y abrir la tienda. El adaptador angular es un GIF que empieza en negro: para las imágenes
   descargables usa `cardImg: "img/2238229.jpg"`. Si cambian productos o precios, rehacer el catálogo.
+- **Más productos y catálogo de WhatsApp Business** (17 nov 2026, pedido de Rigoberto: «quiero más productos», «con buena
+  rentabilidad», «mete bastantes perfumes», «armar una tienda en mi WhatsApp» con un PDF «separado por secciones»): 29 productos
+  nuevos (53 en total; lista y ganancias en `PRODUCTOS.md`), secciones nuevas «Perfumes» y «Tecnología», «Regalos» pasa a
+  «Regalos y Navidad». La vitrina de arriba ya no muestra todos: solo `top: true` y los marcados `vitrina: true` (`SHOW`).
+  PDF `3R-Market-catalogo-WhatsApp.pdf` (guía para montar el catálogo y las colecciones + cada producto con foto, nombre, precio,
+  descripción, enlace y código `3R-<id de Dropi>`) y ZIP con fotos limpias por sección; se arma con `catwa.mjs` en `catalogo/`.
+  Rigoberto dijo (17 nov) que «hay muchos productos que no me gustan» pero no dijo cuáles: preguntarle antes de quitar.
 - Cuando entre un pedido: revisar al comprador con la huella de Dropi, confirmar por WhatsApp y crear el pedido en Dropi
   solo después de que Rigoberto confirme el resumen.
 
