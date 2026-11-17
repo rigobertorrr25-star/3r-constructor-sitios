@@ -65,7 +65,7 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   nuevos (53 en total; lista y ganancias en `PRODUCTOS.md`), secciones nuevas «Perfumes» y «Tecnología», «Regalos» pasa a
   «Regalos y Navidad». La vitrina de arriba ya no muestra todos: solo `top: true` y los marcados `vitrina: true` (`SHOW`).
   PDF `3R-Market-catalogo-WhatsApp.pdf` (guía para montar el catálogo y las colecciones + cada producto con foto, nombre, precio,
-  descripción, enlace y código `3R-<id de Dropi>`) y ZIP con fotos limpias por sección; se arma con `catwa.mjs` en `catalogo/`.
+  descripción, enlace y código `3R-<id de Dropi>`) y ZIP con fotos limpias por sección; se arma con `herramientas/catalogo-whatsapp.mjs` (pasos en `herramientas/LEEME.md`).
   Rigoberto dijo (17 nov) que «hay muchos productos que no me gustan» pero no dijo cuáles: preguntarle antes de quitar.
 - Cuando entre un pedido: revisar al comprador con la huella de Dropi, confirmar por WhatsApp y crear el pedido en Dropi
   solo después de que Rigoberto confirme el resumen.
