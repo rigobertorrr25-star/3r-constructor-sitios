@@ -58,8 +58,8 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   otras ciudades, plan semanal por ciudad, mensajes y cada producto con imagen, título, precio y texto) y ZIP con las imágenes
   cuadradas y verticales. Se arma en `catalogo/` (ignorado por git) con scripts de Playwright que usan `drawCard` de la tienda.
   Desde el 17 nov la sesión usa el entorno «3r-constructor-sitios», que deja bajar las fotos del CDN de Dropi
-  (`d39ru7awumhhs2.cloudfront.net`) y abrir la tienda. El adaptador angular es un GIF que empieza en negro: para las imágenes
-  descargables usa `cardImg: "img/2238229.jpg"`. Si cambian productos o precios, rehacer el catálogo.
+  (`d39ru7awumhhs2.cloudfront.net`) y abrir la tienda. Si una foto es un GIF que empieza en negro, usar `cardImg` con un cuadro fijo en `img/` (se hizo así con el adaptador
+  angular, quitado el 17 nov). Si cambian productos o precios, rehacer el catálogo.
 - **Más productos y catálogo de WhatsApp Business** (17 nov 2026, pedido de Rigoberto: «quiero más productos», «con buena
   rentabilidad», «mete bastantes perfumes», «armar una tienda en mi WhatsApp» con un PDF «separado por secciones»): 29 productos
   nuevos (53 en total; lista y ganancias en `PRODUCTOS.md`), secciones nuevas «Perfumes» y «Tecnología», «Regalos» pasa a
