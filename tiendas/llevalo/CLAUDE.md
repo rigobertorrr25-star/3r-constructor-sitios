@@ -84,6 +84,10 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   https://claude.ai/artifact/4QZrSHaz9of1V14bSryD1J (foto, botones Copiar, casilla «Ya lo subí»; `herramientas/pagina-whatsapp.mjs`,
   republicar el mismo archivo `catalogo/wpp-copiar.html` para no cambiar el enlace). El `.gitignore` es `/catalogo/` (antes
   `catalogo/` ignoraba también `img/catalogo/` y las fotos no se subieron en el PR #140).
+- **Plan de Marketplace** (17 nov 2026, Rigoberto: «ayúdame a publicar»): Marketplace en Colombia no se llena desde el catálogo de
+  Meta; se publica a mano. Página privada «Marketplace 3R Market»: https://claude.ai/artifact/PVQtoUhV9tDBU8jcjBcqQ2 (7 días × 5
+  publicaciones, una ciudad por día, foto + título con ciudad + precio + categoría + descripción para copiar, casilla «Ya lo
+  publiqué»). Se arma con `herramientas/pagina-marketplace.mjs` → `catalogo/marketplace.html` (republicar el mismo archivo).
 - **Píxel de Meta** (17 nov 2026, Rigoberto: «sí quiero ponerlo»): píxel `1624806965361371`, instalado **solo con permiso**: el
   aviso de abajo pregunta «¿Aceptas cookies de Meta…?» con «No, gracias» / «Aceptar» (se guarda en `localStorage`
   `3rmarket-cookies` = si/no); el enlace «Cookies» del pie lo vuelve a mostrar. Si acepta: PageView, `ViewContent` al abrir un
