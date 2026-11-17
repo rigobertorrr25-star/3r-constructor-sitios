@@ -275,6 +275,8 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
 .storage-note button { flex: none; padding: 7px 12px; border: 0; border-radius: 10px; background: #39ff14; color: #0b0b0b;
   font: inherit; font-weight: 600; cursor: pointer; }
 .storage-note .lk { padding: 0; background: none; color: inherit; font-weight: 400; text-decoration: underline; }
+.storage-note .note-btns { flex: none; display: flex; flex-direction: column; gap: 6px; }
+.storage-note .no { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.5); }
 </style>
 </head>
 <body>
@@ -330,7 +332,7 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
   <div class="wrap">
     <p><b style="color:var(--text)">3R Market</b> · Pedidos contra entrega a toda Colombia · WhatsApp 310 790 7194</p>
     <p style="margin-top:6px">Tus datos se usan solo para entregar tu pedido.</p>
-    <p class="legal-links" style="margin-top:10px;justify-content:flex-start"><button type="button" data-legal="privacidad">Política de privacidad</button><button type="button" data-legal="terminos">Términos y condiciones</button></p>
+    <p class="legal-links" style="margin-top:10px;justify-content:flex-start"><button type="button" data-legal="privacidad">Política de privacidad</button><button type="button" data-legal="terminos">Términos y condiciones</button><button type="button" data-cookies>Cookies</button></p>
   </div>
 </footer>
 
@@ -512,6 +514,7 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
   }
   function openSheet(p) {
     current = p; qty = 1;
+    window.track3r && window.track3r("ViewContent", { content_ids: ["3R-" + p.dropi], content_type: "product", content_name: p.name, value: p.price, currency: "COP" });
     const img = document.getElementById("d-img");
     img.style.visibility = ""; img.src = p.img; img.alt = p.name;
     document.getElementById("d-name").textContent = p.name;
@@ -567,6 +570,7 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
       `Dirección: ${v("direccion")}`,
       v("barrio") ? `Barrio / referencia: ${v("barrio")}` : null,
     ].filter((l) => l !== null).join("\n");
+    window.track3r && window.track3r("Lead", { content_ids: ["3R-" + current.dropi + (current.sizes ? "-" + size().ref : "")], content_type: "product", content_name: current.name, value: unit() * qty, currency: "COP" });
     window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
   });
 
@@ -808,7 +812,7 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
   <div class="legal-in">
     <button class="legal-x" type="button" aria-label="Cerrar" data-close>×</button>
     <h2 id="legal-privacidad-t">Política de privacidad</h2>
-    <p>Vigente desde el 8 de noviembre de 2026. Cumple la Ley 1581 de 2012 y el Decreto 1377 de 2013 de Colombia.</p>
+    <p>Vigente desde el 8 de noviembre de 2026; actualizada el 17 de noviembre de 2026 (cookies de Meta). Cumple la Ley 1581 de 2012 y el Decreto 1377 de 2013 de Colombia.</p>
     <h3>1. Quién es el responsable</h3>
 <p>Rigoberto Rincón, bajo la marca 3R Market, Cartagena, Colombia. Contacto: <a href="https://wa.me/573107907194" target="_blank" rel="noopener">WhatsApp 310 790 7194</a>.</p>
 <h3>2. Qué datos recogemos</h3>
@@ -816,7 +820,7 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
 <h3>3. Para qué los usamos</h3>
 <p>Solo para confirmar y entregar tu pedido. Los compartimos con el proveedor y la transportadora que lo llevan a tu casa. No los vendemos ni los usamos para publicidad sin tu permiso.</p>
 <h3>4. Cookies</h3>
-<p>No usamos cookies ni guardamos nada en tu navegador. Las letras de la página se cargan desde Google Fonts y las fotos desde el proveedor.</p>
+<p>Solo si aceptas en el aviso, usamos el píxel de Meta (Facebook e Instagram). Guarda cookies en tu navegador y le envía a Meta qué páginas y productos ves y si envías un pedido (sin tu nombre, celular ni dirección), para medir las visitas y mostrarte nuestros productos en anuncios. Si no aceptas, no se usa. Puedes cambiar tu elección cuando quieras con el enlace «Cookies» al final de la página. También guardamos en tu navegador tu elección sobre las cookies. Las letras de la página se cargan desde Google Fonts y las fotos desde el proveedor.</p>
 <h3>5. Tus derechos</h3>
 <p>Puedes pedirnos sin costo que te digamos qué datos tuyos tenemos, que los corrijamos o que los borremos, por WhatsApp. Respondemos en máximo 10 días hábiles (consultas) o 15 (reclamos). También puedes acudir a la Superintendencia de Industria y Comercio.</p>
 <h3>6. Cuánto tiempo los guardamos</h3>
@@ -845,8 +849,8 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
   </div>
 </dialog>
 <div class="storage-note" id="storage-note" role="region" aria-label="Aviso de cookies" hidden>
-  <span>No usamos cookies. Tus datos solo viajan por WhatsApp cuando haces un pedido. <button type="button" class="lk" data-legal="privacidad">Más información</button></span>
-  <button type="button" id="storage-ok">Entendido</button>
+  <span>¿Aceptas cookies de Meta (Facebook e Instagram)? Nos ayudan a medir las visitas y a mostrarte nuestros productos en anuncios. Tus datos del pedido solo viajan por WhatsApp. <button type="button" class="lk" data-legal="privacidad">Más información</button></span>
+  <span class="note-btns"><button type="button" id="storage-no" class="no">No, gracias</button><button type="button" id="storage-ok">Aceptar</button></span>
 </div>
 <script>
 (function () {
@@ -860,12 +864,25 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
     d.addEventListener('click', function (e) { if (e.target === d) d.close(); });
   });
   var h = location.hash.slice(1); if (h === 'privacidad' || h === 'terminos') open(h);
-  // Aviso: sale una vez por navegador.
-  var KEY = '3rmarket-aviso-ok', note = document.getElementById('storage-note');
-  try { if (!localStorage.getItem(KEY)) note.hidden = false; } catch (e) {}
-  document.getElementById('storage-ok').addEventListener('click', function () {
-    note.hidden = true; try { localStorage.setItem(KEY, '1'); } catch (e) {}
-  });
+  // Píxel de Meta (17 nov 2026, pedido de Rigoberto): solo se carga si el cliente acepta (Ley 1581).
+  var PIXEL = '1624806965361371', loaded = false;
+  function loadPixel() {
+    if (loaded) return; loaded = true;
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+    s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', PIXEL); fbq('track', 'PageView');
+  }
+  // La tienda llama window.track3r('ViewContent' | 'Lead', datos); no hace nada si el cliente no aceptó.
+  window.track3r = function (ev, data) { if (loaded && window.fbq) fbq('track', ev, data); };
+  // Aviso: sale hasta que el cliente escoja; la elección se puede cambiar desde el pie de página.
+  var KEY = '3rmarket-cookies', note = document.getElementById('storage-note'), choice = null;
+  try { choice = localStorage.getItem(KEY); } catch (e) {}
+  if (choice === 'si') loadPixel(); else if (choice !== 'no') note.hidden = false;
+  function decide(v) { note.hidden = true; try { localStorage.setItem(KEY, v); } catch (e) {} if (v === 'si') loadPixel(); else if (loaded) location.reload(); }
+  document.getElementById('storage-ok').addEventListener('click', function () { decide('si'); });
+  document.getElementById('storage-no').addEventListener('click', function () { decide('no'); });
+  document.addEventListener('click', function (e) { if (e.target.closest('[data-cookies]')) note.hidden = false; });
 })();
 </script>
 </body>
