@@ -58,8 +58,8 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   otras ciudades, plan semanal por ciudad, mensajes y cada producto con imagen, título, precio y texto) y ZIP con las imágenes
   cuadradas y verticales. Se arma en `catalogo/` (ignorado por git) con scripts de Playwright que usan `drawCard` de la tienda.
   Desde el 17 nov la sesión usa el entorno «3r-constructor-sitios», que deja bajar las fotos del CDN de Dropi
-  (`d39ru7awumhhs2.cloudfront.net`) y abrir la tienda. El adaptador angular es un GIF que empieza en negro: para las imágenes
-  descargables usa `cardImg: "img/2238229.jpg"`. Si cambian productos o precios, rehacer el catálogo.
+  (`d39ru7awumhhs2.cloudfront.net`) y abrir la tienda. Si una foto es un GIF que empieza en negro, usar `cardImg` con un cuadro fijo en `img/` (se hizo así con el adaptador
+  angular, quitado el 17 nov). Si cambian productos o precios, rehacer el catálogo.
 - **Más productos y catálogo de WhatsApp Business** (17 nov 2026, pedido de Rigoberto: «quiero más productos», «con buena
   rentabilidad», «mete bastantes perfumes», «armar una tienda en mi WhatsApp» con un PDF «separado por secciones»): 29 productos
   nuevos (53 en total; lista y ganancias en `PRODUCTOS.md`), secciones nuevas «Perfumes» y «Tecnología», «Regalos» pasa a
@@ -67,6 +67,18 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   PDF `3R-Market-catalogo-WhatsApp.pdf` (guía para montar el catálogo y las colecciones + cada producto con foto, nombre, precio,
   descripción, enlace y código `3R-<id de Dropi>`) y ZIP con fotos limpias por sección; se arma con `herramientas/catalogo-whatsapp.mjs` (pasos en `herramientas/LEEME.md`).
   Rigoberto dijo (17 nov) que «hay muchos productos que no me gustan» pero no dijo cuáles: preguntarle antes de quitar.
+- **Cambios por paquetes** (17 nov 2026, Rigoberto: «recuerda hacer cambio en la página después de [~10] cambios o cuando yo te
+  diga»): los cambios a la tienda se juntan en un solo PR en borrador (título «paquete de cambios (N de ~10)») y se le pide unirlo
+  solo al llegar a ~10 cambios o cuando él lo pida. La cuenta va en `PENDIENTES.md`. Paquete en curso: PR #140.
+- **Barra de secciones** (17 nov 2026, Rigoberto pidió mejorar «el banner donde dice perfume y lo demás» y luego «quiero que se
+  deslice»; dijo «me gusta»): cada sección en tarjeta con foto redonda de un producto y «N productos», la escogida en negro con
+  verde neón, fija arriba al bajar (`position: sticky`), y se desliza sola de lado a lado (`slideChips`, se detiene 6 s al
+  tocarla, quieta con «reducir movimiento»). Mantener así.
+- **Catálogo en Meta / WhatsApp** (17 nov 2026, Rigoberto: «cómo hago para que tú montes todo en WhatsApp»): Claude no puede
+  manejar la app de WhatsApp. Se armó un archivo para subir todo de una vez en Meta Commerce Manager y conectarlo a WhatsApp
+  (`herramientas/catalogo-meta.mjs`, fotos en `img/catalogo/`, pasos en `herramientas/LEEME.md`). Amua no va (suplemento). No es
+  seguro que todas las cuentas de la app WhatsApp Business dejen conectar un catálogo de Commerce Manager; si no, cargar a mano
+  con el PDF de WhatsApp.
 - Cuando entre un pedido: revisar al comprador con la huella de Dropi, confirmar por WhatsApp y crear el pedido en Dropi
   solo después de que Rigoberto confirme el resumen.
 

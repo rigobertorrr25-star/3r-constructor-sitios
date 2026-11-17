@@ -16,7 +16,7 @@ const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const F = CAT + 'fotos/';
 const mime = (buf) => buf[0] === 0x89 ? 'image/png' : buf[0] === 0xff ? 'image/jpeg' : buf.slice(0, 3).toString() === 'GIF' ? 'image/gif' : 'image/webp';
 const photo = (id) => {
-  const f = id === 5417 ? BASE + 'img/5417.jpg' : id === 2238229 ? BASE + 'img/2238229.jpg' : F + id + '.src';
+  const f = id === 5417 ? BASE + 'img/5417.jpg' : F + id + '.src';
   const buf = fs.readFileSync(f); return 'data:' + mime(buf) + ';base64,' + buf.toString('base64');
 };
 const NOTE = {

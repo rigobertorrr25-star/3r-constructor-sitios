@@ -22,14 +22,10 @@ cotizar en Dropi antes del primer pedido de cada uno.
 | Set de 7 cuchillos con base y tabla | 931275 | $25.000 | $77.400 | $19.000 | $33.400 |
 | Juego de ollas 13 piezas | 2162882 | $50.000 | $96.800 | $23.000 | $23.800 |
 | Organizador de cocina 2 niveles | 2316315 | $80.000 | $126.700 | $23.000 | $23.700 |
-| Colador escurridor giratorio | 2222432 | $29.000 | $63.300 | $19.000 | $15.300 |
-| Trapero autoescurrible de microfibra | 1925861 | $23.000 | $58.400 | $19.000 | $16.400 |
 | Licuadora portátil recargable | 2139745 | $20.000 | $53.600 | $19.000 | $14.600 |
 | Destornillador inalámbrico con accesorios | 2055149 | $26.900 | $76.300 | $19.000 | $30.400 |
-| Adaptador angular para taladro | 2238229 | $18.900 | $57.800 | $19.000 | $19.900 |
 | Tina spa para pies plegable | 1915585 | $85.000 | $136.400 | $23.000 | $28.400 |
 | Masajeador de percusión 4 en 1 | 1885151 | $48.000 | $87.300 | $19.000 | $20.300 |
-| Cepillo secador térmico | 2151602 | $25.000 | $62.700 | $19.000 | $18.700 |
 | Micrófono de solapa inalámbrico doble | 2237413 | $58.200 | $97.300 | $19.000 | $20.100 |
 | Lámpara LED con parlante bluetooth | 2209683 | $109.900 | $156.300 | $23.000 | $23.400 |
 | Tren navideño eléctrico 30 piezas | 2286139 | $99.900 | $146.300 | $23.000 | $23.400 |
@@ -86,3 +82,5 @@ Perfumes: solo Lattafa con precio y código de barras de original ($70.000–$95
 | Picatodo eléctrico 2 litros | 2195772 | $33.000 | $77.800 | $18.200 | $26.600 |
 | Picatodo eléctrico 4 en 1 recargable | 679131 | $38.900 | $84.700 | $18.200 | $27.600 |
 | Luces de Navidad solares con control | 2279551 | $25.000 | $64.800 | $18.200 | $21.600 |
+
+Quitados por Rigoberto (17 nov 2026, no le gustaron): colador escurridor giratorio (2222432) y trapero autoescurrible (1925861); adaptador angular para taladro (2238229); cepillo secador térmico (2151602).

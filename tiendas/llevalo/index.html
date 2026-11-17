@@ -68,10 +68,19 @@
   .steps div { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 12px 14px; }
   .steps b { color: #ffb48a; }
 
-  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 18px; scrollbar-width: none; }
+  /* Barra de secciones: fija arriba al bajar, cada sección con foto y cuántos productos tiene */
+  .chips { position: sticky; top: 0; z-index: 20; display: flex; gap: 10px; overflow-x: auto; padding: 8px 16px 9px; margin: 0 -16px 16px; background: var(--bg); border-bottom: 1px solid var(--line); scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
-  .chip { flex: none; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--line); background: #fff; font: 600 .95rem "Archivo", sans-serif; cursor: pointer; color: var(--text); }
+  .chip { flex: none; width: 84px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px 7px; border-radius: 14px; border: 1px solid var(--line); background: #fff; font: 700 .76rem/1.12 "Archivo", sans-serif; cursor: pointer; color: var(--text); text-align: center; }
+  .chip .ic { width: 46px; height: 46px; border-radius: 50%; background: #fff; border: 2px solid var(--line); display: grid; place-items: center; overflow: hidden; }
+  .chip .ic img { width: 84%; height: 84%; object-fit: contain; }
+  .chip .ic svg { width: 22px; height: 22px; fill: var(--text); }
+  .chip .lb { min-height: 2.25em; display: flex; align-items: center; }
+  .chip .n { font-weight: 600; font-size: .68rem; color: var(--muted); }
   .chip[aria-pressed="true"] { background: var(--dark); color: #fff; border-color: var(--dark); }
+  .chip[aria-pressed="true"] .ic { border-color: var(--accent); }
+  .chip[aria-pressed="true"] .n { color: var(--accent); }
+  @media (min-width: 700px) { .chips { margin-inline: 0; padding-inline: 0; } .chip { width: 104px; } }
 
   .grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 48px; }
   @media (min-width: 700px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
@@ -427,14 +436,10 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
     { dropi: 931275, vitrina: true, cat: "hogar", name: "Set de 7 cuchillos con base y tabla", desc: "Cuchillos en acero, base y tabla para picar.", price: 77400, colors: ["Rosado", "Azul", "Verde"], img: IMG + "931275/1734719133Simple%20Instagram%20Frame%20Template%20Instagram%20Post%20%20(33).png" },
     { dropi: 2162882, cat: "hogar", name: "Juego de ollas 13 piezas", desc: "Ollas, tapas y utensilios para la cocina.", price: 96800, img: IMG + "2162882/1780078054JUEGO%20DE%20OLLAS%2013%20NEGRO.webp" },
     { dropi: 2316315, cat: "hogar", name: "Organizador de cocina 2 niveles", desc: "Bandejas deslizables para debajo del lavaplatos o la alacena.", price: 126700, img: IMG + "2316315/fd28f061-20d0-4a33-b68c-80a83ef86e56.webp" },
-    { dropi: 2222432, cat: "hogar", name: "Colador escurridor giratorio", desc: "Lava y escurre frutas y verduras sin mojarte.", price: 63300, img: IMG + "2222432/4647368b-f427-462f-802d-bede2f9e28ea.webp" },
-    { dropi: 1925861, cat: "hogar", name: "Trapero autoescurrible de microfibra", desc: "Trapea y escurre sin tocar el agua sucia.", price: 58400, img: IMG + "1925861/1757957144D_NQ_NP_2X_933805-MCO78179304008_082024-F.webp" },
     { dropi: 2139745, cat: "hogar", name: "Licuadora portátil recargable", desc: "Batidos y jugos donde estés. Trae dos vasos.", price: 53600, img: IMG + "2139745/1777331143image-9b408f73f74b4889ab322346ae215a85.webp" },
     { dropi: 2055149, cat: "herramientas", name: "Destornillador inalámbrico con accesorios", desc: "Arma, ajusta y repara sin esfuerzo. Buen regalo para papá.", price: 76300, img: IMG + "2055149/1769551538images%20(25).jpg" },
-    { dropi: 2238229, cat: "herramientas", name: "Adaptador angular para taladro", desc: "Llega a tornillos en rincones donde el taladro no cabe.", price: 57800, img: IMG + "2238229/3286b4b1-9fa2-48eb-a0b3-fc26d4969a14.gif", cardImg: "img/2238229.jpg" },
     { dropi: 1915585, vitrina: true, cat: "belleza", name: "Tina spa para pies plegable", desc: "Hidromasaje para pies en casa. Se pliega para guardarla.", price: 136400, img: IMG + "1915585/1763231417TINA%20PARA%20PIES%20PLEGABLE%20SML%20SQ-806%209.JPG" },
     { dropi: 1885151, cat: "belleza", name: "Masajeador de percusión 4 en 1", desc: "Relaja espalda, piernas y cuello. Trae 4 cabezales.", price: 87300, img: IMG + "1885151/1753893446Masajeador4-1.jpg" },
-    { dropi: 2151602, cat: "belleza", name: "Cepillo secador térmico", desc: "Seca y peina al mismo tiempo.", price: 62700, img: IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%C2%A0m..png", imgTry: [IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%C2%A0m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%E2%80%AFm..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%C2%A0p.%C2%A0m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%20p.%C2%A0m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%E2%80%AFp.%20m..png", IMG + "2151602/1778804727Captura%20de%20pantalla%202026-05-14%20a%20la(s)%207.15.10%20p.%20m..png", IMG + "1771574/1745604025CEPILLO%20SECADOR%20AGUACATE.jpg"] },
     { dropi: 2237413, cat: "tecnologia", name: "Micrófono de solapa inalámbrico doble", desc: "Para grabar videos y en vivo con buen sonido.", price: 97300, img: IMG + "2237413/dca89646-f164-47fb-b9b3-8e339b6f9847.jpg" },
     { dropi: 2209683, cat: "tecnologia", name: "Lámpara LED con parlante bluetooth", desc: "Lámpara, parlante y cargador inalámbrico en uno.", price: 156300, img: IMG + "2209683/1784761240w=1200,h=1200,fit=pad.jpg" },
     { dropi: 2286139, cat: "regalos", name: "Tren navideño eléctrico 30 piezas", desc: "El regalo de diciembre para los niños de la casa.", price: 146300, img: IMG + "2286139/9eca0a30-b00f-4281-ae1e-862c40ea5418.png" },
@@ -456,9 +461,36 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
     box.innerHTML = `<div class="noimg">${esc(img.alt)}</div>`;
   }
   function renderChips() {
-    document.getElementById("chips").innerHTML = CATS.map((c) =>
-      `<button class="chip" type="button" data-cat="${c.id}" aria-pressed="${c.id === cat}">${c.name}</button>`).join("");
+    document.getElementById("chips").innerHTML = CATS.map((c) => {
+      const items = c.id === "todo" ? PRODUCTS : PRODUCTS.filter((p) => p.cat === c.id);
+      const pic = items.find((p) => p.top || p.vitrina) || items[0];
+      const ic = c.id === "todo"
+        ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>'
+        : `<img src="${pic.cardImg || pic.img}" alt="" loading="lazy">`;
+      return `<button class="chip" type="button" data-cat="${c.id}" aria-pressed="${c.id === cat}"><span class="ic">${ic}</span><span class="lb">${c.name}</span><span class="n">${items.length} productos</span></button>`;
+    }).join("");
   }
+  // La barra de secciones se desliza sola de lado a lado (pedido de Rigoberto, 17 nov 2026).
+  // Se detiene 6 s cuando el cliente la toca o la mueve; no se mueve si el sistema pide menos movimiento.
+  (function slideChips() {
+    const bar = document.getElementById("chips");
+    if (!bar || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let dir = 1, wait = performance.now() + 1500, last = performance.now(), x = 0;
+    const stop = () => { wait = performance.now() + 6000; };
+    ["pointerdown", "touchstart", "wheel"].forEach((ev) => bar.addEventListener(ev, stop, { passive: true }));
+    (function step(now) {
+      const dt = Math.min(now - last, 50); last = now;
+      const max = bar.scrollWidth - bar.clientWidth;
+      if (max > 4 && now > wait) {
+        if (Math.abs(bar.scrollLeft - x) > 2) x = bar.scrollLeft;
+        x += dir * dt * 0.035;
+        if (x >= max) { x = max; dir = -1; wait = now + 1500; }
+        else if (x <= 0) { x = 0; dir = 1; wait = now + 1500; }
+        bar.scrollLeft = x;
+      }
+      requestAnimationFrame(step);
+    })(last);
+  })();
   function renderGrid() {
     const list = PRODUCTS.filter((p) => cat === "todo" || p.cat === cat);
     document.getElementById("grid").innerHTML = list.map((p) => `
@@ -498,7 +530,11 @@ dialog.legal .legal-x:hover { background: rgba(127,127,127,.15); }
   document.addEventListener("click", (e) => {
     const t = e.target.closest("[data-cat],[data-pedir],[data-qty],#close");
     if (!t) return;
-    if (t.dataset.cat) { cat = t.dataset.cat; renderChips(); renderGrid(); }
+    if (t.dataset.cat) {
+      cat = t.dataset.cat; renderChips(); renderGrid();
+      const bar = document.getElementById("chips"), g = document.getElementById("grid");
+      if (g.getBoundingClientRect().top < bar.offsetHeight) scrollTo({ top: scrollY + g.getBoundingClientRect().top - bar.offsetHeight - 8, behavior: "smooth" });
+    }
     else if (t.dataset.pedir) openSheet(PRODUCTS.find((p) => String(p.dropi) === t.dataset.pedir));
     else if (t.dataset.qty) { qty = Number(t.dataset.qty); renderQty(); }
     else if (t.id === "close") document.getElementById("dlg").close();

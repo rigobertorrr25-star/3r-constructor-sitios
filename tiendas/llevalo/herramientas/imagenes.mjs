@@ -9,7 +9,11 @@ const r5417 = 'data:image/jpeg;base64,' + fs.readFileSync('/home/user/3r-constru
 await p.evaluate((d) => { PRODUCTS.find(z => z.dropi === 5417).img = d; }, r5417);
 const F = '/home/user/3r-constructor-sitios/tiendas/llevalo/catalogo/fotos/';
 const mime = (buf) => buf[0] === 0x89 ? 'image/png' : buf[0] === 0xff ? 'image/jpeg' : buf.slice(0, 3).toString() === 'GIF' ? 'image/gif' : 'image/webp';
-for (const f of fs.readdirSync(F)) { const id = +f.split('.')[0]; if (id === 5417) continue; const buf = id === 2238229 ? fs.readFileSync('/home/user/3r-constructor-sitios/tiendas/llevalo/img/2238229.jpg') : fs.readFileSync(F + f);
+const vivos = new Set(await p.evaluate(() => PRODUCTS.map(q => q.dropi)));
+for (const f of fs.readdirSync(F)) { const id = +f.split('.')[0]; if (id === 5417 || !vivos.has(id)) continue;
+  // Si el producto tiene cardImg (cuadro fijo en img/ para GIF que empiezan en negro), se usa ese.
+  const card = await p.evaluate((id) => PRODUCTS.find(z => z.dropi === id).cardImg || '', id);
+  const buf = card ? fs.readFileSync('/home/user/3r-constructor-sitios/tiendas/llevalo/' + card) : fs.readFileSync(F + f);
   await p.evaluate(([id, d]) => { const q = PRODUCTS.find(z => z.dropi === id); q.img = d; delete q.cardImg; }, [id, 'data:' + mime(buf) + ';base64,' + buf.toString('base64')]); }
 console.log('fuentes:', await p.evaluate(async () => { await document.fonts.ready; return document.fonts.check('64px "Archivo Black"'); }));
 const ids = await p.evaluate(() => PRODUCTS.map(q => q.dropi));
