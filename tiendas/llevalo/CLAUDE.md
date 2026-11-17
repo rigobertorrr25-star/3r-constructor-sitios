@@ -67,6 +67,9 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   PDF `3R-Market-catalogo-WhatsApp.pdf` (guía para montar el catálogo y las colecciones + cada producto con foto, nombre, precio,
   descripción, enlace y código `3R-<id de Dropi>`) y ZIP con fotos limpias por sección; se arma con `herramientas/catalogo-whatsapp.mjs` (pasos en `herramientas/LEEME.md`).
   Rigoberto dijo (17 nov) que «hay muchos productos que no me gustan» pero no dijo cuáles: preguntarle antes de quitar.
+- **Cambios por paquetes** (17 nov 2026, Rigoberto: «recuerda hacer cambio en la página después de [~10] cambios o cuando yo te
+  diga»): los cambios a la tienda se juntan en un solo PR en borrador (título «paquete de cambios (N de ~10)») y se le pide unirlo
+  solo al llegar a ~10 cambios o cuando él lo pida. La cuenta va en `PENDIENTES.md`. Paquete en curso: PR #140.
 - Cuando entre un pedido: revisar al comprador con la huella de Dropi, confirmar por WhatsApp y crear el pedido en Dropi
   solo después de que Rigoberto confirme el resumen.
 
