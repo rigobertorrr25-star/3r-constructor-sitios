@@ -28,6 +28,32 @@ Bombillos LED que se pegan alrededor del espejo. Ideal para maquillarte en casa,
 Pídelo aquí 👉 https://llevalo.rigoberto-rrr25.workers.dev
 O escríbeme al WhatsApp 310 790 7194
 
+### Carillas dentales removibles
+**Título:** Carillas dentales removibles · Sonrisa pareja al instante · Contra entrega
+**Precio:** 42300
+**Descripción:**
+¿Te da pena sonreír en las fotos? 😁
+Carillas que se ponen sobre tus dientes para lucir una sonrisa pareja en fotos, fiestas y reuniones. Te las quitas cuando quieras.
+
+✅ Pagas en efectivo cuando te llega
+✅ Envío gratis a toda Colombia
+
+Pídelas aquí 👉 https://llevalo.rigoberto-rrr25.workers.dev
+WhatsApp 310 790 7194
+
+### Amua Vital Drops
+**Título:** Amua Vital Drops · Gotas · Pago contra entrega
+**Precio:** 47300
+**Descripción:**
+Amua Vital Drops en frasco gotero, uno de los productos más pedidos esta semana 💧
+
+✅ Pagas en efectivo cuando te llega
+✅ Envío gratis a toda Colombia
+
+Pídelo aquí 👉 https://llevalo.rigoberto-rrr25.workers.dev
+WhatsApp 310 790 7194
+(No le pongas que cura o adelgaza: solo lo que diga la caja.)
+
 ### Espejo redondo de pared
 **Título:** Espejo redondo grande de pared 70 y 90 cm · Pago contra entrega
 **Precio:** 268400
@@ -108,7 +134,9 @@ Todo contra entrega a toda Colombia.
 4. 🔪 Set de 7 cuchillos con base y tabla a $77.400. Rosado, azul o verde. Contra entrega 📦
 5. 💆‍♀️ Tina spa para pies, el regalo perfecto para mamá. $136.400, pagas al recibir.
 6. 🏍️ Hidrolavadora + mini aspiradora para la moto o el carro, $107.300. Contra entrega a toda Colombia.
-7. 📦 Ya llegaron pedidos a varias ciudades. ¿Quieres el tuyo? Pagas cuando te llega 👉 https://llevalo.rigoberto-rrr25.workers.dev
+7. 😁 Carillas dentales removibles para lucir una sonrisa pareja en tus fotos de diciembre. $42.300, pagas al recibir 👉 https://llevalo.rigoberto-rrr25.workers.dev
+8. 💧 Llegó Amua Vital Drops, de lo más pedido esta semana. $47.300, envío gratis y pagas cuando te llega 📦
+9. 📦 Ya llegaron pedidos a varias ciudades. ¿Quieres el tuyo? Pagas cuando te llega 👉 https://llevalo.rigoberto-rrr25.workers.dev
    (usa este solo cuando de verdad ya hayas entregado pedidos)
 
 ---

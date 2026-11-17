@@ -10,7 +10,9 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
 - **Productos** (`PRODUCTS` en el script; costos y ganancia en `PRODUCTOS.md`): 20 escogidos por ganancia el 4 nov y, desde
   el 5 nov, los **más vendidos** según el ranking de Dropdata (Rigoberto tiene cuenta gratis: 2 productos al día; los
   manda por captura y se buscan en Dropi por nombre). Los más vendidos van primero con la etiqueta «Más vendido» (`top: true`).
-  Rigoberto pidió (5 nov) priorizar lo que más se vende aunque deje menos. Productos con tamaños de distinto precio: `sizes`.
+  Rigoberto pidió (5 nov) priorizar lo que más se vende aunque deje menos. Agregados del ranking: 5 nov luces para espejo (#11)
+  y espejo de pared (#14); 17 nov Amua Vital Drops (2312645, 784 ventas en 7 días) y carillas dentales removibles (2322158,
+  en Dropi «Implantes dentales», 1.068 ventas en 7 días; se llaman carillas porque no son implantes). Productos con tamaños de distinto precio: `sizes`.
 - **Diseño** (5 nov 2026, con un video de referencia de Rigoberto): arriba una **vitrina que rueda sola y sin parar**
   (más despacio cuando un producto pasa por el centro). El del centro va grande sobre una tarjeta blanca que flota; los de
   los lados, más pequeños, girados y borrosos. Debajo: nombre en mayúsculas, etiqueta verde con el precio, etiquetas de
@@ -31,7 +33,9 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   gratis, pagas al recibir, te confirmamos). En computador, título a la izquierda y vitrina a la derecha. El botón flotante de
   WhatsApp solo aparece cuando ya no se ve «Escríbenos». Ojo: la clase vieja `.hero` sigue en el CSS (fondo oscuro); la nueva
   es `.hero3`.
-- Sin réplicas de marcas, suplementos ni aparatos médicos. Fotos enlazadas del CDN de Dropi (desde la sesión no cargan; en
+- Sin réplicas de marcas. Al principio también se dejaron por fuera suplementos y aparatos médicos (criterio de Claude, no de
+  Rigoberto); desde el 17 nov 2026 entran si están en el ranking de Dropdata (Rigoberto pidió lo que más se vende), pero sin
+  prometer curas ni efectos de salud, y un suplemento solo se despacha si en Dropi tiene registro INVIMA. Fotos enlazadas del CDN de Dropi (desde la sesión no cargan; en
   el navegador sí), salvo el restaurador (`img/5417.jpg`).
 - **Publicación: Cloudflare, no Vercel** (5 nov 2026, pedido de Rigoberto), igual que ZENOVA: proyecto `llevalo`, rama
   `main`, directorio raíz `tiendas/llevalo`, comando `mkdir -p _site && cp -r index.html img _site/`, salida `_site` (así
