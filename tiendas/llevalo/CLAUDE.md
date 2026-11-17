@@ -88,6 +88,11 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   Meta; se publica a mano. Página privada «Marketplace 3R Market»: https://claude.ai/artifact/PVQtoUhV9tDBU8jcjBcqQ2 (7 días × 5
   publicaciones, una ciudad por día, foto + título con ciudad + precio + categoría + descripción para copiar, casilla «Ya lo
   publiqué»). Se arma con `herramientas/pagina-marketplace.mjs` → `catalogo/marketplace.html` (republicar el mismo archivo).
+- **Qué pautar** (17 nov 2026, recomendación a Rigoberto, que vende en Marketplace hace más de 3 años; puede hacer ~10
+  publicaciones al día, separadas 30–45 min): pautar primero el proyector astronauta (deja ~$31.500) y el perfume Her Confession
+  Lattafa (~$46.500) solo si el proveedor confirma que es original. No pautar carillas ni luces (dejan $16.000–$18.800; el costo por
+  pedido en contra entrega suele ser $15.000–$30.000). Amua no se puede pautar (suplemento). Prueba: anuncio de mensajes a WhatsApp,
+  $15.000–$20.000 al día por producto 3–4 días; apagar si a los $50.000 no hay pedido confirmado. Cifras de costo por pedido: estimado.
 - **Píxel de Meta** (17 nov 2026, Rigoberto: «sí quiero ponerlo»): píxel `1624806965361371`, instalado **solo con permiso**: el
   aviso de abajo pregunta «¿Aceptas cookies de Meta…?» con «No, gracias» / «Aceptar» (se guarda en `localStorage`
   `3rmarket-cookies` = si/no); el enlace «Cookies» del pie lo vuelve a mostrar. Si acepta: PageView, `ViewContent` al abrir un
