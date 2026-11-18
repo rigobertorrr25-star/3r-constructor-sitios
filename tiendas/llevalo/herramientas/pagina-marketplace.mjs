@@ -7,13 +7,15 @@ import fs from 'fs';
 const BASE = '/home/user/3r-constructor-sitios/tiendas/llevalo/';
 const URL = 'https://llevalo.rigoberto-rrr25.workers.dev';
 const FUERA = new Set([2312645]); // suplementos: Facebook no los permite en Marketplace
-const DIAS = [['Bogotá', 'Soacha'], ['Medellín', 'Bello'], ['Cali', 'Palmira'], ['Barranquilla', 'Soledad'], ['Bucaramanga', 'Floridablanca'], ['Cartagena', 'Turbaco'], ['Pereira', 'Dosquebradas']];
+// Para agregar un día extra sin reordenar el plan: SOLO="id,id,..." CIUDAD="Santa Marta" CERCA="Ciénaga" SALIDA=archivo.html
+const SOLO = (process.env.SOLO || '').split(',').filter(Boolean).map(Number);
+const DIAS = process.env.CIUDAD ? [[process.env.CIUDAD, process.env.CERCA || process.env.CIUDAD]] : [['Bogotá', 'Soacha'], ['Medellín', 'Bello'], ['Cali', 'Palmira'], ['Barranquilla', 'Soledad'], ['Bucaramanga', 'Floridablanca'], ['Cartagena', 'Turbaco'], ['Pereira', 'Dosquebradas']];
 const CATMP = { perfumes: 'Salud y belleza', belleza: 'Salud y belleza', tecnologia: 'Electrónica', moto: 'Piezas y accesorios para vehículos', hogar: 'Hogar y cocina', herramientas: 'Herramientas', regalos: 'Juguetes y juegos', mascotas: 'Artículos para mascotas' };
 const b = await chromium.launch();
 const p = await b.newPage();
 await p.goto('file://' + BASE + 'index.html');
 let P = (await p.evaluate(() => PRODUCTS.map(q => ({ id: q.dropi, cat: q.cat, top: !!q.top, vit: !!q.vitrina, name: q.name, desc: q.desc, price: q.price, sizes: q.sizes || null, colors: q.colors || null }))))
-  .filter(q => !FUERA.has(q.id));
+  .filter(q => !FUERA.has(q.id) && (!SOLO.length || SOLO.includes(q.id)));
 // Orden: más vendidos, luego perfumes, luego los destacados de la vitrina, luego el resto (cada producto una vez).
 const rank = (q) => (q.top ? 0 : q.cat === 'perfumes' ? 1 : q.vit ? 2 : 3);
 P.sort((a, c) => rank(a) - rank(c));
@@ -142,6 +144,6 @@ ${days.map((d, i) => `<section id="dia${i + 1}"><h2>Día ${i + 1}${i === 0 ? ' (
 })();
 </script>
 `;
-fs.writeFileSync(BASE + 'catalogo/marketplace.html', html);
+fs.writeFileSync(BASE + 'catalogo/' + (process.env.SALIDA || 'marketplace.html'), html);
 console.log('ok', total, 'publicaciones,', (html.length / 1e6).toFixed(2) + ' MB');
 console.log(days.map((d, i) => `Día ${i + 1} ${d.city}: ` + d.items.map(q => q.name).join(' | ')).join('\n'));

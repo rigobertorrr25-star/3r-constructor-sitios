@@ -82,3 +82,18 @@ Perfumes: solo Lattafa con precio y código de barras de original ($70.000–$95
 | Luces de Navidad solares con control | 2279551 | $25.000 | $64.800 | $18.200 | $21.600 |
 
 Quitados por Rigoberto (17 nov 2026, no le gustaron): colador escurridor giratorio (2222432) y trapero autoescurrible (1925861); adaptador angular para taladro (2238229); cepillo secador térmico (2151602); perfume árabe Najah (1287929); perfume árabe Nafsi (1862648).
+
+## Agregados el 18 nov 2026 (ganadores de Dropdata en otros países, buscados en Dropi Colombia)
+
+Rigoberto mandó capturas de otros países. Se descartaron: vitamina B12, Blood Sugar Complex, colágeno y magnesio (suplementos),
+auriculares «2ª generación» (réplica de AirPods), perfume Her Loss (1 venta), enfriador «Arctic Air» (marca ajena; se tomó uno sin
+marca), Peel Shot y pastillas limpia lavadora (no están en Dropi Colombia). El oxímetro es aparato médico: antes del primer
+pedido, confirmar en Dropi que tenga registro INVIMA. El gel mata cucarachas deja poco, pero es barato y de compra rápida.
+
+| Producto | Dropi id | Te cuesta | Precio de venta | Envío estimado | Te queda (aprox.) |
+|---|---|---|---|---|---|
+| Máquina patillera T9 recargable | 2083138 | $11.000 | $47.800 | $18.200 | $18.600 |
+| Mini enfriador de aire portátil | 1634772 | $36.000 | $84.700 | $18.200 | $30.500 |
+| Oxímetro de pulso digital | 1340756 | $21.000 | $59.800 | $18.200 | $20.600 |
+| Gel mata cucarachas | 1816142 | $9.500 | $44.700 | $18.200 | $17.000 |
+| Aspiradora portátil recargable | 2234067 | $46.900 | $99.800 | $18.200 | $34.700 |

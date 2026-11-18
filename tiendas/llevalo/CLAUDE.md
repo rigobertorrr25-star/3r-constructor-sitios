@@ -88,6 +88,11 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   Meta; se publica a mano. Página privada «Marketplace 3R Market»: https://claude.ai/artifact/PVQtoUhV9tDBU8jcjBcqQ2 (7 días × 5
   publicaciones, una ciudad por día, foto + título con ciudad + precio + categoría + descripción para copiar, casilla «Ya lo
   publiqué»). Se arma con `herramientas/pagina-marketplace.mjs` → `catalogo/marketplace.html` (republicar el mismo archivo).
+  18 nov: Rigoberto empezó a publicar el Día 1; se quitó el Nafsi del plan sin reordenar y se agregó un Día 8 (Santa Marta)
+  con los 5 productos de ganadores de otros países (variables `SOLO`, `CIUDAD`, `CERCA`, `SALIDA` del programa).
+- **Ganadores de otros países** (18 nov 2026, Rigoberto: «¿podemos coger los productos ganadores de otros países?»): sí, si el
+  producto está en Dropi Colombia. Dropdata tiene 11 países. Filtro: fuera suplementos y lo que promete curar, réplicas de marca,
+  productos con pocas ventas y los que dejen menos de ~$15.000 con envío gratis (ej. depilador de cejas). Detalle en `PRODUCTOS.md`.
 - **Qué pautar** (17 nov 2026, recomendación a Rigoberto, que vende en Marketplace hace más de 3 años; puede hacer ~10
   publicaciones al día, separadas 30–45 min): pautar primero el proyector astronauta (deja ~$31.500) y el perfume Her Confession
   Lattafa (~$46.500) solo si el proveedor confirma que es original. No pautar carillas ni luces (dejan $16.000–$18.800; el costo por
