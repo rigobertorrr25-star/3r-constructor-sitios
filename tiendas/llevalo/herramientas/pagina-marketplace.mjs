@@ -1,4 +1,6 @@
 // Arma la página «Publicar en Marketplace»: plan de 7 días, 5 publicaciones por día, una ciudad por día, todo para copiar.
+// OJO: volver a armarla reparte los productos de nuevo entre los días. Si Rigoberto ya va publicando, mejor quitar
+// tarjetas sueltas del HTML (así se quitó el Nafsi el 18 nov) y republicar el mismo archivo.
 // Uso: node herramientas/pagina-marketplace.mjs → catalogo/marketplace.html (Artifact privado de Rigoberto; republicar el mismo archivo).
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 import fs from 'fs';
