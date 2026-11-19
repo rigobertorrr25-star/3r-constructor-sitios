@@ -69,7 +69,7 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   Rigoberto dijo (17 nov) que «hay muchos productos que no me gustan» pero no dijo cuáles: preguntarle antes de quitar.
 - **Cambios por paquetes** (17 nov 2026, Rigoberto: «recuerda hacer cambio en la página después de [~10] cambios o cuando yo te
   diga»): los cambios a la tienda se juntan en un solo PR en borrador (título «paquete de cambios (N de ~10)») y se le pide unirlo
-  solo al llegar a ~10 cambios o cuando él lo pida. La cuenta va en `PENDIENTES.md`. Paquete en curso: PR #140.
+  solo al llegar a ~10 cambios o cuando él lo pida. La cuenta va en `PENDIENTES.md`. Último paquete: PR #141 (unido 17 nov).
 - **Barra de secciones** (17 nov 2026, Rigoberto pidió mejorar «el banner donde dice perfume y lo demás» y luego «quiero que se
   deslice»; dijo «me gusta»): cada sección en tarjeta con foto redonda de un producto y «N productos», la escogida en negro con
   verde neón, fija arriba al bajar (`position: sticky`), y se desliza sola de lado a lado (`slideChips`, se detiene 6 s al
@@ -78,7 +78,26 @@ Reglas generales: `docs/claude/instrucciones-globales.md`. No es de 3R ni de un 
   manejar la app de WhatsApp. Se armó un archivo para subir todo de una vez en Meta Commerce Manager y conectarlo a WhatsApp
   (`herramientas/catalogo-meta.mjs`, fotos en `img/catalogo/`, pasos en `herramientas/LEEME.md`). Amua no va (suplemento). No es
   seguro que todas las cuentas de la app WhatsApp Business dejen conectar un catálogo de Commerce Manager; si no, cargar a mano
-  con el PDF de WhatsApp.
+  con el PDF de WhatsApp. **Resultado (17 nov):** Rigoberto subió el CSV a Commerce Manager (portafolio «3R», catálogo «3R Market»;
+  no pudo crear portafolio propio: límite de Meta). Ese catálogo solo se conecta a WhatsApp por la API (WhatsApp Manager), no a la
+  app; queda para tienda de Facebook/Instagram y anuncios. Para la app se publicó una página privada «copiar y pegar»:
+  https://claude.ai/artifact/4QZrSHaz9of1V14bSryD1J (foto, botones Copiar, casilla «Ya lo subí»; `herramientas/pagina-whatsapp.mjs`,
+  republicar el mismo archivo `catalogo/wpp-copiar.html` para no cambiar el enlace). El `.gitignore` es `/catalogo/` (antes
+  `catalogo/` ignoraba también `img/catalogo/` y las fotos no se subieron en el PR #140).
+- **Plan de Marketplace** (17 nov 2026, Rigoberto: «ayúdame a publicar»): Marketplace en Colombia no se llena desde el catálogo de
+  Meta; se publica a mano. Página privada «Marketplace 3R Market»: https://claude.ai/artifact/PVQtoUhV9tDBU8jcjBcqQ2 (7 días × 5
+  publicaciones, una ciudad por día, foto + título con ciudad + precio + categoría + descripción para copiar, casilla «Ya lo
+  publiqué»). Se arma con `herramientas/pagina-marketplace.mjs` → `catalogo/marketplace.html` (republicar el mismo archivo).
+  18 nov: Rigoberto empezó a publicar el Día 1; se quitó el Nafsi del plan sin reordenar y se agregó un Día 8 (Santa Marta)
+  con los 5 productos de ganadores de otros países (variables `SOLO`, `CIUDAD`, `CERCA`, `SALIDA` del programa).
+- **Ganadores de otros países** (18 nov 2026, Rigoberto: «¿podemos coger los productos ganadores de otros países?»): sí, si el
+  producto está en Dropi Colombia. Dropdata tiene 11 países. Filtro: fuera suplementos y lo que promete curar, réplicas de marca,
+  productos con pocas ventas y los que dejen menos de ~$15.000 con envío gratis (ej. depilador de cejas). Detalle en `PRODUCTOS.md`.
+- **Qué pautar** (17 nov 2026, recomendación a Rigoberto, que vende en Marketplace hace más de 3 años; puede hacer ~10
+  publicaciones al día, separadas 30–45 min): pautar primero el proyector astronauta (deja ~$31.500) y el perfume Her Confession
+  Lattafa (~$46.500) solo si el proveedor confirma que es original. No pautar carillas ni luces (dejan $16.000–$18.800; el costo por
+  pedido en contra entrega suele ser $15.000–$30.000). Amua no se puede pautar (suplemento). Prueba: anuncio de mensajes a WhatsApp,
+  $15.000–$20.000 al día por producto 3–4 días; apagar si a los $50.000 no hay pedido confirmado. Cifras de costo por pedido: estimado.
 - **Píxel de Meta** (17 nov 2026, Rigoberto: «sí quiero ponerlo»): píxel `1624806965361371`, instalado **solo con permiso**: el
   aviso de abajo pregunta «¿Aceptas cookies de Meta…?» con «No, gracias» / «Aceptar» (se guarda en `localStorage`
   `3rmarket-cookies` = si/no); el enlace «Cookies» del pie lo vuelve a mostrar. Si acepta: PageView, `ViewContent` al abrir un

@@ -190,3 +190,21 @@ Dirección: [dirección], [barrio], [ciudad].
 ¿Está todo bien y vas a estar para recibirlo? Respóndeme «sí» y lo despacho hoy 🙌
 
 **Si no responde en 24 horas:** no despachar.
+
+---
+
+## 7. Respuestas rápidas para vender (19 nov 2026, guardar en WhatsApp Business → Respuestas rápidas)
+
+- `/hola` — ¡Hola! 😊 Sí, está disponible. Te llega a tu casa con envío gratis y pagas en efectivo cuando lo recibes. No pagas nada por adelantado. ¿Para qué ciudad sería?
+- `/precio` — Vale [PRECIO], con envío gratis incluido. Ese es el único valor que pagas, y lo pagas cuando te llegue 📦 ¿Te lo envío?
+- `/demora` — Depende de la ciudad, normalmente son pocos días hábiles. Apenas lo despachemos te paso la guía para que sigas tu pedido en línea 🚚
+- `/seguro` — Totalmente seguro ✅ No pagas nada por adelantado: le pagas a la transportadora en efectivo cuando el pedido llega a tu casa. Y si llega con algún defecto, te lo cambiamos o te devolvemos el dinero.
+- `/datos` — ¡Listo! 🙌 Para enviártelo necesito: 1. Nombre y apellido 2. Celular 3. Departamento y ciudad 4. Dirección completa 5. Barrio o punto de referencia 6. Color o tamaño (si aplica)
+- `/confirmo` — ¡Hola, [NOMBRE]! Te confirmo tu pedido: 🛍️ [PRODUCTO] – cantidad [N] · 💰 Total: [VALOR] (envío gratis, pagas al recibir) · 📍 [DIRECCIÓN], [BARRIO], [CIUDAD]. ¿Está todo bien y vas a estar para recibirlo? Respóndeme «SÍ» y lo despacho hoy 🙌
+- `/guia` — ¡Tu pedido ya va en camino! 🚚 Transportadora: [TRANSPORTADORA] · Guía: [NÚMERO]. Ten el efectivo listo ([VALOR]) para cuando llegue. Cualquier cosa me escribes 😊
+- `/sigues` — Hola, [NOMBRE] 👋 ¿Sigues interesado en tu [PRODUCTO]? Solo necesito tu «SÍ» para despacharlo hoy. (Si no responde: no despachar.)
+- `/caro` — Te entiendo 🙏 Ten en cuenta que el precio ya incluye el envío hasta tu casa y que no pagas nada hasta recibirlo y verlo.
+- `/original` — Buena pregunta 👌 Déjame confirmarte con el proveedor y ya te respondo. (Preguntar en Dropi; no afirmar nada sin saber.)
+- `/tienda` — Somos tienda en línea con envíos a toda Colombia 📦 Aquí puedes ver todos los productos: https://llevalo.rigoberto-rrr25.workers.dev Y lo mejor: pagas cuando te llega.
+- `/gracias` — ¡Gracias por tu compra, [NOMBRE]! 🙌 Esperamos que lo disfrutes. Si te gustó, nos ayudas mucho recomendándonos con tus amigos y familia 💚
+- `/problema` — Qué pena 🙏 Mándame por aquí una foto o video del producto y lo solucionamos: te lo cambiamos o te devolvemos el dinero.
