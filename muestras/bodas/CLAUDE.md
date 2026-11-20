@@ -11,3 +11,7 @@
 - El formulario no guarda nada: arma el mensaje y lo abre en WhatsApp (hoy al número de 3R, 310 790 7194).
 - Diseño: fondo negro cálido + blanco puro y gris piedra (no crema), Cormorant Garamond + Jost, acento champaña,
   botones rectos; sin numeración en las tarjetas (la referencia sí la tenía; está en la lista de prohibidos).
+- **Recorrido igual al del video** (20 nov 2026, segundo pedido de Rigoberto): la entrada tiene las mismas 15 escenas
+  en el mismo orden, con las frases en las mismas posiciones y las mismas transiciones (destello blanco, fundido,
+  barrido, desenfoque con texto y círculo que se abre). Se maneja con el scroll; «Ver recorrido» baja sola en ~45 s.
+  Las escenas se cambian en la lista `ESCENAS` del script (foto `img/eNN.jpg`, transición y movimiento).

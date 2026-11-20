@@ -9,7 +9,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Jost:wght@300;400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Pinyon+Script&family=Jost:wght@300;400;500&display=swap">
 <style>
 /* Página de un solo ambiente: intro de cine oscura que se recorre con el scroll,
    después bandas claras (blanco y piedra) y oscuras que se alternan. */
@@ -65,70 +65,80 @@ p { margin: 0; }
 .encabezado .boton { min-height: 40px; padding: 0 18px; font-size: .7rem; }
 @media (max-width: 860px) { .menu { display: none; } }
 
-/* ---------- Recorrido (intro de cine) ---------- */
-.recorrido { position: relative; height: 760vh; background: var(--noche); }
-.escenario { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; color: var(--blanco); }
-.capa { position: absolute; inset: 0; opacity: 0; will-change: opacity, transform; }
-.capa .foto, .capa .desenfoque { position: absolute; inset: -2%; background-size: cover; background-position: center; }
-.capa .desenfoque { filter: blur(16px) brightness(.62) saturate(.9); opacity: 0; transform: scale(1.06); }
+/* ---------- Recorrido (intro de cine, 15 escenas como el video) ---------- */
+.recorrido { position: relative; height: 1650vh; background: var(--noche); }
+.escenario { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; color: var(--blanco); background: var(--noche); }
+.capa { position: absolute; inset: 0; visibility: hidden; will-change: opacity, transform, clip-path; }
+.capa .foto { position: absolute; inset: 0; background-size: cover; background-position: center; will-change: transform; }
 .capa::after { content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(10,8,7,.55) 0%, rgba(10,8,7,0) 26%, rgba(10,8,7,0) 60%, rgba(10,8,7,.6) 100%); }
-.capa[data-n="0"] { opacity: 1; }
-.texto-escena { position: absolute; inset: 0; z-index: 2; opacity: 0; display: flex; align-items: center; pointer-events: none;
-  will-change: opacity, transform; }
-.texto-escena[data-n="0"] { opacity: 1; }
-.texto-escena:not(.portada)::before { content: ""; position: absolute; inset: 0; z-index: -1;
-  background: linear-gradient(90deg, rgba(10,8,7,.7) 0%, rgba(10,8,7,.35) 45%, rgba(10,8,7,0) 75%); }
-.texto-escena { text-shadow: 0 1px 18px rgba(0,0,0,.35); }
-.escenario .etiqueta, .trabajo .etiqueta, .contacto .etiqueta { color: #e2c695; }
+  background: linear-gradient(180deg, rgba(10,8,7,.45) 0%, rgba(10,8,7,0) 22%, rgba(10,8,7,0) 70%, rgba(10,8,7,.45) 100%); }
+.capa.oscura .foto::after { content: ""; position: absolute; inset: 0; background: rgba(28,22,18,.42); }
+.capa .vineta { position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(8,6,5,.92) 72%); }
+.destello { position: absolute; inset: 0; z-index: 1; background: #fffaf3; opacity: 0; pointer-events: none; }
+.cortina { position: absolute; top: -10%; bottom: -10%; z-index: 1; width: 34vw; margin-left: -17vw; opacity: 0; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(20,14,8,.95) 0%, rgba(40,28,14,.7) 40%, rgba(40,28,14,0) 70%); filter: blur(18px); }
+
+.texto-escena { position: absolute; inset: 0; z-index: 2; opacity: 0; visibility: hidden; display: flex; align-items: center; pointer-events: none;
+  text-shadow: 0 1px 18px rgba(0,0,0,.35); }
 .texto-escena .envoltura { width: 100%; }
-.texto-escena h2 { font-size: clamp(2.3rem, 5.4vw, 4.6rem); line-height: 1.04; max-width: 11ch; font-weight: 300; }
-.texto-escena p.bajada { margin-top: 18px; max-width: 34ch; font-size: .98rem; opacity: .86; }
+.texto-escena:not(.portada):not(.sin-velo)::before { content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(90deg, rgba(10,8,7,.62) 0%, rgba(10,8,7,.25) 40%, rgba(10,8,7,0) 65%); }
+.texto-escena.pos-abajo { align-items: flex-end; padding-bottom: 15vh; }
+.texto-escena.pos-abajo::before { background: linear-gradient(20deg, rgba(10,8,7,.7) 0%, rgba(10,8,7,.2) 40%, rgba(10,8,7,0) 60%) !important; }
+.texto-escena.pos-arriba { align-items: flex-start; padding-top: calc(76px + 9vh); }
+.texto-escena.pos-arriba::before { background: linear-gradient(120deg, rgba(10,8,7,.72) 0%, rgba(10,8,7,.3) 38%, rgba(10,8,7,0) 60%) !important; }
+.texto-escena h2 { font-size: clamp(1.9rem, 2.9vw, 2.75rem); line-height: 1.08; max-width: 13ch; font-weight: 400; }
+.texto-escena p.bajada { margin-top: 14px; max-width: 32ch; font-size: .86rem; opacity: .88; line-height: 1.55; }
+.texto-escena .enlace { pointer-events: auto; display: inline-flex; gap: 10px; margin-top: 18px; font-size: .66rem; letter-spacing: .24em; text-transform: uppercase; font-weight: 500; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.5); padding-bottom: 4px; }
+.texto-escena .enlace:hover { color: #e2c695; border-color: #e2c695; }
 
-.portada { flex-direction: column; justify-content: flex-end; padding-bottom: 18vh; text-align: center; }
-.portada .monograma { font-family: var(--f-titulo); font-weight: 300; font-size: clamp(4.2rem, 13vw, 10rem); line-height: .9; letter-spacing: .01em; }
-.portada .linea-fina { width: 1px; height: 46px; background: var(--linea-clara); margin: 26px auto; }
-.portada .sub { font-size: .72rem; letter-spacing: .4em; text-transform: uppercase; }
-.portada .lugar { margin-top: 10px; font-family: var(--f-titulo); font-size: 1.35rem; opacity: .9; }
+.portada .envoltura { display: flex; }
+.portada .sello { position: relative; width: min(380px, 84vw); margin-left: auto; margin-right: 10%; text-align: center; padding: 40px 10px; }
+.portada .sello::before { content: ""; position: absolute; inset: -30% -40%; z-index: -1;
+  background: radial-gradient(closest-side, rgba(12,9,7,.78), rgba(12,9,7,.45) 55%, rgba(12,9,7,0)); }
+.portada .monograma { font-family: "Pinyon Script", "Snell Roundhand", cursive; font-size: clamp(5.5rem, 10vw, 8.5rem); line-height: .9; color: #f1dcb2; text-shadow: 0 2px 30px rgba(0,0,0,.35); }
+.portada .nombre { font-family: "Pinyon Script", "Snell Roundhand", cursive; font-size: clamp(1.9rem, 2.8vw, 2.5rem); color: #f1dcb2; margin-top: 4px; }
+.portada .linea-fina { width: 70px; height: 1px; background: rgba(241,220,178,.7); margin: 14px auto; }
+.portada .sub { font-size: .62rem; letter-spacing: .34em; text-transform: uppercase; font-weight: 500; }
 
-.bloque-objetivo { display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px 64px; align-items: end; }
-.bloque-objetivo h2 { grid-column: 1 / -1; max-width: 18ch; margin-top: 18px; }
-.bloque-objetivo .lead { font-family: var(--f-titulo); font-size: clamp(1.2rem, 1.8vw, 1.55rem); line-height: 1.35; max-width: 30ch; }
+.bloque-objetivo { display: grid; grid-template-columns: 1.1fr .9fr; gap: 26px 64px; align-items: end; }
+.bloque-objetivo h2 { grid-column: 1 / -1; max-width: 22ch; margin-top: 16px; }
+.bloque-objetivo .lead { font-family: var(--f-titulo); font-size: clamp(1.15rem, 1.6vw, 1.45rem); line-height: 1.35; max-width: 32ch; }
 .rasgos { border-top: 1px solid var(--linea-clara); padding-top: 14px; }
-.rasgos small { display: block; font-size: .64rem; letter-spacing: .24em; text-transform: uppercase; opacity: .8; margin-bottom: 10px; font-weight: 500; }
-.rasgos ul { list-style: none; margin: 0; padding: 0; font-family: var(--f-titulo); font-size: 1.35rem; line-height: 1.45; }
+.rasgos small { display: block; font-size: .62rem; letter-spacing: .24em; text-transform: uppercase; opacity: .85; margin-bottom: 10px; font-weight: 500; }
+.rasgos ul { list-style: none; margin: 0; padding: 0; font-family: var(--f-titulo); font-size: 1.3rem; line-height: 1.45; }
 
-.bloque-nosotros { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 56px; align-items: center; }
+.bloque-nosotros { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 52px; align-items: center; }
 .bloque-nosotros .retrato { aspect-ratio: 3 / 4; background-size: cover; background-position: center; box-shadow: 0 30px 60px rgba(0,0,0,.4); }
-.bloque-nosotros h2 { max-width: 16ch; margin: 16px 0 16px; font-size: clamp(2rem, 3.8vw, 3.2rem); }
-.bloque-nosotros p { max-width: 52ch; font-size: .95rem; opacity: .88; }
-.cifras { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px; max-width: 480px; }
+.bloque-nosotros h2 { max-width: 18ch; margin: 14px 0; }
+.bloque-nosotros p { max-width: 54ch; font-size: .9rem; opacity: .9; }
+.cifras { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 26px; max-width: 480px; }
 .cifras div { border-top: 1px solid var(--linea-clara); padding-top: 14px; }
-.cifras strong { display: block; font-family: var(--f-titulo); font-weight: 300; font-size: 3.2rem; line-height: 1; color: #e2c695; font-variant-numeric: lining-nums; }
-.cifras span { font-size: .78rem; opacity: .85; }
+.cifras strong { display: block; font-family: var(--f-titulo); font-weight: 300; font-size: 3rem; line-height: 1; color: #e2c695; }
+.cifras span { font-size: .76rem; opacity: .85; }
 
 .barra-recorrido { position: absolute; z-index: 5; left: max(20px, env(safe-area-inset-left, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-  display: flex; align-items: center; gap: 14px; font-size: .64rem; letter-spacing: .22em; text-transform: uppercase; font-weight: 500; }
+  display: flex; align-items: center; gap: 14px; font-size: .62rem; letter-spacing: .22em; text-transform: uppercase; font-weight: 500; }
 .barra-recorrido button { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; opacity: .85; }
 .barra-recorrido button:hover, .barra-recorrido button:focus-visible { opacity: 1; color: #e2c695; }
-.barra-recorrido .icono { width: 26px; height: 26px; border: 1px solid var(--linea-clara); border-radius: 50%; display: grid; place-items: center; }
+.barra-recorrido .icono { width: 24px; height: 24px; border: 1px solid var(--linea-clara); border-radius: 50%; display: grid; place-items: center; }
 .barra-recorrido .sep { width: 1px; height: 14px; background: var(--linea-clara); }
 .progreso { position: absolute; z-index: 5; right: max(20px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%);
   width: 1px; height: 120px; background: var(--linea-clara); }
 .progreso i { position: absolute; left: -1px; top: 0; width: 3px; height: 0; background: #e2c695; }
 @media (max-width: 760px) {
-  .bloque-objetivo, .bloque-nosotros { grid-template-columns: 1fr; gap: 22px; }
-  .bloque-nosotros .retrato { max-width: 170px; }
-  .bloque-nosotros h2 { margin: 10px 0; }
-  .cifras strong { font-size: 2.5rem; }
+  .bloque-objetivo, .bloque-nosotros { grid-template-columns: 1fr; gap: 20px; }
+  .bloque-nosotros .retrato { max-width: 150px; }
+  .cifras strong { font-size: 2.4rem; }
   .progreso { display: none; }
-  .texto-escena { align-items: flex-end; padding-bottom: 130px; }
-  .texto-escena:not(.portada)::before { background: linear-gradient(0deg, rgba(10,8,7,.82) 0%, rgba(10,8,7,.45) 55%, rgba(10,8,7,0) 85%); }
-  .portada { align-items: center; padding-bottom: 22vh; }
+  .texto-escena, .texto-escena.pos-arriba { align-items: flex-end; padding-top: 0; padding-bottom: 130px; }
+  .texto-escena:not(.portada):not(.sin-velo)::before, .texto-escena.pos-abajo::before { background: linear-gradient(0deg, rgba(10,8,7,.82) 0%, rgba(10,8,7,.4) 50%, rgba(10,8,7,0) 80%) !important; }
+  .portada { align-items: flex-end !important; padding-bottom: 120px !important; }
+  .portada .sello { margin-inline: auto; }
   .barra-recorrido { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
   .encabezado .boton .largo { display: none; }
 }
-
 /* ---------- Portafolio ---------- */
 .banda { padding-block: clamp(72px, 10vw, 128px); }
 .banda-blanca { background: var(--blanco); }
@@ -289,35 +299,34 @@ p { margin: 0; }
 <!-- Recorrido: cada capa es una foto a pantalla completa; el texto de cada escena aparece con el scroll -->
 <section class="recorrido" id="inicio" aria-label="Recorrido por nuestras bodas">
   <div class="escenario" id="escenario">
-    <div class="capa" data-n="0"><div class="foto" style="background-image:url('img/intro-1.jpg')"></div></div>
-    <div class="capa" data-n="1"><div class="foto" style="background-image:url('img/intro-2.jpg')"></div></div>
-    <div class="capa" data-n="2"><div class="foto" style="background-image:url('img/intro-3.jpg')"></div></div>
-    <div class="capa" data-n="3" data-desenfoque><div class="foto" style="background-image:url('img/intro-4.jpg')"></div><div class="desenfoque" style="background-image:url('img/intro-4.jpg')"></div></div>
-    <div class="capa" data-n="4" data-desenfoque><div class="foto" style="background-image:url('img/intro-5.jpg')"></div><div class="desenfoque" style="background-image:url('img/intro-5.jpg')"></div></div>
-    <div class="capa" data-n="5"><div class="foto" style="background-image:url('img/torta.jpg');background-position:center 40%"></div></div>
+    <div id="capas"></div>
+    <div class="destello" id="destello"></div>
+    <div class="cortina" id="cortina"></div>
 
-    <div class="texto-escena portada" data-n="0">
-      <div class="monograma">Velo</div>
-      <div class="linea-fina"></div>
-      <div class="sub">Bodas y celebraciones</div>
-      <div class="lugar">Cartagena de Indias</div>
+    <div class="texto-escena portada" data-escena="0">
+      <div class="envoltura"><div class="sello">
+        <div class="monograma">V</div>
+        <div class="nombre">Velo Eventos</div>
+        <div class="linea-fina"></div>
+        <div class="sub">Bodas y celebraciones · Cartagena de Indias</div>
+      </div></div>
     </div>
 
-    <div class="texto-escena" data-n="1">
+    <div class="texto-escena" data-escena="2">
       <div class="envoltura">
         <h2>Antes de la primera copa, ya está todo en su lugar.</h2>
         <p class="bajada">Montaje, luces y mesas listos horas antes de que llegue el primer invitado.</p>
       </div>
     </div>
 
-    <div class="texto-escena" data-n="2">
+    <div class="texto-escena pos-abajo" data-escena="3">
       <div class="envoltura">
         <h2>Ninguna se parece a la anterior.</h2>
         <p class="bajada">Cada boda empieza con una conversación distinta, y se nota en cada mesa.</p>
       </div>
     </div>
 
-    <div class="texto-escena" data-n="3">
+    <div class="texto-escena sin-velo" data-escena="5">
       <div class="envoltura bloque-objetivo">
         <div style="grid-column:1/-1"><span class="etiqueta">Nuestro objetivo</span>
           <h2>El oficio que no se ve, pero se nota.</h2></div>
@@ -329,12 +338,12 @@ p { margin: 0; }
       </div>
     </div>
 
-    <div class="texto-escena" data-n="4">
+    <div class="texto-escena sin-velo" data-escena="8">
       <div class="envoltura bloque-nosotros">
-        <div class="retrato" style="background-image:url('img/novia.jpg')" role="img" aria-label="Novia con ramo frente al mar"></div>
+        <div class="retrato" style="background-image:url('img/retrato.jpg')" role="img" aria-label="Novia con su ramo junto al novio"></div>
         <div>
           <span class="etiqueta">Quiénes somos</span>
-          <h2>Un equipo pequeño que responde por todo.</h2>
+          <h2>La experiencia tiene nombre propio.</h2>
           <p>Somos planeadores de bodas en Cartagena. Coordinamos proveedores, montaje y protocolo para que tu familia solo tenga que llegar y disfrutar.</p>
           <div class="cifras">
             <div><strong>12</strong><span>años organizando eventos</span></div>
@@ -344,10 +353,18 @@ p { margin: 0; }
       </div>
     </div>
 
-    <div class="texto-escena" data-n="5">
+    <div class="texto-escena pos-abajo" data-escena="11">
+      <div class="envoltura">
+        <h2>De la mano de cada familia.</h2>
+        <p class="bajada">Acompañamos a los papás, a los novios y a la quinceañera en cada decisión, sin afanes.</p>
+      </div>
+    </div>
+
+    <div class="texto-escena pos-arriba" data-escena="14">
       <div class="envoltura">
         <h2>Hasta el último detalle.</h2>
         <p class="bajada">La torta, la mesa de postres y la luz de las velas también pasan por nuestras manos.</p>
+        <a class="enlace" href="#contacto">Planeemos tu evento <span aria-hidden="true">→</span></a>
       </div>
     </div>
 
@@ -360,7 +377,6 @@ p { margin: 0; }
     <div class="progreso" aria-hidden="true"><i id="barraProgreso"></i></div>
   </div>
 </section>
-
 <section class="banda banda-blanca" id="portafolio">
   <div class="envoltura">
     <div class="encabezado-seccion">
@@ -510,32 +526,81 @@ p { margin: 0; }
   document.getElementById("whatsappDirecto").href = wa(saludo);
   document.getElementById("whatsappFlotante").href = wa(saludo);
 
-  // ---- Recorrido con el scroll ----
+  // ---- Recorrido con el scroll: 15 escenas, como el video de referencia ----
+  // ent = cómo entra la escena: fundido, destello (blanco), corte, cortina (barrido) o circulo (se abre desde el centro).
+  // mov = [zoom inicial, zoom final, corrimiento inicial %, corrimiento final %].
+  var ESCENAS = [
+    { img: "e01", ent: "ninguna",  mov: [1.16, 1.0, 0, 0] },
+    { img: "e02", ent: "destello", mov: [1.0, 1.12, -1, 1] },
+    { img: "e03", ent: "fundido",  mov: [1.14, 1.02, 0, 0] },
+    { img: "e04", ent: "cortina",  mov: [1.04, 1.14, 1, -1] },
+    { img: "e05", ent: "fundido",  mov: [1.12, 1.0, 0, 0] },
+    { img: "e06-desenfoque", ent: "fundido", mov: [1.08, 1.08, 0, 0], clase: "oscura" },
+    { img: "e07", ent: "fundido",  mov: [1.0, 1.1, 0, 0] },
+    { img: "e08", ent: "corte",    mov: [1.1, 1.0, 1, -1] },
+    { img: "e09-desenfoque", ent: "fundido", mov: [1.08, 1.08, 0, 0], clase: "oscura" },
+    { img: "e10", ent: "fundido",  mov: [1.0, 1.12, 0, 0] },
+    { img: "e11", ent: "fundido",  mov: [1.12, 1.0, 0, 0] },
+    { img: "e12", ent: "circulo",  mov: [1.1, 1.0, 0, 0] },
+    { img: "e13", ent: "fundido",  mov: [1.0, 1.1, -1, 1] },
+    { img: "e14", ent: "fundido",  mov: [1.1, 1.0, 0, 0] },
+    { img: "e15", ent: "cortina",  mov: [1.14, 1.0, 0, 0] }
+  ];
+  var N = ESCENAS.length, ENTRADA = 0.4;
   var seccion = document.getElementById("inicio");
-  var capas = Array.prototype.slice.call(document.querySelectorAll(".capa"));
-  var textos = Array.prototype.slice.call(document.querySelectorAll(".texto-escena"));
+  var contenedor = document.getElementById("capas");
+  var destello = document.getElementById("destello"), cortina = document.getElementById("cortina");
   var barra = document.getElementById("barraProgreso");
   var encabezado = document.getElementById("encabezado");
-  var N = capas.length;
   var reducir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var lim = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+  var suave = function (t) { return t * t * (3 - 2 * t); };
+  var capas = ESCENAS.map(function (e, i) {
+    var c = document.createElement("div");
+    c.className = "capa" + (e.clase ? " " + e.clase : "");
+    c.innerHTML = '<div class="foto" style="background-image:url(\'img/' + e.img + '.jpg\')"></div>' + (e.ent === "circulo" ? '<div class="vineta"></div>' : "");
+    contenedor.appendChild(c);
+    return c;
+  });
+  var textos = {};
+  Array.prototype.forEach.call(document.querySelectorAll(".texto-escena"), function (t) { textos[t.getAttribute("data-escena")] = t; });
 
   function pintar() {
     var alto = seccion.offsetHeight - window.innerHeight;
     var p = lim((window.scrollY - seccion.offsetTop) / alto, 0, 1);
-    var f = p * (N - 1);
+    var f = p * (N - 1 + 0.5);            // la última escena se queda un rato al final
+    var flash = 0, cortinaX = null, cortinaOp = 0;
     capas.forEach(function (c, i) {
-      var d = f - i;
-      var op = i === 0 ? lim(1.5 - d * 2, 0, 1) : lim(1.5 - Math.abs(d) * 2, 0, 1);
-      if (i === N - 1) op = lim(1.5 + d * 2, 0, 1);
+      var e = ESCENAS[i];
+      var dur = e.ent === "corte" ? 0.06 : ENTRADA;
+      var u = i === 0 ? 1 : lim((f - (i - dur)) / dur, 0, 1);
+      var tapada = i < N - 1 && f > i + 1.02;
+      var visible = u > 0 && !tapada;
+      c.style.visibility = visible ? "visible" : "hidden";
+      if (!visible) return;
+      var op = 1, clip = "none";
+      if (e.ent === "fundido" || e.ent === "corte") op = suave(u);
+      else if (e.ent === "destello") { op = lim((u - 0.45) / 0.15, 0, 1); flash = Math.max(flash, Math.sin(Math.PI * u) * 0.92); }
+      else if (e.ent === "cortina") { var x = (1 - suave(u)) * 100; clip = "inset(0 0 0 " + x.toFixed(2) + "%)"; if (u < 1) { cortinaX = x; cortinaOp = Math.sin(Math.PI * u); } }
+      else if (e.ent === "circulo") { clip = u < 1 ? "circle(" + (suave(u) * 80).toFixed(2) + "% at 50% 50%)" : "none"; c.lastElementChild.style.opacity = (1 - u) * 0.9; }
       c.style.opacity = op;
-      if (!reducir) c.firstElementChild.style.transform = "scale(" + (1.1 - 0.08 * lim((d + 1) / 2, 0, 1)) + ")";
-      var t = textos[i];
-      var top = i === 0 ? lim(1 - d * 3, 0, 1) : lim(2.2 - Math.abs(d) * 4, 0, 1);
-      if (i === N - 1) top = lim(2.2 + d * 4, 0, 1);
-      t.style.opacity = top;
-      if (!reducir) t.style.transform = "translateY(" + (d * -40).toFixed(1) + "px)";
-      if (c.hasAttribute("data-desenfoque")) c.lastElementChild.style.opacity = lim(top * 1.2, 0, 1);
+      c.style.clipPath = clip; c.style.webkitClipPath = clip;
+      if (!reducir) {
+        var t = lim((f - (i - ENTRADA)) / (1 + ENTRADA), 0, 1), m = e.mov;
+        c.firstElementChild.style.transform = "translateX(" + (m[2] + (m[3] - m[2]) * t).toFixed(2) + "%) scale(" + (m[0] + (m[1] - m[0]) * t).toFixed(4) + ")";
+      }
+    });
+    destello.style.opacity = flash;
+    cortina.style.opacity = cortinaOp;
+    if (cortinaX !== null) cortina.style.left = cortinaX + "%";
+    Object.keys(textos).forEach(function (k) {
+      var i = +k, t = textos[k], op;
+      if (i === 0) op = 1 - suave(lim((f - 0.25) / 0.3, 0, 1));
+      else if (i === N - 1) op = suave(lim((f - (i - 0.15)) / 0.2, 0, 1));
+      else op = suave(lim((f - (i - 0.05)) / 0.2, 0, 1)) * (1 - suave(lim((f - (i + 0.45)) / 0.15, 0, 1)));
+      t.style.opacity = op;
+      t.style.visibility = op > 0.01 ? "visible" : "hidden";
+      if (!reducir) t.style.transform = "translateY(" + ((1 - op) * (f < i ? 24 : -24)).toFixed(1) + "px)";
     });
     barra.style.height = (p * 100) + "%";
     encabezado.classList.toggle("solido", window.scrollY > seccion.offsetTop + alto - 40);
@@ -547,14 +612,14 @@ p { margin: 0; }
   window.addEventListener("resize", pintar);
   pintar();
 
-  // ---- Ver recorrido: baja solo por la introducción ----
+  // ---- Ver recorrido: baja solo por la introducción (unos 45 segundos, como el video) ----
   var auto = null, botonVer = document.getElementById("textoVer");
   function parar() { if (auto) { cancelAnimationFrame(auto); auto = null; botonVer.textContent = "Ver recorrido"; } }
   document.getElementById("verRecorrido").addEventListener("click", function () {
     if (auto) { parar(); return; }
     var fin = seccion.offsetTop + seccion.offsetHeight - window.innerHeight;
     if (window.scrollY >= fin - 5) window.scrollTo(0, seccion.offsetTop);
-    var velocidad = (seccion.offsetHeight - window.innerHeight) / 24000; // ~24 s
+    var velocidad = (seccion.offsetHeight - window.innerHeight) / 45000;
     var antes = performance.now(), y = window.scrollY;
     botonVer.textContent = "Pausar";
     (function paso(ahora) {
@@ -567,7 +632,6 @@ p { margin: 0; }
   document.getElementById("saltar").addEventListener("click", function () {
     parar(); document.getElementById("portafolio").scrollIntoView({ behavior: reducir ? "auto" : "smooth" });
   });
-
   // ---- Formulario: arma el mensaje y lo abre en WhatsApp ----
   var form = document.getElementById("formulario"), estado = document.getElementById("estado");
   form.addEventListener("submit", function (e) {
