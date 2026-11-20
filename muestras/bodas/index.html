@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Velo Eventos Cartagena</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Bodas y celebraciones en Cartagena de Indias: planeación, montaje y coordinación de principio a fin.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Jost:wght@300;400;500&display=swap">
+<style>
+/* Página de un solo ambiente: intro de cine oscura que se recorre con el scroll,
+   después bandas claras (blanco y piedra) y oscuras que se alternan. */
+:root {
+  --noche: #13100e;        /* fondo oscuro, negro cálido */
+  --noche-2: #1d1916;
+  --blanco: #ffffff;
+  --piedra: #e9e6e2;       /* gris piedra frío, no crema */
+  --tinta: #221d19;        /* texto sobre claro */
+  --tinta-suave: #6b625a;
+  --champana: #b8925a;     /* acento dorado champaña */
+  --linea-clara: rgba(255,255,255,.28);
+  --linea-oscura: rgba(34,29,25,.14);
+  --f-titulo: "Cormorant Garamond", "Cormorant", Garamond, "Times New Roman", serif;
+  --f-texto: "Jost", "Futura", "Avenir Next", "Segoe UI", Arial, sans-serif;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: auto; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--noche); color: var(--tinta);
+  font-family: var(--f-texto); font-weight: 300; font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased; overflow-x: hidden;
+}
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+h1, h2, h3 { font-family: var(--f-titulo); font-weight: 400; margin: 0; text-wrap: balance; letter-spacing: -.005em; }
+p { margin: 0; }
+:focus-visible { outline: 2px solid var(--champana); outline-offset: 3px; }
+.envoltura { width: 100%; max-width: 1180px; margin-inline: auto;
+  padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.etiqueta { font-family: var(--f-texto); font-size: .7rem; font-weight: 500; letter-spacing: .26em; text-transform: uppercase; color: var(--champana); display: inline-flex; align-items: center; gap: 14px; }
+.etiqueta::before { content: ""; width: 28px; height: 1px; background: currentColor; }
+.boton { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 26px;
+  font: 500 .78rem/1 var(--f-texto); letter-spacing: .16em; text-transform: uppercase; text-decoration: none;
+  border: 1px solid currentColor; border-radius: 2px; background: transparent; cursor: pointer; transition: background .3s, color .3s; }
+.boton-lleno { background: var(--tinta); color: var(--blanco); border-color: var(--tinta); }
+.boton-lleno:hover { background: var(--champana); border-color: var(--champana); }
+.boton-claro { color: var(--blanco); }
+.boton-claro:hover { background: var(--blanco); color: var(--tinta); }
+
+/* ---------- Encabezado ---------- */
+.encabezado { position: fixed; inset: 0 0 auto; z-index: 40; color: var(--blanco); transition: background .4s;
+  padding-top: env(safe-area-inset-top, 0px); }
+.encabezado.solido { background: rgba(19,16,14,.94); backdrop-filter: blur(8px); }
+.encabezado .envoltura { display: flex; align-items: center; justify-content: space-between; height: 76px; gap: 20px; }
+.marca { text-decoration: none; display: flex; flex-direction: column; line-height: 1; }
+.marca b { font-family: var(--f-titulo); font-weight: 400; font-size: 1.9rem; letter-spacing: .02em; }
+.marca span { font-size: .58rem; letter-spacing: .38em; text-transform: uppercase; opacity: .8; margin-top: 4px; }
+.menu { display: flex; gap: 34px; font-size: .74rem; letter-spacing: .2em; text-transform: uppercase; font-weight: 400; }
+.menu a { text-decoration: none; opacity: .85; }
+.menu a:hover { opacity: 1; color: var(--champana); }
+.encabezado .boton { min-height: 40px; padding: 0 18px; font-size: .7rem; }
+@media (max-width: 860px) { .menu { display: none; } }
+
+/* ---------- Recorrido (intro de cine) ---------- */
+.recorrido { position: relative; height: 760vh; background: var(--noche); }
+.escenario { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; color: var(--blanco); }
+.capa { position: absolute; inset: 0; opacity: 0; will-change: opacity, transform; }
+.capa .foto, .capa .desenfoque { position: absolute; inset: -2%; background-size: cover; background-position: center; }
+.capa .desenfoque { filter: blur(16px) brightness(.62) saturate(.9); opacity: 0; transform: scale(1.06); }
+.capa::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(10,8,7,.55) 0%, rgba(10,8,7,0) 26%, rgba(10,8,7,0) 60%, rgba(10,8,7,.6) 100%); }
+.capa[data-n="0"] { opacity: 1; }
+.texto-escena { position: absolute; inset: 0; z-index: 2; opacity: 0; display: flex; align-items: center; pointer-events: none;
+  will-change: opacity, transform; }
+.texto-escena[data-n="0"] { opacity: 1; }
+.texto-escena:not(.portada)::before { content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(90deg, rgba(10,8,7,.7) 0%, rgba(10,8,7,.35) 45%, rgba(10,8,7,0) 75%); }
+.texto-escena { text-shadow: 0 1px 18px rgba(0,0,0,.35); }
+.escenario .etiqueta, .trabajo .etiqueta, .contacto .etiqueta { color: #e2c695; }
+.texto-escena .envoltura { width: 100%; }
+.texto-escena h2 { font-size: clamp(2.3rem, 5.4vw, 4.6rem); line-height: 1.04; max-width: 11ch; font-weight: 300; }
+.texto-escena p.bajada { margin-top: 18px; max-width: 34ch; font-size: .98rem; opacity: .86; }
+
+.portada { flex-direction: column; justify-content: flex-end; padding-bottom: 18vh; text-align: center; }
+.portada .monograma { font-family: var(--f-titulo); font-weight: 300; font-size: clamp(4.2rem, 13vw, 10rem); line-height: .9; letter-spacing: .01em; }
+.portada .linea-fina { width: 1px; height: 46px; background: var(--linea-clara); margin: 26px auto; }
+.portada .sub { font-size: .72rem; letter-spacing: .4em; text-transform: uppercase; }
+.portada .lugar { margin-top: 10px; font-family: var(--f-titulo); font-size: 1.35rem; opacity: .9; }
+
+.bloque-objetivo { display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px 64px; align-items: end; }
+.bloque-objetivo h2 { grid-column: 1 / -1; max-width: 18ch; margin-top: 18px; }
+.bloque-objetivo .lead { font-family: var(--f-titulo); font-size: clamp(1.2rem, 1.8vw, 1.55rem); line-height: 1.35; max-width: 30ch; }
+.rasgos { border-top: 1px solid var(--linea-clara); padding-top: 14px; }
+.rasgos small { display: block; font-size: .64rem; letter-spacing: .24em; text-transform: uppercase; opacity: .8; margin-bottom: 10px; font-weight: 500; }
+.rasgos ul { list-style: none; margin: 0; padding: 0; font-family: var(--f-titulo); font-size: 1.35rem; line-height: 1.45; }
+
+.bloque-nosotros { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 56px; align-items: center; }
+.bloque-nosotros .retrato { aspect-ratio: 3 / 4; background-size: cover; background-position: center; box-shadow: 0 30px 60px rgba(0,0,0,.4); }
+.bloque-nosotros h2 { max-width: 16ch; margin: 16px 0 16px; font-size: clamp(2rem, 3.8vw, 3.2rem); }
+.bloque-nosotros p { max-width: 52ch; font-size: .95rem; opacity: .88; }
+.cifras { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px; max-width: 480px; }
+.cifras div { border-top: 1px solid var(--linea-clara); padding-top: 14px; }
+.cifras strong { display: block; font-family: var(--f-titulo); font-weight: 300; font-size: 3.2rem; line-height: 1; color: #e2c695; font-variant-numeric: lining-nums; }
+.cifras span { font-size: .78rem; opacity: .85; }
+
+.barra-recorrido { position: absolute; z-index: 5; left: max(20px, env(safe-area-inset-left, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 14px; font-size: .64rem; letter-spacing: .22em; text-transform: uppercase; font-weight: 500; }
+.barra-recorrido button { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; opacity: .85; }
+.barra-recorrido button:hover, .barra-recorrido button:focus-visible { opacity: 1; color: #e2c695; }
+.barra-recorrido .icono { width: 26px; height: 26px; border: 1px solid var(--linea-clara); border-radius: 50%; display: grid; place-items: center; }
+.barra-recorrido .sep { width: 1px; height: 14px; background: var(--linea-clara); }
+.progreso { position: absolute; z-index: 5; right: max(20px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%);
+  width: 1px; height: 120px; background: var(--linea-clara); }
+.progreso i { position: absolute; left: -1px; top: 0; width: 3px; height: 0; background: #e2c695; }
+@media (max-width: 760px) {
+  .bloque-objetivo, .bloque-nosotros { grid-template-columns: 1fr; gap: 22px; }
+  .bloque-nosotros .retrato { max-width: 170px; }
+  .bloque-nosotros h2 { margin: 10px 0; }
+  .cifras strong { font-size: 2.5rem; }
+  .progreso { display: none; }
+  .texto-escena { align-items: flex-end; padding-bottom: 130px; }
+  .texto-escena:not(.portada)::before { background: linear-gradient(0deg, rgba(10,8,7,.82) 0%, rgba(10,8,7,.45) 55%, rgba(10,8,7,0) 85%); }
+  .portada { align-items: center; padding-bottom: 22vh; }
+  .barra-recorrido { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  .encabezado .boton .largo { display: none; }
+}
+
+/* ---------- Portafolio ---------- */
+.banda { padding-block: clamp(72px, 10vw, 128px); }
+.banda-blanca { background: var(--blanco); }
+.banda-piedra { background: var(--piedra); }
+.encabezado-seccion { display: grid; gap: 16px; margin-bottom: 52px; }
+.encabezado-seccion h2 { font-size: clamp(2.2rem, 4.4vw, 3.6rem); line-height: 1.05; color: var(--tinta); }
+.encabezado-seccion p { max-width: 50ch; color: var(--tinta-suave); }
+.galeria { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 40px 28px; }
+.boda { grid-column: span 6; text-decoration: none; color: var(--tinta); }
+.boda:nth-child(1) { grid-column: span 7; }
+.boda:nth-child(2) { grid-column: span 5; margin-top: 90px; }
+.boda:nth-child(3) { grid-column: span 5; }
+.boda:nth-child(4) { grid-column: span 7; margin-top: -60px; }
+.boda .marco { overflow: hidden; aspect-ratio: 4 / 3; border-radius: 3px; background: var(--piedra); }
+.boda:nth-child(2) .marco, .boda:nth-child(3) .marco { aspect-ratio: 4 / 5; }
+.boda img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s cubic-bezier(.2,.7,.2,1); }
+.boda:hover img { transform: scale(1.04); }
+.boda h3 { font-size: 1.9rem; margin-top: 16px; }
+.boda .lugar { font-size: .8rem; color: var(--tinta-suave); display: flex; gap: 8px; align-items: center; }
+.boda .lugar svg { width: 12px; height: 12px; }
+.galeria-pie { margin-top: 64px; display: flex; justify-content: center; }
+@media (max-width: 760px) {
+  .galeria { grid-template-columns: 1fr; gap: 40px; }
+  .boda, .boda:nth-child(n) { grid-column: auto; margin-top: 0; }
+  .boda .marco, .boda:nth-child(n) .marco { aspect-ratio: 4 / 3; }
+}
+
+.frase { text-align: center; padding-block: 96px; background: var(--blanco); border-top: 1px solid var(--linea-oscura); }
+.frase .linea-fina { width: 44px; height: 1px; background: var(--champana); margin: 0 auto 26px; }
+.frase p { font-family: var(--f-titulo); font-size: clamp(1.6rem, 3vw, 2.4rem); color: var(--tinta); line-height: 1.2; }
+.frase small { display: block; margin-top: 14px; font-size: .78rem; color: var(--tinta-suave); letter-spacing: .06em; }
+
+/* ---------- Cómo trabajamos (oscuro) ---------- */
+.trabajo { position: relative; color: var(--blanco); background: var(--noche); overflow: hidden; }
+.trabajo::before { content: ""; position: absolute; inset: 0; background: url("img/fiesta-noche.jpg") center / cover; opacity: .26; filter: saturate(.4) sepia(.35); }
+.trabajo .envoltura { position: relative; display: grid; grid-template-columns: .85fr 1.15fr; gap: 56px; align-items: center; }
+.trabajo h2 { font-size: clamp(2.3rem, 4.6vw, 3.8rem); line-height: 1.04; margin-top: 18px; }
+.trabajo .intro p { margin-top: 20px; max-width: 40ch; opacity: .82; }
+.pasos-titulo { font-size: .66rem; letter-spacing: .26em; text-transform: uppercase; font-weight: 500; margin-bottom: 18px; opacity: .85; }
+.pasos { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.paso { padding: 20px 22px; border: 1px solid rgba(255,255,255,.16); background: rgba(29,25,22,.55); backdrop-filter: blur(6px); border-radius: 4px; }
+.paso h3 { font-family: var(--f-texto); font-weight: 500; font-size: .95rem; letter-spacing: .01em; }
+.paso p { margin-top: 6px; font-size: .86rem; opacity: .78; line-height: 1.5; }
+.paso.ultimo { grid-column: 1 / -1; border-color: rgba(226,198,149,.5); }
+@media (max-width: 860px) { .trabajo .envoltura { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .pasos { grid-template-columns: 1fr; } }
+
+/* ---------- Servicios ---------- */
+.servicios .encabezado-seccion { text-align: center; justify-items: center; }
+.arbol { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 26px; }
+.arbol::before { content: ""; position: absolute; left: 16.6%; right: 16.6%; top: 50%; height: 1px; background: var(--linea-oscura); }
+.servicio { position: relative; grid-column: span 2; background: var(--blanco); padding: 30px 28px 32px; border-radius: 4px;
+  box-shadow: 0 1px 0 rgba(34,29,25,.04), 0 18px 40px -24px rgba(34,29,25,.28); }
+.servicio:nth-child(4) { grid-column: 2 / span 2; }
+.servicio::before { content: ""; position: absolute; top: -7px; left: 50%; width: 12px; height: 12px; margin-left: -6px; transform: rotate(45deg);
+  background: var(--blanco); border: 1px solid var(--champana); }
+.servicio h3 { font-size: 1.55rem; text-align: center; color: var(--tinta); }
+.servicio ul { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 10px; font-size: .88rem; color: var(--tinta-suave); }
+.servicio li { display: grid; grid-template-columns: 10px 1fr; gap: 10px; }
+.servicio li::before { content: ""; width: 5px; height: 1px; background: var(--champana); margin-top: .78em; }
+@media (max-width: 900px) {
+  .arbol { grid-template-columns: 1fr 1fr; }
+  .servicio, .servicio:nth-child(4) { grid-column: auto; }
+  .arbol::before { display: none; }
+}
+@media (max-width: 560px) { .arbol { grid-template-columns: 1fr; } }
+
+/* ---------- Tipos de celebración ---------- */
+.tipos-destacados { display: grid; grid-template-columns: 1.25fr 1fr; gap: 24px; }
+.tipo { position: relative; overflow: hidden; border-radius: 3px; min-height: 420px; color: var(--blanco); text-decoration: none; display: flex; align-items: flex-end; }
+.tipo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s cubic-bezier(.2,.7,.2,1); }
+.tipo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,8,7,0) 35%, rgba(10,8,7,.78) 100%); }
+.tipo:hover img { transform: scale(1.04); }
+.tipo div { position: relative; z-index: 1; padding: 30px; }
+.tipo h3 { font-size: 2.4rem; }
+.tipo p { max-width: 38ch; font-size: .9rem; opacity: .88; margin-top: 6px; }
+.tipo .ir { display: inline-block; margin-top: 14px; font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; font-weight: 500; border-bottom: 1px solid currentColor; padding-bottom: 3px; }
+.tipos-lista { margin-top: 30px; border-top: 1px solid var(--linea-oscura); }
+.fila-tipo { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr) 28px; gap: 24px; align-items: center; padding: 22px 4px;
+  border-bottom: 1px solid var(--linea-oscura); text-decoration: none; color: var(--tinta); transition: padding .3s, background .3s; }
+.fila-tipo:hover { background: var(--piedra); padding-inline: 18px; }
+.fila-tipo h3 { font-size: 1.7rem; }
+.fila-tipo p { font-size: .9rem; color: var(--tinta-suave); }
+.fila-tipo .flecha { font-size: 1.1rem; color: var(--champana); }
+@media (max-width: 760px) {
+  .tipos-destacados { grid-template-columns: 1fr; }
+  .tipo { min-height: 340px; }
+  .fila-tipo { grid-template-columns: minmax(0, 1fr) 24px; gap: 6px 14px; }
+  .fila-tipo p { grid-column: 1; grid-row: 2; }
+  .fila-tipo .flecha { grid-row: 1 / span 2; grid-column: 2; }
+}
+
+/* ---------- Contacto ---------- */
+.contacto { position: relative; color: var(--blanco); background: var(--noche); overflow: hidden; }
+.contacto::before { content: ""; position: absolute; inset: 0; background: url("img/pareja-bn.jpg") 30% center / cover; opacity: .55; }
+.contacto::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(19,16,14,.15), rgba(19,16,14,.75)); }
+.contacto .envoltura { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr minmax(0, 470px); gap: 56px; align-items: end; }
+.contacto h2 { font-size: clamp(2.6rem, 5.4vw, 4.4rem); line-height: 1; margin-top: 18px; }
+.contacto .intro p { margin-top: 18px; max-width: 36ch; opacity: .88; }
+.contacto .acciones { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px; }
+.formulario { background: var(--blanco); color: var(--tinta); padding: 32px; border-radius: 4px; }
+.formulario .titulo { font-size: .66rem; letter-spacing: .24em; text-transform: uppercase; font-weight: 500; }
+.formulario .nota { font-size: .76rem; color: var(--tinta-suave); margin-top: 4px; }
+.campos { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 20px; margin-top: 24px; }
+.campo { display: grid; gap: 6px; min-width: 0; }
+.campo.ancho { grid-column: 1 / -1; }
+.campo label { font-size: .62rem; letter-spacing: .2em; text-transform: uppercase; font-weight: 500; color: var(--tinta-suave); }
+.campo input, .campo select, .campo textarea { font: 400 .95rem/1.4 var(--f-texto); color: var(--tinta); background: transparent; border: 0;
+  border-bottom: 1px solid var(--linea-oscura); padding: 8px 0; border-radius: 0; width: 100%; }
+.campo textarea { resize: vertical; min-height: 84px; }
+.campo input:focus, .campo select:focus, .campo textarea:focus { outline: none; border-bottom-color: var(--champana); }
+.formulario .boton { width: 100%; margin-top: 26px; }
+.formulario .estado { margin-top: 14px; font-size: .85rem; color: var(--tinta); }
+.formulario .estado a { color: var(--champana); font-weight: 500; }
+@media (max-width: 860px) { .contacto .envoltura { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .campos { grid-template-columns: 1fr; } .formulario { padding: 24px 20px; } }
+
+/* ---------- Pie ---------- */
+.pie { background: var(--noche); color: rgba(255,255,255,.78); padding-block: 72px 36px; font-size: .86rem; }
+.pie .columnas { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 36px; }
+.pie .marca { color: var(--blanco); }
+.pie .lema { margin-top: 18px; max-width: 30ch; }
+.pie h4 { font-size: .64rem; letter-spacing: .24em; text-transform: uppercase; font-weight: 500; color: #e2c695; margin: 0 0 14px; }
+.pie ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.pie a { text-decoration: none; }
+.pie a:hover { color: var(--blanco); }
+.pie .legal { margin-top: 56px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.12); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: .74rem; opacity: .7; }
+@media (max-width: 760px) { .pie .columnas { grid-template-columns: 1fr 1fr; } .pie .columnas > :first-child { grid-column: 1 / -1; } }
+
+/* ---------- WhatsApp flotante ---------- */
+.whatsapp { position: fixed; z-index: 50; right: calc(18px + env(safe-area-inset-right, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; background: var(--noche-2); color: var(--blanco);
+  text-decoration: none; font-size: .8rem; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.12); }
+.whatsapp:hover { background: #25d366; color: #0b2214; }
+.whatsapp svg { width: 16px; height: 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .boda img, .tipo img { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="encabezado" id="encabezado">
+  <div class="envoltura">
+    <a class="marca" href="#inicio" aria-label="Velo Eventos, inicio"><b>Velo</b><span>Eventos · Cartagena</span></a>
+    <nav class="menu" aria-label="Secciones">
+      <a href="#portafolio">Bodas</a>
+      <a href="#servicios">Servicios</a>
+      <a href="#celebraciones">Celebraciones</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+    <a class="boton boton-claro" href="#contacto">Cotizar<span class="largo">&nbsp;mi fecha</span></a>
+  </div>
+</header>
+
+<main>
+<!-- Recorrido: cada capa es una foto a pantalla completa; el texto de cada escena aparece con el scroll -->
+<section class="recorrido" id="inicio" aria-label="Recorrido por nuestras bodas">
+  <div class="escenario" id="escenario">
+    <div class="capa" data-n="0"><div class="foto" style="background-image:url('img/intro-1.jpg')"></div></div>
+    <div class="capa" data-n="1"><div class="foto" style="background-image:url('img/intro-2.jpg')"></div></div>
+    <div class="capa" data-n="2"><div class="foto" style="background-image:url('img/intro-3.jpg')"></div></div>
+    <div class="capa" data-n="3" data-desenfoque><div class="foto" style="background-image:url('img/intro-4.jpg')"></div><div class="desenfoque" style="background-image:url('img/intro-4.jpg')"></div></div>
+    <div class="capa" data-n="4" data-desenfoque><div class="foto" style="background-image:url('img/intro-5.jpg')"></div><div class="desenfoque" style="background-image:url('img/intro-5.jpg')"></div></div>
+    <div class="capa" data-n="5"><div class="foto" style="background-image:url('img/torta.jpg');background-position:center 40%"></div></div>
+
+    <div class="texto-escena portada" data-n="0">
+      <div class="monograma">Velo</div>
+      <div class="linea-fina"></div>
+      <div class="sub">Bodas y celebraciones</div>
+      <div class="lugar">Cartagena de Indias</div>
+    </div>
+
+    <div class="texto-escena" data-n="1">
+      <div class="envoltura">
+        <h2>Antes de la primera copa, ya está todo en su lugar.</h2>
+        <p class="bajada">Montaje, luces y mesas listos horas antes de que llegue el primer invitado.</p>
+      </div>
+    </div>
+
+    <div class="texto-escena" data-n="2">
+      <div class="envoltura">
+        <h2>Ninguna se parece a la anterior.</h2>
+        <p class="bajada">Cada boda empieza con una conversación distinta, y se nota en cada mesa.</p>
+      </div>
+    </div>
+
+    <div class="texto-escena" data-n="3">
+      <div class="envoltura bloque-objetivo">
+        <div style="grid-column:1/-1"><span class="etiqueta">Nuestro objetivo</span>
+          <h2>El oficio que no se ve, pero se nota.</h2></div>
+        <p class="lead">Pensamos, planeamos y montamos tu evento con tu idea como única guía. Tú pones el sueño; nosotros respondemos por el resultado.</p>
+        <div class="rasgos">
+          <small>Así son nuestros eventos</small>
+          <ul><li>Elegantes</li><li>Hechos a la medida</li><li>Cuidados al detalle</li><li>Con un nivel estético alto</li></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="texto-escena" data-n="4">
+      <div class="envoltura bloque-nosotros">
+        <div class="retrato" style="background-image:url('img/novia.jpg')" role="img" aria-label="Novia con ramo frente al mar"></div>
+        <div>
+          <span class="etiqueta">Quiénes somos</span>
+          <h2>Un equipo pequeño que responde por todo.</h2>
+          <p>Somos planeadores de bodas en Cartagena. Coordinamos proveedores, montaje y protocolo para que tu familia solo tenga que llegar y disfrutar.</p>
+          <div class="cifras">
+            <div><strong>12</strong><span>años organizando eventos</span></div>
+            <div><strong>180</strong><span>bodas en la costa Caribe</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="texto-escena" data-n="5">
+      <div class="envoltura">
+        <h2>Hasta el último detalle.</h2>
+        <p class="bajada">La torta, la mesa de postres y la luz de las velas también pasan por nuestras manos.</p>
+      </div>
+    </div>
+
+    <div class="barra-recorrido">
+      <button type="button" id="verRecorrido"><span class="icono" aria-hidden="true">
+        <svg width="8" height="10" viewBox="0 0 8 10"><path d="M0 0l8 5-8 5z" fill="currentColor"/></svg></span><span id="textoVer">Ver recorrido</span></button>
+      <span class="sep" aria-hidden="true"></span>
+      <button type="button" id="saltar">Saltar la introducción</button>
+    </div>
+    <div class="progreso" aria-hidden="true"><i id="barraProgreso"></i></div>
+  </div>
+</section>
+
+<section class="banda banda-blanca" id="portafolio">
+  <div class="envoltura">
+    <div class="encabezado-seccion">
+      <span class="etiqueta">Portafolio</span>
+      <h2>Bodas que llevan nuestra firma.</h2>
+      <p>Algunas de las bodas que hemos organizado en Cartagena y sus alrededores.</p>
+    </div>
+    <div class="galeria">
+      <a class="boda" href="#contacto"><div class="marco"><img src="img/intro-6.jpg" alt="Novios besándose entre pétalos con sus invitados" ></div>
+        <h3>Mariana &amp; Sebastián</h3><div class="lugar"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0a4.5 4.5 0 0 0-4.5 4.5C1.5 8 6 12 6 12s4.5-4 4.5-7.5A4.5 4.5 0 0 0 6 0zm0 6.3a1.8 1.8 0 1 1 0-3.6 1.8 1.8 0 0 1 0 3.6z" fill="currentColor"/></svg>Ciudad Amurallada</div></a>
+      <a class="boda" href="#contacto"><div class="marco"><img src="img/playa.jpg" alt="Pareja de novios caminando en una playa" ></div>
+        <h3>Laura &amp; Andrés</h3><div class="lugar"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0a4.5 4.5 0 0 0-4.5 4.5C1.5 8 6 12 6 12s4.5-4 4.5-7.5A4.5 4.5 0 0 0 6 0zm0 6.3a1.8 1.8 0 1 1 0-3.6 1.8 1.8 0 0 1 0 3.6z" fill="currentColor"/></svg>Isla Barú</div></a>
+      <a class="boda" href="#contacto"><div class="marco"><img src="img/anillos.jpg" alt="Argollas de matrimonio sobre rosas" ></div>
+        <h3>Camila &amp; Julián</h3><div class="lugar"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0a4.5 4.5 0 0 0-4.5 4.5C1.5 8 6 12 6 12s4.5-4 4.5-7.5A4.5 4.5 0 0 0 6 0zm0 6.3a1.8 1.8 0 1 1 0-3.6 1.8 1.8 0 0 1 0 3.6z" fill="currentColor"/></svg>Getsemaní</div></a>
+      <a class="boda" href="#contacto"><div class="marco"><img src="img/letrero.jpg" alt="Letrero de madera Mr &amp; Mrs entre árboles" ></div>
+        <h3>Valentina &amp; Tomás</h3><div class="lugar"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0a4.5 4.5 0 0 0-4.5 4.5C1.5 8 6 12 6 12s4.5-4 4.5-7.5A4.5 4.5 0 0 0 6 0zm0 6.3a1.8 1.8 0 1 1 0-3.6 1.8 1.8 0 0 1 0 3.6z" fill="currentColor"/></svg>Hacienda en Turbaco</div></a>
+    </div>
+    <div class="galeria-pie"><a class="boton boton-lleno" href="#contacto">Ver todas las bodas y eventos</a></div>
+  </div>
+</section>
+
+<div class="frase">
+  <div class="envoltura">
+    <div class="linea-fina"></div>
+    <p>Todo empieza con un salón vacío y una idea clara.</p>
+    <small>Decoración y montaje en Cartagena de Indias</small>
+  </div>
+</div>
+
+<section class="banda trabajo" id="trabajo">
+  <div class="envoltura">
+    <div class="intro">
+      <span class="etiqueta">Lo que hacemos</span>
+      <h2>Quince responsabilidades que dejan de ser tuyas.</h2>
+      <p>Desde la primera reunión hasta que se va el último invitado, una sola persona de nuestro equipo es tu punto de contacto.</p>
+    </div>
+    <div>
+      <div class="pasos-titulo">Cómo trabajamos</div>
+      <div class="pasos">
+        <div class="paso"><h3>Conversación inicial</h3><p>Antes de proponer, escuchamos: qué celebran, con quién y en qué lugar lo imaginan.</p></div>
+        <div class="paso"><h3>Plan y presupuesto</h3><p>Ordenamos todo en un plan con fechas, prioridades y un presupuesto que revisamos contigo.</p></div>
+        <div class="paso"><h3>Diseño y proveedores</h3><p>Elegimos decoración, flores, música y comida, y cerramos cada contrato por ti.</p></div>
+        <div class="paso"><h3>Minuto a minuto</h3><p>Escribimos el guion del día: quién llega, a qué hora y qué pasa en cada momento.</p></div>
+        <div class="paso ultimo"><h3>El día del evento</h3><p>Estamos desde el montaje hasta el cierre. Tú solo te ocupas de disfrutar con tu familia.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="banda banda-piedra servicios" id="servicios">
+  <div class="envoltura">
+    <div class="encabezado-seccion">
+      <span class="etiqueta">Nuestros servicios</span>
+      <h2>Todo lo que coordinamos por ti.</h2>
+    </div>
+    <div class="arbol">
+      <article class="servicio"><h3>Planeación y coordinación</h3><ul>
+        <li>Planear y coordinar el evento completo</li><li>Guion del minuto a minuto</li><li>Acompañamiento a pruebas de vestido y menú</li></ul></article>
+      <article class="servicio"><h3>Proveedores y montaje</h3><ul>
+        <li>Supervisión del montaje del evento</li><li>Coordinación de proveedores el día del evento</li><li>Control de cada proveedor durante el montaje y la fiesta</li></ul></article>
+      <article class="servicio"><h3>Invitados y protocolo</h3><ul>
+        <li>Confirmación de invitados</li><li>Personal de protocolo para ubicar mesas y acompañar a los invitados</li><li>Control del licor durante la noche</li></ul></article>
+      <article class="servicio"><h3>Presupuesto y papeles</h3><ul>
+        <li>Revisión de contratos con proveedores</li><li>Manejo del presupuesto</li><li>Papeles y seguridad social de proveedores (ARL)</li></ul></article>
+      <article class="servicio"><h3>Decoración y lugar</h3><ul>
+        <li>Asesoría en la decoración</li><li>Búsqueda del lugar y hoteles para invitados</li><li>Logística para novios que llegan de otra ciudad</li></ul></article>
+    </div>
+  </div>
+</section>
+
+<section class="banda banda-blanca" id="celebraciones">
+  <div class="envoltura">
+    <div class="encabezado-seccion">
+      <span class="etiqueta">Celebraciones</span>
+      <h2>Cinco tipos de celebración, un mismo cuidado.</h2>
+    </div>
+    <div class="tipos-destacados">
+      <a class="tipo" href="#contacto"><img src="img/mesa.jpg" alt="Mesa larga decorada con flores y copas" >
+        <div><h3>Bodas</h3><p>Ceremonia, recepción y fiesta, coordinadas como un solo día sin cortes.</p><span class="ir">Cotizar mi boda</span></div></a>
+      <a class="tipo" href="#contacto"><img src="img/globos.jpg" alt="Globos de colores en una fiesta" >
+        <div><h3>Quince años</h3><p>Una noche a la medida de la quinceañera y de su familia.</p><span class="ir">Cotizar mis quince</span></div></a>
+    </div>
+    <div class="tipos-lista">
+      <a class="fila-tipo" href="#contacto"><h3>Eventos de empresa</h3><p>Lanzamientos, cenas y fiestas de fin de año con el mismo cuidado de una boda.</p><span class="flecha" aria-hidden="true">→</span></a>
+      <a class="fila-tipo" href="#contacto"><h3>Eventos sociales</h3><p>Aniversarios, bautizos y reuniones familiares hechas a la medida.</p><span class="flecha" aria-hidden="true">→</span></a>
+      <a class="fila-tipo" href="#contacto"><h3>Fiestas temáticas</h3><p>Una idea clara, sostenida en la decoración, el montaje y el ritmo de la noche.</p><span class="flecha" aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="banda contacto" id="contacto">
+  <div class="envoltura">
+    <div class="intro">
+      <span class="etiqueta">Contacto</span>
+      <h2>Empecemos por la fecha.</h2>
+      <p>Cuéntanos cuándo y dónde lo imaginas. Te respondemos por WhatsApp el mismo día con disponibilidad y una primera propuesta.</p>
+      <div class="acciones">
+        <a class="boton boton-claro" id="whatsappDirecto" href="#" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+      </div>
+    </div>
+    <form class="formulario" id="formulario" novalidate>
+      <div class="titulo">O déjanos tus datos</div>
+      <div class="nota">Los campos con * son obligatorios.</div>
+      <div class="campos">
+        <div class="campo"><label for="nombre">Nombre *</label><input id="nombre" name="nombre" autocomplete="name" required></div>
+        <div class="campo"><label for="correo">Correo *</label><input id="correo" name="correo" type="email" autocomplete="email" required></div>
+        <div class="campo"><label for="telefono">WhatsApp</label><input id="telefono" name="telefono" type="tel" autocomplete="tel" inputmode="tel"></div>
+        <div class="campo"><label for="tipo">Tipo de evento *</label>
+          <select id="tipo" name="tipo" required>
+            <option value="">Elige una opción</option><option>Boda</option><option>Quince años</option><option>Evento de empresa</option><option>Evento social</option><option>Fiesta temática</option>
+          </select></div>
+        <div class="campo"><label for="fecha">Fecha aproximada</label><input id="fecha" name="fecha" type="date"></div>
+        <div class="campo"><label for="invitados">Invitados</label><input id="invitados" name="invitados" type="number" min="10" step="10" placeholder="Ej. 120"></div>
+        <div class="campo ancho"><label for="mensaje">Cuéntanos de tu evento *</label><textarea id="mensaje" name="mensaje" required placeholder="Lugar que tienes en mente, estilo, lo que más te importa…"></textarea></div>
+      </div>
+      <button class="boton boton-lleno" type="submit">Enviar por WhatsApp</button>
+      <div class="estado" id="estado" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+</section>
+</main>
+
+<footer class="pie">
+  <div class="envoltura">
+    <div class="columnas">
+      <div><a class="marca" href="#inicio"><b>Velo</b><span>Eventos · Cartagena</span></a>
+        <p class="lema">Bodas y celebraciones en Cartagena de Indias, Barú y la costa Caribe.</p></div>
+      <div><h4>Página</h4><ul><li><a href="#portafolio">Bodas</a></li><li><a href="#trabajo">Cómo trabajamos</a></li><li><a href="#servicios">Servicios</a></li><li><a href="#celebraciones">Celebraciones</a></li></ul></div>
+      <div><h4>Contacto</h4><ul><li>WhatsApp <span id="numeroVisible">310 790 7194</span></li><li>Bocagrande, Cartagena</li><li>Lunes a sábado, 9:00 a. m. – 6:00 p. m.</li></ul></div>
+      <div><h4>Redes</h4><ul><li><a href="#" rel="noopener">Instagram</a></li><li><a href="#" rel="noopener">TikTok</a></li><li><a href="#" rel="noopener">Pinterest</a></li></ul></div>
+    </div>
+    <div class="legal"><span>© 2026 Velo Eventos. Página de muestra hecha por 3R.</span><span>Fotos: Unsplash</span></div>
+  </div>
+</footer>
+
+<a class="whatsapp" id="whatsappFlotante" href="#" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+  <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M13.6 2.3A7.9 7.9 0 0 0 1.2 11.8L0 16l4.3-1.1a7.9 7.9 0 0 0 3.8 1A7.9 7.9 0 0 0 13.6 2.3zM8 14.5a6.5 6.5 0 0 1-3.3-.9l-.2-.1-2.6.7.7-2.5-.2-.3A6.6 6.6 0 1 1 8 14.5zm3.6-4.9c-.2-.1-1.2-.6-1.4-.6s-.3-.1-.5.1l-.6.8c-.1.1-.2.1-.4 0a5.4 5.4 0 0 1-2.7-2.3c-.2-.4.2-.3.6-1.1v-.4l-.6-1.5c-.2-.4-.3-.3-.5-.3h-.4a.8.8 0 0 0-.6.3 2.4 2.4 0 0 0-.7 1.8 4.2 4.2 0 0 0 .9 2.2 9.5 9.5 0 0 0 3.6 3.2c1.4.6 1.9.6 2.6.5a2.2 2.2 0 0 0 1.4-1c.2-.5.2-.9.1-1z"/></svg>
+  WhatsApp
+</a>
+
+<script>
+(function () {
+  // Número al que llegan los mensajes (cámbialo por el del cliente).
+  var WHATSAPP = "573107907194";
+  var wa = function (texto) { return "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(texto); };
+  var saludo = "Hola, vi su página y quiero cotizar un evento.";
+  document.getElementById("whatsappDirecto").href = wa(saludo);
+  document.getElementById("whatsappFlotante").href = wa(saludo);
+
+  // ---- Recorrido con el scroll ----
+  var seccion = document.getElementById("inicio");
+  var capas = Array.prototype.slice.call(document.querySelectorAll(".capa"));
+  var textos = Array.prototype.slice.call(document.querySelectorAll(".texto-escena"));
+  var barra = document.getElementById("barraProgreso");
+  var encabezado = document.getElementById("encabezado");
+  var N = capas.length;
+  var reducir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var lim = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+
+  function pintar() {
+    var alto = seccion.offsetHeight - window.innerHeight;
+    var p = lim((window.scrollY - seccion.offsetTop) / alto, 0, 1);
+    var f = p * (N - 1);
+    capas.forEach(function (c, i) {
+      var d = f - i;
+      var op = i === 0 ? lim(1.5 - d * 2, 0, 1) : lim(1.5 - Math.abs(d) * 2, 0, 1);
+      if (i === N - 1) op = lim(1.5 + d * 2, 0, 1);
+      c.style.opacity = op;
+      if (!reducir) c.firstElementChild.style.transform = "scale(" + (1.1 - 0.08 * lim((d + 1) / 2, 0, 1)) + ")";
+      var t = textos[i];
+      var top = i === 0 ? lim(1 - d * 3, 0, 1) : lim(2.2 - Math.abs(d) * 4, 0, 1);
+      if (i === N - 1) top = lim(2.2 + d * 4, 0, 1);
+      t.style.opacity = top;
+      if (!reducir) t.style.transform = "translateY(" + (d * -40).toFixed(1) + "px)";
+      if (c.hasAttribute("data-desenfoque")) c.lastElementChild.style.opacity = lim(top * 1.2, 0, 1);
+    });
+    barra.style.height = (p * 100) + "%";
+    encabezado.classList.toggle("solido", window.scrollY > seccion.offsetTop + alto - 40);
+  }
+  var pendiente = false;
+  window.addEventListener("scroll", function () {
+    if (!pendiente) { pendiente = true; requestAnimationFrame(function () { pendiente = false; pintar(); }); }
+  }, { passive: true });
+  window.addEventListener("resize", pintar);
+  pintar();
+
+  // ---- Ver recorrido: baja solo por la introducción ----
+  var auto = null, botonVer = document.getElementById("textoVer");
+  function parar() { if (auto) { cancelAnimationFrame(auto); auto = null; botonVer.textContent = "Ver recorrido"; } }
+  document.getElementById("verRecorrido").addEventListener("click", function () {
+    if (auto) { parar(); return; }
+    var fin = seccion.offsetTop + seccion.offsetHeight - window.innerHeight;
+    if (window.scrollY >= fin - 5) window.scrollTo(0, seccion.offsetTop);
+    var velocidad = (seccion.offsetHeight - window.innerHeight) / 24000; // ~24 s
+    var antes = performance.now(), y = window.scrollY;
+    botonVer.textContent = "Pausar";
+    (function paso(ahora) {
+      y = Math.min(fin, y + (ahora - antes) * velocidad); antes = ahora;
+      window.scrollTo(0, y);
+      if (y < fin) auto = requestAnimationFrame(paso); else parar();
+    })(antes);
+  });
+  ["wheel", "touchstart", "keydown"].forEach(function (ev) { window.addEventListener(ev, parar, { passive: true }); });
+  document.getElementById("saltar").addEventListener("click", function () {
+    parar(); document.getElementById("portafolio").scrollIntoView({ behavior: reducir ? "auto" : "smooth" });
+  });
+
+  // ---- Formulario: arma el mensaje y lo abre en WhatsApp ----
+  var form = document.getElementById("formulario"), estado = document.getElementById("estado");
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var v = function (id) { return document.getElementById(id).value.trim(); };
+    var faltan = [];
+    if (!v("nombre")) faltan.push("tu nombre");
+    if (!/^\S+@\S+\.\S+$/.test(v("correo"))) faltan.push("un correo válido");
+    if (!v("tipo")) faltan.push("el tipo de evento");
+    if (!v("mensaje")) faltan.push("unas líneas sobre tu evento");
+    if (faltan.length) { estado.textContent = "Falta " + faltan.join(", ") + "."; return; }
+    var fecha = v("fecha") ? new Date(v("fecha") + "T12:00").toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" }) : "por definir";
+    var texto = "Hola, quiero cotizar un evento.\n\nNombre: " + v("nombre") + "\nCorreo: " + v("correo") +
+      (v("telefono") ? "\nWhatsApp: " + v("telefono") : "") + "\nTipo de evento: " + v("tipo") + "\nFecha: " + fecha +
+      (v("invitados") ? "\nInvitados: " + v("invitados") : "") + "\n\n" + v("mensaje");
+    var enlace = wa(texto);
+    estado.innerHTML = "";
+    estado.append("Listo. Tu mensaje está armado: ");
+    var a = document.createElement("a"); a.href = enlace; a.target = "_blank"; a.rel = "noopener"; a.textContent = "ábrelo en WhatsApp para enviarlo";
+    estado.append(a, ".");
+    window.open(enlace, "_blank");
+  });
+})();
+</script>
+</body>
+</html>

@@ -18,6 +18,7 @@ de los demás salvo que él lo pida. Cuando algo cambie, actualiza las notas de 
 | Lore TRAVEL (planes de viaje en Cartagena) | `clientes/lore-travel/` | `clientes/lore-travel/CLAUDE.md` |
 | Instagram, contenido y ventas de 3R | `marketing/` | `marketing/CLAUDE.md` |
 | Llévalo (dropshipping propio de Rigoberto con Dropi) | `tiendas/llevalo/` | `tiendas/llevalo/CLAUDE.md` |
+| Muestra de página para bodas («Velo Eventos») | `muestras/bodas/` | `muestras/bodas/CLAUDE.md` |
 
 ## Para todos los proyectos
 
