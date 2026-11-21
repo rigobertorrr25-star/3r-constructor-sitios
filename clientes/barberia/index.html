@@ -150,6 +150,60 @@ p { margin: 0; }
 .punto-vivo { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2fbf62; margin-right: 8px; vertical-align: middle; box-shadow: 0 0 0 3px rgba(47,191,98,.2); }
 .punto-vivo.cerrado { background: var(--gris); box-shadow: none; }
 
+/* ---------- En vivo ---------- */
+.vivo { border-bottom: 1px solid var(--linea); }
+.vivo-cabeza { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 32px; }
+.vivo-cabeza > div { display: grid; gap: 14px; }
+.en-vivo { display: inline-flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--gris); }
+.en-vivo i { width: 10px; height: 10px; border-radius: 50%; background: var(--rojo); animation: latido 1.6s ease-in-out infinite; }
+.en-vivo.apagado i { background: var(--gris); animation: none; }
+@keyframes latido { 0%, 100% { box-shadow: 0 0 0 0 rgba(211,22,31,.55); } 50% { box-shadow: 0 0 0 7px rgba(211,22,31,0); } }
+.vivo-resumen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px solid var(--linea); margin-bottom: 28px; }
+.vivo-resumen > div { padding: 18px 16px 18px 0; display: grid; gap: 4px; min-width: 0; }
+.vivo-resumen > div + div { padding-left: 16px; border-left: 1px solid var(--linea); }
+.vivo-resumen b { font-family: var(--f-titulo); font-weight: 400; font-size: clamp(2.2rem, 6vw, 4.2rem); line-height: 1; font-variant-numeric: tabular-nums; }
+.vivo-resumen span { font-size: .86rem; color: var(--gris); }
+.vivo-aviso { margin: -12px 0 24px; font-size: .88rem; color: #e0b4b4; }
+.sillas { display: grid; gap: 14px; }
+.silla { background: var(--carbon); border: 1px solid var(--linea); border-radius: 2px; padding: 20px; display: grid; gap: 16px; align-content: start; min-width: 0; }
+.silla-top { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 12px; }
+.silla-top img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; filter: grayscale(1) contrast(1.1); }
+.silla-top b { display: block; font-family: var(--f-titulo); font-weight: 400; font-size: 1.6rem; line-height: 1; }
+.silla-top small { color: var(--gris); font-size: .8rem; }
+.chip-estado { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 2px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+.chip-estado::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip-estado.motilando { background: var(--rojo); color: var(--blanco); }
+.chip-estado.motilando::before { animation: latido 1.6s ease-in-out infinite; }
+.chip-estado.libre { background: #17532c; color: #d9f5e2; }
+.chip-estado.descanso { background: #3a3030; color: #d8cccc; }
+.corte-progreso { display: grid; gap: 6px; font-size: .85rem; color: #cfc7c7; }
+.corte-barra { height: 6px; background: var(--linea); border-radius: 2px; overflow: hidden; }
+.corte-barra i { display: block; height: 100%; background: var(--rojo); transition: width .6s ease; }
+.cola { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-height: 22px; font-size: .85rem; color: var(--gris); }
+.cola i { width: 14px; height: 20px; border-radius: 7px 7px 2px 2px; background: #5a4848; }
+.cola span { margin-left: 6px; }
+.espera { padding-top: 14px; border-top: 1px solid var(--linea); display: grid; gap: 4px; }
+.espera small { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--gris); font-weight: 600; }
+.espera b { font-family: var(--f-titulo); font-weight: 400; font-size: 2rem; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.espera span { font-size: .86rem; color: #cfc7c7; }
+.vivo-nota { margin-top: 20px; font-size: .86rem; color: var(--gris); max-width: 70ch; }
+.panel-barbero { margin-top: 28px; border: 1px dashed #5a4848; border-radius: 2px; padding: 18px; display: grid; gap: 16px; }
+.panel-barbero h3 { font-size: 1.7rem; }
+.panel-barbero > p { font-size: .88rem; color: var(--gris); }
+.controles { display: grid; gap: 12px; }
+.control-fila { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--linea); }
+.control-fila > b { font-weight: 700; }
+.control-botones { display: flex; flex-wrap: wrap; gap: 6px; }
+.control-botones button { min-height: 40px; padding: 0 12px; border: 1px solid var(--linea); background: var(--negro); border-radius: 2px; cursor: pointer; font-size: .86rem; font-weight: 600; }
+.control-botones button:hover { border-color: var(--blanco); }
+.control-botones button.principal { background: var(--rojo); border-color: var(--rojo); }
+.boton-texto { background: none; border: 0; padding: 0; cursor: pointer; color: var(--gris); font-size: .86rem; text-decoration: underline; text-underline-offset: 3px; }
+@media (min-width: 820px) { .sillas { grid-template-columns: repeat(3, minmax(0, 1fr)); } .controles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) {
+  .vivo-resumen { grid-template-columns: 1fr 1fr; }
+  .vivo-resumen > div:last-child { grid-column: 1 / -1; padding-left: 0; border-left: 0; border-top: 1px solid var(--linea); }
+}
+
 /* ---------- Capa roja (precios) ---------- */
 .capa {
   position: relative; overflow: hidden; isolation: isolate;
@@ -168,7 +222,7 @@ p { margin: 0; }
 .lista-precios { list-style: none; margin: 0; padding: 0; border-top: 1px solid rgba(245,242,242,.35); }
 .lista-precios li { border-bottom: 1px solid rgba(245,242,242,.35); }
 .fila-precio {
-  width: 100%; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 4px 18px;
+  width: 100%; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 18px;
   padding: 16px 4px; background: none; border: 0; text-align: left; cursor: pointer;
   transition: background-color .2s, padding .2s;
 }
@@ -455,6 +509,7 @@ p { margin: 0; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
   .portada-foto img { transform: none !important; }
+  .en-vivo i, .chip-estado.motilando::before { animation: none !important; }
 }
 </style>
 </head>
@@ -464,6 +519,7 @@ p { margin: 0; }
   <div class="envoltura">
     <a class="marca" href="#inicio" aria-label="El Filo Barbería, inicio"><b>EL FILO</b><span>Barbería</span></a>
     <nav class="nav" aria-label="Secciones">
+      <a href="#en-vivo">En vivo</a>
       <a href="#precios">Precios</a>
       <a href="#galeria">Galería</a>
       <a href="#equipo">Equipo</a>
@@ -477,6 +533,7 @@ p { margin: 0; }
   </div>
   <div class="menu-movil" id="menu-movil" hidden>
     <nav class="envoltura" aria-label="Secciones">
+      <a href="#en-vivo">En vivo</a>
       <a href="#precios">Precios</a>
       <a href="#galeria">Galería</a>
       <a href="#equipo">Equipo</a>
@@ -493,7 +550,7 @@ p { margin: 0; }
   <section class="portada" id="inicio">
     <div class="portada-foto"><img id="portada-img" src="img/portada.jpg" alt="Interior de la barbería con sillas de cuero y luces cálidas" fetchpriority="high"></div>
     <div class="envoltura portada-contenido">
-      <span class="etiqueta">Barbería en Manga, Cartagena</span>
+      <span class="etiqueta">Barbería para hombres en Manga, Cartagena</span>
       <h1>Cortes con filo. <span class="rojo">Al milímetro.</span></h1>
       <p class="portada-texto">Degradados, barba y afeitado con navaja. Reservas en un minuto, llegas a tu hora y te sientas sin hacer fila.</p>
       <div class="portada-botones">
@@ -502,9 +559,32 @@ p { margin: 0; }
       </div>
       <div class="portada-datos">
         <span id="estado-hoy"><span class="punto-vivo"></span><strong>Abierto</strong> · lunes a sábado 9:00 a. m. – 8:00 p. m.</span>
-        <span>Desde <strong>$25.000</strong></span>
+        <a href="#en-vivo" id="dato-vivo" style="text-decoration:none">En vivo: <strong>cargando…</strong></a>
+        <span>Turnos de <strong>45 min</strong> desde <strong>$25.000</strong></span>
         <span>Calle 27 # 24-15, Manga</span>
       </div>
+    </div>
+  </section>
+
+  <!-- En vivo -->
+  <section class="vivo seccion" id="en-vivo" aria-labelledby="titulo-vivo">
+    <div class="envoltura">
+      <div class="vivo-cabeza">
+        <div>
+          <span class="etiqueta">Antes de salir de la casa</span>
+          <h2 class="titulo-seccion" id="titulo-vivo">Así está la barbería ahora.</h2>
+        </div>
+        <span class="en-vivo apagado" id="vivo-estado" aria-live="polite"><i></i><span>Conectando…</span></span>
+      </div>
+      <div class="vivo-resumen">
+        <div><b id="res-esperando">–</b><span>esperando turno</span></div>
+        <div><b id="res-sillas">–</b><span>sillas motilando</span></div>
+        <div><b id="res-espera">–</b><span id="res-espera-txt">espera más corta</span></div>
+      </div>
+      <p class="vivo-aviso" id="vivo-aviso" hidden></p>
+      <div class="sillas" id="sillas"></div>
+      <p class="vivo-nota">Cada cliente dura más o menos 45 minutos, por eso la espera se muestra como un rango. Si escoges barbero, cuenta la fila de esa silla; si te da igual, te toca la que se libere primero.</p>
+      <div id="zona-panel"></div>
     </div>
   </section>
 
@@ -515,7 +595,7 @@ p { margin: 0; }
         <div class="precios-cabeza">
           <span class="etiqueta">Servicios y precios</span>
           <h2 class="titulo-seccion" id="titulo-precios">Escoge tu corte.</h2>
-          <p class="texto-suave">Toca un servicio y lo dejamos listo en tu reserva. Todos incluyen lavado y peinado final.</p>
+          <p class="texto-suave">Toca un servicio y lo dejamos listo en tu reserva. Cada turno dura 45 minutos e incluye lavado y peinado final.</p>
         </div>
         <ul class="lista-precios" id="lista-precios"></ul>
         <p class="precios-nota">Precios en pesos colombianos. Pagas en la barbería o dejas un anticipo del 50 % por Nequi.</p>
@@ -587,7 +667,7 @@ p { margin: 0; }
       <div class="equipo-cabeza">
         <span class="etiqueta">Quién te corta</span>
         <h2 class="titulo-seccion" id="titulo-equipo">Tres sillas, tres manos.</h2>
-        <p class="texto-suave">Puedes escoger barbero o dejar que te atienda el primero que esté libre.</p>
+        <p class="texto-suave">Barbería para hombres y niños. Puedes escoger barbero o dejar que te atienda el primero que esté libre.</p>
       </div>
       <div class="equipo-grid" id="equipo-grid"></div>
     </div>
@@ -626,7 +706,7 @@ p { margin: 0; }
           <div class="panel" role="tabpanel" id="panel-horario" aria-labelledby="tab-horario" hidden>
             <h3>Abrimos seis días y medio.</h3>
             <table class="tabla-horario" id="tabla-horario"></table>
-            <p style="font-size:.9rem">Festivos: 10:00 a. m. a 2:00 p. m. El último turno empieza 40 minutos antes del cierre.</p>
+            <p style="font-size:.9rem">Festivos: 10:00 a. m. a 2:00 p. m. Cada turno dura 45 minutos; el último empieza 45 minutos antes del cierre.</p>
           </div>
           <div class="panel" role="tabpanel" id="panel-pagos" aria-labelledby="tab-pagos" hidden>
             <h3>Pagas como te quede fácil.</h3>
@@ -739,16 +819,20 @@ p { margin: 0; }
           <p>Puedes llegar sin cita, pero te atendemos en el primer hueco libre. Con reserva te sientas a tu hora. Los sábados casi siempre está lleno, así que mejor reserva.</p>
         </details>
         <details>
+          <summary>¿Cuánto me toca esperar si llego sin cita?</summary>
+          <p>Mira la sección «En vivo» antes de salir: ahí ves cuántos están esperando y si cada barbero está motilando. Cada cliente dura más o menos 45 minutos, así que con dos personas adelante calcula entre una hora y media y dos horas.</p>
+        </details>
+        <details>
           <summary>¿Qué pasa si llego tarde?</summary>
           <p>Te esperamos 10 minutos. Después el turno pasa al siguiente cliente y te buscamos otro hueco ese día. Si dejaste anticipo, el turno se respeta.</p>
         </details>
         <details>
           <summary>¿Cuánto cuesta un corte?</summary>
-          <p>El corte clásico cuesta $25.000 y el degradado $30.000. Degradado con barba sale en $42.000. Todos los precios están arriba, en la sección de servicios.</p>
+          <p>El corte clásico cuesta $25.000 y el degradado $30.000. Degradado con barba sale en $42.000. Cada turno dura 45 minutos. Todos los precios están arriba, en la sección de servicios.</p>
         </details>
         <details>
           <summary>¿Atienden niños?</summary>
-          <p>Sí, desde los 3 años. El corte de niño hasta los 12 años cuesta $20.000. Si es su primer corte, cuéntanos al reservar y le damos más tiempo.</p>
+          <p>Sí. Somos barbería para hombres y atendemos niños desde los 3 años. El corte de niño hasta los 12 años cuesta $20.000. Si es su primer corte, cuéntanos al reservar y le damos más tiempo.</p>
         </details>
         <details>
           <summary>¿Cómo pago el anticipo?</summary>
@@ -816,25 +900,27 @@ p { margin: 0; }
   var WHATSAPP_VISIBLE = "300 000 0000";
 
   var SERVICIOS = [
-    { id: "clasico",  nombre: "Corte clásico",            min: 30, precio: 25000, detalle: "Tijera y máquina, a tu gusto" },
-    { id: "degradado",nombre: "Degradado",                min: 40, precio: 30000, detalle: "Bajo, medio o alto, con perfilado" },
-    { id: "combo",    nombre: "Degradado + barba",        min: 60, precio: 42000, detalle: "El corte y la barba arreglada con navaja" },
-    { id: "barba",    nombre: "Arreglo de barba",         min: 30, precio: 20000, detalle: "Toalla caliente, forma y contorno" },
-    { id: "afeitado", nombre: "Afeitado clásico",         min: 35, precio: 25000, detalle: "Navaja, toalla caliente y bálsamo" },
-    { id: "nino",     nombre: "Corte de niño",            min: 30, precio: 20000, detalle: "Hasta los 12 años" },
-    { id: "perfilado",nombre: "Perfilado y cejas",        min: 15, precio: 10000, detalle: "Para mantener la línea entre cortes" }
+    { id: "clasico",  nombre: "Corte clásico",            min: 45, precio: 25000, detalle: "Tijera y máquina, a tu gusto" },
+    { id: "degradado",nombre: "Degradado",                min: 45, precio: 30000, detalle: "Bajo, medio o alto, con perfilado" },
+    { id: "combo",    nombre: "Degradado + barba",        min: 45, precio: 42000, detalle: "El corte y la barba arreglada con navaja" },
+    { id: "barba",    nombre: "Arreglo de barba",         min: 45, precio: 20000, detalle: "Toalla caliente, forma y contorno" },
+    { id: "afeitado", nombre: "Afeitado clásico",         min: 45, precio: 25000, detalle: "Navaja, toalla caliente y bálsamo" },
+    { id: "nino",     nombre: "Corte de niño",            min: 45, precio: 20000, detalle: "Hasta los 12 años" },
+    { id: "perfilado",nombre: "Perfilado y cejas",        min: 45, precio: 15000, detalle: "Línea, cejas y contorno con navaja" }
   ];
   var BARBEROS = [
     { id: "libre",     nombre: "El que esté libre", corto: "El que esté libre", nota: "Te damos el primer turno", foto: null },
     { id: "alvaro",    nombre: "Álvaro Pérez",   corto: "Álvaro",    nota: "Navaja y barba", foto: "img/equipo-alvaro.jpg", bio: "Fundador. 18 años cortando, los últimos ocho aquí. Si quieres afeitado clásico, es con él.", foco: "Afeitado y barba" },
     { id: "andres",    nombre: "Andrés Mejía",   corto: "Andrés",    nota: "Degradados", foto: "img/equipo-andres.jpg", bio: "El de los degradados sin escalones. Llegó en 2020 y tiene la agenda de los sábados llena.", foco: "Degradados y diseños" },
-    { id: "valentina", nombre: "Valentina Ruiz", corto: "Valentina", nota: "Tijera y textura", foto: "img/equipo-valentina.jpg", bio: "Cortes con tijera para pelo largo, rizado o con textura. También atiende a los niños.", foco: "Tijera y pelo rizado" }
+    { id: "julian",    nombre: "Julián Rojas",   corto: "Julián",    nota: "Tijera y textura", foto: "img/equipo-julian.jpg", bio: "Cortes a tijera para pelo largo, rizado o con textura. Es el que atiende a los niños.", foco: "Tijera y pelo rizado" }
   ];
   var PAGOS = [
     { id: "local",    nombre: "Pagar en la barbería", nota: "Efectivo, tarjeta, Nequi o Daviplata" },
     { id: "anticipo", nombre: "Anticipo del 50 %",    nota: "Por Nequi. Te guarda el turno" }
   ];
   // 0 = domingo ... 6 = sábado. Minutos desde la medianoche.
+  var DURACION = 45;   // minutos que dura cada cliente
+  var VARIACION = 5;   // minutos de más o de menos por cliente en la fila (mínimo 10 en total), para el rango
   var HORARIO = { 0: [600, 840], 1: [540, 1200], 2: [540, 1200], 3: [540, 1200], 4: [540, 1200], 5: [540, 1200], 6: [540, 1200] };
   var GALERIA = [
     { src: "img/degradado-afro.jpg", titulo: "Degradado alto", texto: "Degradado alto con la textura natural arriba. Andrés, 45 minutos." },
@@ -942,7 +1028,7 @@ p { margin: 0; }
   SERVICIOS.forEach(function (s) {
     var li = el("li");
     var b = el("button", { type: "button", class: "fila-precio", "data-servicio": s.id, "aria-label": "Reservar " + s.nombre + ", " + pesos(s.precio) },
-      '<span class="nombre">' + s.nombre + '</span><span class="min">' + s.min + ' min</span><span class="precio">' + pesos(s.precio) + '</span><span class="detalle">' + s.detalle + '</span>');
+      '<span class="nombre">' + s.nombre + '</span><span class="precio">' + pesos(s.precio) + '</span><span class="detalle">' + s.detalle + '</span>');
     b.addEventListener("click", function () { estado.servicio = s.id; estado.hora = null; pintarReserva(); irA("#reserva"); });
     li.appendChild(b); lista.appendChild(li);
   });
@@ -1032,9 +1118,9 @@ p { margin: 0; }
     var h = HORARIO[fecha.getDay()], dur = servicioActual().min, res = [];
     var esHoy = mismoDia(fecha, hoy), ahora = minutosAhora();
     var key = fecha.getFullYear() + "-" + fecha.getMonth() + "-" + fecha.getDate();
-    for (var t = h[0]; t + dur <= h[1]; t += 30) {
+    for (var t = h[0]; t + dur <= h[1]; t += DURACION) {
       var ocupado = (hash(key + estado.barbero + t) % 100) < (estado.barbero === "libre" ? 18 : 38);
-      if (esHoy && t < ahora + 30) ocupado = true;
+      if (esHoy && t < ahora + 20) ocupado = true;
       res.push({ t: t, libre: !ocupado });
     }
     return res;
@@ -1058,7 +1144,7 @@ p { margin: 0; }
     var c = $("#op-servicios"); c.innerHTML = "";
     SERVICIOS.forEach(function (s) {
       botonOpcion(c, s, s.id === estado.servicio,
-        "<b>" + s.nombre + "</b><small>" + s.min + " min · " + s.detalle + "</small><span class=\"precio-op\">" + pesos(s.precio) + "</span>", "",
+        "<b>" + s.nombre + "</b><small>" + s.detalle + "</small><span class=\"precio-op\">" + pesos(s.precio) + "</span>", "",
         function () { estado.servicio = s.id; estado.hora = null; pintarReserva(); });
     });
   }
@@ -1195,6 +1281,197 @@ p { margin: 0; }
     }
     $("#listo").hidden = false;
   });
+
+  /* ===== En vivo: fila y sillas en tiempo real ===== */
+  var SILLAS = BARBEROS.slice(1);
+  var vivo = { modo: "cargando", datos: null, editar: false, ref: null, cadena: Promise.resolve(), panelAbierto: false, conectado: false };
+  var CLAVE_DEMO = "elfilo-fila-demo";
+
+  function estadoEjemplo() {
+    var n = Date.now();
+    return { barberos: {
+      alvaro: { estado: "motilando", desde: n - 20 * 60000, esperando: 2 },
+      andres: { estado: "motilando", desde: n - 33 * 60000, esperando: 1 },
+      julian: { estado: "libre", desde: n - 4 * 60000, esperando: 0 }
+    }, actualizado: n };
+  }
+  function datosDe(id) {
+    var b = vivo.datos && vivo.datos.barberos && vivo.datos.barberos[id];
+    return {
+      estado: b && ["motilando", "libre", "descanso"].indexOf(b.estado) >= 0 ? b.estado : "libre",
+      desde: b && typeof b.desde === "number" ? b.desde : Date.now(),
+      esperando: b ? Math.max(0, Math.min(30, Math.floor(Number(b.esperando) || 0))) : 0
+    };
+  }
+  function r5(x) { return Math.round(x / 5) * 5; }
+  function duracionTxt(m) {
+    if (m < 60) return m + " min";
+    var h = Math.floor(m / 60), r = m % 60;
+    return h + " h" + (r ? " " + r + " min" : "");
+  }
+  function calcular(b) {
+    var lleva = b.estado === "motilando" ? Math.max(0, Math.floor((Date.now() - b.desde) / 60000)) : 0;
+    var resta = b.estado === "motilando" ? Math.max(5, DURACION - lleva) : (b.estado === "descanso" ? 15 : 0);
+    var adelante = b.esperando + (b.estado === "motilando" ? 1 : 0);
+    var base = resta + b.esperando * DURACION;
+    var margen = Math.max(10, VARIACION * adelante);
+    var lo = r5(Math.max(0, base - margen)), hi = r5(base + margen);
+    if (b.estado === "libre" && b.esperando === 0) { lo = 0; hi = 0; }
+    return { lleva: lleva, resta: resta, lo: lo, hi: hi };
+  }
+  function rangoTxt(lo, hi) {
+    if (hi === 0) return "Te atienden ya";
+    if (hi < 60) return lo + " – " + hi + " min";
+    return duracionTxt(lo) + " – " + duracionTxt(hi);
+  }
+  function horaEn(min) { var d = new Date(Date.now() + min * 60000); return hora12(d.getHours() * 60 + d.getMinutes()); }
+
+  function pintarVivo() {
+    var total = 0, motilando = 0, mejor = null;
+    var cont = $("#sillas"); cont.innerHTML = "";
+    if (!vivo.datos) {
+      cont.innerHTML = '<p class="texto-suave">' + (vivo.modo === "vacio" ? "Todavía no hay datos de hoy. Aparecen cuando el barbero actualice la fila." : vivo.modo === "sinconexion" ? "No pudimos traer la fila en este momento. Escríbenos por WhatsApp y te decimos cuánto hay de espera." : "Trayendo la fila…") + '</p>';
+      ["#res-esperando", "#res-sillas", "#res-espera"].forEach(function (x) { $(x).textContent = "–"; });
+      $("#dato-vivo").innerHTML = "En vivo: <strong>ver la fila</strong>";
+      $("#vivo-aviso").hidden = true;
+      var st0 = $("#vivo-estado");
+      st0.lastChild.textContent = vivo.modo === "sinconexion" ? "Sin conexión" : vivo.modo === "vacio" ? "En vivo" : "Conectando…";
+      st0.classList.toggle("apagado", vivo.modo !== "vacio");
+      pintarPanel();
+      return;
+    }
+    SILLAS.forEach(function (bb, i) {
+      var b = datosDe(bb.id), c = calcular(b);
+      total += b.esperando;
+      if (b.estado === "motilando") motilando++;
+      if (b.estado !== "descanso" && (!mejor || c.hi < mejor.c.hi)) mejor = { b: bb, c: c };
+      var chip = { motilando: "Motilando", libre: "Libre", descanso: "En descanso" }[b.estado];
+      var progreso = b.estado === "motilando"
+        ? '<div class="corte-progreso"><div class="corte-barra"><i style="width:' + Math.min(100, Math.round(c.lleva / DURACION * 100)) + '%"></i></div><span>' + (c.lleva < DURACION ? "Lleva " + c.lleva + " min de " + DURACION + " · le faltan unos " + c.resta + " min" : "Terminando el corte") + '</span></div>'
+        : '<div class="corte-progreso"><div class="corte-barra"><i style="width:0"></i></div><span>' + (b.estado === "libre" ? "Silla desocupada" : "Vuelve en unos minutos") + '</span></div>';
+      var cola = "";
+      for (var k = 0; k < Math.min(b.esperando, 8); k++) cola += "<i></i>";
+      cola += "<span>" + (b.esperando === 0 ? "Nadie esperando" : b.esperando === 1 ? "1 esperando" : b.esperando + " esperando") + "</span>";
+      var espera = c.hi === 0
+        ? "<b>Te atienden ya</b><span>Llega y te sientas</span>"
+        : "<b>" + rangoTxt(c.lo, c.hi) + "</b><span>Te atienden más o menos entre " + horaEn(c.lo) + " y " + horaEn(c.hi) + "</span>";
+      cont.appendChild(el("article", { class: "silla" },
+        '<div class="silla-top"><img src="' + bb.foto + '" alt=""><div><b>' + bb.corto + '</b><small>Silla ' + (i + 1) + '</small></div><span class="chip-estado ' + b.estado + '">' + chip + '</span></div>' +
+        progreso + '<div class="cola" aria-label="' + b.esperando + ' personas esperando">' + cola + '</div>' +
+        '<div class="espera"><small>Si llegas ahora</small>' + espera + '</div>'));
+    });
+    $("#res-esperando").textContent = total;
+    $("#res-sillas").textContent = motilando + " de " + SILLAS.length;
+    if (mejor) {
+      $("#res-espera").textContent = mejor.c.hi === 0 ? "Ya" : rangoTxt(mejor.c.lo, mejor.c.hi);
+      $("#res-espera-txt").textContent = mejor.c.hi === 0 ? "hay silla libre (" + mejor.b.corto + ")" : "espera más corta (" + mejor.b.corto + ")";
+    } else { $("#res-espera").textContent = "–"; $("#res-espera-txt").textContent = "todos en descanso"; }
+    var dv = $("#dato-vivo");
+    dv.innerHTML = "En vivo: <strong>" + (total === 1 ? "1 esperando" : total + " esperando") + "</strong>";
+
+    var aviso = $("#vivo-aviso"), d = new Date(), h = HORARIO[d.getDay()], ahora = minutosAhora();
+    var mensajes = [];
+    if (vivo.modo === "ejemplo") mensajes.push("Datos de ejemplo: esta copia de la página no está conectada en vivo.");
+    if (ahora < h[0] || ahora >= h[1]) mensajes.push("La barbería está cerrada ahora; estos datos son de la última vez que se actualizó.");
+    aviso.textContent = mensajes.join(" ");
+    aviso.hidden = !mensajes.length;
+
+    var st = $("#vivo-estado");
+    var act = vivo.datos && vivo.datos.actualizado;
+    var hace = act ? Math.max(0, Math.round((Date.now() - act) / 60000)) : null;
+    var texto = vivo.modo === "vivo"
+      ? (vivo.conectado ? "En vivo" : "Conectando…") + (hace != null ? " · actualizado " + (hace < 1 ? "hace un momento" : "hace " + duracionTxt(hace)) : "")
+      : vivo.modo === "sinconexion" ? "No se pudo conectar todavía. Puede estar desactualizado." : vivo.modo === "vacio" ? "En vivo · esperando que el barbero abra la fila" : "Ejemplo";
+    st.lastChild.textContent = texto;
+    st.classList.toggle("apagado", !(vivo.modo === "vivo" && vivo.conectado));
+    pintarPanel();
+  }
+
+  function pintarPanel() {
+    var z = $("#zona-panel");
+    var mostrar = vivo.editar || vivo.modo === "ejemplo";
+    if (!mostrar) { z.innerHTML = ""; return; }
+    if (!vivo.panelAbierto) {
+      if (!z.querySelector(".abrir-panel")) {
+        z.innerHTML = '<p style="margin-top:20px"><button type="button" class="boton-texto abrir-panel">Soy barbero: actualizar la fila</button></p>';
+        $(".abrir-panel", z).addEventListener("click", function () { vivo.panelAbierto = true; pintarPanel(); });
+      }
+      return;
+    }
+    var nota = vivo.modo === "ejemplo"
+      ? "Modo de prueba: los cambios solo se ven en este dispositivo."
+      : "Lo que toques aquí lo ven todos los clientes al instante. Solo lo ve quien administra la página.";
+    var html = '<div class="panel-barbero"><h3>Panel del barbero</h3><p>' + nota + '</p><div class="controles">';
+    SILLAS.forEach(function (bb) {
+      var b = datosDe(bb.id);
+      html += '<div class="control-fila" data-id="' + bb.id + '"><b>' + bb.corto + ' · ' + { motilando: "motilando", libre: "libre", descanso: "en descanso" }[b.estado] + ' · ' + b.esperando + ' en fila</b><div class="control-botones">' +
+        '<button type="button" class="principal" data-accion="empezar">Empezar corte</button>' +
+        '<button type="button" data-accion="terminar">Terminé</button>' +
+        '<button type="button" data-accion="mas">+1 en fila</button>' +
+        '<button type="button" data-accion="menos">−1 en fila</button>' +
+        '<button type="button" data-accion="descanso">Descanso</button></div></div>';
+    });
+    html += '</div><button type="button" class="boton-texto cerrar-panel" style="justify-self:start">Cerrar panel</button><p class="falta" id="panel-error" aria-live="polite"></p></div>';
+    z.innerHTML = html;
+  }
+  $("#zona-panel").addEventListener("click", function (e) {
+    var btn = e.target.closest("button"); if (!btn) return;
+    if (btn.classList.contains("cerrar-panel")) { vivo.panelAbierto = false; $("#zona-panel").innerHTML = ""; pintarPanel(); return; }
+    var accion = btn.getAttribute("data-accion"); if (!accion) return;
+    var id = btn.closest(".control-fila").getAttribute("data-id");
+    var b = datosDe(id), n = Date.now();
+    if (accion === "empezar") { b.estado = "motilando"; b.desde = n; b.esperando = Math.max(0, b.esperando - 1); }
+    if (accion === "terminar") { b.estado = "libre"; b.desde = n; }
+    if (accion === "mas") b.esperando = Math.min(30, b.esperando + 1);
+    if (accion === "menos") b.esperando = Math.max(0, b.esperando - 1);
+    if (accion === "descanso") { b.estado = "descanso"; b.desde = n; }
+    guardarBarbero(id, b);
+  });
+  function guardarBarbero(id, b) {
+    var nuevo = { barberos: {}, actualizado: Date.now() };
+    SILLAS.forEach(function (x) { nuevo.barberos[x.id] = datosDe(x.id); });
+    nuevo.barberos[id] = b;
+    vivo.datos = nuevo;
+    pintarVivo();
+    if (vivo.modo === "ejemplo") { try { localStorage.setItem(CLAVE_DEMO, JSON.stringify(nuevo)); } catch (e) {} return; }
+    if (vivo.modo === "vacio") vivo.modo = "vivo";
+    vivo.cadena = vivo.cadena.then(function () { return vivo.ref.set(nuevo); }).catch(function (err) {
+      var pe = $("#panel-error");
+      if (pe) pe.textContent = err && err.code === "invalid_argument" ? "No tienes permiso para cambiar la fila." : "No se pudo guardar. Revisa la conexión e inténtalo de nuevo.";
+    });
+  }
+
+  function modoEjemplo() {
+    vivo.modo = "ejemplo";
+    var guardado = null;
+    try { guardado = JSON.parse(localStorage.getItem(CLAVE_DEMO) || "null"); } catch (e) {}
+    vivo.datos = guardado && guardado.barberos ? guardado : estadoEjemplo();
+    pintarVivo();
+  }
+  function conectarVivo() {
+    var c = window.claude;
+    if (!c || typeof c.use !== "function") { modoEjemplo(); return; }
+    vivo.datos = null;
+    pintarVivo();
+    Promise.all([c.use("db"), c.use("user")]).then(function (r) {
+      var db = r[0], user = r[1];
+      if (!db) { modoEjemplo(); return; }
+      vivo.modo = "vivo";
+      if (user) user.canEdit().then(function (v) { vivo.editar = !!v; pintarPanel(); });
+      vivo.ref = db.doc("fila/estado");
+      var temporizador = setTimeout(function () { if (!vivo.conectado) { vivo.modo = vivo.datos ? "vivo" : "sinconexion"; pintarVivo(); } }, 10000);
+      vivo.ref.onSnapshot(function (snap) {
+        if (!snap.metadata.fromCache) { vivo.conectado = true; clearTimeout(temporizador); }
+        if (snap.exists) { vivo.datos = snap.data(); if (vivo.modo !== "vivo") vivo.modo = "vivo"; }
+        else if (!snap.metadata.fromCache) { vivo.datos = null; vivo.modo = "vacio"; }
+        pintarVivo();
+      }, function () {
+        clearTimeout(temporizador); vivo.conectado = false; vivo.modo = vivo.datos ? "vivo" : "sinconexion"; pintarVivo();
+      });
+    }, function () { modoEjemplo(); });
+  }
+  conectarVivo();
+  setInterval(pintarVivo, 30000);
 
   pintarReserva();
   alScroll();
