@@ -147,6 +147,38 @@ h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;line-height:1.1;letter-spaci
 .tour .ver{border:2px solid var(--linea);color:var(--mar)}
 .tour .ver:hover{border-color:var(--coral)}
 
+.tour.con-foto{padding:0;overflow:hidden}
+.tour.con-foto .cuerpo{padding:18px 20px 20px;display:flex;flex-direction:column;gap:12px;flex:1}
+.tour:not(.con-foto) .cuerpo{display:contents}
+.tour .foto{aspect-ratio:4/3}
+.tour.con-foto .top .ic{width:40px;height:40px}
+
+/* Experiencias de clientes */
+.clientes{background:var(--mar);color:#fff}
+.clientes h2{color:#fff}
+.clientes .cabeza p{color:#C9DCDE}
+.galeria{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;grid-auto-flow:dense}
+@media (max-width:900px){.galeria{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:600px){.galeria{grid-template-columns:repeat(2,1fr);gap:8px}}
+.galeria button{position:relative;display:block;width:100%;aspect-ratio:3/4;border-radius:12px;overflow:hidden;background:var(--mar-2)}
+.galeria button.ancha{grid-column:span 2;aspect-ratio:auto}
+.galeria img,.galeria video{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.galeria button:hover img,.galeria button:hover video{transform:scale(1.04)}
+.galeria .tag{position:absolute;left:8px;bottom:8px;background:rgba(13,57,64,.82);color:#fff;font-size:12px;font-weight:700;padding:5px 8px;border-radius:6px}
+.galeria .play{position:absolute;right:8px;top:8px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.9);color:var(--mar);display:grid;place-items:center}
+.galeria .play svg{width:14px;height:14px}
+.galeria button:focus-visible,.tour a:focus-visible,.btn:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
+.mas{margin-top:18px;text-align:center}
+.mas .btn{color:#fff}
+.visor{position:fixed;inset:0;z-index:60;background:rgba(5,20,23,.94);display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px}
+.visor[hidden]{display:none}
+.visor img,.visor video{max-width:min(100%,560px);max-height:86vh;border-radius:12px;background:#000}
+.visor .cerrar,.visor .ant,.visor .sig{position:absolute;width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:26px;display:grid;place-items:center}
+.visor .cerrar{top:max(14px,env(safe-area-inset-top,0px));right:14px}
+.visor .ant{left:10px;top:50%;transform:translateY(-50%)}
+.visor .sig{right:10px;top:50%;transform:translateY(-50%)}
+.visor .pie{position:absolute;bottom:max(16px,env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;color:#C9DCDE;font-size:14px;font-weight:600}
+
 /* Lancha privada */
 .lancha{background:#F3F8F8}
 .lancha .wrap{display:grid;grid-template-columns:1fr 1.15fr;gap:48px;align-items:center}
@@ -243,6 +275,7 @@ body.con-plan .wa{bottom:88px}
   <symbol id="i-lista" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></g></symbol>
   <symbol id="i-cal" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></g></symbol>
   <symbol id="i-sol" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></g></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></symbol>
   <symbol id="i-bote" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h18l-2.5 5H6z"/><path d="M6 14V9h8l3 5"/><path d="M2 21c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1"/></g></symbol>
   <symbol id="i-islas" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20c0-6 1-9 3-11"/><path d="M15 9c-2-2-5-2-7 0M15 9c1-2.5 4-3.5 6-2M15 9c2.5-.5 5 1 5.5 3.5"/><path d="M3 20h18"/></g></symbol>
   <symbol id="i-castillo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 21V9h3v2h2V9h6v2h2V9h3v12z"/><path d="M10 21v-4a2 2 0 0 1 4 0v4"/><path d="M4 9V5h3v4M17 9V5h3v4"/></g></symbol>
@@ -272,6 +305,7 @@ body.con-plan .wa{bottom:88px}
       <a href="#tours">Tours</a>
       <a href="#lancha">Lancha privada</a>
       <a href="#planes">Restaurantes</a>
+      <a href="#clientes">Clientes</a>
       <a href="#armar">Arma tu plan</a>
             <a href="#contacto">Contacto</a>
     </nav>
@@ -364,6 +398,19 @@ body.con-plan .wa{bottom:88px}
     </div>
   </section>
 
+  <section class="sec clientes" id="clientes">
+    <div class="wrap">
+      <div class="cabeza">
+        <div>
+          <h2>Experiencias de clientes</h2>
+          <p>Así se viven los planes con Lore TRAVEL. Toca una foto o un video para verlo en grande.</p>
+        </div>
+      </div>
+      <div class="galeria" id="galeria"></div>
+      <div class="mas" id="masBox" hidden><button class="btn btn-borde" id="mas" type="button">Ver más experiencias</button></div>
+    </div>
+  </section>
+
   <section class="sec armar" id="armar">
     <div class="wrap">
       <div>
@@ -429,6 +476,14 @@ body.con-plan .wa{bottom:88px}
   </div>
 </footer>
 
+<div class="visor" id="visor" hidden role="dialog" aria-modal="true" aria-label="Experiencia de cliente">
+  <button class="cerrar" type="button" aria-label="Cerrar">×</button>
+  <button class="ant" type="button" aria-label="Anterior">‹</button>
+  <div id="visorMedia"></div>
+  <button class="sig" type="button" aria-label="Siguiente">›</button>
+  <div class="pie" id="visorPie"></div>
+</div>
+
 <div class="flota" id="flota" aria-live="polite"><span id="flotaTxt">Tu plan: 0</span><a class="btn btn-coral" href="#armar">Enviar</a></div>
 <a class="wa" href="https://wa.me/573148918445?text=Hola%20Lore%2C%20quiero%20informaci%C3%B3n%20de%20tus%20planes" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><svg><use href="#i-wa"/></svg></a>
 
@@ -464,7 +519,9 @@ const wa = t => `https://wa.me/${WA}?text=${encodeURIComponent(t)}`;
 const elegidos = new Set();
 
 document.getElementById('listaTours').innerHTML = TOURS.map(p=>`
-  <article class="tour">
+  <article class="tour${p.img ? ' con-foto' : ''}">
+    ${p.img ? `<div class="foto"><img src="img/${p.img}.webp" alt="${p.n}" loading="lazy"></div>` : ''}
+    <div class="cuerpo">
     <div class="top"><div class="ic"><svg><use href="#i-${p.ic}"/></svg></div><div><div class="tipo">${p.t}</div><h3>${p.n}</h3></div></div>
     ${p.d ? `<p>${p.d}</p>` : ''}
     ${p.l ? `<ul>${p.l.map(x=>`<li>${x}</li>`).join('')}</ul>` : ''}
@@ -474,6 +531,7 @@ document.getElementById('listaTours').innerHTML = TOURS.map(p=>`
       <a class="btn btn-coral" href="${wa('Hola Lore, quiero información de: ' + p.n)}" target="_blank" rel="noopener">Reservar</a>
       ${p.ver ? `<a class="btn ver" href="${p.ver}">${p.verTxt}</a>` : ''}
       ${p.ig ? `<a class="btn ig" href="${p.ig}" target="_blank" rel="noopener" aria-label="Ver ${p.n} en Instagram"><svg><use href="#i-ig"/></svg></a>` : ''}
+    </div>
     </div>
   </article>`).join('');
 
@@ -490,6 +548,40 @@ document.getElementById('lista').innerHTML = LUGARES.map(p=>`
       </div>
     </div>
   </article>`).join('');
+
+// Experiencias de clientes: fotos (img/clientes/*.webp) y videos (img/clientes/*.mp4 + póster .webp).
+const CLIENTES = [];
+const VISIBLES = 12;
+let mostrar = VISIBLES;
+const gal = document.getElementById('galeria');
+function pintarGaleria(){
+  gal.innerHTML = CLIENTES.slice(0, mostrar).map((c,i)=>`
+    <button type="button" data-g="${i}" aria-label="Ver ${c.alt}">
+      <img src="img/clientes/${c.f}.webp" alt="${c.alt}" loading="lazy">
+      ${c.v ? '<span class="play"><svg><use href="#i-play"/></svg></span>' : ''}
+      ${c.t ? `<span class="tag">${c.t}</span>` : ''}
+    </button>`).join('');
+  document.getElementById('masBox').hidden = CLIENTES.length <= mostrar;
+}
+document.getElementById('mas').addEventListener('click', ()=>{ mostrar = CLIENTES.length; pintarGaleria(); });
+const visor = document.getElementById('visor'), vMedia = document.getElementById('visorMedia');
+let actual = 0;
+function abrir(i){
+  actual = (i + CLIENTES.length) % CLIENTES.length; const c = CLIENTES[actual];
+  vMedia.innerHTML = c.v
+    ? `<video src="img/clientes/${c.f}.mp4" poster="img/clientes/${c.f}.webp" controls autoplay playsinline></video>`
+    : `<img src="img/clientes/${c.f}.webp" alt="${c.alt}">`;
+  document.getElementById('visorPie').textContent = c.t || '';
+  visor.hidden = false; document.body.style.overflow = 'hidden';
+}
+function cerrar(){ visor.hidden = true; vMedia.innerHTML = ''; document.body.style.overflow = ''; }
+gal.addEventListener('click', e=>{ const b = e.target.closest('[data-g]'); if (b) abrir(+b.dataset.g); });
+visor.querySelector('.cerrar').addEventListener('click', cerrar);
+visor.querySelector('.ant').addEventListener('click', ()=>abrir(actual-1));
+visor.querySelector('.sig').addEventListener('click', ()=>abrir(actual+1));
+visor.addEventListener('click', e=>{ if (e.target === visor) cerrar(); });
+document.addEventListener('keydown', e=>{ if (visor.hidden) return; if (e.key==='Escape') cerrar(); if (e.key==='ArrowLeft') abrir(actual-1); if (e.key==='ArrowRight') abrir(actual+1); });
+pintarGaleria();
 
 function pintar(){
   const caja = document.getElementById('elegidos');
