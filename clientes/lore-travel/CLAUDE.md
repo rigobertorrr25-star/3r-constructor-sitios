@@ -42,3 +42,6 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   Quedaron fuera: dos fotos de helicóptero hechas con IA (estrella de Gemini), un catamarán de «Cancun Adventures», dos piezas
   publicitarias de otras empresas (Makarela/Poseidon, Gema Boats), un video con @mambanegra.22 encima, videos repetidos u oscuros.
   Pendiente de confirmar con Lore: textos cortos de Totumo, Palenque, helicóptero y chiva (escritos por Claude).
+- **21 nov 2026**: Rigoberto mandó 3 fotos y 2 videos de clientes en Cartagena (embarque en la lancha en el Muelle de los
+  Pegasos, frente al Centro de Convenciones). Van de primeros en `CLIENTES` (`c-f-lancha-muelle`, `c-embarque`, `c-f-muelle`,
+  `c-muelle`, `c-f-lancha-grupo`); se muestran 13 antes de «Ver más». Sin teléfonos visibles.

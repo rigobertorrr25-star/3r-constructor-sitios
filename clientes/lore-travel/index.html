@@ -162,7 +162,9 @@ h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;line-height:1.1;letter-spaci
 @media (max-width:900px){.galeria{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:600px){.galeria{grid-template-columns:repeat(2,1fr);gap:8px}}
 .galeria button{position:relative;display:block;width:100%;aspect-ratio:3/4;border-radius:12px;overflow:hidden;background:var(--mar-2)}
-.galeria button.ancha{grid-column:span 2;aspect-ratio:auto}
+.galeria button.ancha{grid-column:span 2;aspect-ratio:auto;min-height:100%}
+.galeria button.ancha img{position:absolute;inset:0}
+@media (max-width:600px){.galeria button.ancha{aspect-ratio:3/2}}
 .galeria img,.galeria video{width:100%;height:100%;object-fit:cover;transition:transform .4s}
 .galeria button:hover img,.galeria button:hover video{transform:scale(1.04)}
 .galeria .tag{position:absolute;left:8px;bottom:8px;max-width:calc(100% - 16px);text-align:left;background:rgba(13,57,64,.82);color:#fff;font-size:12px;font-weight:700;padding:5px 8px;border-radius:6px}
@@ -598,6 +600,11 @@ document.getElementById('lista').innerHTML = LUGARES.map(p=>`
 
 // Experiencias de clientes: fotos (img/clientes/*.webp) y videos (img/clientes/*.mp4 + póster .webp).
 const CLIENTES = [
+  {f:'clientes/c-f-lancha-muelle', t:'Lancha en Cartagena', alt:'Clientes a bordo de la lancha en el muelle, frente al Centro de Convenciones', ancha:1},
+  {f:'clientes/c-embarque', v:1, t:'Embarque en el muelle', alt:'Clientes subiendo a la lancha'},
+  {f:'clientes/c-f-muelle', t:'Muelle de los Pegasos', alt:'Clientes caminando por el muelle rumbo a la lancha'},
+  {f:'clientes/c-muelle', v:1, t:'Rumbo a la lancha', alt:'Clientes llegando al muelle'},
+  {f:'clientes/c-f-lancha-grupo', t:'Listos para zarpar', alt:'Grupo de clientes sentados en la lancha', ancha:1},
   {f:'clientes/c-penol', v:1, t:'Guatapé', alt:'Clientes caminando hacia la Piedra del Peñol'},
   {f:'clientes/c-f-cuatrimotos', t:'Cuatrimotos', alt:'Grupo de clientes en cuatrimotos', ancha:1},
   {f:'clientes/c-ritwal', v:1, t:'Cena con vista', alt:'Clientes en un jardín iluminado con vista a la ciudad'},
@@ -621,7 +628,7 @@ const CLIENTES = [
   {f:'clientes/c-f-carpaccio', t:'Gastronomía', alt:'Carpaccio servido de noche'},
   {f:'clientes/c-f-club', t:'Noche de club', alt:'Logo iluminado en un club'},
 ];
-const VISIBLES = 11;
+const VISIBLES = 13;
 let mostrar = VISIBLES;
 const gal = document.getElementById('galeria');
 function pintarGaleria(){
