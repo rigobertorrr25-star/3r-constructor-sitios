@@ -6,16 +6,16 @@ Página estática de una sola hoja (`index.html` + `img/`), sin dueño todavía.
 - **Se ve como la referencia 1** (21 nov 2026, Rigoberto: «no veo nada del primer video, quiero que se vea igual»):
   una sola escena que avanza al bajar. Encabezado blanco → cliente de espaldas con la capa roja «EL FILO» → la cámara
   entra en la capa → tela roja («La capa sobre los hombros.») → «Escoge tu corte.» sobre la tela, con la foto que cambia
-  al pasar por cada servicio → «Nítido desde todos los ángulos.» con contador de grados (000°–359°) → «A cada uno su
-  oficio.» (fotos en blanco y negro con papel blanco) → En vivo → «Siéntate.» (carta blanca) → «La última mirada.» /
-  «Y listo.» (le quitan la capa) → reserva en fondo claro («Tu próximo degradado.», días en fila, ticket a la derecha) →
+  al pasar por cada servicio → «Salidos de esta silla.» → «Nítido desde todos los ángulos.» con contador de grados (000°–359°) → «El que te
+  corta.» (Daniel Mejía) → En vivo → «Siéntate.» (carta blanca) → reserva en fondo claro («Tu próximo degradado.»,
+  días en fila, reloj para la hora, ticket a la derecha) →
   «Antes de venir» (dónde, horario, pagos y preguntas). Regla de horas en el borde derecho.
   - Se quitaron la galería y las pestañas de la referencia 2; las preguntas frecuentes quedaron al final.
 - **Imágenes hechas con IA** (OpenArt, carpeta «Barbería El Filo» del proyecto «Personal Project», GPT Image 2.5
-  Sunburst, 10 créditos cada una): `img/portada-capa.jpg` y `img/capa-quitar.jpg`. La cuenta gratis les pone el logo
-  de OpenArt. **Portada** (21 nov 2026): Rigoberto mandó su propia versión sin el logo (sin las letras); se le
-  volvieron a escribir «EL FILO» en Anton sobre la capa, con las sombras de la tela. **`capa-quitar.jpg` todavía
-  trae el logo** (falta que Rigoberto mande su versión, o un plan de pago). `img/tela-roja.jpg` se dibujó con código (no es foto).
+  Sunburst, 10 créditos cada una): `img/portada-capa.jpg`. La cuenta gratis les pone el logo de OpenArt; Rigoberto mandó
+  su propia versión sin el logo (sin las letras) y se le volvieron a escribir «EL FILO» en Anton sobre la capa, con
+  las sombras de la tela. La escena «La última mirada / Y listo» (`capa-quitar.jpg`, con el logo) se quitó el 21 nov
+  2026 a pedido de Rigoberto. `img/tela-roja.jpg` se dibujó con código (no es foto).
 - **Lupa del antes** (21 nov 2026, Rigoberto, como en la referencia 1): en la portada un círculo dibujado a mano con la
   etiqueta «ANTES» sigue el mouse (o el dedo); dentro se ve `img/portada-antes.jpg` (la misma foto con el pelo largo
   sin cortar, armada con los rizos de la misma foto, sin IA) y fuera el degradado. Si nadie la mueve, ronda sola por
@@ -26,13 +26,20 @@ Página estática de una sola hoja (`index.html` + `img/`), sin dueño todavía.
   con taper), con etiqueta de papel blanco; tocar uno lo deja escogido en la reserva. Servicios nuevos en la lista:
   Mullet $35.000, Mohicano $32.000, Degradado + diseño $38.000 (Burst fade ya estaba, ahora con foto real). Precios
   de ejemplo. Antes de publicar para un cliente, confirmar que las personas de las fotos dieron permiso.
-- **Solo para hombres** (21 nov 2026, Rigoberto): los tres barberos son hombres (Álvaro, Andrés, Julián) y se
-  atienden hombres y niños.
+- **Solo para hombres** (21 nov 2026, Rigoberto): se atienden hombres y niños.
+- **Un solo barbero: Daniel Mejía** (21 nov 2026, Rigoberto quitó a los demás). Su foto está pendiente (la manda
+  Rigoberto): mientras tanto se ven sus iniciales «DM». Cuando llegue, guardarla como `img/equipo-daniel.jpg` y poner
+  `foto: "img/equipo-daniel.jpg"` en `BARBEROS`. La reserva ya no pide escoger barbero.
+- **Reloj para escoger la hora** (21 nov 2026, Rigoberto): en «El momento» hay un reloj de agujas; cada turno libre de
+  45 min es un botón alrededor del reloj (los ocupados salen grises y tachados) y las agujas marcan la hora escogida.
+  Al lado, la fila en vivo: cuántas personas esperan, si Daniel está motilando, cuánto tardan si llegas sin cita y
+  el primer turno libre de hoy. Para hoy no se puede reservar antes de que pase la fila (`esperaAhora`).
 - **Cada cliente dura 45 minutos** (21 nov 2026, Rigoberto): todos los servicios duran 45 min, las horas de reserva
   van cada 45 min y la espera se calcula con eso (`DURACION`); el rango es ±5 min por persona en fila, mínimo ±10
   (`VARIACION`).
 - **Fila en vivo** (sección «En vivo», 21 nov 2026, Rigoberto): los clientes ven cuántos esperan, si cada barbero está
-  motilando (y cuánto lleva del corte), y cuánto les tocaría esperar si llegan ya, con la hora aproximada. El barbero
+  motilando (y cuánto lleva del corte), y cuánto les tocaría esperar si llegan ya, con la hora aproximada. La fila
+  tiene una sola silla (`barberos.daniel` en `fila/estado`). El barbero
   la mueve desde el «Panel del barbero» (Empezar corte, Terminé, +1 / −1 en fila, Descanso).
   - En la vista previa funciona de verdad: un solo documento `fila/estado` en la base de datos compartida; leen
     todos, escribe solo quien administra (regla `write: admin`). El panel solo le aparece a quien puede editar.

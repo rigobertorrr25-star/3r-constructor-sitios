@@ -186,6 +186,16 @@ p { margin: 0; }
 .papel button { justify-self: start; margin-top: 4px; padding: 0; border: 0; background: none; cursor: pointer; font-weight: 700; font-size: .86rem; color: var(--rojo); text-decoration: underline; text-underline-offset: 3px; }
 @media (min-width: 760px) { .equipo-cabeza { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 48px; } .equipo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
+.barbero-unico { display: grid; gap: 36px; align-items: center; }
+.barbero-unico .barbero { margin: 0; width: 100%; max-width: 440px; }
+.barbero-texto { display: grid; gap: 20px; justify-items: start; }
+.foto-pendiente { aspect-ratio: 3 / 4; background: linear-gradient(160deg, #241c1c, #0e0b0b); display: grid; place-items: center; }
+.foto-pendiente span { font-family: var(--f-titulo); font-size: clamp(6rem, 16vw, 10rem); color: #3a2e2e; }
+.especialidades { list-style: none; margin: 0; padding: 0; width: 100%; max-width: 440px; border-top: 1px solid var(--linea); }
+.especialidades li { padding: 11px 0; border-bottom: 1px solid var(--linea); font-weight: 600; }
+@media (min-width: 860px) { .barbero-unico { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 72px; } }
+.silla-top .avatar-libre { width: 52px; height: 52px; font-size: 1.3rem; }
+
 /* ---------- En vivo ---------- */
 .vivo { background: var(--carbon); }
 .vivo-cabeza { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 32px; }
@@ -234,7 +244,7 @@ p { margin: 0; }
 .control-botones button:hover { border-color: var(--blanco); }
 .control-botones button.principal { background: var(--rojo); border-color: var(--rojo); }
 .boton-texto { background: none; border: 0; padding: 0; cursor: pointer; color: var(--gris); font-size: .86rem; text-decoration: underline; text-underline-offset: 3px; }
-@media (min-width: 820px) { .sillas { grid-template-columns: repeat(3, minmax(0, 1fr)); } .controles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.sillas, .controles { max-width: 560px; }
 @media (max-width: 560px) { .vivo-resumen { grid-template-columns: 1fr 1fr; } .vivo-resumen > div:last-child { grid-column: 1 / -1; padding-left: 0; border-left: 0; border-top: 1px solid var(--linea); } }
 
 /* ---------- Siéntate ---------- */
@@ -251,12 +261,7 @@ p { margin: 0; }
 .carta dd { margin: 0; font-weight: 600; text-align: right; }
 
 /* ---------- Última mirada / Y listo ---------- */
-.escena-final { height: 260vh; }
-.foto-final img { object-position: 62% 40%; }
-@media (max-width: 700px) { .foto-portada img { object-position: 74% 50%; } .foto-final img { object-position: 80% 40%; } }
-.texto-final h2, .texto-listo h2 { font-size: clamp(3.4rem, 10vw, 9rem); max-width: 10ch; }
-.texto-final p { margin-top: 14px; color: #e6dede; max-width: 40ch; }
-.texto-listo { opacity: 0; }
+@media (max-width: 700px) { .foto-portada img { object-position: 74% 50%; } }
 
 /* ---------- Reserva (fondo claro) ---------- */
 .reserva { background: var(--claro); color: var(--tinta); color-scheme: light; }
@@ -332,6 +337,36 @@ p { margin: 0; }
 .barra-ticket .boton { min-height: 40px; }
 @media (min-width: 1000px) { .barra-ticket { display: none; } }
 
+/* Reloj para escoger la hora */
+.momento { display: grid; gap: 24px; align-items: start; }
+@media (min-width: 760px) { .momento { grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 40px; } }
+.reloj-caja { display: grid; gap: 14px; justify-items: center; }
+.reloj { position: relative; width: min(100%, 360px); aspect-ratio: 1; max-width: 100%; border-radius: 50%; background: var(--blanco); border: 1px solid var(--claro-linea); box-shadow: 0 24px 48px -28px rgba(0,0,0,.45), inset 0 0 0 12px #f6f6f7; }
+.reloj .num { position: absolute; transform: translate(-50%, -50%); font-family: var(--f-titulo); font-size: 1rem; color: #bdb5b5; pointer-events: none; }
+.aguja { position: absolute; left: 50%; top: 50%; border-radius: 3px; transform-origin: 50% 100%; transform: translate(-50%, -100%); transition: transform .7s cubic-bezier(.3, 1.35, .5, 1), opacity .3s; pointer-events: none; }
+.aguja-hora { width: 6px; height: 21%; background: var(--tinta); }
+.aguja-min { width: 3px; height: 30%; background: var(--rojo); }
+.reloj.sin-hora .aguja { opacity: .35; }
+.reloj-eje { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; border-radius: 50%; background: var(--tinta); border: 3px solid var(--blanco); box-shadow: 0 0 0 2px var(--tinta); transform: translate(-50%, -50%); pointer-events: none; }
+#franjas { position: absolute; inset: 0; }
+.hora-btn { position: absolute; width: 50px; height: 50px; transform: translate(-50%, -50%); padding: 0; border-radius: 50%; border: 1px solid var(--claro-linea); background: var(--blanco); color: var(--tinta); font-size: .78rem; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; cursor: pointer; display: grid; place-content: center; transition: background-color .2s, color .2s, border-color .2s, transform .2s; }
+.hora-btn small { display: block; font-size: .56rem; font-weight: 600; color: var(--claro-gris); }
+.hora-btn:hover:not(:disabled) { border-color: var(--tinta); transform: translate(-50%, -50%) scale(1.08); }
+.hora-btn[aria-pressed="true"] { background: var(--tinta); border-color: var(--tinta); color: var(--blanco); transform: translate(-50%, -50%) scale(1.1); }
+.hora-btn[aria-pressed="true"] small { color: #d6cfcf; }
+.hora-btn:disabled { background: #f1f1f2; color: #c4bcbc; border-style: dashed; text-decoration: line-through; cursor: default; }
+.hora-btn:disabled small { color: #cfc8c8; }
+.reloj-lectura { display: grid; gap: 2px; text-align: center; }
+.reloj-lectura b { font-family: var(--f-titulo); font-weight: 400; font-size: 2.2rem; line-height: 1; }
+.reloj-lectura small { font-size: .84rem; color: var(--claro-gris); }
+.momento-info { display: grid; gap: 12px; min-width: 0; }
+.fila-ahora { background: var(--blanco); border: 1px solid var(--claro-linea); border-radius: 3px; padding: 16px 18px; display: grid; gap: 8px; font-size: .92rem; color: #3f3939; }
+.fila-ahora small { font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; color: var(--claro-gris); }
+.fila-ahora .fila-num { display: flex; align-items: baseline; gap: 10px; }
+.fila-ahora .fila-num b { font-family: var(--f-titulo); font-weight: 400; font-size: 3rem; line-height: 1; color: var(--rojo); }
+.fila-ahora .fila-num span { font-weight: 700; color: var(--tinta); }
+.fila-ahora a { color: var(--tinta); font-weight: 700; font-size: .88rem; }
+
 /* ---------- Antes de venir ---------- */
 .info-grid { display: grid; gap: 32px; margin-bottom: 56px; }
 .info-grid h3 { font-size: 1.6rem; margin-bottom: 10px; }
@@ -372,7 +407,7 @@ p { margin: 0; }
       <a href="#precios">Precios</a>
       <a href="#cortes">Cortes</a>
       <a href="#en-vivo">En vivo</a>
-      <a href="#equipo">Barberos</a>
+      <a href="#equipo">Barbero</a>
       <a href="#antes">Antes de venir</a>
     </nav>
     <div class="header-acciones">
@@ -385,7 +420,7 @@ p { margin: 0; }
       <a href="#precios">Precios</a>
       <a href="#cortes">Cortes</a>
       <a href="#en-vivo">En vivo</a>
-      <a href="#equipo">Barberos</a>
+      <a href="#equipo">Barbero</a>
       <a href="#antes">Antes de venir</a>
       <a href="#reserva">Reservar</a>
     </nav>
@@ -473,14 +508,22 @@ p { margin: 0; }
     </div>
   </section>
 
-  <!-- Equipo -->
+  <!-- Barbero -->
   <section class="equipo seccion" id="equipo" aria-labelledby="titulo-equipo">
-    <div class="envoltura">
-      <div class="equipo-cabeza">
-        <h2 class="titulo-grande" id="titulo-equipo">A cada uno su oficio.</h2>
-        <p class="texto-suave">Tres barberos, tres especialidades. Álvaro abrió El Filo en 2017 con una silla y una navaja; hoy cada silla tiene su mano. Escoge con quién o deja que te atienda el primero libre.</p>
+    <div class="envoltura barbero-unico">
+      <figure class="barbero" id="barbero-foto"></figure>
+      <div class="barbero-texto">
+        <span class="etiqueta">Tu barbero</span>
+        <h2 class="titulo-grande" id="titulo-equipo">El que te corta.</h2>
+        <p class="texto-suave">Daniel Mejía atiende cada turno de principio a fin: el corte, la línea a navaja y la vuelta completa con el espejo antes de que te pares.</p>
+        <ul class="especialidades">
+          <li>Degradados y burst fade</li>
+          <li>Mullets rizados y lisos</li>
+          <li>Mohicanos</li>
+          <li>Diseños y rayas a navaja</li>
+        </ul>
+        <a class="boton boton-blanco" href="#reserva">Reservar con Daniel <span class="flecha" aria-hidden="true">→</span></a>
       </div>
-      <div class="equipo-grid" id="equipo-grid"></div>
     </div>
   </section>
 
@@ -496,12 +539,12 @@ p { margin: 0; }
       </div>
       <div class="vivo-resumen">
         <div><b id="res-esperando">–</b><span>esperando turno</span></div>
-        <div><b id="res-sillas">–</b><span>sillas motilando</span></div>
-        <div><b id="res-espera">–</b><span id="res-espera-txt">espera más corta</span></div>
+        <div><b id="res-sillas">–</b><span>Daniel ahora</span></div>
+        <div><b id="res-espera">–</b><span id="res-espera-txt">si llegas ahora</span></div>
       </div>
       <p class="vivo-aviso" id="vivo-aviso" hidden></p>
       <div class="sillas" id="sillas"></div>
-      <p class="vivo-nota">Cada cliente dura más o menos 45 minutos, por eso la espera se muestra como un rango. Si escoges barbero, cuenta la fila de esa silla; si te da igual, te toca la que se libere primero.</p>
+      <p class="vivo-nota">Cada cliente dura más o menos 45 minutos, por eso la espera se muestra como un rango. Daniel la actualiza desde la barbería cada vez que entra o sale un cliente.</p>
       <div id="zona-panel"></div>
     </div>
   </section>
@@ -524,30 +567,13 @@ p { margin: 0; }
     </div>
   </section>
 
-  <!-- Escena 3: la última mirada y listo -->
-  <section class="escena escena-final" aria-labelledby="titulo-final">
-    <div class="escenario">
-      <div class="capa-img foto-final" id="foto-final"><img src="img/capa-quitar.jpg" alt="El barbero le quita la capa roja al cliente al terminar el corte" loading="lazy"></div>
-      <div class="sombra-portada"></div>
-      <div class="texto-escena texto-final" id="texto-final">
-        <div class="envoltura">
-          <h2 id="titulo-final">La última mirada.</h2>
-          <p>Espejo atrás, capa afuera, cuello limpio. Si algo no está parejo, se corrige antes de que te levantes.</p>
-        </div>
-      </div>
-      <div class="texto-escena texto-listo" id="texto-listo" aria-hidden="true">
-        <div class="envoltura"><h2>Y listo.</h2></div>
-      </div>
-    </div>
-  </section>
-
   <!-- Reserva -->
   <section class="reserva seccion" id="reserva" aria-labelledby="titulo-reserva" style="padding-bottom:0">
     <div class="envoltura">
       <div class="reserva-cabeza">
         <span class="etiqueta">Reserva en línea</span>
         <h2 id="titulo-reserva">Tu próximo degradado.</h2>
-        <p>Escoge corte, barbero, día y hora. Al confirmar se abre WhatsApp con tu reserva escrita para que nos la envíes.</p>
+        <p>Escoge el corte, el día y la hora en el reloj. Al confirmar se abre WhatsApp con tu reserva escrita para que nos la envíes.</p>
       </div>
       <form class="reserva-grid" id="form-reserva" novalidate>
         <div>
@@ -556,14 +582,24 @@ p { margin: 0; }
             <div class="opciones" id="op-servicios"></div>
           </div>
           <div class="bloque">
-            <div class="bloque-titulo"><h3>El barbero</h3></div>
-            <div class="opciones" id="op-barberos"></div>
-          </div>
-          <div class="bloque">
             <div class="bloque-titulo"><h3>El momento</h3><span id="horas-dia"></span></div>
             <div class="dias" id="dias"></div>
-            <div class="franjas" id="franjas"></div>
-            <p class="leyenda">Las horas tachadas ya están ocupadas.</p>
+            <div class="momento">
+              <div class="reloj-caja">
+                <div class="reloj sin-hora" id="reloj">
+                  <div id="reloj-numeros"></div>
+                  <div class="aguja aguja-hora" id="aguja-hora"></div>
+                  <div class="aguja aguja-min" id="aguja-min"></div>
+                  <div class="reloj-eje"></div>
+                  <div id="franjas"></div>
+                </div>
+                <div class="reloj-lectura" aria-live="polite"><b id="reloj-lectura-hora">Escoge la hora</b><small id="reloj-lectura-nota">Toca una hora libre del reloj</small></div>
+              </div>
+              <div class="momento-info">
+                <div class="fila-ahora" id="fila-ahora"></div>
+                <p class="leyenda">En el reloj cada botón es un turno de 45 minutos. Los grises y tachados ya están ocupados.</p>
+              </div>
+            </div>
           </div>
           <div class="bloque">
             <div class="bloque-titulo"><h3>Tú</h3></div>
@@ -665,7 +701,7 @@ p { margin: 0; }
   <div class="envoltura">
     <div>
       <span class="marca">EL FILO</span>
-      <p>Barbería para hombres · Manga, Cartagena · Desde 2017</p>
+      <p>Barbería para hombres · Manga, Cartagena</p>
     </div>
     <p>© <span id="anio">2026</span> El Filo Barbería · Instagram @elfilo.barberia</p>
   </div>
@@ -695,10 +731,7 @@ p { margin: 0; }
     { id: "nino",      nombre: "Corte de niño",     min: 45, precio: 20000, detalle: "Hasta los 12 años",                       foto: "img/secador.jpg" }
   ];
   var BARBEROS = [
-    { id: "libre",  nombre: "El que esté libre", corto: "El que esté libre", nota: "El primero disponible", foto: null },
-    { id: "alvaro", nombre: "Álvaro Pérez", corto: "Álvaro", nota: "Navaja y barba",   foto: "img/equipo-alvaro.jpg", bio: "Fundador. 18 años cortando. Si quieres afeitado clásico, es con él.", foco: "Navaja y barba" },
-    { id: "andres", nombre: "Andrés Mejía", corto: "Andrés", nota: "Degradados",       foto: "img/equipo-andres.jpg", bio: "Degradados sin escalones y burst fade. Tiene los sábados llenos.", foco: "Degradados" },
-    { id: "julian", nombre: "Julián Rojas", corto: "Julián", nota: "Tijera y textura", foto: "img/equipo-julian.jpg", bio: "Cortes a tijera para pelo largo o rizado. Es el que atiende a los niños.", foco: "Tijera y rizos" }
+    { id: "daniel", nombre: "Daniel Mejía", corto: "Daniel", nota: "Barbero", foto: null, iniciales: "DM" }   // cuando llegue la foto: foto: "img/equipo-daniel.jpg"
   ];
   var PAGOS = [
     { id: "local",    nombre: "Pagar en la barbería", nota: "Efectivo, tarjeta, Nequi o Daviplata" },
@@ -766,7 +799,6 @@ p { margin: 0; }
   var escPortada = $(".escena-portada"), fotoPortada = $("#foto-portada"), sombraPortada = $("#sombra-portada"), tela = $("#tela"),
       txtPortada = $("#texto-portada"), txtCapa = $("#texto-capa"), bajar = $("#bajar");
   var escAngulos = $(".escena-angulos"), angulos = [].slice.call(document.querySelectorAll(".angulo")), grados = $("#grados"), gradosTxt = $("#grados-txt");
-  var escFinal = $(".escena-final"), fotoFinal = $("#foto-final"), txtFinal = $("#texto-final"), txtListo = $("#texto-listo");
   var angActivo = 0, pendiente = false;
 
   function avance(sec) {
@@ -810,13 +842,6 @@ p { margin: 0; }
     if (i !== angActivo) { angulos[angActivo].classList.remove("activa"); angulos[i].classList.add("activa"); angActivo = i; }
     gradosTxt.textContent = "Vista " + (i + 1) + " de 4 · " + ANGULOS[i];
 
-    // Escena 3: la última mirada y listo
-    var f = avance(escFinal);
-    if (!reducir) fotoFinal.style.transform = "scale(" + (1.12 - f * .12).toFixed(3) + ")";
-    opacidad(txtFinal, 1 - tramo(f, .4, .52));
-    opacidad(txtListo, tramo(f, .55, .68));
-    txtListo.style.transform = "scale(" + (1.08 - tramo(f, .55, .75) * .08).toFixed(3) + ")";
-    txtListo.style.transformOrigin = "left bottom";
   }
   addEventListener("scroll", function () { if (!pendiente) { pendiente = true; requestAnimationFrame(alScroll); } }, { passive: true });
   addEventListener("resize", alScroll);
@@ -888,15 +913,13 @@ p { margin: 0; }
     filaCortes.appendChild(b);
   });
 
-  /* ===== Equipo ===== */
-  var eq = $("#equipo-grid");
-  BARBEROS.slice(1).forEach(function (b) {
-    var art = el("article", { class: "barbero" },
-      '<img src="' + b.foto + '" alt="Retrato de ' + b.nombre + '" loading="lazy">' +
-      '<div class="papel"><h3>' + b.corto + '</h3><p><strong>' + b.foco + '.</strong> ' + b.bio + '</p><button type="button">Reservar con ' + b.corto + '</button></div>');
-    $("button", art).addEventListener("click", function () { estado.barbero = b.id; estado.hora = null; pintarReserva(); irA("#reserva"); });
-    eq.appendChild(art);
-  });
+  /* ===== Barbero ===== */
+  function avatar(b) { return b.foto ? '<img src="' + b.foto + '" alt="">' : '<span class="avatar-libre" aria-hidden="true">' + b.iniciales + '</span>'; }
+  (function () {
+    var b = BARBEROS[0], f = $("#barbero-foto");
+    f.innerHTML = (b.foto ? '<img src="' + b.foto + '" alt="Retrato de ' + b.nombre + '" loading="lazy">' : '<div class="foto-pendiente" aria-hidden="true"><span>' + b.iniciales + '</span></div>') +
+      '<figcaption class="papel"><h3>' + b.nombre + '</h3><p>Barbero de El Filo</p></figcaption>';
+  })();
 
   /* ===== Horario ===== */
   (function () {
@@ -910,7 +933,7 @@ p { margin: 0; }
   /* ===== Reserva ===== */
   var hoy = hoyCero();
   var DIAS_VISTA = 14;
-  var estado = { servicio: "degradado", barbero: "libre", fecha: null, hora: null, pago: "local" };
+  var estado = { servicio: "degradado", barbero: "daniel", fecha: null, hora: null, pago: "local" };
   function servicioActual() { return SERVICIOS.find(function (s) { return s.id === estado.servicio; }); }
   function barberoActual() { return BARBEROS.find(function (b) { return b.id === estado.barbero; }); }
   function franjasDe(fecha) {
@@ -918,11 +941,15 @@ p { margin: 0; }
     var esHoy = mismoDia(fecha, hoy), ahora = minutosAhora();
     var key = fecha.getFullYear() + "-" + fecha.getMonth() + "-" + fecha.getDate();
     for (var t = h[0]; t + DURACION <= h[1]; t += DURACION) {
-      var ocupado = (hash(key + estado.barbero + t) % 100) < (estado.barbero === "libre" ? 18 : 38);
-      if (esHoy && t < ahora + 20) ocupado = true;
+      var ocupado = (hash(key + estado.barbero + t) % 100) < 38;
+      if (esHoy && t < ahora + esperaAhora()) ocupado = true;
       res.push({ t: t, libre: !ocupado });
     }
     return res;
+  }
+  function esperaAhora() {   // hoy no se puede reservar antes de que pase la fila de la barbería
+    var hay = typeof vivo !== "undefined" && vivo && vivo.datos;
+    return hay ? Math.max(20, calcular(datosDe(SILLAS[0].id)).hi) : 20;
   }
   function diaConCupo(fecha) { return franjasDe(fecha).some(function (f) { return f.libre; }); }
   function proximosDias() { var r = []; for (var i = 0; i < DIAS_VISTA; i++) { var d = new Date(hoy); d.setDate(d.getDate() + i); r.push(d); } return r; }
@@ -939,14 +966,6 @@ p { margin: 0; }
     SERVICIOS.forEach(function (s) {
       botonOpcion(c, s.id === estado.servicio, "<b>" + s.nombre + "</b><small>" + s.detalle + "</small><span class=\"precio-op\">" + pesos(s.precio) + "</span>", "",
         function () { estado.servicio = s.id; pintarReserva(); });
-    });
-  }
-  function pintarBarberos() {
-    var c = $("#op-barberos"); c.innerHTML = "";
-    BARBEROS.forEach(function (b) {
-      var foto = b.foto ? '<img src="' + b.foto + '" alt="">' : '<span class="avatar-libre" aria-hidden="true">?</span>';
-      botonOpcion(c, b.id === estado.barbero, foto + "<div><b>" + b.nombre + "</b><small>" + b.nota + "</small></div>", "opcion-barbero",
-        function () { estado.barbero = b.id; estado.hora = null; pintarReserva(); });
     });
   }
   function pintarPagos() {
@@ -969,16 +988,46 @@ p { margin: 0; }
       c.appendChild(b);
     });
   }
-  function pintarFranjas() {
+  (function () {   // números del reloj
+    var c = $("#reloj-numeros");
+    for (var k = 1; k <= 12; k++) {
+      var a = k / 12 * Math.PI * 2, n = el("span", { class: "num" }, String(k));
+      n.style.left = (50 + 26 * Math.sin(a)) + "%"; n.style.top = (50 - 26 * Math.cos(a)) + "%";
+      c.appendChild(n);
+    }
+  })();
+  function pintarReloj() {
     var c = $("#franjas"); c.innerHTML = "";
     $("#horas-dia").textContent = estado.fecha ? mayus(fmtDia.format(estado.fecha)) : "";
     if (!estado.fecha) return;
     franjasDe(estado.fecha).forEach(function (f) {
-      var b = el("button", { type: "button", "aria-pressed": String(estado.hora === f.t) }, hora12(f.t));
-      if (!f.libre) { b.disabled = true; b.setAttribute("aria-label", hora12(f.t) + ", ocupada"); }
+      var h = Math.floor(f.t / 60), m = f.t % 60, a = ((f.t / 60) % 12) / 12 * Math.PI * 2;
+      var b = el("button", { type: "button", class: "hora-btn", "aria-pressed": String(estado.hora === f.t), "aria-label": hora12(f.t) + (f.libre ? "" : ", ocupada") },
+        ((h % 12) || 12) + ":" + (m < 10 ? "0" : "") + m + "<small>" + (h < 12 ? "a. m." : "p. m.") + "</small>");
+      b.style.left = (50 + 41 * Math.sin(a)) + "%"; b.style.top = (50 - 41 * Math.cos(a)) + "%";
+      if (!f.libre) b.disabled = true;
       b.addEventListener("click", function () { estado.hora = f.t; pintarReserva(); });
       c.appendChild(b);
     });
+    var t = estado.hora != null ? estado.hora : minutosAhora(), hh = Math.floor(t / 60) % 12, mm = t % 60;
+    $("#aguja-hora").style.transform = "translate(-50%, -100%) rotate(" + ((hh + mm / 60) * 30).toFixed(1) + "deg)";
+    $("#aguja-min").style.transform = "translate(-50%, -100%) rotate(" + (mm * 6) + "deg)";
+    $("#reloj").classList.toggle("sin-hora", estado.hora == null);
+    $("#reloj-lectura-hora").textContent = estado.hora != null ? hora12(estado.hora) : "Escoge la hora";
+    $("#reloj-lectura-nota").textContent = estado.hora != null ? "Turno de 45 min, hasta las " + hora12(estado.hora + DURACION) : "Toca una hora libre del reloj";
+  }
+  function pintarFilaReserva() {
+    var box = $("#fila-ahora");
+    var hay = typeof vivo !== "undefined" && vivo && vivo.datos;
+    if (!hay) { box.innerHTML = '<small>En la barbería ahora</small><p>Trayendo la fila…</p>'; return; }
+    var b = datosDe(SILLAS[0].id), c = calcular(b);
+    var estadoTxt = { motilando: "Daniel está motilando", libre: "Daniel está libre", descanso: "Daniel está en descanso" }[b.estado];
+    var libresHoy = franjasDe(hoy).filter(function (f) { return f.libre; });
+    var html = '<small>En la barbería ahora</small><div class="fila-num"><b>' + b.esperando + '</b><span>' + (b.esperando === 1 ? "persona esperando" : "personas esperando") + '</span></div>' +
+      '<p>' + estadoTxt + '. Si llegas sin cita: <strong>' + (c.hi === 0 ? "te atienden de una" : rangoTxt(c.lo, c.hi)) + '</strong>.</p>' +
+      (libresHoy.length ? '<p>Para hoy, el primer turno libre en el reloj es a las <strong>' + hora12(libresHoy[0].t) + '</strong></p>' : '<p>Hoy ya no quedan turnos: escoge otro día.</p>') +
+      '<a href="#en-vivo">Ver la fila en vivo</a>';
+    box.innerHTML = html;
   }
 
   var nombre = $("#nombre"), celular = $("#celular"), acepto = $("#acepto");
@@ -1043,7 +1092,7 @@ p { margin: 0; }
   function pintarReserva() {
     if (estado.fecha && !diaConCupo(estado.fecha)) estado.fecha = primerDiaLibre();
     if (estado.hora != null && !franjasDe(estado.fecha).some(function (f) { return f.t === estado.hora && f.libre; })) estado.hora = null;
-    pintarServicios(); pintarBarberos(); pintarDias(); pintarFranjas(); pintarPagos(); pintarTicket();
+    pintarServicios(); pintarDias(); pintarReloj(); pintarPagos(); pintarTicket(); pintarFilaReserva();
   }
   nombre.addEventListener("input", pintarTicket);
   celular.addEventListener("input", pintarTicket);
@@ -1062,16 +1111,14 @@ p { margin: 0; }
   });
 
   /* ===== En vivo: fila y sillas en tiempo real ===== */
-  var SILLAS = BARBEROS.slice(1);
+  var SILLAS = BARBEROS;
   var vivo = { modo: "cargando", datos: null, editar: false, ref: null, cadena: Promise.resolve(), panelAbierto: false, conectado: false };
   var CLAVE_DEMO = "elfilo-fila-demo";
 
   function estadoEjemplo() {
     var n = Date.now();
     return { barberos: {
-      alvaro: { estado: "motilando", desde: n - 20 * 60000, esperando: 2 },
-      andres: { estado: "motilando", desde: n - 33 * 60000, esperando: 1 },
-      julian: { estado: "libre", desde: n - 4 * 60000, esperando: 0 }
+      daniel: { estado: "motilando", desde: n - 20 * 60000, esperando: 2 }
     }, actualizado: n };
   }
   function datosDe(id) {
@@ -1109,6 +1156,7 @@ p { margin: 0; }
       st.lastChild.textContent = vivo.modo === "sinconexion" ? "Sin conexión" : vivo.modo === "vacio" ? "En vivo" : "Conectando…";
       st.classList.toggle("apagado", vivo.modo !== "vacio");
       pintarPanel();
+      pintarReserva();
       return;
     }
     SILLAS.forEach(function (bb, i) {
@@ -1127,15 +1175,15 @@ p { margin: 0; }
         ? "<b>Te atienden ya</b><span>Llega y te sientas</span>"
         : "<b>" + rangoTxt(c.lo, c.hi) + "</b><span>Te atienden más o menos entre " + horaEn(c.lo) + " y " + horaEn(c.hi) + "</span>";
       cont.appendChild(el("article", { class: "silla" },
-        '<div class="silla-top"><img src="' + bb.foto + '" alt=""><div><b>' + bb.corto + '</b><small>Silla ' + (i + 1) + '</small></div><span class="chip-estado ' + b.estado + '">' + chip + '</span></div>' +
+        '<div class="silla-top">' + avatar(bb) + '<div><b>' + bb.corto + '</b><small>Silla ' + (i + 1) + '</small></div><span class="chip-estado ' + b.estado + '">' + chip + '</span></div>' +
         progreso + '<div class="cola" aria-label="' + b.esperando + ' personas esperando">' + cola + '</div>' +
         '<div class="espera"><small>Si llegas ahora</small>' + espera + '</div>'));
     });
     $("#res-esperando").textContent = total;
-    $("#res-sillas").textContent = motilando + " de " + SILLAS.length;
+    $("#res-sillas").textContent = { motilando: "Motilando", libre: "Libre", descanso: "Descanso" }[datosDe(SILLAS[0].id).estado];
     if (mejor) {
       $("#res-espera").textContent = mejor.c.hi === 0 ? "Ya" : rangoTxt(mejor.c.lo, mejor.c.hi);
-      $("#res-espera-txt").textContent = mejor.c.hi === 0 ? "hay silla libre (" + mejor.b.corto + ")" : "espera más corta (" + mejor.b.corto + ")";
+      $("#res-espera-txt").textContent = mejor.c.hi === 0 ? "la silla está libre" : "si llegas ahora";
     } else { $("#res-espera").textContent = "–"; $("#res-espera-txt").textContent = "todos en descanso"; }
     $("#dato-vivo").innerHTML = "<i></i>En vivo: <strong>" + (total === 1 ? "1 esperando" : total + " esperando") + "</strong>";
 
@@ -1154,6 +1202,7 @@ p { margin: 0; }
     st.lastChild.textContent = texto;
     st.classList.toggle("apagado", !(vivo.modo === "vivo" && vivo.conectado));
     pintarPanel();
+    pintarReserva();
   }
 
   function pintarPanel() {
