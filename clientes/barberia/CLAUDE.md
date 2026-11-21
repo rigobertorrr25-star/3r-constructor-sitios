@@ -21,6 +21,11 @@ Página estática de una sola hoja (`index.html` + `img/`), sin dueño todavía.
   sin cortar, armada con los rizos de la misma foto, sin IA) y fuera el degradado. Si nadie la mueve, ronda sola por
   la cabeza; desaparece al empezar el acercamiento. Si se cambia la portada, hay que rehacer la foto «antes» con el
   mismo encuadre y ajustar `LUPA_CABEZA` (centro de la cabeza en la foto de 1920×1080).
+- **Cortes de la casa** (21 nov 2026, Rigoberto mandó 5 fotos reales): sección «Salidos de esta silla.» después de
+  los precios (`img/cortes/`: mullet rizado con raya, burst fade mullet, doble raya, mohicano con diseño, mullet liso
+  con taper), con etiqueta de papel blanco; tocar uno lo deja escogido en la reserva. Servicios nuevos en la lista:
+  Mullet $35.000, Mohicano $32.000, Degradado + diseño $38.000 (Burst fade ya estaba, ahora con foto real). Precios
+  de ejemplo. Antes de publicar para un cliente, confirmar que las personas de las fotos dieron permiso.
 - **Solo para hombres** (21 nov 2026, Rigoberto): los tres barberos son hombres (Álvaro, Andrés, Julián) y se
   atienden hombres y niños.
 - **Cada cliente dura 45 minutos** (21 nov 2026, Rigoberto): todos los servicios duran 45 min, las horas de reserva

@@ -140,6 +140,22 @@ p { margin: 0; }
 .tarjeta-foto figcaption b { font-family: var(--f-titulo); font-weight: 400; font-size: 1.15rem; }
 @media (min-width: 900px) { .precios-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 72px; } }
 
+/* ---------- Cortes de la casa ---------- */
+.cortes { background: var(--negro); }
+.cortes-cabeza { display: grid; gap: 18px; margin-bottom: 36px; }
+.cortes-fila { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 72vw); gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); padding-bottom: 10px; scrollbar-width: thin; }
+.corte { position: relative; margin: 0; overflow: hidden; scroll-snap-align: start; cursor: pointer; border: 0; padding: 0; background: var(--carbon); text-align: left; border-radius: 2px; }
+.corte img { width: 100%; aspect-ratio: 9 / 15; object-fit: cover; transition: transform .6s ease; }
+.corte:hover img, .corte:focus-visible img { transform: scale(1.04); }
+.corte .papel { left: 10px; right: 10px; bottom: 10px; }
+.corte .papel { padding: 9px 12px 10px; gap: 2px; }
+.corte .papel h3 { font-size: 1.4rem; }
+.corte img { object-position: 50% 30%; }
+.corte .papel span { justify-self: start; margin-top: 2px; font-weight: 700; font-size: .84rem; color: var(--rojo); text-decoration: underline; text-underline-offset: 3px; }
+.corte:nth-child(odd) .papel { transform: rotate(-1deg); }
+.corte:nth-child(even) .papel { transform: rotate(.9deg); }
+@media (min-width: 1000px) { .cortes-fila { grid-auto-flow: row; grid-template-columns: repeat(5, minmax(0, 1fr)); overflow: visible; max-width: var(--ancho); margin-inline: auto; padding-inline: max(40px, env(safe-area-inset-left, 0px)) max(40px, env(safe-area-inset-right, 0px)); } }
+
 /* ---------- Ángulos ---------- */
 .escena-angulos { height: 360vh; }
 .angulo { opacity: 0; transition: opacity .45s ease; }
@@ -354,6 +370,7 @@ p { margin: 0; }
     <a class="marca" href="#inicio" aria-label="El Filo Barbería, inicio">EL FILO</a>
     <nav class="nav" aria-label="Secciones">
       <a href="#precios">Precios</a>
+      <a href="#cortes">Cortes</a>
       <a href="#en-vivo">En vivo</a>
       <a href="#equipo">Barberos</a>
       <a href="#antes">Antes de venir</a>
@@ -366,6 +383,7 @@ p { margin: 0; }
   <div class="menu-movil" id="menu-movil" hidden>
     <nav class="envoltura" aria-label="Secciones">
       <a href="#precios">Precios</a>
+      <a href="#cortes">Cortes</a>
       <a href="#en-vivo">En vivo</a>
       <a href="#equipo">Barberos</a>
       <a href="#antes">Antes de venir</a>
@@ -422,6 +440,17 @@ p { margin: 0; }
         <figcaption><span>45 min</span><b id="precio-caption">Degradado</b></figcaption>
       </figure>
     </div>
+  </section>
+
+  <!-- Cortes de la casa -->
+  <section class="cortes seccion" id="cortes" aria-labelledby="titulo-cortes">
+    <div class="envoltura">
+      <div class="cortes-cabeza">
+        <h2 class="titulo-grande" id="titulo-cortes">Salidos de esta silla.</h2>
+        <p class="texto-suave">Mullets, burst fade, mohicanos y rayas a navaja. Toca un corte y lo dejamos listo en tu reserva.</p>
+      </div>
+    </div>
+    <div class="cortes-fila" id="cortes-fila"></div>
   </section>
 
   <!-- Escena 2: todos los ángulos -->
@@ -655,7 +684,10 @@ p { margin: 0; }
   var SERVICIOS = [
     { id: "clasico",   nombre: "Corte clásico",     min: 45, precio: 25000, detalle: "Tijera y máquina, a tu gusto",             foto: "img/corte-arriba.jpg" },
     { id: "degradado", nombre: "Degradado",         min: 45, precio: 30000, detalle: "Bajo, medio o alto, con perfilado",       foto: "img/degradado-lado.jpg" },
-    { id: "burst",     nombre: "Burst fade",        min: 45, precio: 32000, detalle: "Degradado en curva alrededor de la oreja", foto: "img/degradado-afro.jpg" },
+    { id: "burst",     nombre: "Burst fade",        min: 45, precio: 32000, detalle: "Degradado en curva alrededor de la oreja", foto: "img/cortes/burst-fade-mullet.jpg" },
+    { id: "mullet",    nombre: "Mullet",            min: 45, precio: 35000, detalle: "Largo atrás, lados en degradado",         foto: "img/cortes/mullet-liso-taper.jpg" },
+    { id: "mohicano",  nombre: "Mohicano",          min: 45, precio: 32000, detalle: "Lados bien bajos y la franja de arriba",  foto: "img/cortes/mohicano-diseno.jpg" },
+    { id: "diseno",    nombre: "Degradado + diseño", min: 45, precio: 38000, detalle: "Rayas o figuras a navaja sobre el degradado", foto: "img/cortes/doble-raya.jpg" },
     { id: "combo",     nombre: "Degradado + barba", min: 45, precio: 42000, detalle: "El corte y la barba arreglada con navaja", foto: "img/barba.jpg" },
     { id: "barba",     nombre: "Arreglo de barba",  min: 45, precio: 20000, detalle: "Toalla caliente, forma y contorno",       foto: "img/barba.jpg" },
     { id: "afeitado",  nombre: "Afeitado clásico",  min: 45, precio: 25000, detalle: "Navaja, toalla caliente y bálsamo",       foto: "img/afeitado.jpg" },
@@ -675,6 +707,13 @@ p { margin: 0; }
   // 0 = domingo ... 6 = sábado. Minutos desde la medianoche.
   var HORARIO = { 0: [600, 840], 1: [540, 1200], 2: [540, 1200], 3: [540, 1200], 4: [540, 1200], 5: [540, 1200], 6: [540, 1200] };
   var ANGULOS = ["Frente", "Perfil", "Arriba", "Línea"];
+  var CORTES = [
+    { foto: "img/cortes/mullet-rizado-raya.jpg", nombre: "Mullet rizado con raya", nota: "Burst fade y una raya curva que abre el lado.", servicio: "diseno" },
+    { foto: "img/cortes/burst-fade-mullet.jpg",  nombre: "Burst fade mullet",      nota: "Degradado en curva alrededor de la oreja y rizos atrás.", servicio: "burst" },
+    { foto: "img/cortes/doble-raya.jpg",         nombre: "Doble raya",             nota: "Dos rayas paralelas a navaja que siguen la forma de la cabeza.", servicio: "diseno" },
+    { foto: "img/cortes/mohicano-diseno.jpg",    nombre: "Mohicano con diseño",    nota: "Lados en cero y un diseño a mano alzada.", servicio: "mohicano" },
+    { foto: "img/cortes/mullet-liso-taper.jpg",  nombre: "Mullet liso con taper",  nota: "Taper bajo, rayas detrás de la oreja y largo atrás.", servicio: "mullet" }
+  ];
 
   /* ===== Utilidades ===== */
   var $ = function (s, c) { return (c || document).querySelector(s); };
@@ -836,6 +875,17 @@ p { margin: 0; }
     b.addEventListener("focus", function () { mostrarServicio(s, b); });
     b.addEventListener("click", function () { estado.servicio = s.id; pintarReserva(); irA("#reserva"); });
     li.appendChild(b); lista.appendChild(li);
+  });
+
+  /* ===== Cortes de la casa ===== */
+  var filaCortes = $("#cortes-fila");
+  CORTES.forEach(function (c) {
+    var srv = SERVICIOS.find(function (x) { return x.id === c.servicio; });
+    var b = el("button", { type: "button", class: "corte", "aria-label": c.nombre + ". Reservar " + srv.nombre },
+      '<img src="' + c.foto + '" alt="' + c.nombre + '" loading="lazy">' +
+      '<div class="papel" title="' + c.nota + '"><h3>' + c.nombre + '</h3><span>' + srv.nombre + ' · ' + pesos(srv.precio) + '</span></div>');
+    b.addEventListener("click", function () { estado.servicio = c.servicio; pintarReserva(); irA("#reserva"); });
+    filaCortes.appendChild(b);
   });
 
   /* ===== Equipo ===== */
