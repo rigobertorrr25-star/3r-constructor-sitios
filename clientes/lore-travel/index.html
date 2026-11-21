@@ -470,7 +470,7 @@ body.con-plan .wa{bottom:88px}
           <div><label for="personas">Personas</label><select id="personas"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10 o más</option></select></div>
           <div class="full"><label for="nota">¿Algo más? (opcional)</label><textarea id="nota" placeholder="Cumpleaños, despedida, luna de miel, hotel donde te quedas…"></textarea></div>
         </div>
-        <button class="btn btn-coral" type="submit"><svg><use href="#i-wa"/></svg>Enviar mi plan por WhatsApp</button>
+        <a class="btn btn-coral" id="enviar" href="https://wa.me/573148918445" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>Enviar mi plan por WhatsApp</a>
       </form>
     </div>
   </section>
@@ -677,6 +677,7 @@ function pintar(){
   document.getElementById('flotaTxt').textContent = `Tu plan: ${n} ${n===1?'plan':'planes'}`;
   document.getElementById('flota').classList.toggle('ver', n>0);
   document.body.classList.toggle('con-plan', n>0);
+  if (typeof actualizarEnvio === 'function') actualizarEnvio();
 }
 document.addEventListener('click', e=>{
   const b = e.target.closest('.agregar'); if(!b) return;
@@ -697,16 +698,24 @@ const hoy = new Date(); hoy.setMinutes(hoy.getMinutes()-hoy.getTimezoneOffset())
 document.getElementById('fecha').min = hoy.toISOString().slice(0,10);
 document.getElementById('anio').textContent = new Date().getFullYear();
 
-document.getElementById('form').addEventListener('submit', e=>{
-  e.preventDefault();
+// El botón es un enlace normal: así abre WhatsApp en cualquier navegador.
+function mensaje(){
   const v = id => document.getElementById(id).value.trim();
   let t = `Hola Lore${v('nombre') ? ', soy ' + v('nombre') : ''}. Quiero armar un plan en Cartagena.`;
   if (elegidos.size) t += `\n\nPlanes:\n` + [...elegidos].map(id=>'• ' + NOMBRES[id]).join('\n');
   if (v('fecha')) { const [a,m,d] = v('fecha').split('-'); t += `\n\nLlegada: ${d}/${m}/${a}`; }
   t += `\nPersonas: ${v('personas')}`;
   if (v('nota')) t += `\n\n${v('nota')}`;
-  window.open(wa(t), '_blank', 'noopener');
-});
+  return t;
+}
+const enviar = document.getElementById('enviar');
+const actualizarEnvio = () => { enviar.href = wa(mensaje()); };
+const form = document.getElementById('form');
+form.addEventListener('input', actualizarEnvio);
+form.addEventListener('change', actualizarEnvio);
+form.addEventListener('submit', e=>{ e.preventDefault(); actualizarEnvio(); enviar.click(); });
+enviar.addEventListener('pointerdown', actualizarEnvio);
+actualizarEnvio();
 </script>
 </body>
 </html>

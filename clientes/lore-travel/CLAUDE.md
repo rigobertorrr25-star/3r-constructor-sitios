@@ -17,7 +17,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   nota) los manda en un solo mensaje a su WhatsApp; «Reservar» abre WhatsApp con el nombre del plan.
 - Para agregar o quitar un plan: lista `PLANES` en el script + foto en `img/`.
 - Fotos del linkbio: 400×400 (baja resolución); para una portada grande hacen falta fotos originales.
-- Vista previa: https://claude.ai/artifact/8q9SegTdBuz6EaFUomCKC8 (ahí el botón «Enviar mi plan» puede no abrir WhatsApp; en la página real sí).
+- Vista previa: https://claude.ai/artifact/8q9SegTdBuz6EaFUomCKC8 (el botón «Enviar mi plan» es un enlace normal desde el 21 nov 2026, así abre WhatsApp también ahí).
 - **7 nov 2026, Rigoberto: «Quiero que todo se vuelva una página web»** → publicarla. Va a Cloudflare gratis como ZENOVA
   (ver «Hosting» en el CLAUDE.md de la raíz): proyecto `loretravel` (Worker conectado al repo), rama `main`, sin vistas
   previas, directorio raíz `clientes/lore-travel`, comando `mkdir -p _site && cp -r index.html img _site/`, despliegue
