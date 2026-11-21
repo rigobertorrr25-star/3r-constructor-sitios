@@ -1,0 +1,1430 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DAMC Barbería</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Barbería para hombres en Manga, Cartagena. Degradados, barba y afeitado con navaja. Mira la fila en vivo y reserva tu turno.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&display=swap">
+<style>
+/* Concepto: una sola escena de cine que avanza al bajar, como el primer video de referencia.
+   Cliente de espaldas con la capa roja → se cierran las puertas de DAMC → se abren y entras a la barbería →
+   la cámara camina hasta la silla y te sientas → precios →
+   la cabeza gira por ángulos → el equipo → siéntate → le quitan la capa → reserva en fondo claro. */
+:root {
+  --negro: #0b0909;
+  --carbon: #161212;
+  --linea: #2f2525;
+  --rojo: #d3161f;
+  --blanco: #ffffff;
+  --gris: #a69c9c;
+  --tinta: #121010;
+  --claro: #f1f1f2;
+  --claro-linea: #dedcdc;
+  --claro-gris: #6e6767;
+
+  --f-titulo: "Anton", "Impact", "Arial Narrow", sans-serif;
+  --f-texto: "Archivo", "Helvetica Neue", Arial, sans-serif;
+
+  --alto-header: 60px;
+  --ancho: 1280px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--alto-header) + env(safe-area-inset-top, 0px)); }
+body { margin: 0; background: var(--negro); color: var(--blanco); font-family: var(--f-texto); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; overflow-x: clip; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--blanco); }
+img { max-width: 100%; display: block; }
+[hidden] { display: none !important; }
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+h1, h2, h3 { font-family: var(--f-titulo); font-weight: 400; line-height: .96; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+:focus-visible { outline: 2px solid var(--rojo); outline-offset: 3px; }
+
+.envoltura { max-width: var(--ancho); margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 720px) { .envoltura { padding-left: max(40px, env(safe-area-inset-left, 0px)); padding-right: max(40px, env(safe-area-inset-right, 0px)); } }
+.seccion { padding-block: clamp(72px, 10vw, 128px); }
+.etiqueta { font-size: .76rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
+.titulo-grande { font-size: clamp(3rem, 8vw, 6.6rem); }
+.texto-suave { color: #cfc6c6; max-width: 52ch; }
+
+/* Botones */
+.boton { display: inline-flex; align-items: center; justify-content: center; gap: .55em; min-height: 46px; padding: 0 1.3em; border: 1px solid transparent; border-radius: 3px; font-weight: 700; font-size: .92rem; text-decoration: none; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; }
+.boton-blanco { background: var(--blanco); color: var(--tinta); }
+.boton-blanco:hover { background: #ececec; }
+.boton-negro { background: var(--tinta); color: var(--blanco); }
+.boton-negro:hover { background: #2b2626; }
+.boton-borde { border-color: rgba(255,255,255,.55); color: var(--blanco); background: transparent; }
+.boton-borde:hover { border-color: var(--blanco); background: rgba(255,255,255,.08); }
+.boton .flecha { transition: transform .2s; }
+.boton:hover .flecha { transform: translateX(3px); }
+
+/* ---------- Encabezado blanco ---------- */
+.header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; background: var(--blanco); color: var(--tinta); border-bottom: 1px solid #e6e4e4; }
+.header .envoltura { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: var(--alto-header); }
+.marca { font-family: var(--f-titulo); font-size: 1.45rem; letter-spacing: .03em; text-decoration: none; line-height: 1; }
+.nav { display: none; gap: 30px; }
+.nav a { text-decoration: none; font-size: .9rem; font-weight: 500; color: #6b6464; transition: color .2s; }
+.nav a:hover { color: var(--tinta); }
+.header-acciones { display: flex; align-items: center; gap: 8px; }
+.header .boton { min-height: 38px; padding: 0 1em; font-size: .86rem; }
+.menu-boton { width: 38px; height: 38px; border: 1px solid #dcd9d9; background: transparent; border-radius: 3px; display: grid; place-items: center; cursor: pointer; }
+.menu-boton span { display: block; width: 16px; height: 2px; background: var(--tinta); box-shadow: 0 5px 0 var(--tinta), 0 -5px 0 var(--tinta); }
+.menu-movil { border-top: 1px solid #e6e4e4; background: var(--blanco); }
+.menu-movil nav { display: grid; padding-block: 6px 14px; }
+.menu-movil a { padding: 12px 0; text-decoration: none; font-family: var(--f-titulo); font-size: 1.5rem; border-bottom: 1px solid #eceaea; }
+@media (min-width: 900px) { .nav { display: flex; } .menu-boton, .menu-movil { display: none !important; } }
+
+/* ---------- Regla del borde ---------- */
+.regla { position: fixed; z-index: 40; right: calc(12px + env(safe-area-inset-right, 0px)); top: calc(var(--alto-header) + env(safe-area-inset-top, 0px) + 24px); bottom: 24px; width: 60px; display: none; pointer-events: none; mix-blend-mode: difference; color: #fff; }
+.regla::before { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.35); }
+.regla-hora { position: absolute; right: 0; display: flex; align-items: center; gap: 6px; transform: translateY(-50%); font-size: .64rem; font-variant-numeric: tabular-nums; color: rgba(255,255,255,.6); }
+.regla-hora::after { content: ""; width: 9px; height: 1px; background: rgba(255,255,255,.6); }
+.regla-corta { position: absolute; right: 0; width: 4px; height: 1px; background: rgba(255,255,255,.35); }
+.regla-marca { position: absolute; right: -4px; transform: translateY(-50%); display: flex; align-items: center; gap: 8px; }
+.regla-marca b { font-size: .68rem; font-weight: 700; color: #fff; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.regla-marca i { width: 9px; height: 9px; background: #fff; border-radius: 50%; }
+@media (min-width: 1180px) { .regla { display: block; } }
+
+/* ---------- Escenas fijas (se recorren al bajar) ---------- */
+.escena { position: relative; }
+.escenario { position: sticky; top: calc(var(--alto-header) + env(safe-area-inset-top, 0px)); height: calc(100svh - var(--alto-header) - env(safe-area-inset-top, 0px)); overflow: hidden; isolation: isolate; }
+.capa-img { position: absolute; inset: 0; will-change: transform, opacity, filter; }
+.capa-img img { width: 100%; height: 100%; object-fit: cover; }
+.texto-escena { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding-block: 0 clamp(28px, 6vh, 64px); will-change: opacity, transform; }
+
+/* Escena 1: portada → puertas → barbería por dentro → la silla */
+.escena-portada { height: 520vh; }
+.foto-portada img { object-position: 66% 50%; }
+.foto-portada .antes { position: absolute; inset: 0; clip-path: circle(var(--lr, 0px) at var(--lx, 70%) var(--ly, 30%)); }
+.lupa { position: absolute; z-index: 4; left: 0; top: 0; pointer-events: none; opacity: 0; transition: opacity .3s ease; will-change: transform; }
+.lupa.visible { opacity: 1; }
+.lupa svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.lupa path { fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; vector-effect: non-scaling-stroke; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+.lupa b { position: absolute; right: 4%; bottom: 6%; padding: 2px 6px; background: #fff; color: var(--tinta); font-size: .66rem; font-weight: 700; letter-spacing: .14em; border-radius: 2px; transform: rotate(-4deg); }
+.pista { font-size: .82rem; color: rgba(255,255,255,.7); }
+.sombra-portada { position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, rgba(8,6,6,.78) 0%, rgba(8,6,6,.35) 45%, rgba(8,6,6,0) 70%), linear-gradient(0deg, rgba(8,6,6,.6) 0%, rgba(8,6,6,0) 35%); pointer-events: none; }
+.interior img { object-position: 50% 62%; filter: brightness(.82) saturate(.95); }
+.silla-cerca img { object-position: 50% 38%; filter: brightness(.72) contrast(1.05); }
+.interior, .silla-cerca { opacity: 0; }
+.interior::after, .silla-cerca::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(8,6,6,.82) 0%, rgba(8,6,6,.1) 55%, rgba(8,6,6,0) 75%); }
+.puertas { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.puerta { position: absolute; top: 0; bottom: 0; width: 50.4%; display: flex; align-items: center; background: linear-gradient(90deg, #110d0d, #1e1717 55%, #130f0f); will-change: transform; }
+.puerta::before { content: ""; position: absolute; inset: 6% 8%; border: 1px solid rgba(255,255,255,.1); }
+.puerta::after { content: ""; position: absolute; inset: 9% 11% 55%; border: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.02); }
+.puerta.izq { left: 0; justify-content: flex-end; padding-right: 2.2vw; transform: translateX(-101%); box-shadow: inset -1px 0 0 rgba(255,255,255,.08); }
+.puerta.der { right: 0; justify-content: flex-start; padding-left: 2.2vw; transform: translateX(101%); }
+.puerta span { position: relative; z-index: 1; font-family: var(--f-titulo); font-size: clamp(4.6rem, 17vw, 15rem); line-height: 1; color: var(--blanco); }
+.puerta i { position: absolute; top: 44%; width: 7px; height: 16%; border-radius: 4px; background: linear-gradient(90deg, #8d8d8d, #e2e2e2, #8d8d8d); }
+.puerta.izq i { right: 1vw; } .puerta.der i { left: 1vw; }
+.letrero { position: absolute; left: 50%; top: 11%; z-index: 3; padding: 8px 18px; background: var(--rojo); color: var(--blanco); font-weight: 700; font-size: .82rem; letter-spacing: .22em; text-transform: uppercase; border-radius: 3px; box-shadow: 0 10px 24px -8px rgba(0,0,0,.7); opacity: 0; transform: translateX(-50%) rotate(-3deg); transform-origin: 50% -40px; }
+.oscuro { position: absolute; inset: 0; z-index: 5; background: var(--negro); opacity: 0; pointer-events: none; }
+.texto-paso { opacity: 0; }
+.texto-paso h2 { font-size: clamp(3.2rem, 9vw, 8rem); max-width: 10ch; }
+.texto-paso p { margin-top: 14px; color: rgba(255,255,255,.88); max-width: 42ch; }
+.paso-silla .envoltura { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px; }
+@media (max-width: 700px) { .paso-silla .carta { width: 100%; padding: 18px 18px 16px; gap: 10px; } .paso-silla .carta p { display: none; } }
+.portada-texto { display: grid; gap: 20px; }
+.portada-texto h1 { font-size: clamp(3.2rem, 7vw, 6.6rem); max-width: 8ch; }
+.portada-texto p { font-size: clamp(.98rem, 1.3vw, 1.1rem); color: #e6dede; max-width: 40ch; }
+.portada-botones { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.dato-vivo { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; color: #f0e8e8; text-decoration: none; }
+.dato-vivo i { width: 8px; height: 8px; border-radius: 50%; background: var(--rojo); box-shadow: 0 0 0 3px rgba(211,22,31,.35); }
+.dato-vivo strong { color: var(--blanco); }
+.bajar { position: absolute; left: 50%; bottom: 14px; z-index: 3; transform: translateX(-50%); font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+
+/* ---------- Precios ---------- */
+.precios { position: relative; overflow: hidden; isolation: isolate; background: radial-gradient(70% 60% at 85% 15%, rgba(211,22,31,.10), transparent 60%), var(--negro); }
+.precios::after { content: "DAMC"; position: absolute; z-index: -1; left: 50%; bottom: -.16em; transform: translateX(-50%); font-family: var(--f-titulo); font-size: 24vw; line-height: 1; white-space: nowrap; color: rgba(255,255,255,.035); pointer-events: none; }
+.precios-grid { display: grid; gap: 40px; align-items: center; }
+.precios h2 { font-size: clamp(3.6rem, 10vw, 8.4rem); margin-bottom: 28px; }
+.lista-precios { list-style: none; margin: 0; padding: 0; max-width: 560px; }
+.fila-precio { width: 100%; display: grid; grid-template-columns: 1fr auto auto; gap: 18px; align-items: baseline; padding: 9px 0; background: none; border: 0; border-bottom: 1px solid rgba(255,255,255,.28); text-align: left; cursor: pointer; transition: padding .2s; }
+.fila-precio:hover, .fila-precio.activo { padding-left: 10px; }
+.fila-precio.activo .nombre::before { content: "→ "; color: var(--rojo); }
+.fila-precio .nombre { font-weight: 700; font-size: 1.02rem; }
+.fila-precio .min { font-size: .88rem; color: rgba(255,255,255,.75); font-variant-numeric: tabular-nums; }
+.fila-precio .precio { font-family: var(--f-titulo); font-size: 1.45rem; min-width: 4.4em; text-align: right; font-variant-numeric: tabular-nums; }
+.precios-acciones { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.precios-nota { margin-top: 16px; font-size: .86rem; color: rgba(255,255,255,.8); max-width: 52ch; }
+.tarjeta-foto { position: relative; margin: 0; border-radius: 4px; overflow: hidden; box-shadow: 0 40px 80px -30px rgba(0,0,0,.65); aspect-ratio: 4 / 5; max-width: 100%; background: #000; }
+.tarjeta-foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .35s ease; }
+.tarjeta-foto figcaption { position: absolute; top: 14px; left: 14px; display: grid; gap: 2px; padding: 8px 12px; background: rgba(11,9,9,.78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius: 3px; font-size: .78rem; }
+.tarjeta-foto figcaption b { font-family: var(--f-titulo); font-weight: 400; font-size: 1.15rem; }
+@media (min-width: 900px) { .precios-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 72px; } }
+
+/* ---------- Cortes de la casa ---------- */
+.cortes { background: var(--negro); }
+.cortes-cabeza { display: grid; gap: 18px; margin-bottom: 36px; }
+.cortes-fila { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 72vw); gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); padding-bottom: 10px; scrollbar-width: thin; }
+.corte { position: relative; margin: 0; overflow: hidden; scroll-snap-align: start; cursor: pointer; border: 0; padding: 0; background: var(--carbon); text-align: left; border-radius: 2px; }
+.corte img { width: 100%; aspect-ratio: 9 / 15; object-fit: cover; transition: transform .6s ease; }
+.corte:hover img, .corte:focus-visible img { transform: scale(1.04); }
+.corte .papel { left: 10px; right: 10px; bottom: 10px; }
+.corte .papel { padding: 9px 12px 10px; gap: 2px; }
+.corte .papel h3 { font-size: 1.4rem; }
+.corte img { object-position: 50% 30%; }
+.corte .papel span { justify-self: start; margin-top: 2px; font-weight: 700; font-size: .84rem; color: var(--rojo); text-decoration: underline; text-underline-offset: 3px; }
+.corte:nth-child(odd) .papel { transform: rotate(-1deg); }
+.corte:nth-child(even) .papel { transform: rotate(.9deg); }
+@media (min-width: 1000px) { .cortes-fila { grid-auto-flow: row; grid-template-columns: repeat(5, minmax(0, 1fr)); overflow: visible; max-width: var(--ancho); margin-inline: auto; padding-inline: max(40px, env(safe-area-inset-left, 0px)) max(40px, env(safe-area-inset-right, 0px)); } }
+
+/* ---------- Ángulos ---------- */
+.escena-angulos { height: 360vh; }
+.angulo { opacity: 0; transition: opacity .45s ease; }
+.angulo.activa { opacity: 1; }
+.angulo img { transform: scale(1.06); transition: transform 1.2s ease; }
+.angulo.activa img { transform: scale(1); }
+.sombra-abajo { position: absolute; inset: 0; z-index: 1; background: linear-gradient(0deg, rgba(8,6,6,.85) 0%, rgba(8,6,6,.15) 45%, rgba(8,6,6,0) 70%); pointer-events: none; }
+.angulos-texto { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 20px; }
+.angulos-texto h2 { font-size: clamp(3rem, 8vw, 7rem); max-width: 9ch; }
+.angulos-texto p { margin-top: 14px; max-width: 42ch; color: #e6dede; }
+.grados { text-align: right; display: grid; justify-items: end; gap: 4px; }
+.grados b { font-family: var(--f-titulo); font-weight: 400; font-size: clamp(3.4rem, 9vw, 7.4rem); line-height: .9; font-variant-numeric: tabular-nums; }
+.grados span { font-size: .82rem; color: #e6dede; }
+
+/* ---------- Equipo ---------- */
+.equipo { background: var(--negro); }
+.equipo-cabeza { display: grid; gap: 18px; margin-bottom: 40px; }
+.equipo-grid { display: grid; gap: 4px; }
+.barbero { position: relative; overflow: hidden; }
+.barbero img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; filter: grayscale(1) contrast(1.15) brightness(.9); transition: filter .5s ease, transform .6s ease; }
+.barbero:hover img { transform: scale(1.03); filter: grayscale(.2) contrast(1.1); }
+.papel { position: absolute; left: 12px; right: 12px; bottom: 12px; background: var(--blanco); color: var(--tinta); padding: 12px 14px 14px; border-radius: 2px; box-shadow: 0 12px 30px -10px rgba(0,0,0,.6); display: grid; gap: 4px; }
+.barbero:nth-child(1) .papel { transform: rotate(-1.2deg); }
+.barbero:nth-child(2) .papel { transform: rotate(.8deg); }
+.barbero:nth-child(3) .papel { transform: rotate(-.5deg); }
+.papel h3 { font-size: 2rem; }
+.papel p { font-size: .86rem; color: #575050; }
+.papel button { justify-self: start; margin-top: 4px; padding: 0; border: 0; background: none; cursor: pointer; font-weight: 700; font-size: .86rem; color: var(--rojo); text-decoration: underline; text-underline-offset: 3px; }
+@media (min-width: 760px) { .equipo-cabeza { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 48px; } .equipo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.barbero-unico { display: grid; gap: 36px; align-items: center; }
+.barbero-unico .barbero { margin: 0; width: 100%; max-width: 440px; }
+.barbero-unico .barbero img { filter: none; aspect-ratio: 3 / 4; object-position: 50% 30%; }
+.barbero-unico .barbero:hover img { filter: none; }
+.barbero-texto { display: grid; gap: 20px; justify-items: start; }
+.foto-pendiente { aspect-ratio: 3 / 4; background: linear-gradient(160deg, #241c1c, #0e0b0b); display: grid; place-items: center; }
+.foto-pendiente span { font-family: var(--f-titulo); font-size: clamp(6rem, 16vw, 10rem); color: #3a2e2e; }
+.especialidades { list-style: none; margin: 0; padding: 0; width: 100%; max-width: 440px; border-top: 1px solid var(--linea); }
+.especialidades li { padding: 11px 0; border-bottom: 1px solid var(--linea); font-weight: 600; }
+@media (min-width: 860px) { .barbero-unico { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 72px; } }
+.silla-top .avatar-libre { width: 52px; height: 52px; font-size: 1.3rem; }
+
+/* ---------- En vivo ---------- */
+.vivo { background: var(--carbon); }
+.vivo-cabeza { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 32px; }
+.vivo-cabeza > div { display: grid; gap: 14px; }
+.en-vivo { display: inline-flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--gris); }
+.en-vivo i { width: 10px; height: 10px; border-radius: 50%; background: var(--rojo); animation: latido 1.6s ease-in-out infinite; }
+.en-vivo.apagado i { background: var(--gris); animation: none; }
+@keyframes latido { 0%, 100% { box-shadow: 0 0 0 0 rgba(211,22,31,.55); } 50% { box-shadow: 0 0 0 7px rgba(211,22,31,0); } }
+.vivo-resumen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px solid var(--linea); margin-bottom: 28px; }
+.vivo-resumen > div { padding: 18px 16px 18px 0; display: grid; gap: 4px; min-width: 0; }
+.vivo-resumen > div + div { padding-left: 16px; border-left: 1px solid var(--linea); }
+.vivo-resumen b { font-family: var(--f-titulo); font-weight: 400; font-size: clamp(2.2rem, 6vw, 4.2rem); line-height: 1; font-variant-numeric: tabular-nums; }
+.vivo-resumen span { font-size: .86rem; color: var(--gris); }
+.vivo-aviso { margin: -12px 0 24px; font-size: .88rem; color: #e0b4b4; }
+.sillas { display: grid; gap: 14px; }
+.silla { background: var(--negro); border: 1px solid var(--linea); border-radius: 3px; padding: 20px; display: grid; gap: 16px; align-content: start; min-width: 0; }
+.silla-top { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 12px; }
+.silla-top img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; filter: grayscale(1) contrast(1.1); }
+.silla-top b { display: block; font-family: var(--f-titulo); font-weight: 400; font-size: 1.6rem; line-height: 1; }
+.silla-top small { color: var(--gris); font-size: .8rem; }
+.chip-estado { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 3px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+.chip-estado::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip-estado.motilando { background: var(--rojo); color: var(--blanco); }
+.chip-estado.motilando::before { animation: latido 1.6s ease-in-out infinite; }
+.chip-estado.libre { background: #17532c; color: #d9f5e2; }
+.chip-estado.descanso { background: #3a3030; color: #d8cccc; }
+.corte-progreso { display: grid; gap: 6px; font-size: .85rem; color: #cfc7c7; }
+.corte-barra { height: 6px; background: var(--linea); border-radius: 3px; overflow: hidden; }
+.corte-barra i { display: block; height: 100%; background: var(--rojo); transition: width .6s ease; }
+.cola { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-height: 22px; font-size: .85rem; color: var(--gris); }
+.cola i { width: 14px; height: 20px; border-radius: 7px 7px 2px 2px; background: #5a4848; }
+.cola span { margin-left: 6px; }
+.espera { padding-top: 14px; border-top: 1px solid var(--linea); display: grid; gap: 4px; }
+.espera small { font-size: .76rem; letter-spacing: .12em; text-transform: uppercase; color: var(--gris); font-weight: 600; }
+.espera b { font-family: var(--f-titulo); font-weight: 400; font-size: 2rem; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.espera span { font-size: .86rem; color: #cfc7c7; }
+.vivo-nota { margin-top: 20px; font-size: .86rem; color: var(--gris); max-width: 70ch; }
+.panel-barbero { margin-top: 28px; border: 1px dashed #5a4848; border-radius: 3px; padding: 18px; display: grid; gap: 16px; }
+.panel-barbero h3 { font-size: 1.7rem; }
+.panel-barbero > p { font-size: .88rem; color: var(--gris); }
+.controles { display: grid; gap: 12px; }
+.control-fila { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--linea); }
+.control-fila > b { font-weight: 700; }
+.control-botones { display: flex; flex-wrap: wrap; gap: 6px; }
+.control-botones button { min-height: 40px; padding: 0 12px; border: 1px solid var(--linea); background: var(--negro); border-radius: 3px; cursor: pointer; font-size: .86rem; font-weight: 600; }
+.control-botones button:hover { border-color: var(--blanco); }
+.control-botones button.principal { background: var(--rojo); border-color: var(--rojo); }
+.boton-texto { background: none; border: 0; padding: 0; cursor: pointer; color: var(--gris); font-size: .86rem; text-decoration: underline; text-underline-offset: 3px; }
+.sillas, .controles { max-width: 560px; }
+@media (max-width: 560px) { .vivo-resumen { grid-template-columns: 1fr 1fr; } .vivo-resumen > div:last-child { grid-column: 1 / -1; padding-left: 0; border-left: 0; border-top: 1px solid var(--linea); } }
+
+/* ---------- Carta del turno ---------- */
+.carta { background: var(--blanco); color: var(--tinta); width: min(100%, 380px); padding: 26px 24px 22px; border-radius: 2px; transform: rotate(1.4deg); box-shadow: 0 30px 60px -20px rgba(0,0,0,.7); display: grid; gap: 14px; }
+.carta h2 { font-size: clamp(2.8rem, 5vw, 3.8rem); }
+.carta p { color: #4f4848; font-size: .95rem; }
+.carta dl { margin: 0; display: grid; gap: 6px; font-size: .9rem; border-top: 1px solid #e4e1e1; padding-top: 12px; }
+.carta dl div { display: flex; justify-content: space-between; gap: 12px; }
+.carta dt { color: #7a7272; }
+.carta dd { margin: 0; font-weight: 600; text-align: right; }
+
+/* ---------- Última mirada / Y listo ---------- */
+@media (max-width: 700px) { .foto-portada img { object-position: 74% 50%; } }
+
+/* ---------- Reserva (fondo claro) ---------- */
+.reserva { background: var(--claro); color: var(--tinta); color-scheme: light; }
+.reserva .etiqueta { color: var(--claro-gris); }
+.reserva-cabeza { display: grid; gap: 14px; margin-bottom: 44px; }
+.reserva-cabeza h2 { font-size: clamp(3rem, 8vw, 6.4rem); }
+.reserva-cabeza p { color: var(--claro-gris); max-width: 56ch; }
+.reserva-grid { display: grid; gap: 28px; align-items: start; }
+.bloque { padding-block: 24px; border-top: 1px solid var(--claro-linea); display: grid; gap: 16px; min-width: 0; }
+.bloque-titulo { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.bloque-titulo h3 { font-size: 1.7rem; display: flex; align-items: center; gap: 10px; }
+.bloque-titulo h3::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--rojo); }
+.bloque-titulo span { font-size: .84rem; color: var(--claro-gris); }
+.opciones { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.opcion { position: relative; display: grid; gap: 3px; padding: 13px 14px; text-align: left; cursor: pointer; background: var(--blanco); color: var(--tinta); border: 1px solid var(--claro-linea); border-radius: 3px; transition: border-color .2s, background-color .2s, color .2s; }
+.opcion:hover { border-color: #9a9090; }
+.opcion[aria-pressed="true"] { background: var(--tinta); border-color: var(--tinta); color: var(--blanco); }
+.opcion b { font-weight: 700; }
+.opcion small { color: var(--claro-gris); font-size: .82rem; }
+.opcion[aria-pressed="true"] small { color: #cfc7c7; }
+.opcion .precio-op { font-family: var(--f-titulo); font-size: 1.2rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.opcion-barbero { grid-template-columns: 40px 1fr; align-items: center; gap: 10px; }
+.opcion-barbero img, .avatar-libre { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; filter: grayscale(1); }
+.avatar-libre { display: grid; place-items: center; background: var(--rojo); color: var(--blanco); font-family: var(--f-titulo); font-size: 1.1rem; }
+.opcion-barbero div { display: grid; gap: 1px; min-width: 0; }
+.dias { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+.dias button { flex: 0 0 auto; width: 58px; padding: 8px 0 10px; display: grid; gap: 2px; justify-items: center; background: var(--blanco); border: 1px solid var(--claro-linea); border-radius: 3px; cursor: pointer; font-variant-numeric: tabular-nums; transition: border-color .2s, background-color .2s, color .2s; }
+.dias button small { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--claro-gris); }
+.dias button b { font-family: var(--f-titulo); font-weight: 400; font-size: 1.5rem; line-height: 1; }
+.dias button:hover:not(:disabled) { border-color: #9a9090; }
+.dias button:disabled { opacity: .35; cursor: default; }
+.dias button[aria-pressed="true"] { background: var(--tinta); border-color: var(--tinta); color: var(--blanco); }
+.dias button[aria-pressed="true"] small { color: #cfc7c7; }
+.franjas { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 6px; }
+.franjas button { min-height: 42px; border: 1px solid var(--claro-linea); background: var(--blanco); border-radius: 3px; cursor: pointer; font-variant-numeric: tabular-nums; font-size: .88rem; transition: border-color .2s, background-color .2s, color .2s; }
+.franjas button:hover:not(:disabled) { border-color: var(--tinta); }
+.franjas button:disabled { color: #b5adad; text-decoration: line-through; cursor: default; background: transparent; }
+.franjas button[aria-pressed="true"] { background: var(--tinta); border-color: var(--tinta); color: var(--blanco); font-weight: 700; }
+.leyenda { font-size: .8rem; color: var(--claro-gris); }
+.campos { display: grid; gap: 14px; }
+.campo { display: grid; gap: 4px; min-width: 0; }
+.campo label { font-size: .82rem; font-weight: 600; color: var(--claro-gris); }
+.campo input { min-height: 44px; padding: 0 2px; border: 0; border-bottom: 1px solid #bdb6b6; background: transparent; color: var(--tinta); font: inherit; font-size: 1.05rem; width: 100%; border-radius: 0; }
+.campo input:focus { outline: none; border-bottom: 2px solid var(--tinta); }
+.campo small { font-size: .78rem; color: var(--claro-gris); }
+.campo.error input { border-bottom-color: #c4141c; }
+.campo.error small { color: #b0141b; }
+.casilla { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; font-size: .9rem; color: #4f4848; cursor: pointer; }
+.casilla input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--tinta); }
+@media (min-width: 640px) { .campos { grid-template-columns: 1fr 1fr; gap: 24px; } }
+.ticket { background: var(--blanco); border: 1px solid var(--claro-linea); border-radius: 3px; padding: 22px; display: grid; gap: 14px; }
+.ticket-cabeza { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--claro-linea); }
+.ticket-cabeza h3 { font-size: 1.9rem; }
+.ticket-cabeza span { font-size: .76rem; letter-spacing: .12em; text-transform: uppercase; color: var(--claro-gris); }
+.ticket dl { margin: 0; display: grid; gap: 9px; }
+.ticket dl div { display: flex; justify-content: space-between; gap: 16px; font-size: .92rem; }
+.ticket dt { color: var(--claro-gris); }
+.ticket dd { margin: 0; font-weight: 600; text-align: right; }
+.ticket dd.vacio { color: #b5adad; font-weight: 500; }
+.ticket-total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 12px; border-top: 1px solid var(--claro-linea); }
+.ticket-total span { font-weight: 700; }
+.ticket-total b { font-family: var(--f-titulo); font-weight: 400; font-size: 2.4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.ticket-anticipo { font-size: .86rem; color: #4f4848; display: flex; justify-content: space-between; gap: 10px; }
+.ticket .boton { width: 100%; min-height: 50px; }
+.ticket .boton[aria-disabled="true"] { background: #d6d2d2; color: #857c7c; cursor: not-allowed; }
+.falta { font-size: .82rem; color: #a3121a; min-height: 1.2em; }
+.ticket-listo { font-size: .86rem; background: #e7f6ec; color: #155c2d; padding: 10px 12px; border-radius: 3px; }
+.ticket-nota { font-size: .78rem; color: var(--claro-gris); }
+@media (min-width: 1000px) { .reserva-grid { grid-template-columns: minmax(0, 1fr) 360px; gap: 56px; } .ticket-columna { position: sticky; top: calc(var(--alto-header) + 28px); } }
+.barra-ticket { position: sticky; bottom: 0; z-index: 30; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: var(--blanco); border-top: 1px solid var(--claro-linea); color: var(--tinta); }
+.barra-ticket b { font-family: var(--f-titulo); font-weight: 400; font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.barra-ticket small { display: block; color: var(--claro-gris); font-size: .78rem; }
+.barra-ticket .boton { min-height: 40px; }
+@media (min-width: 1000px) { .barra-ticket { display: none; } }
+
+/* Reloj para escoger la hora */
+.momento { display: grid; gap: 24px; align-items: start; }
+@media (min-width: 760px) { .momento { grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 40px; } }
+.reloj-caja { display: grid; gap: 14px; justify-items: center; }
+.reloj { position: relative; width: min(100%, 360px); aspect-ratio: 1; max-width: 100%; border-radius: 50%; background: var(--blanco); border: 1px solid var(--claro-linea); box-shadow: 0 24px 48px -28px rgba(0,0,0,.45), inset 0 0 0 12px #f6f6f7; }
+.reloj .num { position: absolute; transform: translate(-50%, -50%); font-family: var(--f-titulo); font-size: 1rem; color: #bdb5b5; pointer-events: none; }
+.aguja { position: absolute; left: 50%; top: 50%; border-radius: 3px; transform-origin: 50% 100%; transform: translate(-50%, -100%); transition: transform .7s cubic-bezier(.3, 1.35, .5, 1), opacity .3s; pointer-events: none; }
+.aguja-hora { width: 6px; height: 21%; background: var(--tinta); }
+.aguja-min { width: 3px; height: 30%; background: var(--rojo); }
+.reloj.sin-hora .aguja { opacity: .35; }
+.reloj-eje { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; border-radius: 50%; background: var(--tinta); border: 3px solid var(--blanco); box-shadow: 0 0 0 2px var(--tinta); transform: translate(-50%, -50%); pointer-events: none; }
+#franjas { position: absolute; inset: 0; }
+.hora-btn { position: absolute; width: 50px; height: 50px; transform: translate(-50%, -50%); padding: 0; border-radius: 50%; border: 1px solid var(--claro-linea); background: var(--blanco); color: var(--tinta); font-size: .78rem; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; cursor: pointer; display: grid; place-content: center; transition: background-color .2s, color .2s, border-color .2s, transform .2s; }
+.hora-btn small { display: block; font-size: .56rem; font-weight: 600; color: var(--claro-gris); }
+.hora-btn:hover:not(:disabled) { border-color: var(--tinta); transform: translate(-50%, -50%) scale(1.08); }
+.hora-btn[aria-pressed="true"] { background: var(--tinta); border-color: var(--tinta); color: var(--blanco); transform: translate(-50%, -50%) scale(1.1); }
+.hora-btn[aria-pressed="true"] small { color: #d6cfcf; }
+.hora-btn:disabled { background: #f1f1f2; color: #c4bcbc; border-style: dashed; text-decoration: line-through; cursor: default; }
+.hora-btn:disabled small { color: #cfc8c8; }
+.reloj-lectura { display: grid; gap: 2px; text-align: center; }
+.reloj-lectura b { font-family: var(--f-titulo); font-weight: 400; font-size: 2.2rem; line-height: 1; }
+.reloj-lectura small { font-size: .84rem; color: var(--claro-gris); }
+.momento-info { display: grid; gap: 12px; min-width: 0; }
+.fila-ahora { background: var(--blanco); border: 1px solid var(--claro-linea); border-radius: 3px; padding: 16px 18px; display: grid; gap: 8px; font-size: .92rem; color: #3f3939; }
+.fila-ahora small { font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; color: var(--claro-gris); }
+.fila-ahora .fila-num { display: flex; align-items: baseline; gap: 10px; }
+.fila-ahora .fila-num b { font-family: var(--f-titulo); font-weight: 400; font-size: 3rem; line-height: 1; color: var(--rojo); }
+.fila-ahora .fila-num span { font-weight: 700; color: var(--tinta); }
+.fila-ahora a { color: var(--tinta); font-weight: 700; font-size: .88rem; }
+
+/* ---------- Tienda: pasarela de gorras ---------- */
+.tienda { background: var(--carbon); overflow: hidden; }
+.tienda-cabeza { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 32px; }
+.tienda-cabeza > div:first-child { display: grid; gap: 14px; }
+.pasarela-flechas { display: flex; gap: 8px; }
+.flecha-btn { width: 48px; height: 48px; display: grid; place-items: center; cursor: pointer; border: 1px solid var(--linea); background: var(--negro); border-radius: 3px; font-size: 1.2rem; transition: border-color .2s; }
+.flecha-btn:hover { border-color: var(--blanco); }
+.pasarela { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); padding-bottom: 6px; }
+.pasarela::-webkit-scrollbar { display: none; }
+@media (min-width: 720px) { .pasarela { padding-inline: max(40px, calc((100vw - var(--ancho)) / 2 + 40px)); scroll-padding-inline: max(40px, calc((100vw - var(--ancho)) / 2 + 40px)); } }
+.gorra { flex: 0 0 clamp(230px, 72vw, 300px); scroll-snap-align: start; background: var(--negro); border: 1px solid var(--linea); border-radius: 3px; overflow: hidden; display: grid; }
+@media (min-width: 720px) { .gorra { flex-basis: clamp(240px, 24vw, 300px); } }
+.gorra-foto { position: relative; overflow: hidden; aspect-ratio: 4 / 5; background: #111; }
+.gorra-foto img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; }
+.gorra:hover .gorra-foto img { transform: scale(1.04); }
+.gorra-info { padding: 14px 16px 16px; display: grid; gap: 10px; }
+.gorra-info h3 { font-family: var(--f-texto); font-weight: 700; font-size: 1rem; line-height: 1.3; }
+.gorra-info .boton { width: 100%; min-height: 42px; font-size: .86rem; }
+.pasarela-pie { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 18px; color: var(--gris); font-size: .86rem; font-variant-numeric: tabular-nums; }
+.puntos { display: flex; flex-wrap: wrap; gap: 6px; }
+.puntos button { width: 22px; height: 4px; padding: 0; border: 0; border-radius: 2px; background: var(--linea); cursor: pointer; transition: background-color .2s, width .2s; }
+.puntos button[aria-current="true"] { background: var(--rojo); width: 34px; }
+
+/* ---------- Antes de venir ---------- */
+.info-grid { display: grid; gap: 32px; margin-bottom: 56px; }
+.info-grid h3 { font-size: 1.6rem; margin-bottom: 10px; }
+.info-grid p, .info-grid li { color: #cfc7c7; font-size: .95rem; }
+.info-grid ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.info-grid li { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--linea); padding-block: 6px; font-variant-numeric: tabular-nums; }
+.info-grid li.hoy { color: var(--blanco); font-weight: 700; }
+@media (min-width: 820px) { .info-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px; } }
+.preguntas-grid { display: grid; gap: 32px; }
+.acordeon { border-top: 1px solid var(--linea); }
+.acordeon details { border-bottom: 1px solid var(--linea); }
+.acordeon summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 0; font-weight: 600; font-size: 1.02rem; }
+.acordeon summary::-webkit-details-marker { display: none; }
+.acordeon summary::after { content: "+"; font-family: var(--f-titulo); font-size: 1.6rem; line-height: 1; color: var(--rojo); transition: transform .25s; }
+.acordeon details[open] summary::after { transform: rotate(45deg); }
+.acordeon details p { padding: 0 0 20px; color: #cfc7c7; max-width: 64ch; }
+@media (min-width: 900px) { .preguntas-grid { grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); gap: 64px; } }
+
+/* ---------- Pie ---------- */
+.pie { background: var(--negro); border-top: 1px solid var(--linea); padding-block: 48px 28px; font-size: .9rem; color: #cfc7c7; }
+.pie .envoltura { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 20px; }
+.pie .marca { font-size: 2.4rem; color: var(--blanco); }
+.pie p { color: var(--gris); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  .en-vivo i, .chip-estado.motilando::before { animation: none !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="envoltura">
+    <a class="marca" href="#inicio" aria-label="DAMC Barbería, inicio">DAMC</a>
+    <nav class="nav" aria-label="Secciones">
+      <a href="#precios">Precios</a>
+      <a href="#cortes">Cortes</a>
+      <a href="#en-vivo">En vivo</a>
+      <a href="#equipo">Barbero</a>
+      <a href="#tienda">Tienda</a>
+      <a href="#antes">Antes de venir</a>
+    </nav>
+    <div class="header-acciones">
+      <a class="boton boton-negro" href="#reserva">Reservar</a>
+      <button class="menu-boton" id="menu-boton" aria-expanded="false" aria-controls="menu-movil" aria-label="Abrir menú"><span></span></button>
+    </div>
+  </div>
+  <div class="menu-movil" id="menu-movil" hidden>
+    <nav class="envoltura" aria-label="Secciones">
+      <a href="#precios">Precios</a>
+      <a href="#cortes">Cortes</a>
+      <a href="#en-vivo">En vivo</a>
+      <a href="#equipo">Barbero</a>
+      <a href="#tienda">Tienda</a>
+      <a href="#antes">Antes de venir</a>
+      <a href="#reserva">Reservar</a>
+    </nav>
+  </div>
+</header>
+
+<div class="regla" id="regla" aria-hidden="true"></div>
+
+<main>
+  <!-- Escena 1: el cliente con la capa → puertas de DAMC → la barbería por dentro → la silla -->
+  <section class="escena escena-portada" id="inicio" aria-labelledby="titulo-portada">
+    <div class="escenario">
+      <div class="capa-img foto-portada" id="foto-portada"><img src="img/portada-capa.jpg" alt="Cliente de espaldas en la silla con la capa roja de DAMC" fetchpriority="high"><img class="antes" id="foto-antes" src="img/portada-antes.jpg" alt="" aria-hidden="true"></div>
+      <div class="lupa" id="lupa" aria-hidden="true"><svg viewBox="0 0 200 200"><path d="M100 6 C152 4 196 42 194 98 C192 152 150 196 98 194 C44 192 6 150 8 96 C10 46 50 10 104 8 C150 8 188 40 190 90"/></svg><b>ANTES</b></div>
+      <div class="sombra-portada" id="sombra-portada"></div>
+      <div class="capa-img interior" id="interior"><img src="img/portada.jpg" alt="La barbería por dentro, con las sillas de cuero y las lámparas encendidas" loading="lazy"></div>
+      <div class="capa-img silla-cerca" id="silla-cerca"><img src="img/silla.jpg" alt="La silla de barbero de cerca" loading="lazy"></div>
+      <div class="puertas" aria-hidden="true">
+        <div class="puerta izq" id="puerta-izq"><span>DA</span><i></i></div>
+        <div class="puerta der" id="puerta-der"><span>MC</span><i></i></div>
+        <div class="letrero" id="letrero">Abierto</div>
+      </div>
+      <div class="texto-escena" id="texto-portada">
+        <div class="envoltura portada-texto">
+          <h1 id="titulo-portada">El degradado, al milímetro.</h1>
+          <p>Barbería para hombres en Manga, Cartagena. Corte, degradado, burst fade, barba y contorno a navaja.</p>
+          <div class="portada-botones">
+            <a class="boton boton-blanco" href="#reserva">Reservar un turno <span class="flecha" aria-hidden="true">→</span></a>
+            <a class="dato-vivo" href="#en-vivo" id="dato-vivo"><i></i>En vivo: <strong>ver la fila</strong></a>
+          </div>
+          <p class="pista" id="pista">Pasa la lupa por la cabeza para ver cómo llegó.</p>
+        </div>
+      </div>
+      <div class="texto-escena texto-paso" id="paso-entra">
+        <div class="envoltura">
+          <h2>Pasa adelante.</h2>
+          <p>Luz cálida, buena música y la silla lista. Aquí se viene sin afán.</p>
+        </div>
+      </div>
+      <div class="texto-escena texto-paso paso-silla" id="paso-silla">
+        <div class="envoltura">
+          <div>
+            <h2 id="titulo-sientate">Siéntate.</h2>
+            <p>Desde aquí son 45 minutos solo tuyos.</p>
+          </div>
+          <div class="carta">
+            <p>Reserva en un minuto y llegas a tu hora, sin hacer fila.</p>
+            <dl>
+              <div><dt>Turno</dt><dd>45 min</dd></div>
+              <div><dt>Desde</dt><dd>$15.000</dd></div>
+              <div><dt>Lunes a sábado</dt><dd>9:00 a. m. – 8:00 p. m.</dd></div>
+              <div><dt>Domingo</dt><dd>10:00 a. m. – 2:00 p. m.</dd></div>
+            </dl>
+            <a class="boton boton-negro" href="#reserva">Reservar mi silla <span class="flecha" aria-hidden="true">→</span></a>
+          </div>
+        </div>
+      </div>
+      <div class="oscuro" id="oscuro"></div>
+      <span class="bajar" id="bajar">Baja</span>
+    </div>
+  </section>
+
+  <!-- Precios -->
+  <section class="precios seccion" id="precios" aria-labelledby="titulo-precios">
+    <div class="envoltura precios-grid">
+      <div>
+        <h2 id="titulo-precios">Escoge tu corte.</h2>
+        <ul class="lista-precios" id="lista-precios"></ul>
+        <div class="precios-acciones">
+          <a class="boton boton-blanco" href="#reserva">Reservar <span class="flecha" aria-hidden="true">→</span></a>
+          <a class="boton boton-borde" href="#en-vivo">Ver la fila en vivo</a>
+        </div>
+        <p class="precios-nota">Cada turno dura 45 minutos e incluye lavado y peinado. Precios en pesos colombianos.</p>
+      </div>
+      <figure class="tarjeta-foto">
+        <img id="precio-foto" src="img/degradado-lado.jpg" alt="Degradado bajo recién hecho, visto de perfil" loading="lazy">
+        <figcaption><span>45 min</span><b id="precio-caption">Degradado</b></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Cortes de la casa -->
+  <section class="cortes seccion" id="cortes" aria-labelledby="titulo-cortes">
+    <div class="envoltura">
+      <div class="cortes-cabeza">
+        <h2 class="titulo-grande" id="titulo-cortes">Salidos de esta silla.</h2>
+        <p class="texto-suave">Mullets, burst fade, mohicanos y rayas a navaja. Toca un corte y lo dejamos listo en tu reserva.</p>
+      </div>
+    </div>
+    <div class="cortes-fila" id="cortes-fila"></div>
+  </section>
+
+  <!-- Escena 2: todos los ángulos -->
+  <section class="escena escena-angulos" id="angulos" aria-labelledby="titulo-angulos">
+    <div class="escenario">
+      <div class="capa-img angulo activa"><img src="img/secador.jpg" alt="Cliente de frente mientras el barbero termina el peinado" loading="lazy"></div>
+      <div class="capa-img angulo"><img src="img/degradado-afro.jpg" alt="Degradado visto de perfil" loading="lazy"></div>
+      <div class="capa-img angulo"><img src="img/corte-arriba.jpg" alt="Barbero revisando el largo de arriba" loading="lazy"></div>
+      <div class="capa-img angulo"><img src="img/perfilado.jpg" alt="Perfilado de la línea con navaja" loading="lazy"></div>
+      <div class="sombra-abajo"></div>
+      <div class="texto-escena">
+        <div class="envoltura angulos-texto">
+          <div>
+            <h2 id="titulo-angulos">Nítido desde todos los ángulos.</h2>
+            <p>La nuca, las patillas, la línea: un degradado se juzga dándole la vuelta completa. Antes de que te pares, te mostramos cada lado con el espejo.</p>
+          </div>
+          <div class="grados" aria-hidden="true"><b id="grados">000°</b><span id="grados-txt">Vista 1 de 4 · Frente</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Barbero -->
+  <section class="equipo seccion" id="equipo" aria-labelledby="titulo-equipo">
+    <div class="envoltura barbero-unico">
+      <figure class="barbero" id="barbero-foto"></figure>
+      <div class="barbero-texto">
+        <span class="etiqueta">Tu barbero</span>
+        <h2 class="titulo-grande" id="titulo-equipo">El que te corta.</h2>
+        <p class="texto-suave">Daniel Mejía atiende cada turno de principio a fin: el corte, la línea a navaja y la vuelta completa con el espejo antes de que te pares.</p>
+        <ul class="especialidades">
+          <li>Degradados y burst fade</li>
+          <li>Mullets rizados y lisos</li>
+          <li>Mohicanos</li>
+          <li>Diseños y rayas a navaja</li>
+        </ul>
+        <a class="boton boton-blanco" href="#reserva">Reservar con Daniel <span class="flecha" aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- En vivo -->
+  <section class="vivo seccion" id="en-vivo" aria-labelledby="titulo-vivo">
+    <div class="envoltura">
+      <div class="vivo-cabeza">
+        <div>
+          <span class="etiqueta">Antes de salir de la casa</span>
+          <h2 class="titulo-grande" id="titulo-vivo">Así está la barbería ahora.</h2>
+        </div>
+        <span class="en-vivo apagado" id="vivo-estado" aria-live="polite"><i></i><span>Conectando…</span></span>
+      </div>
+      <div class="vivo-resumen">
+        <div><b id="res-esperando">–</b><span>esperando turno</span></div>
+        <div><b id="res-sillas">–</b><span>Daniel ahora</span></div>
+        <div><b id="res-espera">–</b><span id="res-espera-txt">si llegas ahora</span></div>
+      </div>
+      <p class="vivo-aviso" id="vivo-aviso" hidden></p>
+      <div class="sillas" id="sillas"></div>
+      <p class="vivo-nota">Cada cliente dura más o menos 45 minutos, por eso la espera se muestra como un rango. Daniel la actualiza desde la barbería cada vez que entra o sale un cliente.</p>
+      <div id="zona-panel"></div>
+    </div>
+  </section>
+
+  <!-- Reserva -->
+  <section class="reserva seccion" id="reserva" aria-labelledby="titulo-reserva" style="padding-bottom:0">
+    <div class="envoltura">
+      <div class="reserva-cabeza">
+        <span class="etiqueta">Reserva en línea</span>
+        <h2 id="titulo-reserva">Tu próximo degradado.</h2>
+        <p>Escoge el corte, el día y la hora en el reloj. Al confirmar se abre WhatsApp con tu reserva escrita para que nos la envíes.</p>
+      </div>
+      <form class="reserva-grid" id="form-reserva" novalidate>
+        <div>
+          <div class="bloque">
+            <div class="bloque-titulo"><h3>El corte</h3><span>45 min cada uno</span></div>
+            <div class="opciones" id="op-servicios"></div>
+          </div>
+          <div class="bloque">
+            <div class="bloque-titulo"><h3>El momento</h3><span id="horas-dia"></span></div>
+            <div class="dias" id="dias"></div>
+            <div class="momento">
+              <div class="reloj-caja">
+                <div class="reloj sin-hora" id="reloj">
+                  <div id="reloj-numeros"></div>
+                  <div class="aguja aguja-hora" id="aguja-hora"></div>
+                  <div class="aguja aguja-min" id="aguja-min"></div>
+                  <div class="reloj-eje"></div>
+                  <div id="franjas"></div>
+                </div>
+                <div class="reloj-lectura" aria-live="polite"><b id="reloj-lectura-hora">Escoge la hora</b><small id="reloj-lectura-nota">Toca una hora libre del reloj</small></div>
+              </div>
+              <div class="momento-info">
+                <div class="fila-ahora" id="fila-ahora"></div>
+                <p class="leyenda">En el reloj cada botón es un turno de 45 minutos. Los grises y tachados ya están ocupados.</p>
+              </div>
+            </div>
+          </div>
+          <div class="bloque">
+            <div class="bloque-titulo"><h3>Tú</h3></div>
+            <div class="campos">
+              <div class="campo" id="campo-nombre">
+                <label for="nombre">Nombre</label>
+                <input id="nombre" name="nombre" autocomplete="given-name" placeholder="Ej.: Camilo">
+                <small>Para llamarte a la silla.</small>
+              </div>
+              <div class="campo" id="campo-celular">
+                <label for="celular">Celular (WhatsApp)</label>
+                <input id="celular" name="celular" inputmode="numeric" autocomplete="tel-national" placeholder="300 123 4567">
+                <small>10 dígitos. Te escribimos si hay un cambio.</small>
+              </div>
+            </div>
+          </div>
+          <div class="bloque">
+            <div class="bloque-titulo"><h3>El pago</h3></div>
+            <div class="opciones" id="op-pago"></div>
+            <label class="casilla" for="acepto">
+              <input type="checkbox" id="acepto">
+              <span>Entiendo que si llego más de 10 minutos tarde sin anticipo, el turno pasa al siguiente cliente.</span>
+            </label>
+          </div>
+        </div>
+        <div class="ticket-columna" id="ticket">
+          <div class="ticket">
+            <div class="ticket-cabeza"><h3>Tu ticket</h3><span>DAMC</span></div>
+            <dl id="ticket-datos"></dl>
+            <div class="ticket-total"><span>Total</span><b id="ticket-total">$0</b></div>
+            <div class="ticket-anticipo" id="ticket-anticipo"></div>
+            <a class="boton boton-negro" id="confirmar" href="#reserva" aria-disabled="true">Confirmar el turno <span class="flecha" aria-hidden="true">→</span></a>
+            <p class="falta" id="falta" aria-live="polite"></p>
+            <p class="ticket-listo" id="listo" hidden>Se abrió WhatsApp con tu reserva. Envía el mensaje y te confirmamos el turno. Si no se abrió, escríbenos al <b id="numero-visible"></b>.</p>
+            <p class="ticket-nota">Puedes cambiar o cancelar sin costo hasta 2 horas antes.</p>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="barra-ticket">
+      <div><small id="barra-detalle">Degradado</small><b id="barra-total">$0</b></div>
+      <a class="boton boton-negro" href="#ticket">Ver ticket</a>
+    </div>
+  </section>
+
+  <!-- Tienda: pasarela de gorras -->
+  <section class="tienda seccion" id="tienda" aria-labelledby="titulo-tienda">
+    <div class="envoltura">
+      <div class="tienda-cabeza">
+        <div>
+          <span class="etiqueta">Tienda DAMC</span>
+          <h2 class="titulo-grande" id="titulo-tienda">Gorras.</h2>
+          <p class="texto-suave">Escoge la tuya y pregúntala por WhatsApp: te decimos el precio y si la recoges en la barbería o te la enviamos.</p>
+        </div>
+        <div class="pasarela-flechas">
+          <button type="button" class="flecha-btn" id="pas-ant" aria-label="Gorra anterior">←</button>
+          <button type="button" class="flecha-btn" id="pas-sig" aria-label="Gorra siguiente">→</button>
+        </div>
+      </div>
+    </div>
+    <div class="pasarela" id="pasarela" aria-label="Gorras disponibles"></div>
+    <div class="envoltura"><div class="pasarela-pie"><div class="puntos" id="pas-puntos"></div><span id="pas-contador"></span></div></div>
+  </section>
+
+  <!-- Antes de venir -->
+  <section class="seccion" id="antes" aria-labelledby="titulo-antes">
+    <div class="envoltura">
+      <div class="info-grid">
+        <div>
+          <h3>Dónde</h3>
+          <p>Calle 27 # 24-15, barrio Manga, Cartagena. A media cuadra de la avenida Miramar, frente a la panadería.</p>
+          <p style="margin-top:10px"><a href="https://www.google.com/maps/search/?api=1&amp;query=Manga%2C+Cartagena" target="_blank" rel="noopener">Abrir en Google Maps ↗</a></p>
+        </div>
+        <div>
+          <h3>Horario</h3>
+          <ul id="lista-horario"></ul>
+        </div>
+        <div>
+          <h3>Pagos</h3>
+          <p>Efectivo, Nequi, Daviplata, tarjeta débito o crédito y transferencia Bancolombia. El anticipo del 50 % es opcional y se paga por Nequi.</p>
+          <p style="margin-top:10px">WhatsApp <span id="pie-numero"></span></p>
+        </div>
+      </div>
+      <div class="preguntas-grid">
+        <h2 class="titulo-grande" id="titulo-antes">Antes de sentarte.</h2>
+        <div class="acordeon">
+          <details open>
+            <summary>¿Cuánto me toca esperar si llego sin cita?</summary>
+            <p>Mira la sección «En vivo» antes de salir: ahí ves cuántos están esperando y si cada barbero está motilando. Cada cliente dura más o menos 45 minutos, así que con dos personas adelante calcula entre una hora y media y dos horas.</p>
+          </details>
+          <details>
+            <summary>¿Qué pasa si llego tarde?</summary>
+            <p>Te esperamos 10 minutos. Después el turno pasa al siguiente cliente y te buscamos otro hueco ese día. Si dejaste anticipo, el turno se respeta.</p>
+          </details>
+          <details>
+            <summary>¿Atienden niños?</summary>
+            <p>Sí. Somos barbería para hombres y atendemos niños desde los 3 años. El corte de niño hasta los 12 años cuesta $20.000.</p>
+          </details>
+          <details>
+            <summary>¿Cómo pago el anticipo?</summary>
+            <p>Al confirmar por WhatsApp te enviamos el número de Nequi. El anticipo es la mitad del servicio y se descuenta del total el día del corte.</p>
+          </details>
+          <details>
+            <summary>¿Puedo cambiar o cancelar mi turno?</summary>
+            <p>Sí, sin costo hasta 2 horas antes. Escríbenos al mismo WhatsApp. Si cancelas con menos tiempo, el anticipo queda para tu próximo corte.</p>
+          </details>
+          <details>
+            <summary>¿Hay parqueadero?</summary>
+            <p>Las motos se dejan en la puerta. Para carro hay espacio sobre la calle 27 y un parqueadero pago a una cuadra, sobre la avenida Miramar.</p>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="pie">
+  <div class="envoltura">
+    <div>
+      <span class="marca">DAMC</span>
+      <p>Barbería para hombres · Manga, Cartagena</p>
+    </div>
+    <p>© <span id="anio">2026</span> DAMC Barbería · WhatsApp <span id="pie-numero-2"></span></p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ===== Datos del negocio (cambiar aquí) ===== */
+  var WHATSAPP = "573233966084";          // WhatsApp de Daniel, con 57 adelante y sin espacios
+  var WHATSAPP_VISIBLE = "323 396 6084";
+  var DURACION = 45;   // minutos que dura cada cliente
+  var VARIACION = 5;   // minutos de más o de menos por cliente en la fila (mínimo 10 en total), para el rango
+
+  var SERVICIOS = [
+    { id: "clasico",   nombre: "Corte clásico",     min: 45, precio: 25000, detalle: "Tijera y máquina, a tu gusto",             foto: "img/corte-arriba.jpg" },
+    { id: "degradado", nombre: "Degradado",         min: 45, precio: 30000, detalle: "Bajo, medio o alto, con perfilado",       foto: "img/degradado-lado.jpg" },
+    { id: "burst",     nombre: "Burst fade",        min: 45, precio: 32000, detalle: "Degradado en curva alrededor de la oreja", foto: "img/cortes/burst-fade-mullet.jpg" },
+    { id: "mullet",    nombre: "Mullet",            min: 45, precio: 35000, detalle: "Largo atrás, lados en degradado",         foto: "img/cortes/mullet-liso-taper.jpg" },
+    { id: "mohicano",  nombre: "Mohicano",          min: 45, precio: 32000, detalle: "Lados bien bajos y la franja de arriba",  foto: "img/cortes/mohicano-diseno.jpg" },
+    { id: "diseno",    nombre: "Degradado + diseño", min: 45, precio: 38000, detalle: "Rayas o figuras a navaja sobre el degradado", foto: "img/cortes/doble-raya.jpg" },
+    { id: "combo",     nombre: "Degradado + barba", min: 45, precio: 42000, detalle: "El corte y la barba arreglada con navaja", foto: "img/barba.jpg" },
+    { id: "barba",     nombre: "Arreglo de barba",  min: 45, precio: 20000, detalle: "Toalla caliente, forma y contorno",       foto: "img/barba.jpg" },
+    { id: "afeitado",  nombre: "Afeitado clásico",  min: 45, precio: 25000, detalle: "Navaja, toalla caliente y bálsamo",       foto: "img/afeitado.jpg" },
+    { id: "contorno",  nombre: "Contorno a navaja", min: 45, precio: 15000, detalle: "Línea, cejas y contorno entre cortes",    foto: "img/perfilado.jpg" },
+    { id: "nino",      nombre: "Corte de niño",     min: 45, precio: 20000, detalle: "Hasta los 12 años",                       foto: "img/secador.jpg" }
+  ];
+  var BARBEROS = [
+    { id: "daniel", nombre: "Daniel Mejía", corto: "Daniel", nota: "Barbero", foto: "img/equipo-daniel.jpg", cara: "img/equipo-daniel-cara.jpg", iniciales: "DM" }
+  ];
+  var PAGOS = [
+    { id: "local",    nombre: "Pagar en la barbería", nota: "Efectivo, tarjeta, Nequi o Daviplata" },
+    { id: "anticipo", nombre: "Anticipo del 50 %",    nota: "Por Nequi. Te guarda el turno" }
+  ];
+  // 0 = domingo ... 6 = sábado. Minutos desde la medianoche.
+  var HORARIO = { 0: [600, 840], 1: [540, 1200], 2: [540, 1200], 3: [540, 1200], 4: [540, 1200], 5: [540, 1200], 6: [540, 1200] };
+  var ANGULOS = ["Frente", "Perfil", "Arriba", "Línea"];
+  var CORTES = [
+    { foto: "img/cortes/mullet-rizado-raya.jpg", nombre: "Mullet rizado con raya", nota: "Burst fade y una raya curva que abre el lado.", servicio: "diseno" },
+    { foto: "img/cortes/burst-fade-mullet.jpg",  nombre: "Burst fade mullet",      nota: "Degradado en curva alrededor de la oreja y rizos atrás.", servicio: "burst" },
+    { foto: "img/cortes/doble-raya.jpg",         nombre: "Doble raya",             nota: "Dos rayas paralelas a navaja que siguen la forma de la cabeza.", servicio: "diseno" },
+    { foto: "img/cortes/mohicano-diseno.jpg",    nombre: "Mohicano con diseño",    nota: "Lados en cero y un diseño a mano alzada.", servicio: "mohicano" },
+    { foto: "img/cortes/mullet-liso-taper.jpg",  nombre: "Mullet liso con taper",  nota: "Taper bajo, rayas detrás de la oreja y largo atrás.", servicio: "mullet" }
+  ];
+  var GORRAS = [
+    { foto: "img/gorras/ny-crema-beige.jpg",        nombre: "Gorra NY crema y beige" },
+    { foto: "img/gorras/negra-azul-cielo.jpg",      nombre: "Gorra negra y azul cielo" },
+    { foto: "img/gorras/roja-placa.jpg",            nombre: "Gorra roja con placa" },
+    { foto: "img/gorras/crema-camel.jpg",           nombre: "Gorra crema y camel" },
+    { foto: "img/gorras/azul-deportiva.jpg",        nombre: "Gorra azul deportiva" },
+    { foto: "img/gorras/caballista.jpg",            nombre: "Gorra caballista bordada" },
+    { foto: "img/gorras/new-york-blanca.jpg",       nombre: "Gorra blanca New York" },
+    { foto: "img/gorras/negra-malla.jpg",           nombre: "Gorra negra de malla" },
+    { foto: "img/gorras/rosada-blanca.jpg",         nombre: "Gorra rosada y blanca" },
+    { foto: "img/gorras/verde-estampada.jpg",       nombre: "Gorra verde estampada" },
+    { foto: "img/gorras/blanca-franjas-negras.jpg", nombre: "Gorra blanca con franjas negras" },
+    { foto: "img/gorras/blanca-tres-franjas.jpg",   nombre: "Gorra blanca con tres franjas" },
+    { foto: "img/gorras/blanca-perforada.jpg",      nombre: "Gorra blanca perforada" }
+  ];
+
+  /* ===== Utilidades ===== */
+  var $ = function (s, c) { return (c || document).querySelector(s); };
+  function el(tag, attrs, html) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+    if (html != null) n.innerHTML = html;
+    return n;
+  }
+  function mayus(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+  function pesos(n) { return "$" + Math.round(n).toLocaleString("es-CO"); }
+  function hora12(min) {
+    var h = Math.floor(min / 60) % 24, m = min % 60;
+    return (h % 12 || 12) + ":" + (m < 10 ? "0" : "") + m + (h < 12 ? " a. m." : " p. m.");
+  }
+  var fmtDia = new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" });
+  var fmtSemana = new Intl.DateTimeFormat("es-CO", { weekday: "short" });
+  function mismoDia(a, b) { return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function hoyCero() { var d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+  function minutosAhora() { var d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
+  function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0); }
+  function limitar(x) { return Math.max(0, Math.min(1, x)); }
+  function tramo(p, a, b) { return limitar((p - a) / (b - a)); }
+  var reducir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function irA(sel) { var t = $(sel); if (t) t.scrollIntoView({ behavior: reducir ? "auto" : "smooth", block: "start" }); }
+
+  $("#numero-visible").textContent = WHATSAPP_VISIBLE;
+  $("#pie-numero").textContent = WHATSAPP_VISIBLE;
+  $("#pie-numero-2").textContent = WHATSAPP_VISIBLE;
+  $("#anio").textContent = new Date().getFullYear();
+
+  /* ===== Menú móvil ===== */
+  var menuBtn = $("#menu-boton"), menu = $("#menu-movil");
+  menuBtn.addEventListener("click", function () { var abrir = menu.hidden; menu.hidden = !abrir; menuBtn.setAttribute("aria-expanded", String(abrir)); });
+  menu.addEventListener("click", function (e) { if (e.target.closest("a")) { menu.hidden = true; menuBtn.setAttribute("aria-expanded", "false"); } });
+
+  /* ===== Regla de horas ===== */
+  var regla = $("#regla"), reglaMarca;
+  (function () {
+    for (var h = 9; h <= 20; h++) {
+      var t = el("span", { class: "regla-hora" }, (h % 12 || 12) + ":00");
+      t.style.top = ((h - 9) / 11 * 100) + "%";
+      regla.appendChild(t);
+      if (h < 20) for (var q = 1; q < 4; q++) { var c = el("span", { class: "regla-corta" }); c.style.top = ((h - 9 + q / 4) / 11 * 100) + "%"; regla.appendChild(c); }
+    }
+    reglaMarca = el("div", { class: "regla-marca" }, "<b>9:00 a. m.</b><i></i>");
+    regla.appendChild(reglaMarca);
+  })();
+
+  /* ===== Escenas al bajar ===== */
+  var escPortada = $(".escena-portada"), fotoPortada = $("#foto-portada"), sombraPortada = $("#sombra-portada"),
+      txtPortada = $("#texto-portada"), bajar = $("#bajar"), interior = $("#interior"), sillaCerca = $("#silla-cerca"),
+      puertaIzq = $("#puerta-izq"), puertaDer = $("#puerta-der"), letrero = $("#letrero"), oscuro = $("#oscuro"),
+      pasoEntra = $("#paso-entra"), pasoSilla = $("#paso-silla");
+  var escAngulos = $(".escena-angulos"), angulos = [].slice.call(document.querySelectorAll(".angulo")), grados = $("#grados"), gradosTxt = $("#grados-txt");
+  var angActivo = 0, pendiente = false;
+
+  function avance(sec) {
+    var r = sec.getBoundingClientRect();
+    var recorrido = r.height - sec.querySelector(".escenario").offsetHeight;
+    return recorrido > 0 ? limitar(-r.top / recorrido) : 0;
+  }
+  function opacidad(n, v) { n.style.opacity = v.toFixed(3); }
+
+  function alScroll() {
+    pendiente = false;
+    var max = document.documentElement.scrollHeight - innerHeight;
+    var pg = max > 0 ? limitar(scrollY / max) : 0;
+    reglaMarca.style.top = (pg * 100) + "%";
+    reglaMarca.firstChild.textContent = hora12(540 + Math.round(pg * 660 / 5) * 5);
+
+    // Escena 1: recorrido. Se cierran las puertas, se abren, entras a la barbería y te sientas en la silla
+    var p = avance(escPortada), mueve = !reducir;
+    opacidad(txtPortada, 1 - tramo(p, 0, .07));
+    txtPortada.style.transform = "translateY(" + (-tramo(p, 0, .07) * 40).toFixed(1) + "px)";
+    txtPortada.style.visibility = p > .08 ? "hidden" : "visible";
+    opacidad(bajar, 1 - tramo(p, 0, .04));
+    if (typeof lente !== "undefined") lente.visible = p < .04;
+    if (mueve) fotoPortada.style.transform = "scale(" + (1 + tramo(p, .02, .2) * .12).toFixed(3) + ")";
+    fotoPortada.style.transformOrigin = innerWidth < 700 ? "62% 45%" : "72% 45%";
+    fotoPortada.style.opacity = p < .21 ? "1" : "0";
+    // puertas: se cierran (.08–.2) y se abren (.3–.44)
+    var cierre = tramo(p, .08, .2), abre = tramo(p, .3, .44), pos = (1 - cierre) + abre;
+    puertaIzq.style.transform = "translateX(" + (-pos * 101).toFixed(2) + "%)";
+    puertaDer.style.transform = "translateX(" + (pos * 101).toFixed(2) + "%)";
+    opacidad(letrero, tramo(p, .17, .22) * (1 - tramo(p, .27, .31)));
+    letrero.style.transform = "translateX(-50%) rotate(" + (mueve ? (-3 + Math.sin(p * 60) * 4 * (1 - tramo(p, .17, .28))) : -3).toFixed(2) + "deg)";
+    // la barbería por dentro: la cámara camina hasta la silla del centro
+    opacidad(interior, p > .2 ? 1 - tramo(p, .64, .74) : 0);
+    if (mueve) { interior.style.transform = "scale(" + (1.04 + Math.pow(tramo(p, .32, .72), 1.3) * 1.5).toFixed(3) + ")"; interior.style.transformOrigin = "50.5% 74%"; }
+    opacidad(pasoEntra, tramo(p, .42, .48) * (1 - tramo(p, .58, .63)));
+    pasoEntra.style.transform = "translateY(" + ((1 - tramo(p, .42, .5)) * 30).toFixed(1) + "px)";
+    // la silla de cerca: bajas la mirada como al sentarte
+    opacidad(sillaCerca, tramo(p, .64, .74));
+    if (mueve) sillaCerca.style.transform = "scale(" + (1.45 - tramo(p, .64, .88) * .43).toFixed(3) + ") translateY(" + (-6 + tramo(p, .64, .88) * 6).toFixed(2) + "%)";
+    opacidad(pasoSilla, tramo(p, .76, .82) * (1 - tramo(p, .93, .97)));
+    pasoSilla.style.transform = "translateY(" + ((1 - tramo(p, .76, .84)) * 30).toFixed(1) + "px)";
+    pasoSilla.style.visibility = p > .74 && p < .98 ? "visible" : "hidden";
+    opacidad(oscuro, tramo(p, .94, 1));
+
+    // Escena 2: ángulos con contador de grados
+    var q = avance(escAngulos);
+    var deg = Math.round(q * 359);
+    grados.textContent = ("00" + deg).slice(-3) + "°";
+    var i = Math.min(3, Math.floor(q * 4));
+    if (i !== angActivo) { angulos[angActivo].classList.remove("activa"); angulos[i].classList.add("activa"); angActivo = i; }
+    gradosTxt.textContent = "Vista " + (i + 1) + " de 4 · " + ANGULOS[i];
+
+  }
+  addEventListener("scroll", function () { if (!pendiente) { pendiente = true; requestAnimationFrame(alScroll); } }, { passive: true });
+  addEventListener("resize", alScroll);
+
+  /* ===== Lupa del antes en la portada ===== */
+  var lupa = $("#lupa"), escenario1 = escPortada.querySelector(".escenario");
+  var LUPA_CABEZA = { x: 1372, y: 300, w: 1920, h: 1080 };   // centro de la cabeza en la foto
+  var lente = { x: 0, y: 0, tx: 0, ty: 0, r: 0, ultimo: 0, visible: true, listo: false };
+  if (matchMedia("(hover: none)").matches) $("#pista").textContent = "Toca la cabeza del cliente para ver cómo llegó.";
+  function cabezaEnPantalla() {
+    var W = escenario1.clientWidth, H = escenario1.clientHeight;
+    var esc = Math.max(W / LUPA_CABEZA.w, H / LUPA_CABEZA.h);
+    var posX = innerWidth < 700 ? .74 : .66;
+    return { x: LUPA_CABEZA.x * esc + (W - LUPA_CABEZA.w * esc) * posX, y: LUPA_CABEZA.y * esc + (H - LUPA_CABEZA.h * esc) * .5, esc: esc };
+  }
+  function moverLupa(e) {
+    var r = escenario1.getBoundingClientRect();
+    lente.tx = e.clientX - r.left; lente.ty = e.clientY - r.top; lente.ultimo = performance.now();
+  }
+  escenario1.addEventListener("pointermove", moverLupa, { passive: true });
+  escenario1.addEventListener("pointerdown", moverLupa, { passive: true });
+  function cicloLupa(t) {
+    var c = cabezaEnPantalla();
+    var radio = Math.max(70, Math.min(170, 150 * c.esc));
+    if (!lente.listo) { lente.x = lente.tx = c.x; lente.y = lente.ty = c.y; lente.listo = true; }
+    if (t - lente.ultimo > 2500 || !lente.ultimo) {
+      var a = reducir ? 0 : t / 1400;
+      lente.tx = c.x + Math.cos(a) * radio * .45; lente.ty = c.y + Math.sin(a * 1.3) * radio * .35;
+    }
+    lente.x += (lente.tx - lente.x) * .14; lente.y += (lente.ty - lente.y) * .14;
+    lente.r += ((lente.visible ? radio : 0) - lente.r) * .2;
+    var foto = fotoPortada.style;
+    foto.setProperty("--lx", lente.x.toFixed(1) + "px"); foto.setProperty("--ly", lente.y.toFixed(1) + "px"); foto.setProperty("--lr", lente.r.toFixed(1) + "px");
+    var d = radio * 2.1;
+    lupa.style.width = d + "px"; lupa.style.height = d + "px";
+    lupa.style.transform = "translate(" + (lente.x - d / 2).toFixed(1) + "px," + (lente.y - d / 2).toFixed(1) + "px) rotate(" + (Math.sin(t / 900) * 4).toFixed(2) + "deg)";
+    lupa.classList.toggle("visible", lente.visible);
+    requestAnimationFrame(cicloLupa);
+  }
+  requestAnimationFrame(cicloLupa);
+
+  /* ===== Precios ===== */
+  var lista = $("#lista-precios"), precioFoto = $("#precio-foto"), precioCaption = $("#precio-caption");
+  function mostrarServicio(s, btn) {
+    [].forEach.call(lista.querySelectorAll(".fila-precio"), function (b) { b.classList.toggle("activo", b === btn); });
+    precioCaption.textContent = s.nombre;
+    if (precioFoto.getAttribute("src") === s.foto) return;
+    precioFoto.style.opacity = "0";
+    setTimeout(function () { precioFoto.src = s.foto; precioFoto.alt = s.nombre + ": " + s.detalle; precioFoto.style.opacity = "1"; }, reducir ? 0 : 180);
+  }
+  SERVICIOS.forEach(function (s) {
+    var li = el("li");
+    var b = el("button", { type: "button", class: "fila-precio" + (s.id === "degradado" ? " activo" : ""), "aria-label": "Reservar " + s.nombre + ", " + pesos(s.precio) },
+      '<span class="nombre">' + s.nombre + '</span><span class="min">' + s.min + ' min</span><span class="precio">' + pesos(s.precio) + '</span>');
+    b.addEventListener("mouseenter", function () { mostrarServicio(s, b); });
+    b.addEventListener("focus", function () { mostrarServicio(s, b); });
+    b.addEventListener("click", function () { estado.servicio = s.id; pintarReserva(); irA("#reserva"); });
+    li.appendChild(b); lista.appendChild(li);
+  });
+
+  /* ===== Cortes de la casa ===== */
+  var filaCortes = $("#cortes-fila");
+  CORTES.forEach(function (c) {
+    var srv = SERVICIOS.find(function (x) { return x.id === c.servicio; });
+    var b = el("button", { type: "button", class: "corte", "aria-label": c.nombre + ". Reservar " + srv.nombre },
+      '<img src="' + c.foto + '" alt="' + c.nombre + '" loading="lazy">' +
+      '<div class="papel" title="' + c.nota + '"><h3>' + c.nombre + '</h3><span>' + srv.nombre + ' · ' + pesos(srv.precio) + '</span></div>');
+    b.addEventListener("click", function () { estado.servicio = c.servicio; pintarReserva(); irA("#reserva"); });
+    filaCortes.appendChild(b);
+  });
+
+  /* ===== Tienda: pasarela de gorras ===== */
+  (function () {
+    var pista = $("#pasarela"), puntos = $("#pas-puntos"), contador = $("#pas-contador");
+    GORRAS.forEach(function (g, i) {
+      var msg = "Hola, quiero pedir en la tienda DAMC:\n• " + g.nombre + "\n¿Está disponible? ¿Qué precio tiene y cómo hago el pago y la entrega?";
+      pista.appendChild(el("article", { class: "gorra", "aria-label": g.nombre + ", " + (i + 1) + " de " + GORRAS.length },
+        '<div class="gorra-foto"><img src="' + g.foto + '" alt="' + g.nombre + '" loading="lazy"></div>' +
+        '<div class="gorra-info"><h3>' + g.nombre + '</h3>' +
+        '<a class="boton boton-blanco" target="_blank" rel="noopener" href="https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg) + '">Pedir por WhatsApp <span class="flecha" aria-hidden="true">→</span></a></div>'));
+      var d = el("button", { type: "button", "aria-label": "Ver " + g.nombre });
+      d.addEventListener("click", function () { ir(i); pausar(); });
+      puntos.appendChild(d);
+    });
+    var tarjetas = pista.children, actual = 0, enPantalla = false, quieta = 0;
+    function paso() { return tarjetas.length > 1 ? tarjetas[1].offsetLeft - tarjetas[0].offsetLeft : 1; }
+    function ir(i) {
+      var max = pista.scrollWidth - pista.clientWidth;
+      if (i >= tarjetas.length || (i > actual && pista.scrollLeft >= max - 4)) i = 0;
+      if (i < 0) i = tarjetas.length - 1;
+      pista.scrollTo({ left: Math.min(max, tarjetas[i].offsetLeft - tarjetas[0].offsetLeft), behavior: reducir ? "auto" : "smooth" });
+    }
+    function marcar() {
+      actual = Math.min(tarjetas.length - 1, Math.round(pista.scrollLeft / paso()));
+      [].forEach.call(puntos.children, function (b, j) { b.setAttribute("aria-current", String(j === actual)); });
+      contador.textContent = (actual + 1) + " / " + tarjetas.length;
+    }
+    function pausar() { quieta = Date.now() + 8000; }
+    pista.addEventListener("scroll", function () { requestAnimationFrame(marcar); }, { passive: true });
+    ["pointerdown", "wheel", "touchstart", "focusin"].forEach(function (ev) { pista.addEventListener(ev, pausar, { passive: true }); });
+    pista.addEventListener("mouseenter", function () { quieta = Infinity; });
+    pista.addEventListener("mouseleave", function () { quieta = Date.now() + 1500; });
+    $("#pas-ant").addEventListener("click", function () { ir(actual - 1); pausar(); });
+    $("#pas-sig").addEventListener("click", function () { ir(actual + 1); pausar(); });
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (e) { enPantalla = e[0].isIntersecting; }, { threshold: .3 }).observe(pista);
+    if (!reducir) setInterval(function () { if (enPantalla && Date.now() > quieta && !document.hidden) ir(actual + 1); }, 3200);
+    marcar();
+  })();
+
+  /* ===== Barbero ===== */
+  function avatar(b) { return (b.cara || b.foto) ? '<img src="' + (b.cara || b.foto) + '" alt="">' : '<span class="avatar-libre" aria-hidden="true">' + b.iniciales + '</span>'; }
+  (function () {
+    var b = BARBEROS[0], f = $("#barbero-foto");
+    f.innerHTML = (b.foto ? '<img src="' + b.foto + '" alt="Retrato de ' + b.nombre + '" loading="lazy">' : '<div class="foto-pendiente" aria-hidden="true"><span>' + b.iniciales + '</span></div>') +
+      '<figcaption class="papel"><h3>' + b.nombre + '</h3><p>Barbero de DAMC</p></figcaption>';
+  })();
+
+  /* ===== Horario ===== */
+  (function () {
+    var dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"], orden = [1, 2, 3, 4, 5, 6, 0], hoyN = new Date().getDay();
+    var ul = $("#lista-horario");
+    orden.forEach(function (d) {
+      ul.appendChild(el("li", d === hoyN ? { class: "hoy" } : null, "<span>" + dias[d] + (d === hoyN ? " (hoy)" : "") + "</span><span>" + hora12(HORARIO[d][0]) + " – " + hora12(HORARIO[d][1]) + "</span>"));
+    });
+  })();
+
+  /* ===== Reserva ===== */
+  var hoy = hoyCero();
+  var DIAS_VISTA = 14;
+  var estado = { servicio: "degradado", barbero: "daniel", fecha: null, hora: null, pago: "local" };
+  function servicioActual() { return SERVICIOS.find(function (s) { return s.id === estado.servicio; }); }
+  function barberoActual() { return BARBEROS.find(function (b) { return b.id === estado.barbero; }); }
+  function franjasDe(fecha) {
+    var h = HORARIO[fecha.getDay()], res = [];
+    var esHoy = mismoDia(fecha, hoy), ahora = minutosAhora();
+    var key = fecha.getFullYear() + "-" + fecha.getMonth() + "-" + fecha.getDate();
+    for (var t = h[0]; t + DURACION <= h[1]; t += DURACION) {
+      var ocupado = (hash(key + estado.barbero + t) % 100) < 38;
+      if (esHoy && t < ahora + esperaAhora()) ocupado = true;
+      res.push({ t: t, libre: !ocupado });
+    }
+    return res;
+  }
+  function esperaAhora() {   // hoy no se puede reservar antes de que pase la fila de la barbería
+    var hay = typeof vivo !== "undefined" && vivo && vivo.datos;
+    return hay ? Math.max(20, calcular(datosDe(SILLAS[0].id)).hi) : 20;
+  }
+  function diaConCupo(fecha) { return franjasDe(fecha).some(function (f) { return f.libre; }); }
+  function proximosDias() { var r = []; for (var i = 0; i < DIAS_VISTA; i++) { var d = new Date(hoy); d.setDate(d.getDate() + i); r.push(d); } return r; }
+  function primerDiaLibre() { var ds = proximosDias(); for (var i = 0; i < ds.length; i++) if (diaConCupo(ds[i])) return ds[i]; return ds[0]; }
+  estado.fecha = primerDiaLibre();
+
+  function botonOpcion(cont, activo, html, clase, onClick) {
+    var b = el("button", { type: "button", class: "opcion" + (clase ? " " + clase : ""), "aria-pressed": String(activo) }, html);
+    b.addEventListener("click", onClick);
+    cont.appendChild(b);
+  }
+  function pintarServicios() {
+    var c = $("#op-servicios"); c.innerHTML = "";
+    SERVICIOS.forEach(function (s) {
+      botonOpcion(c, s.id === estado.servicio, "<b>" + s.nombre + "</b><small>" + s.detalle + "</small><span class=\"precio-op\">" + pesos(s.precio) + "</span>", "",
+        function () { estado.servicio = s.id; pintarReserva(); });
+    });
+  }
+  function pintarPagos() {
+    var c = $("#op-pago"); c.innerHTML = "";
+    var s = servicioActual();
+    PAGOS.forEach(function (p) {
+      var extra = p.id === "anticipo" ? pesos(s.precio / 2) + " ahora" : pesos(s.precio) + " al final";
+      botonOpcion(c, p.id === estado.pago, "<b>" + p.nombre + "</b><small>" + p.nota + "</small><span class=\"precio-op\">" + extra + "</span>", "",
+        function () { estado.pago = p.id; pintarReserva(); });
+    });
+  }
+  function pintarDias() {
+    var c = $("#dias"); c.innerHTML = "";
+    proximosDias().forEach(function (d) {
+      var sinCupo = !diaConCupo(d);
+      var b = el("button", { type: "button", "aria-pressed": String(mismoDia(d, estado.fecha)), "aria-label": fmtDia.format(d) + (sinCupo ? ", sin cupo" : "") },
+        "<small>" + (mismoDia(d, hoy) ? "hoy" : fmtSemana.format(d).replace(".", "")) + "</small><b>" + d.getDate() + "</b>");
+      if (sinCupo) b.disabled = true;
+      b.addEventListener("click", function () { estado.fecha = d; estado.hora = null; pintarReserva(); });
+      c.appendChild(b);
+    });
+  }
+  (function () {   // números del reloj
+    var c = $("#reloj-numeros");
+    for (var k = 1; k <= 12; k++) {
+      var a = k / 12 * Math.PI * 2, n = el("span", { class: "num" }, String(k));
+      n.style.left = (50 + 26 * Math.sin(a)) + "%"; n.style.top = (50 - 26 * Math.cos(a)) + "%";
+      c.appendChild(n);
+    }
+  })();
+  function pintarReloj() {
+    var c = $("#franjas"); c.innerHTML = "";
+    $("#horas-dia").textContent = estado.fecha ? mayus(fmtDia.format(estado.fecha)) : "";
+    if (!estado.fecha) return;
+    franjasDe(estado.fecha).forEach(function (f) {
+      var h = Math.floor(f.t / 60), m = f.t % 60, a = ((f.t / 60) % 12) / 12 * Math.PI * 2;
+      var b = el("button", { type: "button", class: "hora-btn", "aria-pressed": String(estado.hora === f.t), "aria-label": hora12(f.t) + (f.libre ? "" : ", ocupada") },
+        ((h % 12) || 12) + ":" + (m < 10 ? "0" : "") + m + "<small>" + (h < 12 ? "a. m." : "p. m.") + "</small>");
+      b.style.left = (50 + 41 * Math.sin(a)) + "%"; b.style.top = (50 - 41 * Math.cos(a)) + "%";
+      if (!f.libre) b.disabled = true;
+      b.addEventListener("click", function () { estado.hora = f.t; pintarReserva(); });
+      c.appendChild(b);
+    });
+    var t = estado.hora != null ? estado.hora : minutosAhora(), hh = Math.floor(t / 60) % 12, mm = t % 60;
+    $("#aguja-hora").style.transform = "translate(-50%, -100%) rotate(" + ((hh + mm / 60) * 30).toFixed(1) + "deg)";
+    $("#aguja-min").style.transform = "translate(-50%, -100%) rotate(" + (mm * 6) + "deg)";
+    $("#reloj").classList.toggle("sin-hora", estado.hora == null);
+    $("#reloj-lectura-hora").textContent = estado.hora != null ? hora12(estado.hora) : "Escoge la hora";
+    $("#reloj-lectura-nota").textContent = estado.hora != null ? "Turno de 45 min, hasta las " + hora12(estado.hora + DURACION) : "Toca una hora libre del reloj";
+  }
+  function pintarFilaReserva() {
+    var box = $("#fila-ahora");
+    var hay = typeof vivo !== "undefined" && vivo && vivo.datos;
+    if (!hay) { box.innerHTML = '<small>En la barbería ahora</small><p>Trayendo la fila…</p>'; return; }
+    var b = datosDe(SILLAS[0].id), c = calcular(b);
+    var estadoTxt = { motilando: "Daniel está motilando", libre: "Daniel está libre", descanso: "Daniel está en descanso" }[b.estado];
+    var libresHoy = franjasDe(hoy).filter(function (f) { return f.libre; });
+    var html = '<small>En la barbería ahora</small><div class="fila-num"><b>' + b.esperando + '</b><span>' + (b.esperando === 1 ? "persona esperando" : "personas esperando") + '</span></div>' +
+      '<p>' + estadoTxt + '. Si llegas sin cita: <strong>' + (c.hi === 0 ? "te atienden de una" : rangoTxt(c.lo, c.hi)) + '</strong>.</p>' +
+      (libresHoy.length ? '<p>Para hoy, el primer turno libre en el reloj es a las <strong>' + hora12(libresHoy[0].t) + '</strong></p>' : '<p>Hoy ya no quedan turnos: escoge otro día.</p>') +
+      '<a href="#en-vivo">Ver la fila en vivo</a>';
+    box.innerHTML = html;
+  }
+
+  var nombre = $("#nombre"), celular = $("#celular"), acepto = $("#acepto");
+  var tocado = { nombre: false, celular: false };
+  function celularLimpio() { return celular.value.replace(/\D/g, "").replace(/^57(?=3\d{9}$)/, ""); }
+  function nombreOk() { return nombre.value.trim().length >= 2; }
+  function celularOk() { return /^3\d{9}$/.test(celularLimpio()); }
+
+  function pintarTicket() {
+    var s = servicioActual(), b = barberoActual();
+    var filas = [
+      ["Corte", s.nombre + " · " + s.min + " min"],
+      ["Barbero", b.corto],
+      ["Día", estado.fecha ? mayus(fmtDia.format(estado.fecha)) : null],
+      ["Hora", estado.hora != null ? hora12(estado.hora) : null],
+      ["A nombre de", nombreOk() ? nombre.value.trim() : null]
+    ];
+    var dl = $("#ticket-datos"); dl.innerHTML = "";
+    filas.forEach(function (f) {
+      var d = el("div", null, "<dt>" + f[0] + "</dt><dd" + (f[1] ? "" : ' class="vacio"') + "></dd>");
+      $("dd", d).textContent = f[1] || "Falta";
+      dl.appendChild(d);
+    });
+    $("#ticket-total").textContent = pesos(s.precio);
+    $("#ticket-anticipo").innerHTML = estado.pago === "anticipo"
+      ? "<span>Anticipo por Nequi</span><b>" + pesos(s.precio / 2) + "</b>"
+      : "<span>Pagas al terminar</span><b>" + pesos(s.precio) + "</b>";
+    $("#barra-detalle").textContent = s.nombre + (estado.hora != null ? " · " + hora12(estado.hora) : "");
+    $("#barra-total").textContent = pesos(s.precio);
+
+    var falta = [];
+    if (estado.hora == null) falta.push("la hora");
+    if (!nombreOk()) falta.push("tu nombre");
+    if (!celularOk()) falta.push("tu celular");
+    if (!acepto.checked) falta.push("aceptar la regla de llegada");
+    var btn = $("#confirmar");
+    if (falta.length) {
+      btn.setAttribute("aria-disabled", "true"); btn.href = "#reserva"; btn.removeAttribute("target");
+      $("#falta").textContent = "Falta " + falta.join(", ").replace(/, ([^,]*)$/, " y $1") + ".";
+    } else {
+      btn.setAttribute("aria-disabled", "false");
+      btn.href = "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(mensaje());
+      btn.target = "_blank"; btn.rel = "noopener";
+      $("#falta").textContent = "";
+    }
+    $("#campo-nombre").classList.toggle("error", tocado.nombre && !nombreOk());
+    $("#campo-celular").classList.toggle("error", tocado.celular && !celularOk());
+  }
+  function mensaje() {
+    var s = servicioActual(), b = barberoActual();
+    return [
+      "Hola, quiero reservar en DAMC:",
+      "• Corte: " + s.nombre + " (" + pesos(s.precio) + ", " + s.min + " min)",
+      "• Barbero: " + b.corto,
+      "• Día: " + fmtDia.format(estado.fecha),
+      "• Hora: " + hora12(estado.hora),
+      "• Nombre: " + nombre.value.trim(),
+      "• Celular: " + celularLimpio(),
+      "• Pago: " + (estado.pago === "anticipo" ? "anticipo del 50 % por Nequi (" + pesos(s.precio / 2) + ")" : "en la barbería")
+    ].join("\n");
+  }
+  function pintarReserva() {
+    if (estado.fecha && !diaConCupo(estado.fecha)) estado.fecha = primerDiaLibre();
+    if (estado.hora != null && !franjasDe(estado.fecha).some(function (f) { return f.t === estado.hora && f.libre; })) estado.hora = null;
+    pintarServicios(); pintarDias(); pintarReloj(); pintarPagos(); pintarTicket(); pintarFilaReserva();
+  }
+  nombre.addEventListener("input", pintarTicket);
+  celular.addEventListener("input", pintarTicket);
+  nombre.addEventListener("blur", function () { tocado.nombre = true; pintarTicket(); });
+  celular.addEventListener("blur", function () { tocado.celular = true; pintarTicket(); });
+  acepto.addEventListener("change", pintarTicket);
+  $("#form-reserva").addEventListener("submit", function (e) { e.preventDefault(); });
+  $("#confirmar").addEventListener("click", function (e) {
+    if (this.getAttribute("aria-disabled") === "true") {
+      e.preventDefault();
+      tocado.nombre = tocado.celular = true; pintarTicket();
+      if (estado.hora == null) irA("#dias"); else if (!nombreOk()) nombre.focus(); else if (!celularOk()) celular.focus(); else acepto.focus();
+      return;
+    }
+    $("#listo").hidden = false;
+  });
+
+  /* ===== En vivo: fila y sillas en tiempo real ===== */
+  var SILLAS = BARBEROS;
+  var vivo = { modo: "cargando", datos: null, editar: false, ref: null, cadena: Promise.resolve(), panelAbierto: false, conectado: false };
+  var CLAVE_DEMO = "damc-fila-demo";
+
+  function estadoEjemplo() {
+    var n = Date.now();
+    return { barberos: {
+      daniel: { estado: "motilando", desde: n - 20 * 60000, esperando: 2 }
+    }, actualizado: n };
+  }
+  function datosDe(id) {
+    var b = vivo.datos && vivo.datos.barberos && vivo.datos.barberos[id];
+    return {
+      estado: b && ["motilando", "libre", "descanso"].indexOf(b.estado) >= 0 ? b.estado : "libre",
+      desde: b && typeof b.desde === "number" ? b.desde : Date.now(),
+      esperando: b ? Math.max(0, Math.min(30, Math.floor(Number(b.esperando) || 0))) : 0
+    };
+  }
+  function r5(x) { return Math.round(x / 5) * 5; }
+  function duracionTxt(m) { if (m < 60) return m + " min"; var h = Math.floor(m / 60), r = m % 60; return h + " h" + (r ? " " + r + " min" : ""); }
+  function calcular(b) {
+    var lleva = b.estado === "motilando" ? Math.max(0, Math.floor((Date.now() - b.desde) / 60000)) : 0;
+    var resta = b.estado === "motilando" ? Math.max(5, DURACION - lleva) : (b.estado === "descanso" ? 15 : 0);
+    var adelante = b.esperando + (b.estado === "motilando" ? 1 : 0);
+    var base = resta + b.esperando * DURACION;
+    var margen = Math.max(10, VARIACION * adelante);
+    var lo = r5(Math.max(0, base - margen)), hi = r5(base + margen);
+    if (b.estado === "libre" && b.esperando === 0) { lo = 0; hi = 0; }
+    return { lleva: lleva, resta: resta, lo: lo, hi: hi };
+  }
+  function rangoTxt(lo, hi) { if (hi === 0) return "Te atienden ya"; if (hi < 60) return lo + " – " + hi + " min"; return duracionTxt(lo) + " – " + duracionTxt(hi); }
+  function horaEn(min) { var d = new Date(Date.now() + min * 60000); return hora12(d.getHours() * 60 + d.getMinutes()); }
+
+  function pintarVivo() {
+    var total = 0, motilando = 0, mejor = null;
+    var cont = $("#sillas"); cont.innerHTML = "";
+    var st = $("#vivo-estado");
+    if (!vivo.datos) {
+      cont.innerHTML = '<p class="texto-suave">' + (vivo.modo === "vacio" ? "Todavía no hay datos de hoy. Aparecen cuando el barbero actualice la fila." : vivo.modo === "sinconexion" ? "No pudimos traer la fila en este momento. Escríbenos por WhatsApp y te decimos cuánto hay de espera." : "Trayendo la fila…") + '</p>';
+      ["#res-esperando", "#res-sillas", "#res-espera"].forEach(function (x) { $(x).textContent = "–"; });
+      $("#dato-vivo").innerHTML = "<i></i>En vivo: <strong>ver la fila</strong>";
+      $("#vivo-aviso").hidden = true;
+      st.lastChild.textContent = vivo.modo === "sinconexion" ? "Sin conexión" : vivo.modo === "vacio" ? "En vivo" : "Conectando…";
+      st.classList.toggle("apagado", vivo.modo !== "vacio");
+      pintarPanel();
+      pintarReserva();
+      return;
+    }
+    SILLAS.forEach(function (bb, i) {
+      var b = datosDe(bb.id), c = calcular(b);
+      total += b.esperando;
+      if (b.estado === "motilando") motilando++;
+      if (b.estado !== "descanso" && (!mejor || c.hi < mejor.c.hi)) mejor = { b: bb, c: c };
+      var chip = { motilando: "Motilando", libre: "Libre", descanso: "En descanso" }[b.estado];
+      var progreso = b.estado === "motilando"
+        ? '<div class="corte-progreso"><div class="corte-barra"><i style="width:' + Math.min(100, Math.round(c.lleva / DURACION * 100)) + '%"></i></div><span>' + (c.lleva < DURACION ? "Lleva " + c.lleva + " min de " + DURACION + " · le faltan unos " + c.resta + " min" : "Terminando el corte") + '</span></div>'
+        : '<div class="corte-progreso"><div class="corte-barra"><i style="width:0"></i></div><span>' + (b.estado === "libre" ? "Silla desocupada" : "Vuelve en unos minutos") + '</span></div>';
+      var cola = "";
+      for (var k = 0; k < Math.min(b.esperando, 8); k++) cola += "<i></i>";
+      cola += "<span>" + (b.esperando === 0 ? "Nadie esperando" : b.esperando === 1 ? "1 esperando" : b.esperando + " esperando") + "</span>";
+      var espera = c.hi === 0
+        ? "<b>Te atienden ya</b><span>Llega y te sientas</span>"
+        : "<b>" + rangoTxt(c.lo, c.hi) + "</b><span>Te atienden más o menos entre " + horaEn(c.lo) + " y " + horaEn(c.hi) + "</span>";
+      cont.appendChild(el("article", { class: "silla" },
+        '<div class="silla-top">' + avatar(bb) + '<div><b>' + bb.corto + '</b><small>Silla ' + (i + 1) + '</small></div><span class="chip-estado ' + b.estado + '">' + chip + '</span></div>' +
+        progreso + '<div class="cola" aria-label="' + b.esperando + ' personas esperando">' + cola + '</div>' +
+        '<div class="espera"><small>Si llegas ahora</small>' + espera + '</div>'));
+    });
+    $("#res-esperando").textContent = total;
+    $("#res-sillas").textContent = { motilando: "Motilando", libre: "Libre", descanso: "Descanso" }[datosDe(SILLAS[0].id).estado];
+    if (mejor) {
+      $("#res-espera").textContent = mejor.c.hi === 0 ? "Ya" : rangoTxt(mejor.c.lo, mejor.c.hi);
+      $("#res-espera-txt").textContent = mejor.c.hi === 0 ? "la silla está libre" : "si llegas ahora";
+    } else { $("#res-espera").textContent = "–"; $("#res-espera-txt").textContent = "todos en descanso"; }
+    $("#dato-vivo").innerHTML = "<i></i>En vivo: <strong>" + (total === 1 ? "1 esperando" : total + " esperando") + "</strong>";
+
+    var aviso = $("#vivo-aviso"), d = new Date(), h = HORARIO[d.getDay()], ahora = minutosAhora();
+    var mensajes = [];
+    if (vivo.modo === "ejemplo") mensajes.push("Datos de ejemplo: esta copia de la página no está conectada en vivo.");
+    if (ahora < h[0] || ahora >= h[1]) mensajes.push("La barbería está cerrada ahora; estos datos son de la última vez que se actualizó.");
+    aviso.textContent = mensajes.join(" ");
+    aviso.hidden = !mensajes.length;
+
+    var act = vivo.datos && vivo.datos.actualizado;
+    var hace = act ? Math.max(0, Math.round((Date.now() - act) / 60000)) : null;
+    var texto = vivo.modo === "vivo"
+      ? (vivo.conectado ? "En vivo" : "Conectando…") + (hace != null ? " · actualizado " + (hace < 1 ? "hace un momento" : "hace " + duracionTxt(hace)) : "")
+      : vivo.modo === "sinconexion" ? "No se pudo conectar todavía. Puede estar desactualizado." : "Ejemplo";
+    st.lastChild.textContent = texto;
+    st.classList.toggle("apagado", !(vivo.modo === "vivo" && vivo.conectado));
+    pintarPanel();
+    pintarReserva();
+  }
+
+  function pintarPanel() {
+    var z = $("#zona-panel");
+    var mostrar = vivo.editar || vivo.modo === "ejemplo";
+    if (!mostrar) { z.innerHTML = ""; return; }
+    if (!vivo.panelAbierto) {
+      if (!z.querySelector(".abrir-panel")) {
+        z.innerHTML = '<p style="margin-top:20px"><button type="button" class="boton-texto abrir-panel">Soy barbero: actualizar la fila</button></p>';
+        $(".abrir-panel", z).addEventListener("click", function () { vivo.panelAbierto = true; pintarPanel(); });
+      }
+      return;
+    }
+    var nota = vivo.modo === "ejemplo"
+      ? "Modo de prueba: los cambios solo se ven en este dispositivo."
+      : "Lo que toques aquí lo ven todos los clientes al instante. Solo lo ve quien administra la página.";
+    var html = '<div class="panel-barbero"><h3>Panel del barbero</h3><p>' + nota + '</p><div class="controles">';
+    SILLAS.forEach(function (bb) {
+      var b = datosDe(bb.id);
+      html += '<div class="control-fila" data-id="' + bb.id + '"><b>' + bb.corto + ' · ' + { motilando: "motilando", libre: "libre", descanso: "en descanso" }[b.estado] + ' · ' + b.esperando + ' en fila</b><div class="control-botones">' +
+        '<button type="button" class="principal" data-accion="empezar">Empezar corte</button>' +
+        '<button type="button" data-accion="terminar">Terminé</button>' +
+        '<button type="button" data-accion="mas">+1 en fila</button>' +
+        '<button type="button" data-accion="menos">−1 en fila</button>' +
+        '<button type="button" data-accion="descanso">Descanso</button></div></div>';
+    });
+    html += '</div><button type="button" class="boton-texto cerrar-panel" style="justify-self:start">Cerrar panel</button><p class="falta" id="panel-error" aria-live="polite"></p></div>';
+    z.innerHTML = html;
+  }
+  $("#zona-panel").addEventListener("click", function (e) {
+    var btn = e.target.closest("button"); if (!btn) return;
+    if (btn.classList.contains("cerrar-panel")) { vivo.panelAbierto = false; $("#zona-panel").innerHTML = ""; pintarPanel(); return; }
+    var accion = btn.getAttribute("data-accion"); if (!accion) return;
+    var id = btn.closest(".control-fila").getAttribute("data-id");
+    var b = datosDe(id), n = Date.now();
+    if (accion === "empezar") { b.estado = "motilando"; b.desde = n; b.esperando = Math.max(0, b.esperando - 1); }
+    if (accion === "terminar") { b.estado = "libre"; b.desde = n; }
+    if (accion === "mas") b.esperando = Math.min(30, b.esperando + 1);
+    if (accion === "menos") b.esperando = Math.max(0, b.esperando - 1);
+    if (accion === "descanso") { b.estado = "descanso"; b.desde = n; }
+    guardarBarbero(id, b);
+  });
+  function guardarBarbero(id, b) {
+    var nuevo = { barberos: {}, actualizado: Date.now() };
+    SILLAS.forEach(function (x) { nuevo.barberos[x.id] = datosDe(x.id); });
+    nuevo.barberos[id] = b;
+    vivo.datos = nuevo;
+    pintarVivo();
+    if (vivo.modo === "ejemplo") { try { localStorage.setItem(CLAVE_DEMO, JSON.stringify(nuevo)); } catch (e) {} return; }
+    if (vivo.modo === "vacio") vivo.modo = "vivo";
+    vivo.cadena = vivo.cadena.then(function () { return vivo.ref.set(nuevo); }).catch(function (err) {
+      var pe = $("#panel-error");
+      if (pe) pe.textContent = err && err.code === "invalid_argument" ? "No tienes permiso para cambiar la fila." : "No se pudo guardar. Revisa la conexión e inténtalo de nuevo.";
+    });
+  }
+  function modoEjemplo() {
+    vivo.modo = "ejemplo";
+    var guardado = null;
+    try { guardado = JSON.parse(localStorage.getItem(CLAVE_DEMO) || "null"); } catch (e) {}
+    vivo.datos = guardado && guardado.barberos ? guardado : estadoEjemplo();
+    pintarVivo();
+  }
+  function conectarVivo() {
+    var c = window.claude;
+    if (!c || typeof c.use !== "function") { modoEjemplo(); return; }
+    vivo.datos = null;
+    pintarVivo();
+    Promise.all([c.use("db"), c.use("user")]).then(function (r) {
+      var db = r[0], user = r[1];
+      if (!db) { modoEjemplo(); return; }
+      vivo.modo = "vivo";
+      if (user) user.canEdit().then(function (v) { vivo.editar = !!v; pintarPanel(); });
+      vivo.ref = db.doc("fila/estado");
+      var temporizador = setTimeout(function () { if (!vivo.conectado) { vivo.modo = vivo.datos ? "vivo" : "sinconexion"; pintarVivo(); } }, 10000);
+      vivo.ref.onSnapshot(function (snap) {
+        if (!snap.metadata.fromCache) { vivo.conectado = true; clearTimeout(temporizador); }
+        if (snap.exists) { vivo.datos = snap.data(); vivo.modo = "vivo"; }
+        else if (!snap.metadata.fromCache) { vivo.datos = null; vivo.modo = "vacio"; }
+        pintarVivo();
+      }, function () {
+        clearTimeout(temporizador); vivo.conectado = false; vivo.modo = vivo.datos ? "vivo" : "sinconexion"; pintarVivo();
+      });
+    }, function () { modoEjemplo(); });
+  }
+
+  pintarReserva();
+  conectarVivo();
+  setInterval(pintarVivo, 30000);
+  alScroll();
+})();
+</script>
+</body>
+</html>
