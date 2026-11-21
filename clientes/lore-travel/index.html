@@ -143,7 +143,7 @@ h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;line-height:1.1;letter-spaci
 .tour li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--coral);margin-top:8px;flex:none}
 .tour .incluye{font-size:13.5px;font-weight:600;color:var(--mar-2);background:#EAF3F4;border-radius:8px;padding:8px 10px}
 .tour .botones{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:6px}
-.tour .botones .btn{flex:1 1 40%;padding:12px 10px;font-size:14px}
+.tour .botones .btn{flex:1 1 calc(50% - 32px);padding:12px 10px;font-size:14px}
 .tour .botones .ig{flex:0 0 48px}
 .tour .ver{border:2px solid var(--linea);color:var(--mar)}
 .tour .ver:hover{border-color:var(--coral)}
@@ -303,6 +303,10 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:1
 footer .marca{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 footer .marca img{height:26px;width:auto}
 footer a{color:#fff;font-weight:600}
+.creditos{width:100%;margin-top:14px;font-size:12px}
+.creditos summary{cursor:pointer;color:#B8C0C3}
+.creditos ul{list-style:none;display:grid;gap:4px;margin-top:8px}
+.creditos a{font-weight:500;text-decoration:underline}
 
 /* Barra flotante del plan */
 .flota{position:fixed;left:50%;bottom:18px;transform:translate(-50%,140%);z-index:40;background:var(--mar);color:#fff;border-radius:12px;padding:10px 10px 10px 18px;display:flex;align-items:center;gap:16px;box-shadow:0 14px 40px rgba(0,0,0,.25);transition:transform .3s;width:max-content;max-width:calc(100% - 32px)}
@@ -381,7 +385,7 @@ body.con-plan .wa{bottom:88px}
           <a class="btn btn-borde" href="#armar">Arma tu plan</a>
         </div>
         <div class="datos">
-          <div><strong>13</strong>tours y servicios</div>
+          <div><strong>12</strong>tours y servicios</div>
           <div><strong>1</strong>solo chat para reservar</div>
           <div><strong>WhatsApp</strong>respuesta directa</div>
         </div>
@@ -658,6 +662,7 @@ body.con-plan .wa{bottom:88px}
     <span class="marca"><img src="img/logo-horizontal-blanco.svg" alt="Lore TRAVEL"><span>© <span id="anio"></span> · Cartagena, Colombia</span></span>
     <span>Página hecha por <a href="https://3rpaginas.com" target="_blank" rel="noopener">3R</a></span>
   </div>
+  <div class="wrap"><details class="creditos" id="creditos" hidden><summary>Créditos de fotos</summary><ul id="listaCreditos"></ul></details></div>
 </footer>
 
 <div class="visor" id="visor" hidden role="dialog" aria-modal="true" aria-label="Experiencia de cliente">
@@ -678,16 +683,15 @@ const WA = '573006279421';
 const TOURS = [
   {id:'islas', img:'islas-rosario', n:'Tour 5 islas', ic:'islas', t:'Islas', l:['Oceanario','Isla Barú','Cholón','Snorkel'], inc:'Incluye agua y hielo'},
   {id:'cholon', img:'cholon', n:'Cholón', ic:'bote', t:'Islas', d:'Día de playa y fiesta en el agua.', l:['Embarcación privada','Embarcación compartida'], ver:'#lancha', verTxt:'Ver la lancha'},
-  {id:'ciudad', n:'Recorrido por la ciudad', ic:'castillo', t:'Ciudad', l:['Castillo de San Felipe','Las Botas Viejas','Letras de Cartagena','Convento de La Popa','Fuerte del Pastelillo (Club de Pesca)','Ciudad amurallada','Getsemaní','Museo del Chocolate y reloj floral']},
+  {id:'ciudad', img:'ciudad-catedral', n:'Recorrido por la ciudad', ic:'castillo', t:'Ciudad', l:['Castillo de San Felipe','Las Botas Viejas','Letras de Cartagena','Convento de La Popa','Fuerte del Pastelillo (Club de Pesca)','Ciudad amurallada','Getsemaní','Museo del Chocolate y reloj floral']},
   {id:'totumo', n:'Volcán del Totumo', ic:'volcan', t:'Excursión', d:'Baño de lodo dentro del volcán, a las afueras de Cartagena.'},
-  {id:'costa', n:'Excursión a Barranquilla y Santa Marta', ic:'bus', t:'Excursión de un día', d:'En bus y con guía, visitando los lugares turísticos de las dos ciudades.', l:['Salida de Cartagena: 5:00 a. m.','Regreso a Cartagena: 10:00 p. m. del mismo día']},
-  {id:'palenque', n:'Palenque', ic:'tambor', t:'Excursión', d:'San Basilio de Palenque: música, historia y cultura afrocolombiana.'},
+  {id:'costa', img:'santa-marta', n:'Excursión a Barranquilla y Santa Marta', ic:'bus', t:'Excursión de un día', d:'En bus y con guía, visitando los lugares turísticos de las dos ciudades.', l:['Salida de Cartagena: 5:00 a. m.','Regreso a Cartagena: 10:00 p. m. del mismo día']},
+  {id:'palenque', img:'palenqueras', n:'Palenque', ic:'tambor', t:'Excursión', d:'San Basilio de Palenque: música, historia y cultura afrocolombiana.'},
   {id:'reservas', img:'mariscos', n:'Reservas en restaurantes y clubes', ic:'copa', t:'Reservas', d:'Te consigo mesa en los mejores lugares de la ciudad.', ver:'#planes', verTxt:'Ver lugares'},
   {id:'atardecer', img:'atardecer', n:'Atardecer en el mar', ic:'atardecer', t:'Paseo en el mar', d:'Mira el atardecer desde el muelle, en catamarán o en lancha rápida.', l:['Excursión de 2 horas'], inc:'Barra libre'},
   {id:'helicoptero', img:'helicoptero', n:'Cartagena en helicóptero', ic:'helice', t:'Experiencia', d:'Mira la ciudad, las murallas y el mar desde el aire.'},
   {id:'chiva', img:'chiva-1', n:'Chiva rumbera', ic:'bus', t:'Rumba', d:'Recorrido de noche en bus típico con música y fiesta.'},
-  {id:'vans', n:'Transporte en van', ic:'bus', t:'Transporte', d:'Traslados privados para tu grupo: aeropuerto, hotel, tours y salidas de noche.'},
-  {id:'limosina', n:'Limosina', ic:'copa', t:'Transporte', d:'Llega con estilo a tu cena, cumpleaños, boda o despedida.'},
+  {id:'transporte', img:'limosina', n:'Transporte privado', ic:'bus', t:'Van y limosina', l:['Van para tu grupo: aeropuerto, hotel, tours y salidas de noche','Limosina: llega con estilo a tu cena, cumpleaños, boda o despedida']},
   {id:'cuatrimotos', img:'cuatrimotos', n:'Cuatrimotos', ic:'cuatri', t:'Aventura', d:'Recorrido en cuatrimoto por la playa con Cartagena ATV.', ig:'https://www.instagram.com/cartagena_atv?igsh=NTZkYW94b3I3aDk4'},
 ];
 const LUGARES = [
@@ -710,6 +714,16 @@ const VIDEOS = {
   islas: [{f:'videos/v-islas-piscina', v:1, t:'Beach club en las islas', alt:'Fiesta en la piscina de un beach club'},
           {f:'videos/v-islas-restaurante', v:1, t:'Almuerzo frente al mar', alt:'Restaurante de playa con vista a un yate'},
           {f:'videos/v-playa', v:1, t:'Día de playa', alt:'Mesa de playa con piña y cervezas'}],
+  ciudad: [{f:'ciudad-catedral', t:'Calle del Centro con la Catedral', alt:'Calle colonial con la torre de la Catedral al fondo'},
+           {f:'ciudad-torre', t:'Ciudad amurallada', alt:'Calle colonial con balcones de madera'},
+           {f:'ciudad-balcones', t:'Balcones coloniales', alt:'Casa colonial amarilla con balcones'},
+           {f:'ciudad-muralla', t:'La muralla', alt:'Bandera de Colombia sobre la muralla'},
+           {f:'ciudad-techos', t:'Cartagena desde lo alto', alt:'Techos del Centro Histórico y la torre de una iglesia'}],
+  palenque: [{f:'palenqueras', t:'Palenqueras', alt:'Dos palenqueras con su traje típico'},
+             {f:'palenquera-frutas', t:'Palenquera con frutas', alt:'Palenquera con una bandeja de frutas en la cabeza'},
+             {f:'palenquera', t:'Palenquera', alt:'Retrato de una palenquera con turbante'}],
+  costa: [{f:'santa-marta', t:'Santa Marta', alt:'Santa Marta desde el aire, con la bahía y la Sierra'},
+          {f:'santa-marta-playa', t:'Playa en Santa Marta', alt:'Lanchas en una playa de agua turquesa'}],
   chiva: [{f:'chiva-1', t:'Chiva típica de Cartagena', alt:'Chiva amarilla y verde pintada a mano'},
           {f:'chiva-2', t:'Chivas listas para salir', alt:'Dos chivas de colores estacionadas'}],
   lancha: [{f:'videos/v-lancha', v:1, t:'Lancha frente a Bocagrande', alt:'Lancha navegando frente a Bocagrande'}],
@@ -851,6 +865,13 @@ document.querySelectorAll('.filtros button').forEach(b=>b.addEventListener('clic
 
 const hoy = new Date(); hoy.setMinutes(hoy.getMinutes()-hoy.getTimezoneOffset());
 document.getElementById('fecha').min = hoy.toISOString().slice(0,10);
+// Fotos de Wikimedia Commons: se nombra autor y licencia, como piden sus licencias.
+const CREDITOS = [];
+// Fotos de Pexels (licencia libre, no exige crédito): ciudad-*, palenquera*, santa-marta*, limosina.
+if (CREDITOS.length) {
+  document.getElementById('creditos').hidden = false;
+  document.getElementById('listaCreditos').innerHTML = CREDITOS.map(c=>`<li>${c.que}: foto de ${c.autor}, <a href="${c.url}" target="_blank" rel="noopener">${c.lic}</a>, vía Wikimedia Commons</li>`).join('');
+}
 document.getElementById('anio').textContent = new Date().getFullYear();
 
 // El botón es un enlace normal: así abre WhatsApp en cualquier navegador.

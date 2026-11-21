@@ -52,4 +52,4 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   «desde» ($10.500.000 día completo islas; $2.700.000 por 2 h en la bahía) y listas desplegables con comida y servicios
   adicionales con sus precios. **No se nombra al proveedor (MAVI)** para que el cliente reserve con Lore. Fotos sacadas del
   PDF: `img/catamaran-*.webp`, `bahia-atardecer.webp`, `islas-rosario.webp` (esta también es ahora la foto del Tour 5 islas).
-  Tours nuevos: «Transporte en van» y «Limosina» (fotos pendientes; se buscan en Wikimedia Commons, con crédito al autor).
+  Tour nuevo «Transporte privado» (van y limosina en una sola tarjeta, para que las filas queden parejas). Fotos de Pexels (licencia libre, sin crédito obligatorio) en ciudad, Palenque, Santa Marta y limosina, con botón «Fotos»; Wikimedia Commons rechaza descargas desde la sesión (política de robots, 429). Sin foto: Totumo y la van (pedir a Lore fotos reales).
