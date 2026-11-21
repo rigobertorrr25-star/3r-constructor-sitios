@@ -213,6 +213,43 @@ h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;line-height:1.1;letter-spaci
 @media (max-width:900px){.lancha .wrap:first-child{grid-template-columns:1fr;gap:28px}}
 @media (max-width:480px){.ficha{grid-template-columns:1fr}}
 
+/* Catamarán */
+.catamaran .wrap.cat-top{display:grid;grid-template-columns:1.15fr 1fr;gap:48px;align-items:start}
+.catamaran .lead{color:var(--gris);font-size:17px;margin:12px 0 20px}
+.sello-cat{display:inline-flex;gap:8px;align-items:center;background:var(--coral-claro);color:var(--coral-osc);font-weight:800;font-size:13px;padding:7px 10px;border-radius:8px;margin-bottom:14px}
+.capacidad{display:grid;gap:8px;margin-bottom:22px}
+.capacidad div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--linea);padding:8px 0;font-size:15px}
+.capacidad b{font-weight:800;white-space:nowrap}
+.pisos{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:36px}
+.piso{border:1px solid var(--linea);border-radius:14px;padding:20px}
+.piso.azul{background:var(--mar);color:#fff;border-color:var(--mar)}
+.piso h3{font-size:18px;font-weight:800;margin-bottom:12px}
+.piso h3 span{font-weight:500;font-size:14px;opacity:.8}
+.piso ul{list-style:none;display:grid;gap:8px;font-size:15px}
+.piso li{display:flex;gap:8px}
+.piso li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--coral);margin-top:8px;flex:none}
+.planes-cat{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.plan-cat{border-radius:14px;overflow:hidden;position:relative;color:#fff;min-height:320px;display:flex;flex-direction:column;justify-content:flex-end;background:var(--mar)}
+.plan-cat img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.plan-cat::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(5,25,28,.92) 15%,rgba(5,25,28,.35) 60%,rgba(5,25,28,.1))}
+.plan-cat .txt{position:relative;z-index:1;padding:22px;display:grid;gap:8px}
+.plan-cat h3{font-size:22px;font-weight:800}
+.plan-cat p{font-size:14.5px;color:#E3EEEF}
+.plan-cat .datos-cat{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px;font-weight:600;color:#fff}
+.plan-cat .desde{font-size:15px;font-weight:700;color:#FFD9D3}
+.nota-precio{color:var(--gris);font-size:13.5px;margin-top:10px}
+.extras{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;align-items:start}
+.extras details{border:1px solid var(--linea);border-radius:14px;padding:0 20px;background:#fff}
+.extras summary{cursor:pointer;list-style:none;padding:18px 0;font-weight:800;font-size:17px;display:flex;justify-content:space-between;gap:12px}
+.extras summary::-webkit-details-marker{display:none}
+.extras summary::after{content:"+";font-size:22px;line-height:1;color:var(--coral-osc)}
+.extras details[open] summary::after{content:"–"}
+.extras .cont{padding-bottom:18px;display:grid;gap:14px;font-size:14.5px}
+.extras h4{font-size:15px;font-weight:800;color:var(--mar)}
+.extras ul{list-style:none;display:grid;gap:5px;color:var(--gris)}
+.extras li b{color:var(--tinta);font-weight:700}
+@media (max-width:900px){.catamaran .wrap.cat-top,.pisos,.planes-cat,.extras{grid-template-columns:1fr}.catamaran .wrap.cat-top{gap:28px}}
+
 /* Arma tu plan */
 .armar{background:var(--mar);color:#fff}
 .armar .wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:48px;align-items:start}
@@ -322,6 +359,7 @@ body.con-plan .wa{bottom:88px}
     <nav class="menu" aria-label="Menú">
       <a href="#tours">Tours</a>
       <a href="#lancha">Lancha privada</a>
+      <a href="#catamaran">Catamarán</a>
       <a href="#planes">Restaurantes</a>
       <a href="#clientes">Clientes</a>
       <a href="#armar">Arma tu plan</a>
@@ -343,7 +381,7 @@ body.con-plan .wa{bottom:88px}
           <a class="btn btn-borde" href="#armar">Arma tu plan</a>
         </div>
         <div class="datos">
-          <div><strong>11</strong>tours y experiencias</div>
+          <div><strong>13</strong>tours y servicios</div>
           <div><strong>1</strong>solo chat para reservar</div>
           <div><strong>WhatsApp</strong>respuesta directa</div>
         </div>
@@ -417,6 +455,110 @@ body.con-plan .wa{bottom:88px}
           <figure><img src="img/barco-makaira.webp" alt="Lancha deportiva blanca navegando" loading="lazy"><figcaption>Lancha deportiva</figcaption></figure>
           <figure><img src="img/barco-mangelito.webp" alt="Lancha con techo blanco frente a Bocagrande" loading="lazy"><figcaption>Lancha con techo</figcaption></figure>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec catamaran" id="catamaran">
+    <div class="wrap cat-top">
+      <div class="fotos-l">
+        <div class="foto-l"><img src="img/catamaran-1.webp" alt="Catamarán privado navegando en las Islas del Rosario" loading="lazy"></div>
+        <div class="miniaturas">
+          <button type="button" aria-current="true" data-src="catamaran-1" aria-label="Foto 1: navegando en las islas"><img src="img/catamaran-1.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="catamaran-jacuzzi" aria-label="Foto 2: jacuzzi en la cubierta"><img src="img/catamaran-jacuzzi.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="catamaran-interior" aria-label="Foto 3: sala y cocina con aire acondicionado"><img src="img/catamaran-interior.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="catamaran-aereo" aria-label="Foto 4: vista desde el aire"><img src="img/catamaran-aereo.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="bahia-atardecer" aria-label="Foto 5: la bahía al atardecer"><img src="img/bahia-atardecer.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="islas-rosario" aria-label="Foto 6: Islas del Rosario"><img src="img/islas-rosario.webp" alt="" loading="lazy"></button>
+        </div>
+      </div>
+      <div>
+        <div class="sello-cat">Único en Colombia con jacuzzi a bordo</div>
+        <h2>Catamarán privado de 61 pies</h2>
+        <p class="lead">Navega las Islas del Rosario y la bahía con estilo: jacuzzi, cocina con asador, habitaciones con aire acondicionado y sonido profesional.</p>
+        <div class="capacidad">
+          <div><span>Islas del Rosario, Cholón, Barú o Lago de los Vásquez</span><b>hasta 40 personas</b></div>
+          <div><span>Paseo por la bahía de Cartagena</span><b>hasta 50 personas</b></div>
+          <div><span>Plan dormir a bordo (se arma a tu medida)</span><b>hasta 8 personas</b></div>
+          <div><span>Tripulación incluida</span><b>4 personas</b></div>
+        </div>
+        <div class="acciones">
+          <button class="btn agregar" aria-pressed="false" data-id="catamaran">Agregar</button>
+          <a class="btn btn-coral" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20informaci%C3%B3n%20del%20catamar%C3%A1n%20con%20jacuzzi" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>Cotizar el catamarán</a>
+        </div>
+      </div>
+    </div>
+    <div class="wrap">
+      <div class="pisos">
+        <div class="piso">
+          <h3>Primer piso <span>· todo con aire acondicionado</span></h3>
+          <ul>
+            <li>2 habitaciones con baño</li>
+            <li>Habitación de la tripulación con baño</li>
+            <li>Baño adicional en el pasillo</li>
+            <li>Sala en la proa con asoleadora</li>
+            <li>Sala y cocina completamente dotadas</li>
+            <li>Generador de 27 KVA e iluminación ambiental</li>
+          </ul>
+        </div>
+        <div class="piso azul">
+          <h3>Segundo piso <span>· cubierta</span></h3>
+          <ul>
+            <li>Jacuzzi</li>
+            <li>Cocina auxiliar dotada, con asador a gas</li>
+            <li>Asoleadora en la proa alrededor del jacuzzi</li>
+            <li>Sillas y sofás</li>
+            <li>Iluminación ambiental azul y cálida</li>
+            <li>Sonido JL profesional</li>
+          </ul>
+        </div>
+      </div>
+      <div class="planes-cat">
+        <div class="plan-cat">
+          <img src="img/islas-rosario.webp" alt="Islas del Rosario desde el aire" loading="lazy">
+          <div class="txt">
+            <h3>Islas del Rosario, Barú y Cholón</h3>
+            <p>Aguas cristalinas y corales en las Islas del Rosario, playas de arena blanca en Barú y la mejor fiesta en el agua en Cholón.</p>
+            <div class="datos-cat"><span>Día completo</span><span>7:00 a. m. a 5:00 p. m.</span></div>
+            <div class="desde">Desde $10.500.000 por el catamarán</div>
+          </div>
+        </div>
+        <div class="plan-cat">
+          <img src="img/bahia-atardecer.webp" alt="Bocagrande al atardecer desde la bahía" loading="lazy">
+          <div class="txt">
+            <h3>Bahía de Cartagena</h3>
+            <p>La ciudad desde el mar: murallas, luces coloniales, el atardecer sobre la bahía y una navegación de noche.</p>
+            <div class="datos-cat"><span>2 horas, con horas adicionales</span><span>6:00 p. m. a 11:59 p. m.</span><span>También día completo, 9:00 a. m. a 5:00 p. m.</span></div>
+            <div class="desde">Desde $2.700.000 por 2 horas</div>
+          </div>
+        </div>
+      </div>
+      <p class="nota-precio">Precios en pesos colombianos por el catamarán completo, según el número de personas y la temporada. Temporada alta: enero, Semana Santa, junio y del 20 al 31 de diciembre. Te envío la tarifa exacta por WhatsApp.</p>
+      <div class="extras">
+        <details>
+          <summary>Comida a bordo (opcional)</summary>
+          <div class="cont">
+            <div><h4>Menú por tiempos · $20.000 cada opción (mínimo 4)</h4>
+              <ul><li>El chef cocina durante el recorrido y va sirviendo: ceviche de camarones, pinchos de carne, pollo, camarón o mixtos, minihamburguesas, croquetas de cangrejo, burritos de pollo, tacos de carnitas, bruschetta de pesto con mozzarella y jamón serrano, canastas de plátano con posta cartagenera, mini picada de frutas, ceviche de chicharrón, papas criollas con tocineta y chicharrón de pescado.</li></ul></div>
+            <div><h4>Trilogía de fritos caribeños · $40.000</h4>
+              <ul><li>Escoge 3: quibbe, carimañola de queso o de carne, empanada de queso o de papa y mini arepa de huevo.</li></ul></div>
+            <div><h4>Plato fuerte · $130.000 por persona</h4>
+              <ul><li>Pescado, mariscos, lomito, cerdo o pollo (langosta: $20.000 adicional). Incluye tabla de frutas, entrada, proteína y 2 acompañantes. El menú se diseña con el chef a tu gusto.</li></ul></div>
+            <div><h4>Paella</h4>
+              <ul><li><b>Marinera</b> $130.000: camarones, almejas y anillos de calamar (langosta: $20.000 adicional)</li><li><b>De tierra</b> $130.000: pollo, chorizo, carne y cerdo</li><li><b>Vegetariana</b> $85.000</li></ul></div>
+          </div>
+        </details>
+        <details>
+          <summary>Servicios adicionales (opcionales)</summary>
+          <div class="cont">
+            <div><h4>Barra libre</h4><ul><li>Sin alcohol, básica, premium o diamante. Pide el menú de bebidas.</li></ul></div>
+            <div><h4>Sonido y DJ</h4><ul><li><b>DJ profesional</b> con equipos y generador: $1.400.000</li><li><b>Sonido BOSE</b> de alta fidelidad: $750.000</li><li>Iluminación, pantallas y efectos especiales: consultar</li></ul></div>
+            <div><h4>Música en vivo (por hora)</h4><ul><li>Saxofón sin amplificación: $650.000</li><li>DJ y saxofón: $750.000 (hora extra $350.000)</li><li>Son cubano con cantante y sonido: $1.800.000</li><li>Mariachis: $1.300.000</li><li>Papayera o parranda vallenata: $1.000.000</li></ul></div>
+            <div><h4>Fotografía y video con dron</h4><ul><li>2 horas en la bahía: $900.000</li><li>Día completo en las islas: $1.600.000</li></ul></div>
+            <div><h4>Fuegos artificiales (con pirotécnico)</h4><ul><li>30 segundos, 25 tiros: $750.000</li><li>1 minuto y 30 segundos, 200 tiros: $1.500.000</li><li>2 minutos, 555 tiros: $2.950.000</li><li>Humo de colores: $95.000</li></ul></div>
+            <div><h4>Eventos a bordo</h4><ul><li>Eventos corporativos con tu marca, matrimonios con ceremonia simbólica, cumpleaños y despedidas de soltero o soltera.</li></ul></div>
+          </div>
+        </details>
       </div>
     </div>
   </section>
@@ -534,7 +676,7 @@ const WA = '573006279421';
 // TOURS: la lista que mandó Lore el 20 nov 2026 (mismo orden). LUGARES: los del linkbio.
 // Para agregar uno: copiar una línea (el id no se repite).
 const TOURS = [
-  {id:'islas', img:'videos/v-islas-piscina', n:'Tour 5 islas', ic:'islas', t:'Islas', l:['Oceanario','Isla Barú','Cholón','Snorkel'], inc:'Incluye agua y hielo'},
+  {id:'islas', img:'islas-rosario', n:'Tour 5 islas', ic:'islas', t:'Islas', l:['Oceanario','Isla Barú','Cholón','Snorkel'], inc:'Incluye agua y hielo'},
   {id:'cholon', img:'cholon', n:'Cholón', ic:'bote', t:'Islas', d:'Día de playa y fiesta en el agua.', l:['Embarcación privada','Embarcación compartida'], ver:'#lancha', verTxt:'Ver la lancha'},
   {id:'ciudad', n:'Recorrido por la ciudad', ic:'castillo', t:'Ciudad', l:['Castillo de San Felipe','Las Botas Viejas','Letras de Cartagena','Convento de La Popa','Fuerte del Pastelillo (Club de Pesca)','Ciudad amurallada','Getsemaní','Museo del Chocolate y reloj floral']},
   {id:'totumo', n:'Volcán del Totumo', ic:'volcan', t:'Excursión', d:'Baño de lodo dentro del volcán, a las afueras de Cartagena.'},
@@ -544,6 +686,8 @@ const TOURS = [
   {id:'atardecer', img:'atardecer', n:'Atardecer en el mar', ic:'atardecer', t:'Paseo en el mar', d:'Mira el atardecer desde el muelle, en catamarán o en lancha rápida.', l:['Excursión de 2 horas'], inc:'Barra libre'},
   {id:'helicoptero', img:'helicoptero', n:'Cartagena en helicóptero', ic:'helice', t:'Experiencia', d:'Mira la ciudad, las murallas y el mar desde el aire.'},
   {id:'chiva', img:'chiva-1', n:'Chiva rumbera', ic:'bus', t:'Rumba', d:'Recorrido de noche en bus típico con música y fiesta.'},
+  {id:'vans', n:'Transporte en van', ic:'bus', t:'Transporte', d:'Traslados privados para tu grupo: aeropuerto, hotel, tours y salidas de noche.'},
+  {id:'limosina', n:'Limosina', ic:'copa', t:'Transporte', d:'Llega con estilo a tu cena, cumpleaños, boda o despedida.'},
   {id:'cuatrimotos', img:'cuatrimotos', n:'Cuatrimotos', ic:'cuatri', t:'Aventura', d:'Recorrido en cuatrimoto por la playa con Cartagena ATV.', ig:'https://www.instagram.com/cartagena_atv?igsh=NTZkYW94b3I3aDk4'},
 ];
 const LUGARES = [
@@ -555,7 +699,7 @@ const LUGARES = [
   {id:'niku', n:'Niku', f:'comida', c:'Restaurante', img:'niku', d:'Cocina de autor preparada frente a ti.', ig:'https://www.instagram.com/nikurestaurante?igsh=NTN3ZWJxZGoyZ3Z3'},
   {id:'morena', n:'Morena', f:'comida', c:'Restaurante', img:'morena', d:'Morena Orígenes: sabores y ambiente con raíces del Caribe.', ig:'https://www.instagram.com/morenaorigenes?igsh=cmJ0NncxbWJwYnNn'},
 ];
-const NOMBRES = {lancha:'Lancha privada'};
+const NOMBRES = {lancha:'Lancha privada', catamaran:'Catamarán con jacuzzi'};
 [...TOURS, ...LUGARES].forEach(x=>NOMBRES[x.id]=x.n);
 const wa = t => `https://wa.me/${WA}?text=${encodeURIComponent(t)}`;
 const elegidos = new Set();
@@ -668,11 +812,11 @@ visor.addEventListener('click', e=>{ if (e.target === visor) cerrar(); });
 document.addEventListener('keydown', e=>{ if (visor.hidden) return; if (e.key==='Escape') cerrar(); if (e.key==='ArrowLeft') abrir(actual-1); if (e.key==='ArrowRight') abrir(actual+1); });
 pintarGaleria();
 
-const lanchaFoto = document.getElementById('lanchaFoto');
-document.getElementById('miniaturas').addEventListener('click', e=>{
-  const b = e.target.closest('[data-src]'); if(!b) return;
-  lanchaFoto.src = `img/${b.dataset.src}.webp`;
-  document.querySelectorAll('#miniaturas button').forEach(x=>x.setAttribute('aria-current', x===b));
+document.addEventListener('click', e=>{
+  const b = e.target.closest('.miniaturas [data-src]'); if(!b) return;
+  const caja = b.closest('.fotos-l');
+  caja.querySelector('.foto-l img').src = `img/${b.dataset.src}.webp`;
+  caja.querySelectorAll('.miniaturas button').forEach(x=>x.setAttribute('aria-current', x===b));
 });
 
 function pintar(){

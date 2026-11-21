@@ -47,3 +47,9 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   `c-muelle`, `c-f-lancha-grupo`); se muestran 13 antes de «Ver más». Sin teléfonos visibles.
 - **21 nov 2026**: 2 fotos de chivas de Rigoberto → tour «Chiva rumbera» (`img/chiva-1`, `chiva-2`; botón «Fotos» que abre
   el visor; en `VIDEOS` una entrada sin `v` es foto y el botón dice «Fotos» en vez de «Video»).
+- **21 nov 2026: catamarán con jacuzzi** (PDF «MAVI» de Rigoberto, tarifa clientes 2026). Sección `#catamaran` debajo de la
+  lancha: 61 pies, capacidades (islas 40, bahía 50, dormir a bordo 8, tripulación 4), pisos, planes Islas/Bahía con precio
+  «desde» ($10.500.000 día completo islas; $2.700.000 por 2 h en la bahía) y listas desplegables con comida y servicios
+  adicionales con sus precios. **No se nombra al proveedor (MAVI)** para que el cliente reserve con Lore. Fotos sacadas del
+  PDF: `img/catamaran-*.webp`, `bahia-atardecer.webp`, `islas-rosario.webp` (esta también es ahora la foto del Tour 5 islas).
+  Tours nuevos: «Transporte en van» y «Limosina» (fotos pendientes; se buscan en Wikimedia Commons, con crédito al autor).
