@@ -9,7 +9,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   planes de viaje en Cartagena) y pidió «hazme una página». No dijo si es cliente que paga o muestra de venta.
 - Página estática (un `index.html` y la carpeta `img`), como ZENOVA. Todo sale del linkbio: textos, 9 planes con su foto
   e Instagram (Baruco by Cuzco, Delirium, Cholón, Quebracho, Playa Tranquila, Sublime Premium Spa, Niku, Cartagena ATV
-  —cuatrimotos—, Morena Orígenes), WhatsApp 573148918445, Instagram @ldelcfo, TikTok @ldelcf, Facebook y PayPal
+  —cuatrimotos—, Morena Orígenes), WhatsApp 573006279421 (desde el 21 nov 2026, pedido de Rigoberto; antes 573148918445, el del linkbio), Instagram @ldelcfo, TikTok @ldelcf, Facebook y PayPal
   (paypal.me/LoreinysFernandez). Las descripciones cortas de cada plan las escribió Claude mirando las fotos: Lore debe revisarlas.
   Sin precios (el linkbio no tiene).
 - Colores de su marca en el linkbio (coral #F59E95/#EF877D, letra Montserrat) + azul mar para contraste.
