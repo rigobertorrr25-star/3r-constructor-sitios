@@ -181,9 +181,22 @@ h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;line-height:1.1;letter-spaci
 
 /* Lancha privada */
 .lancha{background:#F3F8F8}
-.lancha .wrap{display:grid;grid-template-columns:1fr 1.15fr;gap:48px;align-items:center}
-.lancha .foto-l{border-radius:16px;overflow:hidden;aspect-ratio:1/1;max-width:100%}
+.lancha .wrap:first-child{display:grid;grid-template-columns:1fr 1.15fr;gap:48px;align-items:center}
+.lancha .fotos-l{display:grid;gap:8px;min-width:0}
+.lancha .foto-l{border-radius:16px;overflow:hidden;aspect-ratio:3/2;max-width:100%;background:#DCE8E9}
 .lancha .foto-l img{width:100%;height:100%;object-fit:cover}
+.miniaturas{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.miniaturas button{aspect-ratio:1/1;border-radius:8px;overflow:hidden;opacity:.7;border:2px solid transparent;transition:opacity .2s}
+.miniaturas button[aria-current="true"]{opacity:1;border-color:var(--coral)}
+.miniaturas img{width:100%;height:100%;object-fit:cover}
+.flota-barcos{margin-top:44px}
+.flota-barcos h3{font-size:20px;font-weight:800}
+.flota-barcos p{color:var(--gris);margin:6px 0 16px}
+.barcos{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.barcos figure{border-radius:12px;overflow:hidden;aspect-ratio:3/4;position:relative}
+.barcos img{width:100%;height:100%;object-fit:cover}
+.barcos figcaption{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.94);color:var(--mar);font-size:12px;font-weight:700;padding:5px 8px;border-radius:6px}
+@media (max-width:900px){.barcos{grid-template-columns:repeat(5,minmax(150px,1fr));overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px}.barcos figure{scroll-snap-align:start}}
 .lancha .lead{color:var(--gris);font-size:17px;margin:12px 0 22px}
 .ficha{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 22px;margin-bottom:22px}
 .ficha div{display:flex;gap:10px;align-items:flex-start;font-size:15px}
@@ -192,7 +205,7 @@ h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;line-height:1.1;letter-spaci
 .zarpe{display:flex;gap:10px;align-items:center;font-weight:700;color:var(--mar);background:#fff;border:1px solid var(--linea);border-radius:10px;padding:12px 14px;margin-bottom:20px}
 .zarpe svg{width:22px;height:22px;color:var(--coral-osc);flex:none}
 .lancha .acciones .btn{flex:1}
-@media (max-width:900px){.lancha .wrap{grid-template-columns:1fr;gap:28px}.lancha .foto-l{aspect-ratio:16/10}}
+@media (max-width:900px){.lancha .wrap:first-child{grid-template-columns:1fr;gap:28px}}
 @media (max-width:480px){.ficha{grid-template-columns:1fr}}
 
 /* Arma tu plan */
@@ -332,8 +345,8 @@ body.con-plan .wa{bottom:88px}
       </div>
       <div class="mosaico">
         <img class="a" src="img/cholon.webp" alt="Lancha llegando a Cholón, aguas verdes y casas sobre el agua">
-        <img class="b" src="img/delirium.webp" alt="Rumba en Delirium con DJ">
-        <img class="c" src="img/baruco.webp" alt="Plato y coctel en Baruco by Cuzco">
+        <img class="b" src="img/lancha-6.webp" alt="Lancha privada frente a Bocagrande">
+        <img class="c" src="img/helicoptero.webp" alt="Helicóptero sobre Bocagrande">
         <img class="d" src="img/cuatrimotos.webp" alt="Recorrido en cuatrimoto por la playa">
         <div class="sello"><img src="img/lore.webp" alt="">Hola, soy Lore. Te ayudo a armar tu viaje.</div>
       </div>
@@ -354,7 +367,17 @@ body.con-plan .wa{bottom:88px}
 
   <section class="sec lancha" id="lancha">
     <div class="wrap">
-      <div class="foto-l"><img src="img/cholon.webp" alt="Lancha en las islas, cerca de Cholón" loading="lazy"></div>
+      <div class="fotos-l">
+        <div class="foto-l"><img id="lanchaFoto" src="img/lancha-1.webp" alt="Lancha privada Blessed Royale en la bahía de Cartagena" loading="lazy"></div>
+        <div class="miniaturas" id="miniaturas">
+          <button type="button" aria-current="true" data-src="lancha-1" aria-label="Foto 1: la lancha en la bahía"><img src="img/lancha-1.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="lancha-2" aria-label="Foto 2: vista desde arriba"><img src="img/lancha-2.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="lancha-3" aria-label="Foto 3: techo y motores"><img src="img/lancha-3.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="lancha-4" aria-label="Foto 4: cojines de la proa"><img src="img/lancha-4.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="lancha-5" aria-label="Foto 5: proa y sonido"><img src="img/lancha-5.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="lancha-6" aria-label="Foto 6: frente a Bocagrande"><img src="img/lancha-6.webp" alt="" loading="lazy"></button>
+        </div>
+      </div>
       <div>
         <h2>Lancha privada para tu grupo</h2>
         <p class="lead">Tu mejor plan en Cartagena está aquí: las islas, Cholón o el atardecer, a tu ritmo y solo con tu gente.</p>
@@ -374,6 +397,19 @@ body.con-plan .wa{bottom:88px}
         <div class="acciones">
           <button class="btn agregar" aria-pressed="false" data-id="lancha">Agregar</button>
           <a class="btn btn-coral" href="https://wa.me/573148918445?text=Hola%20Lore%2C%20quiero%20reservar%20la%20lancha%20privada" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>Reservar la lancha</a>
+        </div>
+      </div>
+    </div>
+    <div class="wrap flota-barcos">
+      <div>
+        <h3>¿Son más personas? Hay más lanchas y yates</h3>
+        <p>Según tu grupo y tu presupuesto te consigo la embarcación ideal para las islas o Cholón.</p>
+        <div class="barcos">
+          <figure><img src="img/barco-sea-dream.webp" alt="Yate frente a Bocagrande" loading="lazy"><figcaption>Yate</figcaption></figure>
+          <figure><img src="img/barco-yate.webp" alt="Yate en Islas del Rosario" loading="lazy"><figcaption>Yate en las islas</figcaption></figure>
+          <figure><img src="img/barco-roja.webp" alt="Lancha rápida con cojines rojos" loading="lazy"><figcaption>Lancha rápida</figcaption></figure>
+          <figure><img src="img/barco-makaira.webp" alt="Lancha deportiva blanca navegando" loading="lazy"><figcaption>Lancha deportiva</figcaption></figure>
+          <figure><img src="img/barco-mangelito.webp" alt="Lancha con techo blanco frente a Bocagrande" loading="lazy"><figcaption>Lancha con techo</figcaption></figure>
         </div>
       </div>
     </div>
@@ -492,17 +528,17 @@ const WA = '573148918445';
 // TOURS: la lista que mandó Lore el 20 nov 2026 (mismo orden). LUGARES: los del linkbio.
 // Para agregar uno: copiar una línea (el id no se repite).
 const TOURS = [
-  {id:'islas', n:'Tour 5 islas', ic:'islas', t:'Islas', l:['Oceanario','Isla Barú','Cholón','Snorkel'], inc:'Incluye agua y hielo'},
-  {id:'cholon', n:'Cholón', ic:'bote', t:'Islas', d:'Día de playa y fiesta en el agua.', l:['Embarcación privada','Embarcación compartida'], ver:'#lancha', verTxt:'Ver la lancha'},
+  {id:'islas', img:'islas', n:'Tour 5 islas', ic:'islas', t:'Islas', l:['Oceanario','Isla Barú','Cholón','Snorkel'], inc:'Incluye agua y hielo'},
+  {id:'cholon', img:'cholon', n:'Cholón', ic:'bote', t:'Islas', d:'Día de playa y fiesta en el agua.', l:['Embarcación privada','Embarcación compartida'], ver:'#lancha', verTxt:'Ver la lancha'},
   {id:'ciudad', n:'Recorrido por la ciudad', ic:'castillo', t:'Ciudad', l:['Castillo de San Felipe','Las Botas Viejas','Letras de Cartagena','Convento de La Popa','Fuerte del Pastelillo (Club de Pesca)','Ciudad amurallada','Getsemaní','Museo del Chocolate y reloj floral']},
   {id:'totumo', n:'Volcán del Totumo', ic:'volcan', t:'Excursión', d:'Baño de lodo dentro del volcán, a las afueras de Cartagena.'},
   {id:'costa', n:'Excursión a Barranquilla y Santa Marta', ic:'bus', t:'Excursión de un día', d:'En bus y con guía, visitando los lugares turísticos de las dos ciudades.', l:['Salida de Cartagena: 5:00 a. m.','Regreso a Cartagena: 10:00 p. m. del mismo día']},
   {id:'palenque', n:'Palenque', ic:'tambor', t:'Excursión', d:'San Basilio de Palenque: música, historia y cultura afrocolombiana.'},
-  {id:'reservas', n:'Reservas en restaurantes y clubes', ic:'copa', t:'Reservas', d:'Te consigo mesa en los mejores lugares de la ciudad.', ver:'#planes', verTxt:'Ver lugares'},
-  {id:'atardecer', n:'Atardecer en el mar', ic:'atardecer', t:'Paseo en el mar', d:'Mira el atardecer desde el muelle, en catamarán o en lancha rápida.', l:['Excursión de 2 horas'], inc:'Barra libre'},
-  {id:'helicoptero', n:'Cartagena en helicóptero', ic:'helice', t:'Experiencia', d:'Mira la ciudad, las murallas y el mar desde el aire.'},
+  {id:'reservas', img:'mariscos', n:'Reservas en restaurantes y clubes', ic:'copa', t:'Reservas', d:'Te consigo mesa en los mejores lugares de la ciudad.', ver:'#planes', verTxt:'Ver lugares'},
+  {id:'atardecer', img:'atardecer', n:'Atardecer en el mar', ic:'atardecer', t:'Paseo en el mar', d:'Mira el atardecer desde el muelle, en catamarán o en lancha rápida.', l:['Excursión de 2 horas'], inc:'Barra libre'},
+  {id:'helicoptero', img:'helicoptero', n:'Cartagena en helicóptero', ic:'helice', t:'Experiencia', d:'Mira la ciudad, las murallas y el mar desde el aire.'},
   {id:'chiva', n:'Chiva rumbera', ic:'bus', t:'Rumba', d:'Recorrido de noche en bus típico con música y fiesta.'},
-  {id:'cuatrimotos', n:'Cuatrimotos', ic:'cuatri', t:'Aventura', d:'Recorrido en cuatrimoto por la playa con Cartagena ATV.', ig:'https://www.instagram.com/cartagena_atv?igsh=NTZkYW94b3I3aDk4'},
+  {id:'cuatrimotos', img:'cuatrimotos', n:'Cuatrimotos', ic:'cuatri', t:'Aventura', d:'Recorrido en cuatrimoto por la playa con Cartagena ATV.', ig:'https://www.instagram.com/cartagena_atv?igsh=NTZkYW94b3I3aDk4'},
 ];
 const LUGARES = [
   {id:'baruco', n:'Baruco by Cuzco', f:'comida', c:'Restaurante', img:'baruco', d:'Cocina y coctelería de autor para una noche especial.', ig:'https://www.instagram.com/barucobycuzco?igsh=MXc1Mm9leWltdHNrYg=='},
@@ -582,6 +618,13 @@ visor.querySelector('.sig').addEventListener('click', ()=>abrir(actual+1));
 visor.addEventListener('click', e=>{ if (e.target === visor) cerrar(); });
 document.addEventListener('keydown', e=>{ if (visor.hidden) return; if (e.key==='Escape') cerrar(); if (e.key==='ArrowLeft') abrir(actual-1); if (e.key==='ArrowRight') abrir(actual+1); });
 pintarGaleria();
+
+const lanchaFoto = document.getElementById('lanchaFoto');
+document.getElementById('miniaturas').addEventListener('click', e=>{
+  const b = e.target.closest('[data-src]'); if(!b) return;
+  lanchaFoto.src = `img/${b.dataset.src}.webp`;
+  document.querySelectorAll('#miniaturas button').forEach(x=>x.setAttribute('aria-current', x===b));
+});
 
 function pintar(){
   const caja = document.getElementById('elegidos');
