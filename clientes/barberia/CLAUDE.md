@@ -34,9 +34,9 @@ reservas y los pedidos de la tienda.
 - **Tienda: solo gorras, en pasarela** (21 nov 2026, Rigoberto quitó los suéteres «por el momento»): sección «Gorras.»
   antes de «Antes de venir». 13 fotos de la carpeta de Drive «BARBERÍA» de Rigoberto, en `img/gorras/` (recortadas a
   4:5, 720×900). La pasarela avanza sola cada 3,2 s cuando está en pantalla, se detiene con el mouse encima o al
-  tocarla, tiene flechas y rayitas abajo. Cada gorra tiene «Pedir por WhatsApp» con su nombre y precio. Datos en
-  `GORRAS` (nombre y foto; `precio` opcional por gorra) y `PRECIO_GORRA` ($45.000, de ejemplo). Los nombres son
-  descriptivos (color y estilo), sin marcas.
+  tocarla, tiene flechas y rayitas abajo. **Sin precio** (21 nov 2026, Rigoberto): cada gorra solo muestra el nombre y
+  «Pedir por WhatsApp», y el mensaje pregunta si está disponible y qué precio tiene. Datos en `GORRAS` (nombre y
+  foto). Los nombres son descriptivos (color y estilo), sin marcas.
 - **Solo para hombres** (21 nov 2026, Rigoberto): se atienden hombres y niños.
 - **Un solo barbero: Daniel Mejía** (21 nov 2026, Rigoberto quitó a los demás). Su foto está pendiente (la manda
   Rigoberto): mientras tanto se ven sus iniciales «DM». Cuando llegue, guardarla como `img/equipo-daniel.jpg` y poner
@@ -60,7 +60,7 @@ reservas y los pedidos de la tienda.
 - No hay pago en línea: al confirmar se abre WhatsApp con la reserva escrita. Las horas ocupadas son de ejemplo
   (se calculan solas), no hay agenda real detrás.
 - **De ejemplo todavía** (también el estado inicial de la fila): dirección (Calle 27 # 24-15, Manga, Cartagena),
-  horario, precios de cortes y de las gorras. Los datos se cambian arriba del `<script>` (WHATSAPP, SERVICIOS, BARBEROS,
+  horario y precios de los cortes. Los datos se cambian arriba del `<script>` (WHATSAPP, SERVICIOS, BARBEROS,
   HORARIO) y en los textos del HTML.
 - Fotos restantes: Unsplash (licencia libre, sin atribución obligatoria). Cambiarlas por las del negocio real cuando haya cliente.
 - Vista previa privada para Rigoberto: https://claude.ai/artifact/5W7SfJ3inW7sUoVgZexYKo (se publica desde una copia
