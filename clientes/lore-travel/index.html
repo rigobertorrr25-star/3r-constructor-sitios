@@ -142,8 +142,9 @@ h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;line-height:1.1;letter-spaci
 .tour li{display:flex;gap:8px;align-items:flex-start}
 .tour li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--coral);margin-top:8px;flex:none}
 .tour .incluye{font-size:13.5px;font-weight:600;color:var(--mar-2);background:#EAF3F4;border-radius:8px;padding:8px 10px}
-.tour .botones{display:flex;gap:8px;margin-top:auto;padding-top:6px}
-.tour .botones .btn{flex:1;padding:12px 10px;font-size:14px}
+.tour .botones{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:6px}
+.tour .botones .btn{flex:1 1 40%;padding:12px 10px;font-size:14px}
+.tour .botones .ig{flex:0 0 48px}
 .tour .ver{border:2px solid var(--linea);color:var(--mar)}
 .tour .ver:hover{border-color:var(--coral)}
 
@@ -164,7 +165,7 @@ h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;line-height:1.1;letter-spaci
 .galeria button.ancha{grid-column:span 2;aspect-ratio:auto}
 .galeria img,.galeria video{width:100%;height:100%;object-fit:cover;transition:transform .4s}
 .galeria button:hover img,.galeria button:hover video{transform:scale(1.04)}
-.galeria .tag{position:absolute;left:8px;bottom:8px;background:rgba(13,57,64,.82);color:#fff;font-size:12px;font-weight:700;padding:5px 8px;border-radius:6px}
+.galeria .tag{position:absolute;left:8px;bottom:8px;max-width:calc(100% - 16px);text-align:left;background:rgba(13,57,64,.82);color:#fff;font-size:12px;font-weight:700;padding:5px 8px;border-radius:6px}
 .galeria .play{position:absolute;right:8px;top:8px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.9);color:var(--mar);display:grid;place-items:center}
 .galeria .play svg{width:14px;height:14px}
 .galeria button:focus-visible,.tour a:focus-visible,.btn:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
@@ -396,6 +397,7 @@ body.con-plan .wa{bottom:88px}
         <div class="zarpe"><svg><use href="#i-pin"/></svg>Zarpe: Muelle de los Pegasos</div>
         <div class="acciones">
           <button class="btn agregar" aria-pressed="false" data-id="lancha">Agregar</button>
+          <button class="btn btn-borde" type="button" data-video="lancha" style="color:var(--mar)"><svg><use href="#i-play"/></svg>Ver video</button>
           <a class="btn btn-coral" href="https://wa.me/573148918445?text=Hola%20Lore%2C%20quiero%20reservar%20la%20lancha%20privada" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>Reservar la lancha</a>
         </div>
       </div>
@@ -528,7 +530,7 @@ const WA = '573148918445';
 // TOURS: la lista que mandó Lore el 20 nov 2026 (mismo orden). LUGARES: los del linkbio.
 // Para agregar uno: copiar una línea (el id no se repite).
 const TOURS = [
-  {id:'islas', img:'islas', n:'Tour 5 islas', ic:'islas', t:'Islas', l:['Oceanario','Isla Barú','Cholón','Snorkel'], inc:'Incluye agua y hielo'},
+  {id:'islas', img:'videos/v-islas-piscina', n:'Tour 5 islas', ic:'islas', t:'Islas', l:['Oceanario','Isla Barú','Cholón','Snorkel'], inc:'Incluye agua y hielo'},
   {id:'cholon', img:'cholon', n:'Cholón', ic:'bote', t:'Islas', d:'Día de playa y fiesta en el agua.', l:['Embarcación privada','Embarcación compartida'], ver:'#lancha', verTxt:'Ver la lancha'},
   {id:'ciudad', n:'Recorrido por la ciudad', ic:'castillo', t:'Ciudad', l:['Castillo de San Felipe','Las Botas Viejas','Letras de Cartagena','Convento de La Popa','Fuerte del Pastelillo (Club de Pesca)','Ciudad amurallada','Getsemaní','Museo del Chocolate y reloj floral']},
   {id:'totumo', n:'Volcán del Totumo', ic:'volcan', t:'Excursión', d:'Baño de lodo dentro del volcán, a las afueras de Cartagena.'},
@@ -554,6 +556,14 @@ const NOMBRES = {lancha:'Lancha privada'};
 const wa = t => `https://wa.me/${WA}?text=${encodeURIComponent(t)}`;
 const elegidos = new Set();
 
+// Videos de los planes
+const VIDEOS = {
+  cholon: [{f:'videos/v-cholon', v:1, t:'Cholón', alt:'Llegada en lancha a Cholón'}],
+  islas: [{f:'videos/v-islas-piscina', v:1, t:'Beach club en las islas', alt:'Fiesta en la piscina de un beach club'},
+          {f:'videos/v-islas-restaurante', v:1, t:'Almuerzo frente al mar', alt:'Restaurante de playa con vista a un yate'},
+          {f:'videos/v-playa', v:1, t:'Día de playa', alt:'Mesa de playa con piña y cervezas'}],
+  lancha: [{f:'videos/v-lancha', v:1, t:'Lancha frente a Bocagrande', alt:'Lancha navegando frente a Bocagrande'}],
+};
 document.getElementById('listaTours').innerHTML = TOURS.map(p=>`
   <article class="tour${p.img ? ' con-foto' : ''}">
     ${p.img ? `<div class="foto"><img src="img/${p.img}.webp" alt="${p.n}" loading="lazy"></div>` : ''}
@@ -566,6 +576,7 @@ document.getElementById('listaTours').innerHTML = TOURS.map(p=>`
       <button class="btn agregar" aria-pressed="false" data-id="${p.id}">Agregar</button>
       <a class="btn btn-coral" href="${wa('Hola Lore, quiero información de: ' + p.n)}" target="_blank" rel="noopener">Reservar</a>
       ${p.ver ? `<a class="btn ver" href="${p.ver}">${p.verTxt}</a>` : ''}
+      ${VIDEOS[p.id] ? `<button class="btn ver" type="button" data-video="${p.id}"><svg><use href="#i-play"/></svg>Video</button>` : ''}
       ${p.ig ? `<a class="btn ig" href="${p.ig}" target="_blank" rel="noopener" aria-label="Ver ${p.n} en Instagram"><svg><use href="#i-ig"/></svg></a>` : ''}
     </div>
     </div>
@@ -586,14 +597,37 @@ document.getElementById('lista').innerHTML = LUGARES.map(p=>`
   </article>`).join('');
 
 // Experiencias de clientes: fotos (img/clientes/*.webp) y videos (img/clientes/*.mp4 + póster .webp).
-const CLIENTES = [];
-const VISIBLES = 12;
+const CLIENTES = [
+  {f:'clientes/c-penol', v:1, t:'Guatapé', alt:'Clientes caminando hacia la Piedra del Peñol'},
+  {f:'clientes/c-f-cuatrimotos', t:'Cuatrimotos', alt:'Grupo de clientes en cuatrimotos', ancha:1},
+  {f:'clientes/c-ritwal', v:1, t:'Cena con vista', alt:'Clientes en un jardín iluminado con vista a la ciudad'},
+  {f:'clientes/c-coctel-montana', v:1, t:'Restaurante de montaña', alt:'Cóctel servido con vista al valle'},
+  {f:'clientes/c-guatape', v:1, t:'Guatapé', alt:'Malecón y embalse de Guatapé'},
+  {f:'clientes/c-plato-humo', v:1, t:'Experiencia gastronómica', alt:'Plato servido bajo campana con humo'},
+  {f:'clientes/c-golf', v:1, t:'Club de golf', alt:'Clientes en un campo de golf'},
+  {f:'clientes/c-f-terraza', t:'Terraza de noche', alt:'Terraza de restaurante de noche con lámparas de mimbre'},
+  {f:'clientes/c-cena', v:1, t:'Cena especial', alt:'Cliente cenando con velas'},
+  {f:'clientes/c-cuatrimotos', v:1, t:'Cuatrimotos', alt:'Clientes listos para montar en cuatrimoto'},
+  {f:'clientes/c-rumba', v:1, t:'Rumba', alt:'Botella con bengalas en la discoteca'},
+  {f:'clientes/c-selfie', v:1, t:'Clienta feliz', alt:'Clienta en la terraza de un restaurante'},
+  {f:'clientes/c-museo', v:1, t:'Recorrido por museo', alt:'Clientes recorriendo un museo'},
+  {f:'clientes/c-f-carne', t:'Gastronomía', alt:'Plato de carne con risotto'},
+  {f:'clientes/c-coctel', v:1, t:'Coctelería', alt:'Cóctel con humo de hielo seco'},
+  {f:'clientes/c-guatape-lancha', v:1, t:'Paseo en lancha', alt:'Clientes subiendo a la lancha en el embalse'},
+  {f:'clientes/c-comida', v:1, t:'Gastronomía', alt:'Mesa con varios platos para compartir'},
+  {f:'clientes/c-f-golf', t:'Café con vista', alt:'Café en terraza con vista a un campo de golf'},
+  {f:'clientes/c-bolera', v:1, t:'Bolos y bar', alt:'Bar con pistas de bolos iluminadas'},
+  {f:'clientes/c-f-asiatico', t:'Restaurante asiático', alt:'Faroles rojos de un restaurante asiático', ancha:1},
+  {f:'clientes/c-f-carpaccio', t:'Gastronomía', alt:'Carpaccio servido de noche'},
+  {f:'clientes/c-f-club', t:'Noche de club', alt:'Logo iluminado en un club'},
+];
+const VISIBLES = 11;
 let mostrar = VISIBLES;
 const gal = document.getElementById('galeria');
 function pintarGaleria(){
   gal.innerHTML = CLIENTES.slice(0, mostrar).map((c,i)=>`
-    <button type="button" data-g="${i}" aria-label="Ver ${c.alt}">
-      <img src="img/clientes/${c.f}.webp" alt="${c.alt}" loading="lazy">
+    <button type="button" data-g="${i}"${c.ancha ? ' class="ancha"' : ''} aria-label="Ver ${c.alt}">
+      <img src="img/${c.f}.webp" alt="${c.alt}" loading="lazy">
       ${c.v ? '<span class="play"><svg><use href="#i-play"/></svg></span>' : ''}
       ${c.t ? `<span class="tag">${c.t}</span>` : ''}
     </button>`).join('');
@@ -601,19 +635,23 @@ function pintarGaleria(){
 }
 document.getElementById('mas').addEventListener('click', ()=>{ mostrar = CLIENTES.length; pintarGaleria(); });
 const visor = document.getElementById('visor'), vMedia = document.getElementById('visorMedia');
-let actual = 0;
-function abrir(i){
-  actual = (i + CLIENTES.length) % CLIENTES.length; const c = CLIENTES[actual];
+let actual = 0, listaVisor = CLIENTES;
+function abrir(i, lista){
+  if (lista) listaVisor = lista;
+  actual = (i + listaVisor.length) % listaVisor.length; const c = listaVisor[actual];
+  visor.querySelector('.ant').hidden = visor.querySelector('.sig').hidden = listaVisor.length < 2;
   vMedia.innerHTML = c.v
-    ? `<video src="img/clientes/${c.f}.mp4" poster="img/clientes/${c.f}.webp" controls autoplay playsinline></video>`
-    : `<img src="img/clientes/${c.f}.webp" alt="${c.alt}">`;
+    ? `<video src="img/${c.f}.mp4" poster="img/${c.f}.webp" controls autoplay playsinline></video>`
+    : `<img src="img/${c.f}.webp" alt="${c.alt}">`;
   document.getElementById('visorPie').textContent = c.t || '';
   visor.hidden = false; document.body.style.overflow = 'hidden';
 }
 function cerrar(){ visor.hidden = true; vMedia.innerHTML = ''; document.body.style.overflow = ''; }
-gal.addEventListener('click', e=>{ const b = e.target.closest('[data-g]'); if (b) abrir(+b.dataset.g); });
+gal.addEventListener('click', e=>{ const b = e.target.closest('[data-g]'); if (b) abrir(+b.dataset.g, CLIENTES); });
+document.addEventListener('click', e=>{ const b = e.target.closest('[data-video]'); if (b) abrir(0, VIDEOS[b.dataset.video]); });
 visor.querySelector('.cerrar').addEventListener('click', cerrar);
 visor.querySelector('.ant').addEventListener('click', ()=>abrir(actual-1));
+
 visor.querySelector('.sig').addEventListener('click', ()=>abrir(actual+1));
 visor.addEventListener('click', e=>{ if (e.target === visor) cerrar(); });
 document.addEventListener('keydown', e=>{ if (visor.hidden) return; if (e.key==='Escape') cerrar(); if (e.key==='ArrowLeft') abrir(actual-1); if (e.key==='ArrowRight') abrir(actual+1); });

@@ -31,3 +31,14 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   `-blanco` para fondos oscuros, `icono` azul y `icono-coral` para foto de perfil). La página usa las copias de `img/`
   (`logo-horizontal*.svg`, `icono-32.png`, `icono-180.png`), porque Cloudflare solo sube `index.html` e `img`.
   Letras convertidas a dibujo (Montserrat ExtraBold 800 y SemiBold 600): no hace falta tener la letra instalada.
+- **21 nov 2026: tours, lancha y experiencias de clientes** (lista de Lore por WhatsApp + carpeta de Drive «Página Lore»
+  de Rigoberto: 39 fotos y 39 videos). Secciones nuevas: «Tours y experiencias» (11 tours, lista `TOURS`), «Lancha privada»
+  (la Blessed Royale: 28 pies, 8 pax, zarpe Muelle de los Pegasos; 6 fotos con miniaturas + franja «más lanchas y yates»),
+  «Experiencias de clientes» (lista `CLIENTES`: 15 videos y 7 fotos de un viaje de clientes a Medellín/Guatapé —Peñol,
+  museo, golf, Ritwal, bolera, cuatrimotos—; se muestran 11 y «Ver más») y botón «Video» en Cholón, Tour 5 islas y lancha
+  (lista `VIDEOS`). «Restaurantes, clubes y más» = los lugares del linkbio (Cholón y cuatrimotos pasaron a tours).
+  Archivos: `img/clientes/` (c-*.mp4 + póster .webp), `img/videos/` (v-*.mp4 + póster), fotos en `img/`. Videos recortados
+  a 15 s (planes 20 s), 480 px, ~0,3–2 MB. Ninguna foto ni video tenía teléfono visible.
+  Quedaron fuera: dos fotos de helicóptero hechas con IA (estrella de Gemini), un catamarán de «Cancun Adventures», dos piezas
+  publicitarias de otras empresas (Makarela/Poseidon, Gema Boats), un video con @mambanegra.22 encima, videos repetidos u oscuros.
+  Pendiente de confirmar con Lore: textos cortos de Totumo, Palenque, helicóptero y chiva (escritos por Claude).
