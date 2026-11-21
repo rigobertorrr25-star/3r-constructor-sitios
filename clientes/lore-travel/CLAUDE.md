@@ -45,3 +45,5 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
 - **21 nov 2026**: Rigoberto mandó 3 fotos y 2 videos de clientes en Cartagena (embarque en la lancha en el Muelle de los
   Pegasos, frente al Centro de Convenciones). Van de primeros en `CLIENTES` (`c-f-lancha-muelle`, `c-embarque`, `c-f-muelle`,
   `c-muelle`, `c-f-lancha-grupo`); se muestran 13 antes de «Ver más». Sin teléfonos visibles.
+- **21 nov 2026**: 2 fotos de chivas de Rigoberto → tour «Chiva rumbera» (`img/chiva-1`, `chiva-2`; botón «Fotos» que abre
+  el visor; en `VIDEOS` una entrada sin `v` es foto y el botón dice «Fotos» en vez de «Video»).

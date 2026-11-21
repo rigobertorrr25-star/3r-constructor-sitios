@@ -175,7 +175,9 @@ h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;line-height:1.1;letter-spaci
 .mas .btn{color:#fff}
 .visor{position:fixed;inset:0;z-index:60;background:rgba(5,20,23,.94);display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px}
 .visor[hidden]{display:none}
-.visor img,.visor video{max-width:min(100%,560px);max-height:86vh;border-radius:12px;background:#000}
+#visorMedia{width:100%;display:flex;justify-content:center;align-items:center}
+.visor img{max-width:min(100%,1000px);max-height:82vh;border-radius:12px}
+.visor video{max-width:min(100%,560px);max-height:82vh;border-radius:12px;background:#000}
 .visor .cerrar,.visor .ant,.visor .sig{position:absolute;width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:26px;display:grid;place-items:center}
 .visor .cerrar{top:max(14px,env(safe-area-inset-top,0px));right:14px}
 .visor .ant{left:10px;top:50%;transform:translateY(-50%)}
@@ -541,7 +543,7 @@ const TOURS = [
   {id:'reservas', img:'mariscos', n:'Reservas en restaurantes y clubes', ic:'copa', t:'Reservas', d:'Te consigo mesa en los mejores lugares de la ciudad.', ver:'#planes', verTxt:'Ver lugares'},
   {id:'atardecer', img:'atardecer', n:'Atardecer en el mar', ic:'atardecer', t:'Paseo en el mar', d:'Mira el atardecer desde el muelle, en catamarán o en lancha rápida.', l:['Excursión de 2 horas'], inc:'Barra libre'},
   {id:'helicoptero', img:'helicoptero', n:'Cartagena en helicóptero', ic:'helice', t:'Experiencia', d:'Mira la ciudad, las murallas y el mar desde el aire.'},
-  {id:'chiva', n:'Chiva rumbera', ic:'bus', t:'Rumba', d:'Recorrido de noche en bus típico con música y fiesta.'},
+  {id:'chiva', img:'chiva-1', n:'Chiva rumbera', ic:'bus', t:'Rumba', d:'Recorrido de noche en bus típico con música y fiesta.'},
   {id:'cuatrimotos', img:'cuatrimotos', n:'Cuatrimotos', ic:'cuatri', t:'Aventura', d:'Recorrido en cuatrimoto por la playa con Cartagena ATV.', ig:'https://www.instagram.com/cartagena_atv?igsh=NTZkYW94b3I3aDk4'},
 ];
 const LUGARES = [
@@ -564,6 +566,8 @@ const VIDEOS = {
   islas: [{f:'videos/v-islas-piscina', v:1, t:'Beach club en las islas', alt:'Fiesta en la piscina de un beach club'},
           {f:'videos/v-islas-restaurante', v:1, t:'Almuerzo frente al mar', alt:'Restaurante de playa con vista a un yate'},
           {f:'videos/v-playa', v:1, t:'Día de playa', alt:'Mesa de playa con piña y cervezas'}],
+  chiva: [{f:'chiva-1', t:'Chiva típica de Cartagena', alt:'Chiva amarilla y verde pintada a mano'},
+          {f:'chiva-2', t:'Chivas listas para salir', alt:'Dos chivas de colores estacionadas'}],
   lancha: [{f:'videos/v-lancha', v:1, t:'Lancha frente a Bocagrande', alt:'Lancha navegando frente a Bocagrande'}],
 };
 document.getElementById('listaTours').innerHTML = TOURS.map(p=>`
@@ -578,7 +582,7 @@ document.getElementById('listaTours').innerHTML = TOURS.map(p=>`
       <button class="btn agregar" aria-pressed="false" data-id="${p.id}">Agregar</button>
       <a class="btn btn-coral" href="${wa('Hola Lore, quiero información de: ' + p.n)}" target="_blank" rel="noopener">Reservar</a>
       ${p.ver ? `<a class="btn ver" href="${p.ver}">${p.verTxt}</a>` : ''}
-      ${VIDEOS[p.id] ? `<button class="btn ver" type="button" data-video="${p.id}"><svg><use href="#i-play"/></svg>Video</button>` : ''}
+      ${VIDEOS[p.id] ? (VIDEOS[p.id].some(x=>x.v) ? `<button class="btn ver" type="button" data-video="${p.id}"><svg><use href="#i-play"/></svg>Video</button>` : `<button class="btn ver" type="button" data-video="${p.id}">Fotos</button>`) : ''}
       ${p.ig ? `<a class="btn ig" href="${p.ig}" target="_blank" rel="noopener" aria-label="Ver ${p.n} en Instagram"><svg><use href="#i-ig"/></svg></a>` : ''}
     </div>
     </div>
