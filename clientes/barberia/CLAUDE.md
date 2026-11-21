@@ -11,7 +11,7 @@ reservas y los pedidos de la tienda.
   abren, entras a la barbería (`img/portada.jpg`, «Pasa adelante.»), la cámara camina hasta la silla del centro y
   termina en la silla de cerca (`img/silla.jpg`, «Siéntate.» con la carta del turno) → negro → «Escoge tu corte.» en
   fondo oscuro, con la foto que cambia al pasar por cada servicio → «Salidos de esta silla.» → «Nítido desde todos los ángulos.» con contador de grados (000°–359°) → «El que te
-  corta.» (Daniel Mejía) → En vivo → «Siéntate.» (carta blanca) → reserva en fondo claro («Tu próximo degradado.»,
+  corta.» (Daniel Mejía) → En vivo → reserva en fondo claro («Tu próximo degradado.»,
   días en fila, reloj para la hora, ticket a la derecha) → **Tienda** («Llévate la marca.») →
   «Antes de venir» (dónde, horario, pagos y preguntas). Regla de horas en el borde derecho.
   - Se quitaron la galería y las pestañas de la referencia 2; las preguntas frecuentes quedaron al final.
