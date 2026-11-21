@@ -12,7 +12,7 @@ reservas y los pedidos de la tienda.
   termina en la silla de cerca (`img/silla.jpg`, «Siéntate.» con la carta del turno) → negro → «Escoge tu corte.» en
   fondo oscuro, con la foto que cambia al pasar por cada servicio → «Salidos de esta silla.» → «Nítido desde todos los ángulos.» con contador de grados (000°–359°) → «El que te
   corta.» (Daniel Mejía) → En vivo → reserva en fondo claro («Tu próximo degradado.»,
-  días en fila, reloj para la hora, ticket a la derecha) → **Tienda** («Llévate la marca.») →
+  días en fila, reloj para la hora, ticket a la derecha) → **Tienda** («Gorras.», pasarela) →
   «Antes de venir» (dónde, horario, pagos y preguntas). Regla de horas en el borde derecho.
   - Se quitaron la galería y las pestañas de la referencia 2; las preguntas frecuentes quedaron al final.
 - **Imágenes hechas con IA** (OpenArt, carpeta «Barbería El Filo» del proyecto «Personal Project», GPT Image 2.5
@@ -31,10 +31,12 @@ reservas y los pedidos de la tienda.
   con taper), con etiqueta de papel blanco; tocar uno lo deja escogido en la reserva. Servicios nuevos en la lista:
   Mullet $35.000, Mohicano $32.000, Degradado + diseño $38.000 (Burst fade ya estaba, ahora con foto real). Precios
   de ejemplo. Antes de publicar para un cliente, confirmar que las personas de las fotos dieron permiso.
-- **Tienda** (21 nov 2026, Rigoberto vende suéteres y gorras): sección «Llévate la marca.» antes de «Antes de venir».
-  `PRODUCTOS` (Suéter DAMC $95.000 tallas S–XL, Gorra DAMC $45.000 talla única; precios de ejemplo) y `COLORES`
-  (negro, blanco, rojo). Las prendas se dibujan con código (no hay fotos todavía); el cliente escoge color, talla y
-  cantidad y el botón abre WhatsApp con el pedido. Cuando Rigoberto mande fotos, cambiarlas por las reales.
+- **Tienda: solo gorras, en pasarela** (21 nov 2026, Rigoberto quitó los suéteres «por el momento»): sección «Gorras.»
+  antes de «Antes de venir». 13 fotos de la carpeta de Drive «BARBERÍA» de Rigoberto, en `img/gorras/` (recortadas a
+  4:5, 720×900). La pasarela avanza sola cada 3,2 s cuando está en pantalla, se detiene con el mouse encima o al
+  tocarla, tiene flechas y rayitas abajo. Cada gorra tiene «Pedir por WhatsApp» con su nombre y precio. Datos en
+  `GORRAS` (nombre y foto; `precio` opcional por gorra) y `PRECIO_GORRA` ($45.000, de ejemplo). Los nombres son
+  descriptivos (color y estilo), sin marcas.
 - **Solo para hombres** (21 nov 2026, Rigoberto): se atienden hombres y niños.
 - **Un solo barbero: Daniel Mejía** (21 nov 2026, Rigoberto quitó a los demás). Su foto está pendiente (la manda
   Rigoberto): mientras tanto se ven sus iniciales «DM». Cuando llegue, guardarla como `img/equipo-daniel.jpg` y poner
@@ -58,7 +60,7 @@ reservas y los pedidos de la tienda.
 - No hay pago en línea: al confirmar se abre WhatsApp con la reserva escrita. Las horas ocupadas son de ejemplo
   (se calculan solas), no hay agenda real detrás.
 - **De ejemplo todavía** (también el estado inicial de la fila): dirección (Calle 27 # 24-15, Manga, Cartagena),
-  horario, precios de cortes y de la tienda. Los datos se cambian arriba del `<script>` (WHATSAPP, SERVICIOS, BARBEROS,
+  horario, precios de cortes y de las gorras. Los datos se cambian arriba del `<script>` (WHATSAPP, SERVICIOS, BARBEROS,
   HORARIO) y en los textos del HTML.
 - Fotos restantes: Unsplash (licencia libre, sin atribución obligatoria). Cambiarlas por las del negocio real cuando haya cliente.
 - Vista previa privada para Rigoberto: https://claude.ai/artifact/5W7SfJ3inW7sUoVgZexYKo (se publica desde una copia

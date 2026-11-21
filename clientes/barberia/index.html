@@ -380,36 +380,30 @@ p { margin: 0; }
 .fila-ahora .fila-num span { font-weight: 700; color: var(--tinta); }
 .fila-ahora a { color: var(--tinta); font-weight: 700; font-size: .88rem; }
 
-/* ---------- Tienda ---------- */
-.tienda { background: var(--carbon); }
-.tienda-cabeza { display: grid; gap: 16px; margin-bottom: 40px; }
-.productos { display: grid; gap: 20px; }
-@media (min-width: 860px) { .productos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; } }
-.producto { background: var(--negro); border: 1px solid var(--linea); border-radius: 3px; overflow: hidden; display: grid; align-content: start; min-width: 0; }
-.producto-arte { position: relative; aspect-ratio: 5 / 4; background: radial-gradient(80% 70% at 50% 45%, #f4f3f3, #dcdada); display: grid; place-items: center; }
-.producto-arte svg { width: 72%; max-height: 82%; filter: drop-shadow(0 18px 22px rgba(0,0,0,.22)); transition: transform .4s ease; }
-.producto:hover .producto-arte svg { transform: translateY(-4px) rotate(-1deg); }
-.producto-arte .marca-prenda { position: absolute; left: 14px; top: 12px; font-family: var(--f-titulo); font-size: 1rem; color: rgba(0,0,0,.35); letter-spacing: .04em; }
-.producto-cuerpo { padding: 20px; display: grid; gap: 16px; }
-.producto-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-.producto-top h3 { font-size: 2rem; }
-.producto-top b { font-family: var(--f-titulo); font-weight: 400; font-size: 1.7rem; font-variant-numeric: tabular-nums; }
-.producto .detalle { color: #cfc7c7; font-size: .92rem; }
-.selector { display: grid; gap: 8px; }
-.selector > small { font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; color: var(--gris); }
-.selector > small span { color: var(--blanco); letter-spacing: 0; text-transform: none; margin-left: 6px; }
-.colores, .tallas { display: flex; flex-wrap: wrap; gap: 8px; }
-.color-btn { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--linea); background: var(--c); cursor: pointer; padding: 0; }
-.color-btn[aria-pressed="true"] { outline: 2px solid var(--blanco); outline-offset: 3px; }
-.talla-btn { min-width: 46px; height: 40px; padding: 0 10px; border: 1px solid var(--linea); background: var(--carbon); border-radius: 3px; font-weight: 700; cursor: pointer; }
-.talla-btn:hover { border-color: var(--blanco); }
-.talla-btn[aria-pressed="true"] { background: var(--blanco); color: var(--tinta); border-color: var(--blanco); }
-.cantidad { display: inline-flex; align-items: center; border: 1px solid var(--linea); border-radius: 3px; justify-self: start; }
-.cantidad button { width: 40px; height: 40px; border: 0; background: none; cursor: pointer; font-size: 1.1rem; }
-.cantidad span { min-width: 34px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
-.producto-pie { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--linea); }
-.producto-pie small { display: block; color: var(--gris); font-size: .78rem; }
-.producto-pie b { font-family: var(--f-titulo); font-weight: 400; font-size: 1.9rem; font-variant-numeric: tabular-nums; }
+/* ---------- Tienda: pasarela de gorras ---------- */
+.tienda { background: var(--carbon); overflow: hidden; }
+.tienda-cabeza { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 32px; }
+.tienda-cabeza > div:first-child { display: grid; gap: 14px; }
+.pasarela-flechas { display: flex; gap: 8px; }
+.flecha-btn { width: 48px; height: 48px; display: grid; place-items: center; cursor: pointer; border: 1px solid var(--linea); background: var(--negro); border-radius: 3px; font-size: 1.2rem; transition: border-color .2s; }
+.flecha-btn:hover { border-color: var(--blanco); }
+.pasarela { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); padding-bottom: 6px; }
+.pasarela::-webkit-scrollbar { display: none; }
+@media (min-width: 720px) { .pasarela { padding-inline: max(40px, calc((100vw - var(--ancho)) / 2 + 40px)); scroll-padding-inline: max(40px, calc((100vw - var(--ancho)) / 2 + 40px)); } }
+.gorra { flex: 0 0 clamp(230px, 72vw, 300px); scroll-snap-align: start; background: var(--negro); border: 1px solid var(--linea); border-radius: 3px; overflow: hidden; display: grid; }
+@media (min-width: 720px) { .gorra { flex-basis: clamp(240px, 24vw, 300px); } }
+.gorra-foto { position: relative; overflow: hidden; aspect-ratio: 4 / 5; background: #111; }
+.gorra-foto img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; }
+.gorra:hover .gorra-foto img { transform: scale(1.04); }
+.gorra-info { padding: 14px 16px 16px; display: grid; gap: 10px; }
+.gorra-info div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.gorra-info h3 { font-family: var(--f-texto); font-weight: 700; font-size: 1rem; line-height: 1.3; }
+.gorra-info b { font-family: var(--f-titulo); font-weight: 400; font-size: 1.4rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.gorra-info .boton { width: 100%; min-height: 42px; font-size: .86rem; }
+.pasarela-pie { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 18px; color: var(--gris); font-size: .86rem; font-variant-numeric: tabular-nums; }
+.puntos { display: flex; flex-wrap: wrap; gap: 6px; }
+.puntos button { width: 22px; height: 4px; padding: 0; border: 0; border-radius: 2px; background: var(--linea); cursor: pointer; transition: background-color .2s, width .2s; }
+.puntos button[aria-current="true"] { background: var(--rojo); width: 34px; }
 
 /* ---------- Antes de venir ---------- */
 .info-grid { display: grid; gap: 32px; margin-bottom: 56px; }
@@ -698,16 +692,23 @@ p { margin: 0; }
     </div>
   </section>
 
-  <!-- Tienda -->
+  <!-- Tienda: pasarela de gorras -->
   <section class="tienda seccion" id="tienda" aria-labelledby="titulo-tienda">
     <div class="envoltura">
       <div class="tienda-cabeza">
-        <span class="etiqueta">Tienda DAMC</span>
-        <h2 class="titulo-grande" id="titulo-tienda">Llévate la marca.</h2>
-        <p class="texto-suave">Suéteres y gorras DAMC. Escoge color, talla y cantidad y pídelo por WhatsApp: lo recoges en la barbería o acordamos el envío.</p>
+        <div>
+          <span class="etiqueta">Tienda DAMC</span>
+          <h2 class="titulo-grande" id="titulo-tienda">Gorras.</h2>
+          <p class="texto-suave">Escoge la tuya y pídela por WhatsApp. La recoges en la barbería o acordamos el envío.</p>
+        </div>
+        <div class="pasarela-flechas">
+          <button type="button" class="flecha-btn" id="pas-ant" aria-label="Gorra anterior">←</button>
+          <button type="button" class="flecha-btn" id="pas-sig" aria-label="Gorra siguiente">→</button>
+        </div>
       </div>
-      <div class="productos" id="productos"></div>
     </div>
+    <div class="pasarela" id="pasarela" aria-label="Gorras disponibles"></div>
+    <div class="envoltura"><div class="pasarela-pie"><div class="puntos" id="pas-puntos"></div><span id="pas-contador"></span></div></div>
   </section>
 
   <!-- Antes de venir -->
@@ -805,21 +806,28 @@ p { margin: 0; }
   // 0 = domingo ... 6 = sábado. Minutos desde la medianoche.
   var HORARIO = { 0: [600, 840], 1: [540, 1200], 2: [540, 1200], 3: [540, 1200], 4: [540, 1200], 5: [540, 1200], 6: [540, 1200] };
   var ANGULOS = ["Frente", "Perfil", "Arriba", "Línea"];
-  var COLORES = [
-    { nombre: "Negro", fondo: "#151212", letra: "#ffffff" },
-    { nombre: "Blanco", fondo: "#f6f6f6", letra: "#151212" },
-    { nombre: "Rojo", fondo: "#c4141c", letra: "#ffffff" }
-  ];
-  var PRODUCTOS = [   // precios de ejemplo: cambiarlos por los reales
-    { id: "sueter", nombre: "Suéter DAMC", tipo: "sueter", precio: 95000, detalle: "Suéter cuello redondo con el logo DAMC al frente.", tallas: ["S", "M", "L", "XL"] },
-    { id: "gorra",  nombre: "Gorra DAMC",  tipo: "gorra",  precio: 45000, detalle: "Gorra de visera curva con el logo DAMC, se ajusta atrás.", tallas: ["Única"] }
-  ];
   var CORTES = [
     { foto: "img/cortes/mullet-rizado-raya.jpg", nombre: "Mullet rizado con raya", nota: "Burst fade y una raya curva que abre el lado.", servicio: "diseno" },
     { foto: "img/cortes/burst-fade-mullet.jpg",  nombre: "Burst fade mullet",      nota: "Degradado en curva alrededor de la oreja y rizos atrás.", servicio: "burst" },
     { foto: "img/cortes/doble-raya.jpg",         nombre: "Doble raya",             nota: "Dos rayas paralelas a navaja que siguen la forma de la cabeza.", servicio: "diseno" },
     { foto: "img/cortes/mohicano-diseno.jpg",    nombre: "Mohicano con diseño",    nota: "Lados en cero y un diseño a mano alzada.", servicio: "mohicano" },
     { foto: "img/cortes/mullet-liso-taper.jpg",  nombre: "Mullet liso con taper",  nota: "Taper bajo, rayas detrás de la oreja y largo atrás.", servicio: "mullet" }
+  ];
+  var PRECIO_GORRA = 45000;   // precio de ejemplo: cambiar por el real (o poner precio en cada gorra)
+  var GORRAS = [
+    { foto: "img/gorras/ny-crema-beige.jpg",        nombre: "Gorra NY crema y beige" },
+    { foto: "img/gorras/negra-azul-cielo.jpg",      nombre: "Gorra negra y azul cielo" },
+    { foto: "img/gorras/roja-placa.jpg",            nombre: "Gorra roja con placa" },
+    { foto: "img/gorras/crema-camel.jpg",           nombre: "Gorra crema y camel" },
+    { foto: "img/gorras/azul-deportiva.jpg",        nombre: "Gorra azul deportiva" },
+    { foto: "img/gorras/caballista.jpg",            nombre: "Gorra caballista bordada" },
+    { foto: "img/gorras/new-york-blanca.jpg",       nombre: "Gorra blanca New York" },
+    { foto: "img/gorras/negra-malla.jpg",           nombre: "Gorra negra de malla" },
+    { foto: "img/gorras/rosada-blanca.jpg",         nombre: "Gorra rosada y blanca" },
+    { foto: "img/gorras/verde-estampada.jpg",       nombre: "Gorra verde estampada" },
+    { foto: "img/gorras/blanca-franjas-negras.jpg", nombre: "Gorra blanca con franjas negras" },
+    { foto: "img/gorras/blanca-tres-franjas.jpg",   nombre: "Gorra blanca con tres franjas" },
+    { foto: "img/gorras/blanca-perforada.jpg",      nombre: "Gorra blanca perforada" }
   ];
 
   /* ===== Utilidades ===== */
@@ -1000,56 +1008,44 @@ p { margin: 0; }
     filaCortes.appendChild(b);
   });
 
-  /* ===== Tienda ===== */
-  function arte(tipo, c) {
-    var borde = 'stroke="rgba(0,0,0,.2)" stroke-width="1.2"', marca = c.nombre === "Blanco" ? "rgba(0,0,0,.14)" : "rgba(255,255,255,.16)";
-    if (tipo === "gorra") return '<svg viewBox="0 0 220 150" role="img" aria-label="Gorra DAMC ' + c.nombre.toLowerCase() + '">' +
-      '<path d="M38 102 Q34 34 104 28 Q170 26 178 94 Z" fill="' + c.fondo + '" ' + borde + '/>' +
-      '<path d="M104 29 Q96 62 100 100 M68 40 Q60 70 62 101 M142 35 Q152 64 152 96" fill="none" stroke="' + marca + '" stroke-width="1.6"/>' +
-      '<path d="M38 102 Q100 86 178 94 Q208 98 214 114 Q208 121 194 118 Q150 110 104 112 Q60 114 38 102 Z" fill="' + c.fondo + '" ' + borde + '/>' +
-      '<path d="M38 102 Q100 86 178 94 Q208 98 214 114 Q208 121 194 118 Q150 110 104 112 Q60 114 38 102 Z" fill="rgba(0,0,0,.14)"/>' +
-      '<circle cx="104" cy="28" r="5" fill="' + c.fondo + '" ' + borde + '/>' +
-      '<text x="106" y="78" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="25" letter-spacing="1" fill="' + c.letra + '">DAMC</text></svg>';
-    return '<svg viewBox="0 0 200 190" role="img" aria-label="Suéter DAMC ' + c.nombre.toLowerCase() + '">' +
-      '<path d="M68 22 Q100 36 132 22 L170 40 Q184 46 186 60 L196 128 Q196 134 190 135 L170 138 Q164 138 163 132 L156 84 L156 168 Q156 176 148 176 L52 176 Q44 176 44 168 L44 84 L37 132 Q36 138 30 138 L10 135 Q4 134 4 128 L14 60 Q16 46 30 40 Z" fill="' + c.fondo + '" ' + borde + '/>' +
-      '<path d="M74 25 Q100 41 126 25" fill="none" stroke="' + marca + '" stroke-width="6" stroke-linecap="round"/>' +
-      '<path d="M46 167 L154 167 M8 127 L32 131 M168 131 L192 127" stroke="' + marca + '" stroke-width="5"/>' +
-      '<path d="M44 84 L44 160 M156 84 L156 160" stroke="' + marca + '" stroke-width="1.2"/>' +
-      '<text x="100" y="110" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="32" letter-spacing="1" fill="' + c.letra + '">DAMC</text></svg>';
-  }
-  var cajaProductos = $("#productos");
-  PRODUCTOS.forEach(function (pr) {
-    var sel = { color: 0, talla: pr.tallas.length === 1 ? 0 : 1, cant: 1 };
-    var art = el("article", { class: "producto" });
-    function pintar() {
-      var c = COLORES[sel.color], total = pr.precio * sel.cant;
-      var msg = "Hola, quiero pedir en la tienda DAMC:\n• " + pr.nombre + ", color " + c.nombre + ", talla " + pr.tallas[sel.talla] + ", cantidad " + sel.cant + " (" + pesos(total) + ")\n¿Cómo hago el pago y la entrega?";
-      art.innerHTML =
-        '<div class="producto-arte"><span class="marca-prenda">DAMC</span>' + arte(pr.tipo, c) + '</div>' +
-        '<div class="producto-cuerpo">' +
-          '<div class="producto-top"><h3>' + pr.nombre + '</h3><b>' + pesos(pr.precio) + '</b></div>' +
-          '<p class="detalle">' + pr.detalle + '</p>' +
-          '<div class="selector"><small>Color<span>' + c.nombre + '</span></small><div class="colores">' +
-            COLORES.map(function (co, i) { return '<button type="button" class="color-btn" data-color="' + i + '" style="--c:' + co.fondo + '" aria-label="' + co.nombre + '" aria-pressed="' + (i === sel.color) + '"></button>'; }).join("") + '</div></div>' +
-          '<div class="selector"><small>Talla</small><div class="tallas">' +
-            pr.tallas.map(function (t, i) { return '<button type="button" class="talla-btn" data-talla="' + i + '" aria-pressed="' + (i === sel.talla) + '">' + t + '</button>'; }).join("") + '</div></div>' +
-          '<div class="selector"><small>Cantidad</small><div class="cantidad"><button type="button" data-cant="-1" aria-label="Quitar uno">−</button><span>' + sel.cant + '</span><button type="button" data-cant="1" aria-label="Agregar uno">+</button></div></div>' +
-          '<div class="producto-pie"><div><small>Total</small><b>' + pesos(total) + '</b></div>' +
-          '<a class="boton boton-blanco" target="_blank" rel="noopener" href="https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg) + '">Pedir por WhatsApp <span class="flecha" aria-hidden="true">→</span></a></div>' +
-        '</div>';
-    }
-    art.addEventListener("click", function (e) {
-      var b = e.target.closest("button"); if (!b) return;
-      if (b.dataset.color != null) sel.color = +b.dataset.color;
-      if (b.dataset.talla != null) sel.talla = +b.dataset.talla;
-      if (b.dataset.cant != null) sel.cant = Math.max(1, Math.min(10, sel.cant + (+b.dataset.cant)));
-      pintar();
-      var igual = art.querySelector('[data-' + (b.dataset.color != null ? 'color="' + sel.color : b.dataset.talla != null ? 'talla="' + sel.talla : 'cant="' + b.dataset.cant) + '"]');
-      if (igual) igual.focus();
+  /* ===== Tienda: pasarela de gorras ===== */
+  (function () {
+    var pista = $("#pasarela"), puntos = $("#pas-puntos"), contador = $("#pas-contador");
+    GORRAS.forEach(function (g, i) {
+      var precio = g.precio || PRECIO_GORRA;
+      var msg = "Hola, quiero pedir en la tienda DAMC:\n• " + g.nombre + " (" + pesos(precio) + ")\n¿Está disponible? ¿Cómo hago el pago y la entrega?";
+      pista.appendChild(el("article", { class: "gorra", "aria-label": g.nombre + ", " + (i + 1) + " de " + GORRAS.length },
+        '<div class="gorra-foto"><img src="' + g.foto + '" alt="' + g.nombre + '" loading="lazy"></div>' +
+        '<div class="gorra-info"><div><h3>' + g.nombre + '</h3><b>' + pesos(precio) + '</b></div>' +
+        '<a class="boton boton-blanco" target="_blank" rel="noopener" href="https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg) + '">Pedir por WhatsApp <span class="flecha" aria-hidden="true">→</span></a></div>'));
+      var d = el("button", { type: "button", "aria-label": "Ver " + g.nombre });
+      d.addEventListener("click", function () { ir(i); pausar(); });
+      puntos.appendChild(d);
     });
-    pintar();
-    cajaProductos.appendChild(art);
-  });
+    var tarjetas = pista.children, actual = 0, enPantalla = false, quieta = 0;
+    function paso() { return tarjetas.length > 1 ? tarjetas[1].offsetLeft - tarjetas[0].offsetLeft : 1; }
+    function ir(i) {
+      var max = pista.scrollWidth - pista.clientWidth;
+      if (i >= tarjetas.length || (i > actual && pista.scrollLeft >= max - 4)) i = 0;
+      if (i < 0) i = tarjetas.length - 1;
+      pista.scrollTo({ left: Math.min(max, tarjetas[i].offsetLeft - tarjetas[0].offsetLeft), behavior: reducir ? "auto" : "smooth" });
+    }
+    function marcar() {
+      actual = Math.min(tarjetas.length - 1, Math.round(pista.scrollLeft / paso()));
+      [].forEach.call(puntos.children, function (b, j) { b.setAttribute("aria-current", String(j === actual)); });
+      contador.textContent = (actual + 1) + " / " + tarjetas.length;
+    }
+    function pausar() { quieta = Date.now() + 8000; }
+    pista.addEventListener("scroll", function () { requestAnimationFrame(marcar); }, { passive: true });
+    ["pointerdown", "wheel", "touchstart", "focusin"].forEach(function (ev) { pista.addEventListener(ev, pausar, { passive: true }); });
+    pista.addEventListener("mouseenter", function () { quieta = Infinity; });
+    pista.addEventListener("mouseleave", function () { quieta = Date.now() + 1500; });
+    $("#pas-ant").addEventListener("click", function () { ir(actual - 1); pausar(); });
+    $("#pas-sig").addEventListener("click", function () { ir(actual + 1); pausar(); });
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (e) { enPantalla = e[0].isIntersecting; }, { threshold: .3 }).observe(pista);
+    if (!reducir) setInterval(function () { if (enPantalla && Date.now() > quieta && !document.hidden) ir(actual + 1); }, 3200);
+    marcar();
+  })();
 
   /* ===== Barbero ===== */
   function avatar(b) { return b.foto ? '<img src="' + b.foto + '" alt="">' : '<span class="avatar-libre" aria-hidden="true">' + b.iniciales + '</span>'; }
