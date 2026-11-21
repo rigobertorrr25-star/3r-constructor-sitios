@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>El Filo Barbería</title>
+<title>DAMC Barbería</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Barbería para hombres en Manga, Cartagena. Degradados, barba y afeitado con navaja. Mira la fila en vivo y reserva tu turno.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,7 +11,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&display=swap">
 <style>
 /* Concepto: una sola escena de cine que avanza al bajar, como el primer video de referencia.
-   Cliente de espaldas con la capa roja → la cámara entra en la capa → tela roja con los precios →
+   Cliente de espaldas con la capa roja → se cierran las puertas de DAMC → se abren y entras a la barbería →
+   la cámara camina hasta la silla y te sientas → precios →
    la cabeza gira por ángulos → el equipo → siéntate → le quitan la capa → reserva en fondo claro. */
 :root {
   --negro: #0b0909;
@@ -96,8 +97,8 @@ p { margin: 0; }
 .capa-img img { width: 100%; height: 100%; object-fit: cover; }
 .texto-escena { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding-block: 0 clamp(28px, 6vh, 64px); will-change: opacity, transform; }
 
-/* Escena 1: portada → capa → tela */
-.escena-portada { height: 330vh; }
+/* Escena 1: portada → puertas → barbería por dentro → la silla */
+.escena-portada { height: 520vh; }
 .foto-portada img { object-position: 66% 50%; }
 .foto-portada .antes { position: absolute; inset: 0; clip-path: circle(var(--lr, 0px) at var(--lx, 70%) var(--ly, 30%)); }
 .lupa { position: absolute; z-index: 4; left: 0; top: 0; pointer-events: none; opacity: 0; transition: opacity .3s ease; will-change: transform; }
@@ -107,7 +108,26 @@ p { margin: 0; }
 .lupa b { position: absolute; right: 4%; bottom: 6%; padding: 2px 6px; background: #fff; color: var(--tinta); font-size: .66rem; font-weight: 700; letter-spacing: .14em; border-radius: 2px; transform: rotate(-4deg); }
 .pista { font-size: .82rem; color: rgba(255,255,255,.7); }
 .sombra-portada { position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, rgba(8,6,6,.78) 0%, rgba(8,6,6,.35) 45%, rgba(8,6,6,0) 70%), linear-gradient(0deg, rgba(8,6,6,.6) 0%, rgba(8,6,6,0) 35%); pointer-events: none; }
-.tela { position: absolute; inset: -4%; z-index: 2; opacity: 0; background: linear-gradient(rgba(60,0,4,.25), rgba(60,0,4,.45)), url("img/tela-roja.jpg") center / cover; will-change: opacity, transform; }
+.interior img { object-position: 50% 62%; filter: brightness(.82) saturate(.95); }
+.silla-cerca img { object-position: 50% 38%; filter: brightness(.72) contrast(1.05); }
+.interior, .silla-cerca { opacity: 0; }
+.interior::after, .silla-cerca::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(8,6,6,.82) 0%, rgba(8,6,6,.1) 55%, rgba(8,6,6,0) 75%); }
+.puertas { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.puerta { position: absolute; top: 0; bottom: 0; width: 50.4%; display: flex; align-items: center; background: linear-gradient(90deg, #110d0d, #1e1717 55%, #130f0f); will-change: transform; }
+.puerta::before { content: ""; position: absolute; inset: 6% 8%; border: 1px solid rgba(255,255,255,.1); }
+.puerta::after { content: ""; position: absolute; inset: 9% 11% 55%; border: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.02); }
+.puerta.izq { left: 0; justify-content: flex-end; padding-right: 2.2vw; transform: translateX(-101%); box-shadow: inset -1px 0 0 rgba(255,255,255,.08); }
+.puerta.der { right: 0; justify-content: flex-start; padding-left: 2.2vw; transform: translateX(101%); }
+.puerta span { position: relative; z-index: 1; font-family: var(--f-titulo); font-size: clamp(4.6rem, 17vw, 15rem); line-height: 1; color: var(--blanco); }
+.puerta i { position: absolute; top: 44%; width: 7px; height: 16%; border-radius: 4px; background: linear-gradient(90deg, #8d8d8d, #e2e2e2, #8d8d8d); }
+.puerta.izq i { right: 1vw; } .puerta.der i { left: 1vw; }
+.letrero { position: absolute; left: 50%; top: 11%; z-index: 3; padding: 8px 18px; background: var(--rojo); color: var(--blanco); font-weight: 700; font-size: .82rem; letter-spacing: .22em; text-transform: uppercase; border-radius: 3px; box-shadow: 0 10px 24px -8px rgba(0,0,0,.7); opacity: 0; transform: translateX(-50%) rotate(-3deg); transform-origin: 50% -40px; }
+.oscuro { position: absolute; inset: 0; z-index: 5; background: var(--negro); opacity: 0; pointer-events: none; }
+.texto-paso { opacity: 0; }
+.texto-paso h2 { font-size: clamp(3.2rem, 9vw, 8rem); max-width: 10ch; }
+.texto-paso p { margin-top: 14px; color: rgba(255,255,255,.88); max-width: 42ch; }
+.paso-silla .envoltura { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px; }
+@media (max-width: 700px) { .paso-silla .carta { width: 100%; padding: 18px 18px 16px; gap: 10px; } .paso-silla .carta p { display: none; } }
 .portada-texto { display: grid; gap: 20px; }
 .portada-texto h1 { font-size: clamp(3.2rem, 7vw, 6.6rem); max-width: 8ch; }
 .portada-texto p { font-size: clamp(.98rem, 1.3vw, 1.1rem); color: #e6dede; max-width: 40ch; }
@@ -115,20 +135,17 @@ p { margin: 0; }
 .dato-vivo { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; color: #f0e8e8; text-decoration: none; }
 .dato-vivo i { width: 8px; height: 8px; border-radius: 50%; background: var(--rojo); box-shadow: 0 0 0 3px rgba(211,22,31,.35); }
 .dato-vivo strong { color: var(--blanco); }
-.texto-capa h2 { font-size: clamp(3.2rem, 9vw, 8rem); max-width: 10ch; }
-.texto-capa p { margin-top: 16px; color: rgba(255,255,255,.85); max-width: 42ch; }
-.texto-capa { opacity: 0; }
 .bajar { position: absolute; left: 50%; bottom: 14px; z-index: 3; transform: translateX(-50%); font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.7); }
 
-/* ---------- Precios sobre la tela ---------- */
-.precios { position: relative; overflow: hidden; isolation: isolate; background: linear-gradient(rgba(60,0,4,.25), rgba(60,0,4,.45)), url("img/tela-roja.jpg") center / cover; background-color: var(--rojo); }
-.precios::after { content: "EL FILO"; position: absolute; z-index: -1; left: 50%; bottom: -.16em; transform: translateX(-50%); font-family: var(--f-titulo); font-size: 24vw; line-height: 1; white-space: nowrap; color: rgba(255,255,255,.07); pointer-events: none; }
+/* ---------- Precios ---------- */
+.precios { position: relative; overflow: hidden; isolation: isolate; background: radial-gradient(70% 60% at 85% 15%, rgba(211,22,31,.10), transparent 60%), var(--negro); }
+.precios::after { content: "DAMC"; position: absolute; z-index: -1; left: 50%; bottom: -.16em; transform: translateX(-50%); font-family: var(--f-titulo); font-size: 24vw; line-height: 1; white-space: nowrap; color: rgba(255,255,255,.035); pointer-events: none; }
 .precios-grid { display: grid; gap: 40px; align-items: center; }
 .precios h2 { font-size: clamp(3.6rem, 10vw, 8.4rem); margin-bottom: 28px; }
 .lista-precios { list-style: none; margin: 0; padding: 0; max-width: 560px; }
 .fila-precio { width: 100%; display: grid; grid-template-columns: 1fr auto auto; gap: 18px; align-items: baseline; padding: 9px 0; background: none; border: 0; border-bottom: 1px solid rgba(255,255,255,.28); text-align: left; cursor: pointer; transition: padding .2s; }
 .fila-precio:hover, .fila-precio.activo { padding-left: 10px; }
-.fila-precio.activo .nombre::before { content: "→ "; }
+.fila-precio.activo .nombre::before { content: "→ "; color: var(--rojo); }
 .fila-precio .nombre { font-weight: 700; font-size: 1.02rem; }
 .fila-precio .min { font-size: .88rem; color: rgba(255,255,255,.75); font-variant-numeric: tabular-nums; }
 .fila-precio .precio { font-family: var(--f-titulo); font-size: 1.45rem; min-width: 4.4em; text-align: right; font-variant-numeric: tabular-nums; }
@@ -247,11 +264,7 @@ p { margin: 0; }
 .sillas, .controles { max-width: 560px; }
 @media (max-width: 560px) { .vivo-resumen { grid-template-columns: 1fr 1fr; } .vivo-resumen > div:last-child { grid-column: 1 / -1; padding-left: 0; border-left: 0; border-top: 1px solid var(--linea); } }
 
-/* ---------- Siéntate ---------- */
-.sientate { position: relative; min-height: min(88svh, 820px); display: flex; align-items: center; overflow: hidden; isolation: isolate; }
-.sientate > img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; filter: brightness(.55) contrast(1.1) saturate(.8); }
-.sientate::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(8,6,6,.1), rgba(8,6,6,.55)); }
-.sientate .envoltura { width: 100%; display: flex; justify-content: flex-end; padding-block: 64px; }
+/* ---------- Carta del turno ---------- */
 .carta { background: var(--blanco); color: var(--tinta); width: min(100%, 380px); padding: 26px 24px 22px; border-radius: 2px; transform: rotate(1.4deg); box-shadow: 0 30px 60px -20px rgba(0,0,0,.7); display: grid; gap: 14px; }
 .carta h2 { font-size: clamp(2.8rem, 5vw, 3.8rem); }
 .carta p { color: #4f4848; font-size: .95rem; }
@@ -367,6 +380,37 @@ p { margin: 0; }
 .fila-ahora .fila-num span { font-weight: 700; color: var(--tinta); }
 .fila-ahora a { color: var(--tinta); font-weight: 700; font-size: .88rem; }
 
+/* ---------- Tienda ---------- */
+.tienda { background: var(--carbon); }
+.tienda-cabeza { display: grid; gap: 16px; margin-bottom: 40px; }
+.productos { display: grid; gap: 20px; }
+@media (min-width: 860px) { .productos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; } }
+.producto { background: var(--negro); border: 1px solid var(--linea); border-radius: 3px; overflow: hidden; display: grid; align-content: start; min-width: 0; }
+.producto-arte { position: relative; aspect-ratio: 5 / 4; background: radial-gradient(80% 70% at 50% 45%, #f4f3f3, #dcdada); display: grid; place-items: center; }
+.producto-arte svg { width: 72%; max-height: 82%; filter: drop-shadow(0 18px 22px rgba(0,0,0,.22)); transition: transform .4s ease; }
+.producto:hover .producto-arte svg { transform: translateY(-4px) rotate(-1deg); }
+.producto-arte .marca-prenda { position: absolute; left: 14px; top: 12px; font-family: var(--f-titulo); font-size: 1rem; color: rgba(0,0,0,.35); letter-spacing: .04em; }
+.producto-cuerpo { padding: 20px; display: grid; gap: 16px; }
+.producto-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.producto-top h3 { font-size: 2rem; }
+.producto-top b { font-family: var(--f-titulo); font-weight: 400; font-size: 1.7rem; font-variant-numeric: tabular-nums; }
+.producto .detalle { color: #cfc7c7; font-size: .92rem; }
+.selector { display: grid; gap: 8px; }
+.selector > small { font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; color: var(--gris); }
+.selector > small span { color: var(--blanco); letter-spacing: 0; text-transform: none; margin-left: 6px; }
+.colores, .tallas { display: flex; flex-wrap: wrap; gap: 8px; }
+.color-btn { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--linea); background: var(--c); cursor: pointer; padding: 0; }
+.color-btn[aria-pressed="true"] { outline: 2px solid var(--blanco); outline-offset: 3px; }
+.talla-btn { min-width: 46px; height: 40px; padding: 0 10px; border: 1px solid var(--linea); background: var(--carbon); border-radius: 3px; font-weight: 700; cursor: pointer; }
+.talla-btn:hover { border-color: var(--blanco); }
+.talla-btn[aria-pressed="true"] { background: var(--blanco); color: var(--tinta); border-color: var(--blanco); }
+.cantidad { display: inline-flex; align-items: center; border: 1px solid var(--linea); border-radius: 3px; justify-self: start; }
+.cantidad button { width: 40px; height: 40px; border: 0; background: none; cursor: pointer; font-size: 1.1rem; }
+.cantidad span { min-width: 34px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.producto-pie { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--linea); }
+.producto-pie small { display: block; color: var(--gris); font-size: .78rem; }
+.producto-pie b { font-family: var(--f-titulo); font-weight: 400; font-size: 1.9rem; font-variant-numeric: tabular-nums; }
+
 /* ---------- Antes de venir ---------- */
 .info-grid { display: grid; gap: 32px; margin-bottom: 56px; }
 .info-grid h3 { font-size: 1.6rem; margin-bottom: 10px; }
@@ -402,12 +446,13 @@ p { margin: 0; }
 
 <header class="header">
   <div class="envoltura">
-    <a class="marca" href="#inicio" aria-label="El Filo Barbería, inicio">EL FILO</a>
+    <a class="marca" href="#inicio" aria-label="DAMC Barbería, inicio">DAMC</a>
     <nav class="nav" aria-label="Secciones">
       <a href="#precios">Precios</a>
       <a href="#cortes">Cortes</a>
       <a href="#en-vivo">En vivo</a>
       <a href="#equipo">Barbero</a>
+      <a href="#tienda">Tienda</a>
       <a href="#antes">Antes de venir</a>
     </nav>
     <div class="header-acciones">
@@ -421,6 +466,7 @@ p { margin: 0; }
       <a href="#cortes">Cortes</a>
       <a href="#en-vivo">En vivo</a>
       <a href="#equipo">Barbero</a>
+      <a href="#tienda">Tienda</a>
       <a href="#antes">Antes de venir</a>
       <a href="#reserva">Reservar</a>
     </nav>
@@ -430,13 +476,19 @@ p { margin: 0; }
 <div class="regla" id="regla" aria-hidden="true"></div>
 
 <main>
-  <!-- Escena 1: el cliente de espaldas con la capa; la cámara entra en la capa -->
+  <!-- Escena 1: el cliente con la capa → puertas de DAMC → la barbería por dentro → la silla -->
   <section class="escena escena-portada" id="inicio" aria-labelledby="titulo-portada">
     <div class="escenario">
-      <div class="capa-img foto-portada" id="foto-portada"><img src="img/portada-capa.jpg" alt="Cliente de espaldas en la silla con la capa roja de El Filo" fetchpriority="high"><img class="antes" id="foto-antes" src="img/portada-antes.jpg" alt="" aria-hidden="true"></div>
+      <div class="capa-img foto-portada" id="foto-portada"><img src="img/portada-capa.jpg" alt="Cliente de espaldas en la silla con la capa roja de DAMC" fetchpriority="high"><img class="antes" id="foto-antes" src="img/portada-antes.jpg" alt="" aria-hidden="true"></div>
       <div class="lupa" id="lupa" aria-hidden="true"><svg viewBox="0 0 200 200"><path d="M100 6 C152 4 196 42 194 98 C192 152 150 196 98 194 C44 192 6 150 8 96 C10 46 50 10 104 8 C150 8 188 40 190 90"/></svg><b>ANTES</b></div>
       <div class="sombra-portada" id="sombra-portada"></div>
-      <div class="tela" id="tela"></div>
+      <div class="capa-img interior" id="interior"><img src="img/portada.jpg" alt="La barbería por dentro, con las sillas de cuero y las lámparas encendidas" loading="lazy"></div>
+      <div class="capa-img silla-cerca" id="silla-cerca"><img src="img/silla.jpg" alt="La silla de barbero de cerca" loading="lazy"></div>
+      <div class="puertas" aria-hidden="true">
+        <div class="puerta izq" id="puerta-izq"><span>DA</span><i></i></div>
+        <div class="puerta der" id="puerta-der"><span>MC</span><i></i></div>
+        <div class="letrero" id="letrero">Abierto</div>
+      </div>
       <div class="texto-escena" id="texto-portada">
         <div class="envoltura portada-texto">
           <h1 id="titulo-portada">El degradado, al milímetro.</h1>
@@ -448,17 +500,36 @@ p { margin: 0; }
           <p class="pista" id="pista">Pasa la lupa por la cabeza para ver cómo llegó.</p>
         </div>
       </div>
-      <div class="texto-escena texto-capa" id="texto-capa" aria-hidden="true">
+      <div class="texto-escena texto-paso" id="paso-entra">
         <div class="envoltura">
-          <h2>La capa sobre los hombros.</h2>
-          <p>Cuello limpio, capa ajustada y a la silla. Desde aquí, 45 minutos que son solo tuyos.</p>
+          <h2>Pasa adelante.</h2>
+          <p>Luz cálida, buena música y la silla lista. Aquí se viene sin afán.</p>
         </div>
       </div>
+      <div class="texto-escena texto-paso paso-silla" id="paso-silla">
+        <div class="envoltura">
+          <div>
+            <h2 id="titulo-sientate">Siéntate.</h2>
+            <p>Desde aquí son 45 minutos solo tuyos.</p>
+          </div>
+          <div class="carta">
+            <p>Reserva en un minuto y llegas a tu hora, sin hacer fila.</p>
+            <dl>
+              <div><dt>Turno</dt><dd>45 min</dd></div>
+              <div><dt>Desde</dt><dd>$15.000</dd></div>
+              <div><dt>Lunes a sábado</dt><dd>9:00 a. m. – 8:00 p. m.</dd></div>
+              <div><dt>Domingo</dt><dd>10:00 a. m. – 2:00 p. m.</dd></div>
+            </dl>
+            <a class="boton boton-negro" href="#reserva">Reservar mi silla <span class="flecha" aria-hidden="true">→</span></a>
+          </div>
+        </div>
+      </div>
+      <div class="oscuro" id="oscuro"></div>
       <span class="bajar" id="bajar">Baja</span>
     </div>
   </section>
 
-  <!-- Precios sobre la tela roja -->
+  <!-- Precios -->
   <section class="precios seccion" id="precios" aria-labelledby="titulo-precios">
     <div class="envoltura precios-grid">
       <div>
@@ -549,24 +620,6 @@ p { margin: 0; }
     </div>
   </section>
 
-  <!-- Siéntate -->
-  <section class="sientate" aria-labelledby="titulo-sientate">
-    <img src="img/portada.jpg" alt="La barbería vacía con las sillas listas" loading="lazy">
-    <div class="envoltura">
-      <div class="carta">
-        <h2 id="titulo-sientate">Siéntate.</h2>
-        <p>Tu silla te espera. Reserva en un minuto y llegas a tu hora, sin hacer fila.</p>
-        <dl>
-          <div><dt>Turno</dt><dd>45 min</dd></div>
-          <div><dt>Desde</dt><dd>$15.000</dd></div>
-          <div><dt>Lunes a sábado</dt><dd>9:00 a. m. – 8:00 p. m.</dd></div>
-          <div><dt>Domingo</dt><dd>10:00 a. m. – 2:00 p. m.</dd></div>
-        </dl>
-        <a class="boton boton-negro" href="#reserva">Reservar mi silla <span class="flecha" aria-hidden="true">→</span></a>
-      </div>
-    </div>
-  </section>
-
   <!-- Reserva -->
   <section class="reserva seccion" id="reserva" aria-labelledby="titulo-reserva" style="padding-bottom:0">
     <div class="envoltura">
@@ -627,7 +680,7 @@ p { margin: 0; }
         </div>
         <div class="ticket-columna" id="ticket">
           <div class="ticket">
-            <div class="ticket-cabeza"><h3>Tu ticket</h3><span>El Filo</span></div>
+            <div class="ticket-cabeza"><h3>Tu ticket</h3><span>DAMC</span></div>
             <dl id="ticket-datos"></dl>
             <div class="ticket-total"><span>Total</span><b id="ticket-total">$0</b></div>
             <div class="ticket-anticipo" id="ticket-anticipo"></div>
@@ -642,6 +695,18 @@ p { margin: 0; }
     <div class="barra-ticket">
       <div><small id="barra-detalle">Degradado</small><b id="barra-total">$0</b></div>
       <a class="boton boton-negro" href="#ticket">Ver ticket</a>
+    </div>
+  </section>
+
+  <!-- Tienda -->
+  <section class="tienda seccion" id="tienda" aria-labelledby="titulo-tienda">
+    <div class="envoltura">
+      <div class="tienda-cabeza">
+        <span class="etiqueta">Tienda DAMC</span>
+        <h2 class="titulo-grande" id="titulo-tienda">Llévate la marca.</h2>
+        <p class="texto-suave">Suéteres y gorras DAMC. Escoge color, talla y cantidad y pídelo por WhatsApp: lo recoges en la barbería o acordamos el envío.</p>
+      </div>
+      <div class="productos" id="productos"></div>
     </div>
   </section>
 
@@ -700,10 +765,10 @@ p { margin: 0; }
 <footer class="pie">
   <div class="envoltura">
     <div>
-      <span class="marca">EL FILO</span>
+      <span class="marca">DAMC</span>
       <p>Barbería para hombres · Manga, Cartagena</p>
     </div>
-    <p>© <span id="anio">2026</span> El Filo Barbería · Instagram @elfilo.barberia</p>
+    <p>© <span id="anio">2026</span> DAMC Barbería · WhatsApp <span id="pie-numero-2"></span></p>
   </div>
 </footer>
 
@@ -712,8 +777,8 @@ p { margin: 0; }
   "use strict";
 
   /* ===== Datos del negocio (cambiar aquí) ===== */
-  var WHATSAPP = "573000000000";          // número con 57 adelante, sin espacios
-  var WHATSAPP_VISIBLE = "300 000 0000";
+  var WHATSAPP = "573233966084";          // WhatsApp de Daniel, con 57 adelante y sin espacios
+  var WHATSAPP_VISIBLE = "323 396 6084";
   var DURACION = 45;   // minutos que dura cada cliente
   var VARIACION = 5;   // minutos de más o de menos por cliente en la fila (mínimo 10 en total), para el rango
 
@@ -740,6 +805,15 @@ p { margin: 0; }
   // 0 = domingo ... 6 = sábado. Minutos desde la medianoche.
   var HORARIO = { 0: [600, 840], 1: [540, 1200], 2: [540, 1200], 3: [540, 1200], 4: [540, 1200], 5: [540, 1200], 6: [540, 1200] };
   var ANGULOS = ["Frente", "Perfil", "Arriba", "Línea"];
+  var COLORES = [
+    { nombre: "Negro", fondo: "#151212", letra: "#ffffff" },
+    { nombre: "Blanco", fondo: "#f6f6f6", letra: "#151212" },
+    { nombre: "Rojo", fondo: "#c4141c", letra: "#ffffff" }
+  ];
+  var PRODUCTOS = [   // precios de ejemplo: cambiarlos por los reales
+    { id: "sueter", nombre: "Suéter DAMC", tipo: "sueter", precio: 95000, detalle: "Suéter cuello redondo con el logo DAMC al frente.", tallas: ["S", "M", "L", "XL"] },
+    { id: "gorra",  nombre: "Gorra DAMC",  tipo: "gorra",  precio: 45000, detalle: "Gorra de visera curva con el logo DAMC, se ajusta atrás.", tallas: ["Única"] }
+  ];
   var CORTES = [
     { foto: "img/cortes/mullet-rizado-raya.jpg", nombre: "Mullet rizado con raya", nota: "Burst fade y una raya curva que abre el lado.", servicio: "diseno" },
     { foto: "img/cortes/burst-fade-mullet.jpg",  nombre: "Burst fade mullet",      nota: "Degradado en curva alrededor de la oreja y rizos atrás.", servicio: "burst" },
@@ -775,6 +849,7 @@ p { margin: 0; }
 
   $("#numero-visible").textContent = WHATSAPP_VISIBLE;
   $("#pie-numero").textContent = WHATSAPP_VISIBLE;
+  $("#pie-numero-2").textContent = WHATSAPP_VISIBLE;
   $("#anio").textContent = new Date().getFullYear();
 
   /* ===== Menú móvil ===== */
@@ -796,8 +871,10 @@ p { margin: 0; }
   })();
 
   /* ===== Escenas al bajar ===== */
-  var escPortada = $(".escena-portada"), fotoPortada = $("#foto-portada"), sombraPortada = $("#sombra-portada"), tela = $("#tela"),
-      txtPortada = $("#texto-portada"), txtCapa = $("#texto-capa"), bajar = $("#bajar");
+  var escPortada = $(".escena-portada"), fotoPortada = $("#foto-portada"), sombraPortada = $("#sombra-portada"),
+      txtPortada = $("#texto-portada"), bajar = $("#bajar"), interior = $("#interior"), sillaCerca = $("#silla-cerca"),
+      puertaIzq = $("#puerta-izq"), puertaDer = $("#puerta-der"), letrero = $("#letrero"), oscuro = $("#oscuro"),
+      pasoEntra = $("#paso-entra"), pasoSilla = $("#paso-silla");
   var escAngulos = $(".escena-angulos"), angulos = [].slice.call(document.querySelectorAll(".angulo")), grados = $("#grados"), gradosTxt = $("#grados-txt");
   var angActivo = 0, pendiente = false;
 
@@ -815,24 +892,34 @@ p { margin: 0; }
     reglaMarca.style.top = (pg * 100) + "%";
     reglaMarca.firstChild.textContent = hora12(540 + Math.round(pg * 660 / 5) * 5);
 
-    // Escena 1: la cámara entra en la capa y aparece la tela
-    var p = avance(escPortada);
-    if (!reducir) {
-      var zoom = 1 + Math.pow(tramo(p, .08, .55), 1.6) * 3.4;
-      fotoPortada.style.transform = "scale(" + zoom.toFixed(3) + ")";
-      fotoPortada.style.transformOrigin = innerWidth < 700 ? "62% 61%" : "72% 61%";
-      fotoPortada.style.filter = "blur(" + (tramo(p, .32, .55) * 10).toFixed(1) + "px)";
-      tela.style.transform = "scale(" + (1.15 - tramo(p, .4, 1) * .15).toFixed(3) + ")";
-    }
-    opacidad(sombraPortada, 1 - tramo(p, .05, .3));
-    opacidad(tela, tramo(p, .42, .6));
-    opacidad(txtPortada, 1 - tramo(p, 0, .14));
-    txtPortada.style.transform = "translateY(" + (-tramo(p, 0, .14) * 40).toFixed(1) + "px)";
-    txtPortada.style.visibility = p > .15 ? "hidden" : "visible";
-    opacidad(txtCapa, tramo(p, .58, .68) * (1 - tramo(p, .88, .99)));
-    txtCapa.style.transform = "translateY(" + ((1 - tramo(p, .58, .7)) * 30).toFixed(1) + "px)";
-    opacidad(bajar, 1 - tramo(p, 0, .06));
-    if (typeof lente !== "undefined") lente.visible = p < .05;
+    // Escena 1: recorrido. Se cierran las puertas, se abren, entras a la barbería y te sientas en la silla
+    var p = avance(escPortada), mueve = !reducir;
+    opacidad(txtPortada, 1 - tramo(p, 0, .07));
+    txtPortada.style.transform = "translateY(" + (-tramo(p, 0, .07) * 40).toFixed(1) + "px)";
+    txtPortada.style.visibility = p > .08 ? "hidden" : "visible";
+    opacidad(bajar, 1 - tramo(p, 0, .04));
+    if (typeof lente !== "undefined") lente.visible = p < .04;
+    if (mueve) fotoPortada.style.transform = "scale(" + (1 + tramo(p, .02, .2) * .12).toFixed(3) + ")";
+    fotoPortada.style.transformOrigin = innerWidth < 700 ? "62% 45%" : "72% 45%";
+    fotoPortada.style.opacity = p < .21 ? "1" : "0";
+    // puertas: se cierran (.08–.2) y se abren (.3–.44)
+    var cierre = tramo(p, .08, .2), abre = tramo(p, .3, .44), pos = (1 - cierre) + abre;
+    puertaIzq.style.transform = "translateX(" + (-pos * 101).toFixed(2) + "%)";
+    puertaDer.style.transform = "translateX(" + (pos * 101).toFixed(2) + "%)";
+    opacidad(letrero, tramo(p, .17, .22) * (1 - tramo(p, .27, .31)));
+    letrero.style.transform = "translateX(-50%) rotate(" + (mueve ? (-3 + Math.sin(p * 60) * 4 * (1 - tramo(p, .17, .28))) : -3).toFixed(2) + "deg)";
+    // la barbería por dentro: la cámara camina hasta la silla del centro
+    opacidad(interior, p > .2 ? 1 - tramo(p, .64, .74) : 0);
+    if (mueve) { interior.style.transform = "scale(" + (1.04 + Math.pow(tramo(p, .32, .72), 1.3) * 1.5).toFixed(3) + ")"; interior.style.transformOrigin = "50.5% 74%"; }
+    opacidad(pasoEntra, tramo(p, .42, .48) * (1 - tramo(p, .58, .63)));
+    pasoEntra.style.transform = "translateY(" + ((1 - tramo(p, .42, .5)) * 30).toFixed(1) + "px)";
+    // la silla de cerca: bajas la mirada como al sentarte
+    opacidad(sillaCerca, tramo(p, .64, .74));
+    if (mueve) sillaCerca.style.transform = "scale(" + (1.45 - tramo(p, .64, .88) * .43).toFixed(3) + ") translateY(" + (-6 + tramo(p, .64, .88) * 6).toFixed(2) + "%)";
+    opacidad(pasoSilla, tramo(p, .76, .82) * (1 - tramo(p, .93, .97)));
+    pasoSilla.style.transform = "translateY(" + ((1 - tramo(p, .76, .84)) * 30).toFixed(1) + "px)";
+    pasoSilla.style.visibility = p > .74 && p < .98 ? "visible" : "hidden";
+    opacidad(oscuro, tramo(p, .94, 1));
 
     // Escena 2: ángulos con contador de grados
     var q = avance(escAngulos);
@@ -913,12 +1000,63 @@ p { margin: 0; }
     filaCortes.appendChild(b);
   });
 
+  /* ===== Tienda ===== */
+  function arte(tipo, c) {
+    var borde = 'stroke="rgba(0,0,0,.2)" stroke-width="1.2"', marca = c.nombre === "Blanco" ? "rgba(0,0,0,.14)" : "rgba(255,255,255,.16)";
+    if (tipo === "gorra") return '<svg viewBox="0 0 220 150" role="img" aria-label="Gorra DAMC ' + c.nombre.toLowerCase() + '">' +
+      '<path d="M38 102 Q34 34 104 28 Q170 26 178 94 Z" fill="' + c.fondo + '" ' + borde + '/>' +
+      '<path d="M104 29 Q96 62 100 100 M68 40 Q60 70 62 101 M142 35 Q152 64 152 96" fill="none" stroke="' + marca + '" stroke-width="1.6"/>' +
+      '<path d="M38 102 Q100 86 178 94 Q208 98 214 114 Q208 121 194 118 Q150 110 104 112 Q60 114 38 102 Z" fill="' + c.fondo + '" ' + borde + '/>' +
+      '<path d="M38 102 Q100 86 178 94 Q208 98 214 114 Q208 121 194 118 Q150 110 104 112 Q60 114 38 102 Z" fill="rgba(0,0,0,.14)"/>' +
+      '<circle cx="104" cy="28" r="5" fill="' + c.fondo + '" ' + borde + '/>' +
+      '<text x="106" y="78" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="25" letter-spacing="1" fill="' + c.letra + '">DAMC</text></svg>';
+    return '<svg viewBox="0 0 200 190" role="img" aria-label="Suéter DAMC ' + c.nombre.toLowerCase() + '">' +
+      '<path d="M68 22 Q100 36 132 22 L170 40 Q184 46 186 60 L196 128 Q196 134 190 135 L170 138 Q164 138 163 132 L156 84 L156 168 Q156 176 148 176 L52 176 Q44 176 44 168 L44 84 L37 132 Q36 138 30 138 L10 135 Q4 134 4 128 L14 60 Q16 46 30 40 Z" fill="' + c.fondo + '" ' + borde + '/>' +
+      '<path d="M74 25 Q100 41 126 25" fill="none" stroke="' + marca + '" stroke-width="6" stroke-linecap="round"/>' +
+      '<path d="M46 167 L154 167 M8 127 L32 131 M168 131 L192 127" stroke="' + marca + '" stroke-width="5"/>' +
+      '<path d="M44 84 L44 160 M156 84 L156 160" stroke="' + marca + '" stroke-width="1.2"/>' +
+      '<text x="100" y="110" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="32" letter-spacing="1" fill="' + c.letra + '">DAMC</text></svg>';
+  }
+  var cajaProductos = $("#productos");
+  PRODUCTOS.forEach(function (pr) {
+    var sel = { color: 0, talla: pr.tallas.length === 1 ? 0 : 1, cant: 1 };
+    var art = el("article", { class: "producto" });
+    function pintar() {
+      var c = COLORES[sel.color], total = pr.precio * sel.cant;
+      var msg = "Hola, quiero pedir en la tienda DAMC:\n• " + pr.nombre + ", color " + c.nombre + ", talla " + pr.tallas[sel.talla] + ", cantidad " + sel.cant + " (" + pesos(total) + ")\n¿Cómo hago el pago y la entrega?";
+      art.innerHTML =
+        '<div class="producto-arte"><span class="marca-prenda">DAMC</span>' + arte(pr.tipo, c) + '</div>' +
+        '<div class="producto-cuerpo">' +
+          '<div class="producto-top"><h3>' + pr.nombre + '</h3><b>' + pesos(pr.precio) + '</b></div>' +
+          '<p class="detalle">' + pr.detalle + '</p>' +
+          '<div class="selector"><small>Color<span>' + c.nombre + '</span></small><div class="colores">' +
+            COLORES.map(function (co, i) { return '<button type="button" class="color-btn" data-color="' + i + '" style="--c:' + co.fondo + '" aria-label="' + co.nombre + '" aria-pressed="' + (i === sel.color) + '"></button>'; }).join("") + '</div></div>' +
+          '<div class="selector"><small>Talla</small><div class="tallas">' +
+            pr.tallas.map(function (t, i) { return '<button type="button" class="talla-btn" data-talla="' + i + '" aria-pressed="' + (i === sel.talla) + '">' + t + '</button>'; }).join("") + '</div></div>' +
+          '<div class="selector"><small>Cantidad</small><div class="cantidad"><button type="button" data-cant="-1" aria-label="Quitar uno">−</button><span>' + sel.cant + '</span><button type="button" data-cant="1" aria-label="Agregar uno">+</button></div></div>' +
+          '<div class="producto-pie"><div><small>Total</small><b>' + pesos(total) + '</b></div>' +
+          '<a class="boton boton-blanco" target="_blank" rel="noopener" href="https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg) + '">Pedir por WhatsApp <span class="flecha" aria-hidden="true">→</span></a></div>' +
+        '</div>';
+    }
+    art.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.color != null) sel.color = +b.dataset.color;
+      if (b.dataset.talla != null) sel.talla = +b.dataset.talla;
+      if (b.dataset.cant != null) sel.cant = Math.max(1, Math.min(10, sel.cant + (+b.dataset.cant)));
+      pintar();
+      var igual = art.querySelector('[data-' + (b.dataset.color != null ? 'color="' + sel.color : b.dataset.talla != null ? 'talla="' + sel.talla : 'cant="' + b.dataset.cant) + '"]');
+      if (igual) igual.focus();
+    });
+    pintar();
+    cajaProductos.appendChild(art);
+  });
+
   /* ===== Barbero ===== */
   function avatar(b) { return b.foto ? '<img src="' + b.foto + '" alt="">' : '<span class="avatar-libre" aria-hidden="true">' + b.iniciales + '</span>'; }
   (function () {
     var b = BARBEROS[0], f = $("#barbero-foto");
     f.innerHTML = (b.foto ? '<img src="' + b.foto + '" alt="Retrato de ' + b.nombre + '" loading="lazy">' : '<div class="foto-pendiente" aria-hidden="true"><span>' + b.iniciales + '</span></div>') +
-      '<figcaption class="papel"><h3>' + b.nombre + '</h3><p>Barbero de El Filo</p></figcaption>';
+      '<figcaption class="papel"><h3>' + b.nombre + '</h3><p>Barbero de DAMC</p></figcaption>';
   })();
 
   /* ===== Horario ===== */
@@ -1079,7 +1217,7 @@ p { margin: 0; }
   function mensaje() {
     var s = servicioActual(), b = barberoActual();
     return [
-      "Hola, quiero reservar en El Filo:",
+      "Hola, quiero reservar en DAMC:",
       "• Corte: " + s.nombre + " (" + pesos(s.precio) + ", " + s.min + " min)",
       "• Barbero: " + b.corto,
       "• Día: " + fmtDia.format(estado.fecha),
@@ -1113,7 +1251,7 @@ p { margin: 0; }
   /* ===== En vivo: fila y sillas en tiempo real ===== */
   var SILLAS = BARBEROS;
   var vivo = { modo: "cargando", datos: null, editar: false, ref: null, cadena: Promise.resolve(), panelAbierto: false, conectado: false };
-  var CLAVE_DEMO = "elfilo-fila-demo";
+  var CLAVE_DEMO = "damc-fila-demo";
 
   function estadoEjemplo() {
     var n = Date.now();
