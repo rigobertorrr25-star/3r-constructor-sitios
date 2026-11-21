@@ -38,9 +38,9 @@ reservas y los pedidos de la tienda.
   «Pedir por WhatsApp», y el mensaje pregunta si está disponible y qué precio tiene. Datos en `GORRAS` (nombre y
   foto). Los nombres son descriptivos (color y estilo), sin marcas.
 - **Solo para hombres** (21 nov 2026, Rigoberto): se atienden hombres y niños.
-- **Un solo barbero: Daniel Mejía** (21 nov 2026, Rigoberto quitó a los demás). Su foto está pendiente (la manda
-  Rigoberto): mientras tanto se ven sus iniciales «DM». Cuando llegue, guardarla como `img/equipo-daniel.jpg` y poner
-  `foto: "img/equipo-daniel.jpg"` en `BARBEROS`. La reserva ya no pide escoger barbero.
+- **Un solo barbero: Daniel Mejía** (21 nov 2026, Rigoberto quitó a los demás). Foto real mandada por Rigoberto:
+  `img/equipo-daniel.jpg` (a color, en su barbería; en el letrero se lee «Bendito Barbería Daniel Mejía») y el recorte
+  de la cara `img/equipo-daniel-cara.jpg` para la fila en vivo. La reserva ya no pide escoger barbero.
 - **Reloj para escoger la hora** (21 nov 2026, Rigoberto): en «El momento» hay un reloj de agujas; cada turno libre de
   45 min es un botón alrededor del reloj (los ocupados salen grises y tachados) y las agujas marcan la hora escogida.
   Al lado, la fila en vivo: cuántas personas esperan, si Daniel está motilando, cuánto tardan si llegas sin cita y

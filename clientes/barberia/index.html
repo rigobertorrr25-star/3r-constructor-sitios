@@ -205,6 +205,8 @@ p { margin: 0; }
 
 .barbero-unico { display: grid; gap: 36px; align-items: center; }
 .barbero-unico .barbero { margin: 0; width: 100%; max-width: 440px; }
+.barbero-unico .barbero img { filter: none; aspect-ratio: 3 / 4; object-position: 50% 30%; }
+.barbero-unico .barbero:hover img { filter: none; }
 .barbero-texto { display: grid; gap: 20px; justify-items: start; }
 .foto-pendiente { aspect-ratio: 3 / 4; background: linear-gradient(160deg, #241c1c, #0e0b0b); display: grid; place-items: center; }
 .foto-pendiente span { font-family: var(--f-titulo); font-size: clamp(6rem, 16vw, 10rem); color: #3a2e2e; }
@@ -795,7 +797,7 @@ p { margin: 0; }
     { id: "nino",      nombre: "Corte de niño",     min: 45, precio: 20000, detalle: "Hasta los 12 años",                       foto: "img/secador.jpg" }
   ];
   var BARBEROS = [
-    { id: "daniel", nombre: "Daniel Mejía", corto: "Daniel", nota: "Barbero", foto: null, iniciales: "DM" }   // cuando llegue la foto: foto: "img/equipo-daniel.jpg"
+    { id: "daniel", nombre: "Daniel Mejía", corto: "Daniel", nota: "Barbero", foto: "img/equipo-daniel.jpg", cara: "img/equipo-daniel-cara.jpg", iniciales: "DM" }
   ];
   var PAGOS = [
     { id: "local",    nombre: "Pagar en la barbería", nota: "Efectivo, tarjeta, Nequi o Daviplata" },
@@ -1044,7 +1046,7 @@ p { margin: 0; }
   })();
 
   /* ===== Barbero ===== */
-  function avatar(b) { return b.foto ? '<img src="' + b.foto + '" alt="">' : '<span class="avatar-libre" aria-hidden="true">' + b.iniciales + '</span>'; }
+  function avatar(b) { return (b.cara || b.foto) ? '<img src="' + (b.cara || b.foto) + '" alt="">' : '<span class="avatar-libre" aria-hidden="true">' + b.iniciales + '</span>'; }
   (function () {
     var b = BARBEROS[0], f = $("#barbero-foto");
     f.innerHTML = (b.foto ? '<img src="' + b.foto + '" alt="Retrato de ' + b.nombre + '" loading="lazy">' : '<div class="foto-pendiente" aria-hidden="true"><span>' + b.iniciales + '</span></div>') +
