@@ -16,6 +16,11 @@ Página estática de una sola hoja (`index.html` + `img/`), sin dueño todavía.
   de OpenArt. **Portada** (21 nov 2026): Rigoberto mandó su propia versión sin el logo (sin las letras); se le
   volvieron a escribir «EL FILO» en Anton sobre la capa, con las sombras de la tela. **`capa-quitar.jpg` todavía
   trae el logo** (falta que Rigoberto mande su versión, o un plan de pago). `img/tela-roja.jpg` se dibujó con código (no es foto).
+- **Lupa del antes** (21 nov 2026, Rigoberto, como en la referencia 1): en la portada un círculo dibujado a mano con la
+  etiqueta «ANTES» sigue el mouse (o el dedo); dentro se ve `img/portada-antes.jpg` (la misma foto con el pelo largo
+  sin cortar, armada con los rizos de la misma foto, sin IA) y fuera el degradado. Si nadie la mueve, ronda sola por
+  la cabeza; desaparece al empezar el acercamiento. Si se cambia la portada, hay que rehacer la foto «antes» con el
+  mismo encuadre y ajustar `LUPA_CABEZA` (centro de la cabeza en la foto de 1920×1080).
 - **Solo para hombres** (21 nov 2026, Rigoberto): los tres barberos son hombres (Álvaro, Andrés, Julián) y se
   atienden hombres y niños.
 - **Cada cliente dura 45 minutos** (21 nov 2026, Rigoberto): todos los servicios duran 45 min, las horas de reserva
