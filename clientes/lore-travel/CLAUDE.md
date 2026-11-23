@@ -60,3 +60,9 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   botones y mensajes en `UI`. En inglés los mensajes de WhatsApp salen en inglés y los precios como «COP $10,500,000».
   **Al agregar un texto o un plan nuevo, poner también su inglés.** Menú completo solo desde 1200 px de ancho; en
   pantallas menores quedan logo, ES | EN y WhatsApp (en celulares de menos de 420 px el botón de WhatsApp es solo ícono).
+- **23 nov 2026: fotos más nítidas** (Rigoberto: «hay algunas que salen pixeladas»). Se midió cada foto contra el tamaño en
+  que se muestra (celular y computador con pantalla de alta densidad). Las de Drive, del PDF y de Pexels se volvieron a sacar
+  en tamaño completo (hasta 1.400–1.700 px). Las 9 del linkbio (400×400: Cholón, cuatrimotos y los 7 lugares) se agrandaron
+  ×3 con un mejorador de imagen (EDSR, OpenCV 4) a 1.200 px: mejoran mucho pero no son originales; si Lore consigue las
+  fotos originales de esos lugares, reemplazarlas. En la portada, Cholón y cuatrimotos se cambiaron por Islas del Rosario y
+  el catamarán. Con esto ninguna foto se estira más de 1,15 veces.
