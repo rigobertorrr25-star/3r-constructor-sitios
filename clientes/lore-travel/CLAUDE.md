@@ -66,3 +66,9 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   ×3 con un mejorador de imagen (EDSR, OpenCV 4) a 1.200 px: mejoran mucho pero no son originales; si Lore consigue las
   fotos originales de esos lugares, reemplazarlas. En la portada, Cholón y cuatrimotos se cambiaron por Islas del Rosario y
   el catamarán. Con esto ninguna foto se estira más de 1,15 veces.
+- **23 nov 2026: videos revisados** (Rigoberto: «verifica que todos los videos se reproduzcan bien»). Los 22 (17 de clientes y
+  5 de planes) se decodificaron enteros sin errores: H.264 Main, yuv420p, AAC, índice al comienzo (arrancan sin bajarse
+  completos), con póster y sin rotación. Problema encontrado y arreglado: al abrirlos en el visor **no arrancaban solos**
+  (el atributo autoplay en HTML insertado no cuenta como toque del cliente). Ahora `abrir()` crea el `<video>` y llama
+  `play()` dentro del mismo toque; si el celular no deja sonido, arranca en silencio. Probado con clic real en celular y
+  computador: los 22 avanzan solos, con sonido, y se ven completos. Safari (iPhone) no se puede probar desde la sesión.

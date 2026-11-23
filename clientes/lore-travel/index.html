@@ -885,9 +885,18 @@ function abrir(i, lista){
   if (lista) listaVisor = lista;
   actual = (i + listaVisor.length) % listaVisor.length; const c = listaVisor[actual];
   visor.querySelector('.ant').hidden = visor.querySelector('.sig').hidden = listaVisor.length < 2;
-  vMedia.innerHTML = c.v
-    ? `<video src="img/${c.f}.mp4" poster="img/${c.f}.webp" controls autoplay playsinline></video>`
-    : `<img src="img/${c.f}.webp" alt="${c.alt}">`;
+  if (c.v) {
+    // El video se arranca con play() dentro del mismo toque del cliente: así lo permiten Chrome y Safari (iPhone).
+    const v = document.createElement('video');
+    v.src = `img/${c.f}.mp4`; v.poster = `img/${c.f}.webp`;
+    v.controls = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto';
+    vMedia.replaceChildren(v);
+    const p = v.play();
+    // si el celular no deja arrancar con sonido, arranca sin sonido (el cliente lo activa en los controles)
+    if (p && p.catch) p.catch(() => { v.muted = true; v.play().catch(() => {}); });
+  } else {
+    vMedia.innerHTML = `<img src="img/${c.f}.webp" alt="${c.alt}">`;
+  }
   document.getElementById('visorPie').textContent = tt(c) || '';
   visor.hidden = false; document.body.style.overflow = 'hidden';
 }
