@@ -49,13 +49,21 @@ button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
 
 /* Barra de arriba */
 header{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--linea)}
-.barra{display:flex;align-items:center;justify-content:space-between;height:66px}
+.barra{display:flex;align-items:center;justify-content:space-between;gap:18px;height:66px}
 .logo{display:flex;align-items:center}
 .logo img{height:34px;width:auto}
 nav.menu{display:flex;gap:28px;font-weight:600;font-size:14px;color:var(--gris)}
 nav.menu a:hover{color:var(--coral-osc)}
 .barra .btn{padding:10px 16px;font-size:14px}
-@media (max-width:820px){nav.menu{display:none}}
+.lado{display:flex;align-items:center;gap:10px}
+.idioma{display:flex;border:1.5px solid var(--linea);border-radius:8px;overflow:hidden;background:#fff}
+.idioma button{padding:7px 10px;font-weight:700;font-size:13px;color:var(--gris);line-height:1}
+.idioma button[aria-pressed="true"]{background:var(--mar);color:#fff}
+@media (max-width:420px){#waMenu .txt{display:none}#waMenu{padding:9px 11px}#waMenu svg{width:22px;height:22px}}
+@media (max-width:1199px){nav.menu{display:none}}
+nav.menu a,.barra .btn{white-space:nowrap}
+.logo{flex:none}
+nav.menu{gap:22px}
 
 /* Portada */
 .portada{padding:56px 0 72px;overflow:hidden}
@@ -362,14 +370,17 @@ body.con-plan .wa{bottom:88px}
     <a class="logo" href="#inicio"><img src="img/logo-horizontal.svg" alt="Lore TRAVEL"></a>
     <nav class="menu" aria-label="Menú">
       <a href="#tours">Tours</a>
-      <a href="#lancha">Lancha privada</a>
-      <a href="#catamaran">Catamarán</a>
-      <a href="#planes">Restaurantes</a>
-      <a href="#clientes">Clientes</a>
-      <a href="#armar">Arma tu plan</a>
-            <a href="#contacto">Contacto</a>
+      <a href="#lancha" data-en="Private boat">Lancha privada</a>
+      <a href="#catamaran" data-en="Catamaran">Catamarán</a>
+      <a href="#planes" data-en="Restaurants">Restaurantes</a>
+      <a href="#clientes" data-en="Clients">Clientes</a>
+      <a href="#armar" data-en="Plan your trip">Arma tu plan</a>
+      <a href="#contacto" data-en="Contact">Contacto</a>
     </nav>
-    <a class="btn btn-coral" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20informaci%C3%B3n%20de%20tus%20planes" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>Escríbeme</a>
+    <div class="lado">
+      <div class="idioma" role="group" aria-label="Idioma / Language"><button type="button" data-lang="es" aria-pressed="true">ES</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div>
+      <a class="btn btn-coral" id="waMenu" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20informaci%C3%B3n%20de%20tus%20planes" data-en-href="https://wa.me/573006279421?text=Hi%20Lore%2C%20I%27d%20like%20information%20about%20your%20plans" target="_blank" rel="noopener" aria-label="WhatsApp"><svg><use href="#i-wa"/></svg><span class="txt" data-en="Message me">Escríbeme</span></a>
+    </div>
   </div>
 </header>
 
@@ -377,17 +388,17 @@ body.con-plan .wa{bottom:88px}
   <section class="portada">
     <div class="wrap">
       <div>
-        <div class="lugar"><svg><use href="#i-pin"/></svg>Cartagena · Barú · Islas</div>
-        <h1>¡Escápate con nosotros! <span>Tus vacaciones, listas.</span></h1>
-        <p class="sub">Crea recuerdos inolvidables en tus próximas vacaciones. Islas, lancha privada, recorridos por la ciudad, excursiones, rumba y buena comida: tú escoges qué quieres vivir y yo me encargo de las reservas.</p>
+        <div class="lugar" data-en="&lt;svg&gt;&lt;use href=&quot;#i-pin&quot;/&gt;&lt;/svg&gt;Cartagena · Barú · Islands"><svg><use href="#i-pin"/></svg>Cartagena · Barú · Islas</div>
+        <h1 data-en="Get away with us! &lt;span&gt;Your vacation, sorted.&lt;/span&gt;">¡Escápate con nosotros! <span>Tus vacaciones, listas.</span></h1>
+        <p class="sub" data-en="Make unforgettable memories on your next vacation. Islands, private boats, city tours, day trips, nightlife and great food: you choose what to experience and I take care of the bookings.">Crea recuerdos inolvidables en tus próximas vacaciones. Islas, lancha privada, recorridos por la ciudad, excursiones, rumba y buena comida: tú escoges qué quieres vivir y yo me encargo de las reservas.</p>
         <div class="acciones">
-          <a class="btn btn-coral" href="#tours">Ver los tours</a>
-          <a class="btn btn-borde" href="#armar">Arma tu plan</a>
+          <a class="btn btn-coral" href="#tours" data-en="See the tours">Ver los tours</a>
+          <a class="btn btn-borde" href="#armar" data-en="Plan your trip">Arma tu plan</a>
         </div>
         <div class="datos">
-          <div><strong>12</strong>tours y servicios</div>
-          <div><strong>1</strong>solo chat para reservar</div>
-          <div><strong>WhatsApp</strong>respuesta directa</div>
+          <div data-en="&lt;strong&gt;12&lt;/strong&gt;tours and services"><strong>12</strong>tours y servicios</div>
+          <div data-en="&lt;strong&gt;1&lt;/strong&gt;chat to book it all"><strong>1</strong>solo chat para reservar</div>
+          <div data-en="&lt;strong&gt;WhatsApp&lt;/strong&gt;direct replies"><strong>WhatsApp</strong>respuesta directa</div>
         </div>
       </div>
       <div class="mosaico">
@@ -395,7 +406,7 @@ body.con-plan .wa{bottom:88px}
         <img class="b" src="img/lancha-6.webp" alt="Lancha privada frente a Bocagrande">
         <img class="c" src="img/helicoptero.webp" alt="Helicóptero sobre Bocagrande">
         <img class="d" src="img/cuatrimotos.webp" alt="Recorrido en cuatrimoto por la playa">
-        <div class="sello"><img src="img/lore.webp" alt="">Hola, soy Lore. Te ayudo a armar tu viaje.</div>
+        <div class="sello" data-en="&lt;img src=&quot;img/lore.webp&quot; alt=&quot;&quot;&gt;Hi, I&#x27;m Lore. I&#x27;ll help you plan your trip."><img src="img/lore.webp" alt="">Hola, soy Lore. Te ayudo a armar tu viaje.</div>
       </div>
     </div>
   </section>
@@ -404,8 +415,8 @@ body.con-plan .wa{bottom:88px}
     <div class="wrap">
       <div class="cabeza">
         <div>
-          <h2>Tours y experiencias</h2>
-          <p>Toca «Agregar» en los que te gusten y al final me mandas todo en un solo mensaje. Precios y disponibilidad te los doy por WhatsApp.</p>
+          <h2 data-en="Tours and experiences">Tours y experiencias</h2>
+          <p data-en="Tap “Add” on the ones you like and send me everything in one message. I&#x27;ll share prices and availability on WhatsApp.">Toca «Agregar» en los que te gusten y al final me mandas todo en un solo mensaje. Precios y disponibilidad te los doy por WhatsApp.</p>
         </div>
       </div>
       <div class="tours" id="listaTours"></div>
@@ -426,38 +437,38 @@ body.con-plan .wa{bottom:88px}
         </div>
       </div>
       <div>
-        <h2>Lancha privada para tu grupo</h2>
-        <p class="lead">Tu mejor plan en Cartagena está aquí: las islas, Cholón o el atardecer, a tu ritmo y solo con tu gente.</p>
+        <h2 data-en="Private boat for your group">Lancha privada para tu grupo</h2>
+        <p class="lead" data-en="Your best plan in Cartagena is right here: the islands, Cholón or the sunset, at your own pace and only with your people.">Tu mejor plan en Cartagena está aquí: las islas, Cholón o el atardecer, a tu ritmo y solo con tu gente.</p>
         <div class="ficha">
-          <div><svg><use href="#i-gente"/></svg><span>Capacidad: <b>hasta 8 personas</b></span></div>
-          <div><svg><use href="#i-regla"/></svg><span>Eslora: <b>28 pies</b></span></div>
-          <div><svg><use href="#i-motor"/></svg><span><b>2 motores</b> Mercury de 115 HP</span></div>
-          <div><svg><use href="#i-sonido"/></svg><span>Sonido JL profesional inalámbrico</span></div>
-          <div><svg><use href="#i-bano"/></svg><span>Baño</span></div>
-          <div><svg><use href="#i-ducha"/></svg><span>Ducha de agua dulce</span></div>
-          <div><svg><use href="#i-snorkel"/></svg><span>Caretas para snorkel</span></div>
-          <div><svg><use href="#i-flotador"/></svg><span>Flotadores recreativos</span></div>
-          <div><svg><use href="#i-hielo"/></svg><span>Nevera fija y nevera portátil con hielo</span></div>
-          <div><svg><use href="#i-escalera"/></svg><span>Escalera para entrar y salir del mar</span></div>
+          <div><svg><use href="#i-gente"/></svg><span data-en="Capacity: &lt;b&gt;up to 8 people&lt;/b&gt;&lt;/span&gt;">Capacidad: <b>hasta 8 personas</b></span></div>
+          <div><svg><use href="#i-regla"/></svg><span data-en="Length: &lt;b&gt;28 feet&lt;/b&gt;&lt;/span&gt;">Eslora: <b>28 pies</b></span></div>
+          <div><svg><use href="#i-motor"/></svg><span data-en="&lt;b&gt;2 Mercury engines&lt;/b&gt;, 115 HP&lt;/span&gt;"><b>2 motores</b> Mercury de 115 HP</span></div>
+          <div><svg><use href="#i-sonido"/></svg><span data-en="Professional wireless JL sound system&lt;/span&gt;">Sonido JL profesional inalámbrico</span></div>
+          <div><svg><use href="#i-bano"/></svg><span data-en="Bathroom&lt;/span&gt;">Baño</span></div>
+          <div><svg><use href="#i-ducha"/></svg><span data-en="Freshwater shower&lt;/span&gt;">Ducha de agua dulce</span></div>
+          <div><svg><use href="#i-snorkel"/></svg><span data-en="Snorkel masks&lt;/span&gt;">Caretas para snorkel</span></div>
+          <div><svg><use href="#i-flotador"/></svg><span data-en="Pool floats&lt;/span&gt;">Flotadores recreativos</span></div>
+          <div><svg><use href="#i-hielo"/></svg><span data-en="Built-in and portable coolers with ice&lt;/span&gt;">Nevera fija y nevera portátil con hielo</span></div>
+          <div><svg><use href="#i-escalera"/></svg><span data-en="Swim ladder&lt;/span&gt;">Escalera para entrar y salir del mar</span></div>
         </div>
-        <div class="zarpe"><svg><use href="#i-pin"/></svg>Zarpe: Muelle de los Pegasos</div>
+        <div class="zarpe" data-en="&lt;svg&gt;&lt;use href=&quot;#i-pin&quot;/&gt;&lt;/svg&gt;Departs from: Muelle de los Pegasos"><svg><use href="#i-pin"/></svg>Zarpe: Muelle de los Pegasos</div>
         <div class="acciones">
           <button class="btn agregar" aria-pressed="false" data-id="lancha">Agregar</button>
-          <button class="btn btn-borde" type="button" data-video="lancha" style="color:var(--mar)"><svg><use href="#i-play"/></svg>Ver video</button>
-          <a class="btn btn-coral" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20reservar%20la%20lancha%20privada" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>Reservar la lancha</a>
+          <button class="btn btn-borde" type="button" data-video="lancha" style="color:var(--mar)" data-en="&lt;svg&gt;&lt;use href=&quot;#i-play&quot;/&gt;&lt;/svg&gt;Watch video"><svg><use href="#i-play"/></svg>Ver video</button>
+          <a class="btn btn-coral" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20reservar%20la%20lancha%20privada" data-en-href="https://wa.me/573006279421?text=Hi%20Lore%2C%20I%27d%20like%20to%20book%20the%20private%20boat" target="_blank" rel="noopener" data-en="&lt;svg&gt;&lt;use href=&quot;#i-wa&quot;/&gt;&lt;/svg&gt;Book the boat"><svg><use href="#i-wa"/></svg>Reservar la lancha</a>
         </div>
       </div>
     </div>
     <div class="wrap flota-barcos">
       <div>
-        <h3>¿Son más personas? Hay más lanchas y yates</h3>
-        <p>Según tu grupo y tu presupuesto te consigo la embarcación ideal para las islas o Cholón.</p>
+        <h3 data-en="More people? There are more boats and yachts">¿Son más personas? Hay más lanchas y yates</h3>
+        <p data-en="Depending on your group and budget, I&#x27;ll find the right boat for the islands or Cholón.">Según tu grupo y tu presupuesto te consigo la embarcación ideal para las islas o Cholón.</p>
         <div class="barcos">
-          <figure><img src="img/barco-sea-dream.webp" alt="Yate frente a Bocagrande" loading="lazy"><figcaption>Yate</figcaption></figure>
-          <figure><img src="img/barco-yate.webp" alt="Yate en Islas del Rosario" loading="lazy"><figcaption>Yate en las islas</figcaption></figure>
-          <figure><img src="img/barco-roja.webp" alt="Lancha rápida con cojines rojos" loading="lazy"><figcaption>Lancha rápida</figcaption></figure>
-          <figure><img src="img/barco-makaira.webp" alt="Lancha deportiva blanca navegando" loading="lazy"><figcaption>Lancha deportiva</figcaption></figure>
-          <figure><img src="img/barco-mangelito.webp" alt="Lancha con techo blanco frente a Bocagrande" loading="lazy"><figcaption>Lancha con techo</figcaption></figure>
+          <figure><img src="img/barco-sea-dream.webp" alt="Yate frente a Bocagrande" loading="lazy"><figcaption data-en="Yacht&lt;/figcaption&gt;">Yate</figcaption></figure>
+          <figure><img src="img/barco-yate.webp" alt="Yate en Islas del Rosario" loading="lazy"><figcaption data-en="Yacht at the islands">Yate en las islas</figcaption></figure>
+          <figure><img src="img/barco-roja.webp" alt="Lancha rápida con cojines rojos" loading="lazy"><figcaption data-en="Speedboat">Lancha rápida</figcaption></figure>
+          <figure><img src="img/barco-makaira.webp" alt="Lancha deportiva blanca navegando" loading="lazy"><figcaption data-en="Sport boat">Lancha deportiva</figcaption></figure>
+          <figure><img src="img/barco-mangelito.webp" alt="Lancha con techo blanco frente a Bocagrande" loading="lazy"><figcaption data-en="Covered boat">Lancha con techo</figcaption></figure>
         </div>
       </div>
     </div>
@@ -477,43 +488,43 @@ body.con-plan .wa{bottom:88px}
         </div>
       </div>
       <div>
-        <div class="sello-cat">Único en Colombia con jacuzzi a bordo</div>
-        <h2>Catamarán privado de 61 pies</h2>
-        <p class="lead">Navega las Islas del Rosario y la bahía con estilo: jacuzzi, cocina con asador, habitaciones con aire acondicionado y sonido profesional.</p>
+        <div class="sello-cat" data-en="The only one in Colombia with an onboard jacuzzi">Único en Colombia con jacuzzi a bordo</div>
+        <h2 data-en="61-foot private catamaran">Catamarán privado de 61 pies</h2>
+        <p class="lead" data-en="Sail the Rosario Islands and the bay in style: jacuzzi, kitchen with grill, air-conditioned cabins and professional sound.">Navega las Islas del Rosario y la bahía con estilo: jacuzzi, cocina con asador, habitaciones con aire acondicionado y sonido profesional.</p>
         <div class="capacidad">
-          <div><span>Islas del Rosario, Cholón, Barú o Lago de los Vásquez</span><b>hasta 40 personas</b></div>
-          <div><span>Paseo por la bahía de Cartagena</span><b>hasta 50 personas</b></div>
-          <div><span>Plan dormir a bordo (se arma a tu medida)</span><b>hasta 8 personas</b></div>
-          <div><span>Tripulación incluida</span><b>4 personas</b></div>
+          <div data-en="&lt;span&gt;Rosario Islands, Cholón, Barú or Vásquez Lagoon&lt;/span&gt;&lt;b&gt;up to 40 people&lt;/b&gt;"><span>Islas del Rosario, Cholón, Barú o Lago de los Vásquez</span><b>hasta 40 personas</b></div>
+          <div data-en="&lt;span&gt;Cartagena Bay cruise&lt;/span&gt;&lt;b&gt;up to 50 people&lt;/b&gt;"><span>Paseo por la bahía de Cartagena</span><b>hasta 50 personas</b></div>
+          <div data-en="&lt;span&gt;Overnight on board (custom plan)&lt;/span&gt;&lt;b&gt;up to 8 people&lt;/b&gt;"><span>Plan dormir a bordo (se arma a tu medida)</span><b>hasta 8 personas</b></div>
+          <div data-en="&lt;span&gt;Crew included&lt;/span&gt;&lt;b&gt;4 people&lt;/b&gt;"><span>Tripulación incluida</span><b>4 personas</b></div>
         </div>
         <div class="acciones">
           <button class="btn agregar" aria-pressed="false" data-id="catamaran">Agregar</button>
-          <a class="btn btn-coral" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20informaci%C3%B3n%20del%20catamar%C3%A1n%20con%20jacuzzi" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>Cotizar el catamarán</a>
+          <a class="btn btn-coral" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20informaci%C3%B3n%20del%20catamar%C3%A1n%20con%20jacuzzi" data-en-href="https://wa.me/573006279421?text=Hi%20Lore%2C%20I%27d%20like%20information%20about%20the%20catamaran%20with%20jacuzzi" target="_blank" rel="noopener" data-en="&lt;svg&gt;&lt;use href=&quot;#i-wa&quot;/&gt;&lt;/svg&gt;Get a quote"><svg><use href="#i-wa"/></svg>Cotizar el catamarán</a>
         </div>
       </div>
     </div>
     <div class="wrap">
       <div class="pisos">
         <div class="piso">
-          <h3>Primer piso <span>· todo con aire acondicionado</span></h3>
+          <h3 data-en="First deck &lt;span&gt;· fully air-conditioned&lt;/span&gt;">Primer piso <span>· todo con aire acondicionado</span></h3>
           <ul>
-            <li>2 habitaciones con baño</li>
-            <li>Habitación de la tripulación con baño</li>
-            <li>Baño adicional en el pasillo</li>
-            <li>Sala en la proa con asoleadora</li>
-            <li>Sala y cocina completamente dotadas</li>
-            <li>Generador de 27 KVA e iluminación ambiental</li>
+            <li data-en="2 cabins with bathroom">2 habitaciones con baño</li>
+            <li data-en="Crew cabin with bathroom">Habitación de la tripulación con baño</li>
+            <li data-en="Extra bathroom in the hallway">Baño adicional en el pasillo</li>
+            <li data-en="Bow lounge with sunbed">Sala en la proa con asoleadora</li>
+            <li data-en="Fully equipped living room and kitchen">Sala y cocina completamente dotadas</li>
+            <li data-en="27 KVA generator and ambient lighting">Generador de 27 KVA e iluminación ambiental</li>
           </ul>
         </div>
         <div class="piso azul">
-          <h3>Segundo piso <span>· cubierta</span></h3>
+          <h3 data-en="Upper deck &lt;span&gt;· open deck&lt;/span&gt;">Segundo piso <span>· cubierta</span></h3>
           <ul>
-            <li>Jacuzzi</li>
-            <li>Cocina auxiliar dotada, con asador a gas</li>
-            <li>Asoleadora en la proa alrededor del jacuzzi</li>
-            <li>Sillas y sofás</li>
-            <li>Iluminación ambiental azul y cálida</li>
-            <li>Sonido JL profesional</li>
+            <li data-en="Jacuzzi">Jacuzzi</li>
+            <li data-en="Equipped auxiliary kitchen with gas grill">Cocina auxiliar dotada, con asador a gas</li>
+            <li data-en="Sunbed around the jacuzzi at the bow">Asoleadora en la proa alrededor del jacuzzi</li>
+            <li data-en="Chairs and sofas">Sillas y sofás</li>
+            <li data-en="Blue and warm ambient lighting">Iluminación ambiental azul y cálida</li>
+            <li data-en="Professional JL sound system&lt;/li&gt;">Sonido JL profesional</li>
           </ul>
         </div>
       </div>
@@ -521,27 +532,36 @@ body.con-plan .wa{bottom:88px}
         <div class="plan-cat">
           <img src="img/islas-rosario.webp" alt="Islas del Rosario desde el aire" loading="lazy">
           <div class="txt">
-            <h3>Islas del Rosario, Barú y Cholón</h3>
-            <p>Aguas cristalinas y corales en las Islas del Rosario, playas de arena blanca en Barú y la mejor fiesta en el agua en Cholón.</p>
-            <div class="datos-cat"><span>Día completo</span><span>7:00 a. m. a 5:00 p. m.</span></div>
-            <div class="desde">Desde $10.500.000 por el catamarán</div>
+            <h3 data-en="Rosario Islands, Barú and Cholón">Islas del Rosario, Barú y Cholón</h3>
+            <p data-en="Crystal-clear water and coral reefs in the Rosario Islands, white-sand beaches in Barú and the best party on the water in Cholón.">Aguas cristalinas y corales en las Islas del Rosario, playas de arena blanca en Barú y la mejor fiesta en el agua en Cholón.</p>
+            <div class="datos-cat" data-en="&lt;span&gt;Full day&lt;/span&gt;&lt;span&gt;7:00 a.m. to 5:00 p.m.&lt;/span&gt;"><span>Día completo</span><span>7:00 a. m. a 5:00 p. m.</span></div>
+            <div class="desde" data-en="From COP $10,500,000 for the whole catamaran">Desde $10.500.000 por el catamarán</div>
           </div>
         </div>
         <div class="plan-cat">
           <img src="img/bahia-atardecer.webp" alt="Bocagrande al atardecer desde la bahía" loading="lazy">
           <div class="txt">
-            <h3>Bahía de Cartagena</h3>
-            <p>La ciudad desde el mar: murallas, luces coloniales, el atardecer sobre la bahía y una navegación de noche.</p>
-            <div class="datos-cat"><span>2 horas, con horas adicionales</span><span>6:00 p. m. a 11:59 p. m.</span><span>También día completo, 9:00 a. m. a 5:00 p. m.</span></div>
-            <div class="desde">Desde $2.700.000 por 2 horas</div>
+            <h3 data-en="Cartagena Bay">Bahía de Cartagena</h3>
+            <p data-en="The city from the sea: city walls, colonial lights, sunset over the bay and a night cruise.">La ciudad desde el mar: murallas, luces coloniales, el atardecer sobre la bahía y una navegación de noche.</p>
+            <div class="datos-cat" data-en="&lt;span&gt;2 hours, extra hours available&lt;/span&gt;&lt;span&gt;6:00 p.m. to 11:59 p.m.&lt;/span&gt;&lt;span&gt;Also full day, 9:00 a.m. to 5:00 p.m.&lt;/span&gt;"><span>2 horas, con horas adicionales</span><span>6:00 p. m. a 11:59 p. m.</span><span>También día completo, 9:00 a. m. a 5:00 p. m.</span></div>
+            <div class="desde" data-en="From COP $2,700,000 for 2 hours">Desde $2.700.000 por 2 horas</div>
           </div>
         </div>
       </div>
-      <p class="nota-precio">Precios en pesos colombianos por el catamarán completo, según el número de personas y la temporada. Temporada alta: enero, Semana Santa, junio y del 20 al 31 de diciembre. Te envío la tarifa exacta por WhatsApp.</p>
+      <p class="nota-precio" data-en="Prices in Colombian pesos (COP) for the whole catamaran, depending on group size and season. High season: January, Holy Week, June and December 20–31. I&#x27;ll send you the exact rate on WhatsApp.">Precios en pesos colombianos por el catamarán completo, según el número de personas y la temporada. Temporada alta: enero, Semana Santa, junio y del 20 al 31 de diciembre. Te envío la tarifa exacta por WhatsApp.</p>
       <div class="extras">
         <details>
-          <summary>Comida a bordo (opcional)</summary>
-          <div class="cont">
+          <summary data-en="Food on board (optional)">Comida a bordo (opcional)</summary>
+          <div class="cont" data-en="
+            &lt;div&gt;&lt;h4&gt;Tasting menu · COP $20,000 per item (minimum 4)&lt;/h4&gt;
+              &lt;ul&gt;&lt;li&gt;The chef cooks during the trip and serves as you sail: shrimp ceviche, beef, chicken, shrimp or mixed skewers, mini burgers, crab croquettes, chicken burritos, carnitas tacos, pesto bruschetta with mozzarella and serrano ham, plantain cups with Cartagena-style beef, mini fruit platter, pork rind ceviche, fried baby potatoes with bacon, and fried fish bites.&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;
+            &lt;div&gt;&lt;h4&gt;Trio of Caribbean fritters · COP $40,000&lt;/h4&gt;
+              &lt;ul&gt;&lt;li&gt;Choose 3: kibbeh, cheese or beef carimañola, cheese or potato empanada, and mini egg arepa.&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;
+            &lt;div&gt;&lt;h4&gt;Main course · COP $130,000 per person&lt;/h4&gt;
+              &lt;ul&gt;&lt;li&gt;Fish, seafood, beef tenderloin, pork or chicken (lobster: COP $20,000 extra). Includes fruit platter, starter, protein and 2 sides. You design the menu with the chef.&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;
+            &lt;div&gt;&lt;h4&gt;Paella&lt;/h4&gt;
+              &lt;ul&gt;&lt;li&gt;&lt;b&gt;Seafood&lt;/b&gt; COP $130,000: shrimp, clams and squid rings (lobster: COP $20,000 extra)&lt;/li&gt;&lt;li&gt;&lt;b&gt;Meat&lt;/b&gt; COP $130,000: chicken, chorizo, beef and pork&lt;/li&gt;&lt;li&gt;&lt;b&gt;Vegetarian&lt;/b&gt; COP $85,000&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;
+          ">
             <div><h4>Menú por tiempos · $20.000 cada opción (mínimo 4)</h4>
               <ul><li>El chef cocina durante el recorrido y va sirviendo: ceviche de camarones, pinchos de carne, pollo, camarón o mixtos, minihamburguesas, croquetas de cangrejo, burritos de pollo, tacos de carnitas, bruschetta de pesto con mozzarella y jamón serrano, canastas de plátano con posta cartagenera, mini picada de frutas, ceviche de chicharrón, papas criollas con tocineta y chicharrón de pescado.</li></ul></div>
             <div><h4>Trilogía de fritos caribeños · $40.000</h4>
@@ -553,8 +573,15 @@ body.con-plan .wa{bottom:88px}
           </div>
         </details>
         <details>
-          <summary>Servicios adicionales (opcionales)</summary>
-          <div class="cont">
+          <summary data-en="Extra services (optional)">Servicios adicionales (opcionales)</summary>
+          <div class="cont" data-en="
+            &lt;div&gt;&lt;h4&gt;Open bar&lt;/h4&gt;&lt;ul&gt;&lt;li&gt;Non-alcoholic, basic, premium or diamond. Ask for the drinks menu.&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;
+            &lt;div&gt;&lt;h4&gt;Sound and DJ&lt;/h4&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;Professional DJ&lt;/b&gt; with equipment and generator: COP $1,400,000&lt;/li&gt;&lt;li&gt;&lt;b&gt;BOSE sound&lt;/b&gt;, high fidelity: COP $750,000&lt;/li&gt;&lt;li&gt;Lighting, screens and special effects: ask for a quote&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;
+            &lt;div&gt;&lt;h4&gt;Live music (per hour)&lt;/h4&gt;&lt;ul&gt;&lt;li&gt;Saxophone, unamplified: COP $650,000&lt;/li&gt;&lt;li&gt;DJ and saxophone: COP $750,000 (extra hour COP $350,000)&lt;/li&gt;&lt;li&gt;Cuban son band with singer and sound: COP $1,800,000&lt;/li&gt;&lt;li&gt;Mariachis: COP $1,300,000&lt;/li&gt;&lt;li&gt;Brass band (papayera) or vallenato group: COP $1,000,000&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;
+            &lt;div&gt;&lt;h4&gt;Drone photo and video&lt;/h4&gt;&lt;ul&gt;&lt;li&gt;2 hours in the bay: COP $900,000&lt;/li&gt;&lt;li&gt;Full day at the islands: COP $1,600,000&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;
+            &lt;div&gt;&lt;h4&gt;Fireworks (with a professional technician)&lt;/h4&gt;&lt;ul&gt;&lt;li&gt;30 seconds, 25 shots: COP $750,000&lt;/li&gt;&lt;li&gt;1 minute 30 seconds, 200 shots: COP $1,500,000&lt;/li&gt;&lt;li&gt;2 minutes, 555 shots: COP $2,950,000&lt;/li&gt;&lt;li&gt;Colored smoke: COP $95,000&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;
+            &lt;div&gt;&lt;h4&gt;Events on board&lt;/h4&gt;&lt;ul&gt;&lt;li&gt;Corporate events with your branding, weddings with a symbolic ceremony, birthdays, and bachelor or bachelorette parties.&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;
+          ">
             <div><h4>Barra libre</h4><ul><li>Sin alcohol, básica, premium o diamante. Pide el menú de bebidas.</li></ul></div>
             <div><h4>Sonido y DJ</h4><ul><li><b>DJ profesional</b> con equipos y generador: $1.400.000</li><li><b>Sonido BOSE</b> de alta fidelidad: $750.000</li><li>Iluminación, pantallas y efectos especiales: consultar</li></ul></div>
             <div><h4>Música en vivo (por hora)</h4><ul><li>Saxofón sin amplificación: $650.000</li><li>DJ y saxofón: $750.000 (hora extra $350.000)</li><li>Son cubano con cantante y sonido: $1.800.000</li><li>Mariachis: $1.300.000</li><li>Papayera o parranda vallenata: $1.000.000</li></ul></div>
@@ -571,16 +598,16 @@ body.con-plan .wa{bottom:88px}
     <div class="wrap">
       <div class="cabeza">
         <div>
-          <h2>Restaurantes, clubes y más</h2>
-          <p>Te hago la reserva en los mejores lugares de la ciudad. Agrégalos a tu plan o pídemelos directo.</p>
+          <h2 data-en="Restaurants, clubs and more">Restaurantes, clubes y más</h2>
+          <p data-en="I&#x27;ll book you a table at the best spots in town. Add them to your plan or ask me directly.">Te hago la reserva en los mejores lugares de la ciudad. Agrégalos a tu plan o pídemelos directo.</p>
         </div>
       </div>
       <div class="filtros" role="group" aria-label="Filtrar planes">
-        <button aria-pressed="true" data-f="todos">Todos</button>
-        <button aria-pressed="false" data-f="comida">Restaurantes</button>
-        <button aria-pressed="false" data-f="rumba">Rumba</button>
-        <button aria-pressed="false" data-f="playa">Playa</button>
-        <button aria-pressed="false" data-f="relax">Spa y celebraciones</button>
+        <button aria-pressed="true" data-f="todos" data-en="All">Todos</button>
+        <button aria-pressed="false" data-f="comida" data-en="Restaurants">Restaurantes</button>
+        <button aria-pressed="false" data-f="rumba" data-en="Nightlife">Rumba</button>
+        <button aria-pressed="false" data-f="playa" data-en="Beach">Playa</button>
+        <button aria-pressed="false" data-f="relax" data-en="Spa and celebrations">Spa y celebraciones</button>
       </div>
       <div class="planes" id="lista"></div>
     </div>
@@ -590,37 +617,37 @@ body.con-plan .wa{bottom:88px}
     <div class="wrap">
       <div class="cabeza">
         <div>
-          <h2>Experiencias de clientes</h2>
-          <p>Así se viven los planes con Lore TRAVEL. Toca una foto o un video para verlo en grande.</p>
+          <h2 data-en="Client experiences">Experiencias de clientes</h2>
+          <p data-en="This is how clients enjoy their plans with Lore TRAVEL. Tap a photo or video to see it full size.">Así se viven los planes con Lore TRAVEL. Toca una foto o un video para verlo en grande.</p>
         </div>
       </div>
       <div class="galeria" id="galeria"></div>
-      <div class="mas" id="masBox" hidden><button class="btn btn-borde" id="mas" type="button">Ver más experiencias</button></div>
+      <div class="mas" id="masBox" hidden><button class="btn btn-borde" id="mas" type="button" data-en="See more experiences">Ver más experiencias</button></div>
     </div>
   </section>
 
   <section class="sec armar" id="armar">
     <div class="wrap">
       <div>
-        <h2>Arma tu plan en un minuto</h2>
-        <p class="lead">Sin llamadas ni vueltas: me cuentas qué quieres hacer y cuándo, y te respondo con precios y reservas.</p>
+        <h2 data-en="Plan your trip in a minute">Arma tu plan en un minuto</h2>
+        <p class="lead" data-en="No calls, no hassle: tell me what you&#x27;d like to do and when, and I&#x27;ll reply with prices and bookings.">Sin llamadas ni vueltas: me cuentas qué quieres hacer y cuándo, y te respondo con precios y reservas.</p>
         <div class="pasos">
-          <div class="paso"><div class="ic"><svg><use href="#i-lista"/></svg></div><div><strong>Escoge tus planes</strong><span>Agrega los que te gusten: islas, lancha, tours, cena o rumba.</span></div></div>
-          <div class="paso"><div class="ic"><svg><use href="#i-cal"/></svg></div><div><strong>Dime la fecha y cuántos son</strong><span>Así reviso la disponibilidad de cada plan.</span></div></div>
-          <div class="paso"><div class="ic"><svg><use href="#i-sol"/></svg></div><div><strong>Confirma y disfruta</strong><span>Te mando el valor y la reserva. Puedes pagar también por PayPal.</span></div></div>
+          <div class="paso"><div class="ic"><svg><use href="#i-lista"/></svg></div><div data-en="&lt;strong&gt;Pick your plans&lt;/strong&gt;&lt;span&gt;Add the ones you like: islands, boat, tours, dinner or nightlife.&lt;/span&gt;"><strong>Escoge tus planes</strong><span>Agrega los que te gusten: islas, lancha, tours, cena o rumba.</span></div></div>
+          <div class="paso"><div class="ic"><svg><use href="#i-cal"/></svg></div><div data-en="&lt;strong&gt;Tell me the date and group size&lt;/strong&gt;&lt;span&gt;So I can check availability for each plan.&lt;/span&gt;"><strong>Dime la fecha y cuántos son</strong><span>Así reviso la disponibilidad de cada plan.</span></div></div>
+          <div class="paso"><div class="ic"><svg><use href="#i-sol"/></svg></div><div data-en="&lt;strong&gt;Confirm and enjoy&lt;/strong&gt;&lt;span&gt;I&#x27;ll send you the price and the booking. You can also pay with PayPal.&lt;/span&gt;"><strong>Confirma y disfruta</strong><span>Te mando el valor y la reserva. Puedes pagar también por PayPal.</span></div></div>
         </div>
       </div>
       <form class="form" id="form">
-        <h3>Tu plan</h3>
-        <p class="ayuda">Esto se envía a mi WhatsApp.</p>
+        <h3 data-en="Your plan">Tu plan</h3>
+        <p class="ayuda" data-en="This goes to my WhatsApp.">Esto se envía a mi WhatsApp.</p>
         <div class="elegidos" id="elegidos"><span class="vacio">Aún no has agregado planes. Agrégalos arriba o escríbeme igual.</span></div>
         <div class="campos">
-          <div class="full"><label for="nombre">Tu nombre</label><input id="nombre" autocomplete="name" placeholder="Ej.: Laura"></div>
-          <div><label for="fecha">Fecha de llegada</label><input id="fecha" type="date"></div>
-          <div><label for="personas">Personas</label><select id="personas"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10 o más</option></select></div>
-          <div class="full"><label for="nota">¿Algo más? (opcional)</label><textarea id="nota" placeholder="Cumpleaños, despedida, luna de miel, hotel donde te quedas…"></textarea></div>
+          <div class="full"><label for="nombre" data-en="Your name">Tu nombre</label><input id="nombre" autocomplete="name" placeholder="Ej.: Laura" data-en-placeholder="E.g. Laura"></div>
+          <div><label for="fecha" data-en="Arrival date">Fecha de llegada</label><input id="fecha" type="date"></div>
+          <div><label for="personas" data-en="Guests">Personas</label><select id="personas"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option data-en="10 or more">10 o más</option></select></div>
+          <div class="full"><label for="nota" data-en="Anything else? (optional)">¿Algo más? (opcional)</label><textarea id="nota" placeholder="Cumpleaños, despedida, luna de miel, hotel donde te quedas…" data-en-placeholder="Birthday, bachelor party, honeymoon, your hotel…"></textarea></div>
         </div>
-        <a class="btn btn-coral" id="enviar" href="https://wa.me/573006279421" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>Enviar mi plan por WhatsApp</a>
+        <a class="btn btn-coral" id="enviar" href="https://wa.me/573006279421" target="_blank" rel="noopener" data-en="&lt;svg&gt;&lt;use href=&quot;#i-wa&quot;/&gt;&lt;/svg&gt;Send my plan on WhatsApp"><svg><use href="#i-wa"/></svg>Enviar mi plan por WhatsApp</a>
       </form>
     </div>
   </section>
@@ -629,12 +656,12 @@ body.con-plan .wa{bottom:88px}
     <div class="wrap">
       <div class="retrato"><img src="img/lore.webp" alt="Lore, de Lore TRAVEL" loading="lazy"></div>
       <div>
-        <h2>Hola, soy Lore</h2>
-        <p>Con Lore TRAVEL organizo planes en Cartagena para que tú solo te preocupes por disfrutar. Conozco los lugares, hago las reservas y te acompaño por WhatsApp desde que escribes hasta que regresas a casa.</p>
+        <h2 data-en="Hi, I&#x27;m Lore">Hola, soy Lore</h2>
+        <p data-en="With Lore TRAVEL I organize plans in Cartagena so you only have to worry about enjoying yourself. I know the places, I make the bookings and I&#x27;m with you on WhatsApp from your first message until you get back home.">Con Lore TRAVEL organizo planes en Cartagena para que tú solo te preocupes por disfrutar. Conozco los lugares, hago las reservas y te acompaño por WhatsApp desde que escribes hasta que regresas a casa.</p>
         <div class="lista">
-          <div><svg><use href="#i-ok"/></svg>Un solo contacto para todo tu viaje</div>
-          <div><svg><use href="#i-ok"/></svg>Planes para parejas, amigos, familia y celebraciones</div>
-          <div><svg><use href="#i-ok"/></svg>Pago fácil, también por PayPal si vienes de fuera</div>
+          <div data-en="&lt;svg&gt;&lt;use href=&quot;#i-ok&quot;/&gt;&lt;/svg&gt;One contact for your whole trip"><svg><use href="#i-ok"/></svg>Un solo contacto para todo tu viaje</div>
+          <div data-en="&lt;svg&gt;&lt;use href=&quot;#i-ok&quot;/&gt;&lt;/svg&gt;Plans for couples, friends, families and celebrations"><svg><use href="#i-ok"/></svg>Planes para parejas, amigos, familia y celebraciones</div>
+          <div data-en="&lt;svg&gt;&lt;use href=&quot;#i-ok&quot;/&gt;&lt;/svg&gt;Easy payment, including PayPal if you&#x27;re visiting from abroad"><svg><use href="#i-ok"/></svg>Pago fácil, también por PayPal si vienes de fuera</div>
         </div>
       </div>
     </div>
@@ -643,16 +670,16 @@ body.con-plan .wa{bottom:88px}
   <section class="sec contacto" id="contacto">
     <div class="wrap caja">
       <div>
-        <h2>¿Lista tu escapada?</h2>
-        <p>Escríbeme y armamos juntos tu próximo viaje a Cartagena.</p>
+        <h2 data-en="Ready for your getaway?">¿Lista tu escapada?</h2>
+        <p data-en="Message me and let&#x27;s plan your next trip to Cartagena together.">Escríbeme y armamos juntos tu próximo viaje a Cartagena.</p>
         <div class="redes">
           <a href="https://www.instagram.com/ldelcfo?igsh=OThkMWM0cWVmaWU1" target="_blank" rel="noopener"><svg><use href="#i-ig"/></svg>Instagram</a>
           <a href="https://www.tiktok.com/@ldelcf?_t=ZS-902k1mFPyyo&_r=1" target="_blank" rel="noopener"><svg><use href="#i-tt"/></svg>TikTok</a>
           <a href="https://www.facebook.com/share/1A3r3DhFEr/?mibextid=wwXIfr" target="_blank" rel="noopener"><svg><use href="#i-fb"/></svg>Facebook</a>
-          <a href="https://www.paypal.me/LoreinysFernandez" target="_blank" rel="noopener"><svg><use href="#i-pp"/></svg>Pagar con PayPal</a>
+          <a href="https://www.paypal.me/LoreinysFernandez" target="_blank" rel="noopener" data-en="&lt;svg&gt;&lt;use href=&quot;#i-pp&quot;/&gt;&lt;/svg&gt;Pay with PayPal"><svg><use href="#i-pp"/></svg>Pagar con PayPal</a>
         </div>
       </div>
-      <a class="btn btn-coral" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20armar%20un%20plan%20en%20Cartagena" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>+57 300 627 9421</a>
+      <a class="btn btn-coral" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20armar%20un%20plan%20en%20Cartagena" data-en-href="https://wa.me/573006279421?text=Hi%20Lore%2C%20I%27d%20like%20to%20plan%20a%20trip%20to%20Cartagena" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>+57 300 627 9421</a>
     </div>
   </section>
 </main>
@@ -660,7 +687,7 @@ body.con-plan .wa{bottom:88px}
 <footer>
   <div class="wrap">
     <span class="marca"><img src="img/logo-horizontal-blanco.svg" alt="Lore TRAVEL"><span>© <span id="anio"></span> · Cartagena, Colombia</span></span>
-    <span>Página hecha por <a href="https://3rpaginas.com" target="_blank" rel="noopener">3R</a></span>
+    <span data-en="Website by &lt;a href=&quot;https://3rpaginas.com&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;3R&lt;/a&gt;">Página hecha por <a href="https://3rpaginas.com" target="_blank" rel="noopener">3R</a></span>
   </div>
   <div class="wrap"><details class="creditos" id="creditos" hidden><summary>Créditos de fotos</summary><ul id="listaCreditos"></ul></details></div>
 </footer>
@@ -673,11 +700,53 @@ body.con-plan .wa{bottom:88px}
   <div class="pie" id="visorPie"></div>
 </div>
 
-<div class="flota" id="flota" aria-live="polite"><span id="flotaTxt">Tu plan: 0</span><a class="btn btn-coral" href="#armar">Enviar</a></div>
-<a class="wa" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20informaci%C3%B3n%20de%20tus%20planes" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><svg><use href="#i-wa"/></svg></a>
+<div class="flota" id="flota" aria-live="polite"><span id="flotaTxt">Tu plan: 0</span><a class="btn btn-coral" href="#armar" data-en="Send">Enviar</a></div>
+<a class="wa" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20informaci%C3%B3n%20de%20tus%20planes" data-en-href="https://wa.me/573006279421?text=Hi%20Lore%2C%20I%27d%20like%20information%20about%20your%20plans" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><svg><use href="#i-wa"/></svg></a>
 
 <script>
 const WA = '573006279421';
+// ---------- Idioma (ES | EN). Textos fijos: atributo data-en en el HTML. Listas: diccionario EN de abajo.
+let lang = 'es';
+const UI = {
+  es: {add:'Agregar', added:'Agregado ✓', book:'Reservar', video:'Video', photos:'Fotos', ig:'Ver {n} en Instagram',
+       empty:'Aún no has agregado planes. Agrégalos arriba o escríbeme igual.', remove:'Quitar {n}',
+       plan:n=>`Tu plan: ${n} ${n===1?'plan':'planes'}`, see:'Ver {n}',
+       waTour:'Hola Lore, quiero información de: ', waPlace:'Hola Lore, quiero una reserva en ',
+       hi:'Hola Lore', iam:', soy ', want:'. Quiero armar un plan en Cartagena.', plans:'Planes:', arrival:'Llegada:', guests:'Personas:',
+       title:'Lore TRAVEL · Planes en Cartagena'},
+  en: {add:'Add', added:'Added ✓', book:'Book', video:'Video', photos:'Photos', ig:'See {n} on Instagram',
+       empty:'You haven\'t added any plans yet. Add them above or just message me.', remove:'Remove {n}',
+       plan:n=>`Your plan: ${n} ${n===1?'item':'items'}`, see:'See {n}',
+       waTour:'Hi Lore, I\'d like information about: ', waPlace:'Hi Lore, I\'d like a booking at ',
+       hi:'Hi Lore', iam:', I\'m ', want:'. I\'d like to plan a trip to Cartagena.', plans:'Plans:', arrival:'Arrival:', guests:'Guests:',
+       title:'Lore TRAVEL · Things to do in Cartagena'},
+};
+const u = k => UI[lang][k];
+const EN = {
+  islas:{n:'5-island tour', t:'Islands', l:['Oceanarium','Barú Island','Cholón','Snorkeling'], inc:'Water and ice included'},
+  cholon:{n:'Cholón', t:'Islands', d:'A beach day and a party on the water.', l:['Private boat','Shared boat'], verTxt:'See the boat'},
+  ciudad:{n:'City tour', t:'City', l:['San Felipe Castle','Las Botas Viejas monument','Cartagena letters sign','La Popa Convent','El Pastelillo Fort (Club de Pesca)','Walled city','Getsemaní','Chocolate Museum and flower clock']},
+  totumo:{n:'Totumo Mud Volcano', t:'Day trip', d:'A mud bath inside the volcano, just outside Cartagena.'},
+  costa:{n:'Day trip to Barranquilla and Santa Marta', t:'Day trip', d:'By bus with a guide, visiting the main sights of both cities.', l:['Leaves Cartagena: 5:00 a.m.','Back in Cartagena: 10:00 p.m. the same day']},
+  palenque:{n:'Palenque', t:'Day trip', d:'San Basilio de Palenque: music, history and Afro-Colombian culture.'},
+  reservas:{n:'Restaurant and club bookings', t:'Bookings', d:'I\'ll get you a table at the best places in town.', verTxt:'See places'},
+  atardecer:{n:'Sunset at sea', t:'Boat trip', d:'Watch the sunset from the pier, on a catamaran or a speedboat.', l:['2-hour trip'], inc:'Open bar'},
+  helicoptero:{n:'Cartagena by helicopter', t:'Experience', d:'See the city, its walls and the sea from the air.'},
+  chiva:{n:'Party chiva bus', t:'Nightlife', d:'A night ride on a traditional painted bus with music and dancing.'},
+  transporte:{n:'Private transportation', t:'Van and limousine', l:['Van for your group: airport, hotel, tours and nights out','Limousine: arrive in style to your dinner, birthday, wedding or bachelor party']},
+  cuatrimotos:{n:'ATV tour', t:'Adventure', d:'Ride an ATV along the beach with Cartagena ATV.'},
+  baruco:{c:'Restaurant', d:'Signature cuisine and cocktails for a special night.'},
+  delirium:{c:'Nightlife', d:'Social club with a DJ, great music and a late-night vibe.'},
+  quebracho:{c:'Restaurant', d:'A classic Cartagena restaurant for a relaxed dinner.'},
+  'playa-tranquila':{c:'Beach', d:'A beach day with fried fish, patacones and calm water.'},
+  spa:{c:'Spa and celebrations', d:'Sublime Premium Spa: relaxation and birthday or bachelorette celebrations.'},
+  niku:{c:'Restaurant', d:'Signature cuisine prepared right in front of you.'},
+  morena:{c:'Restaurant', d:'Morena Orígenes: Caribbean flavors and atmosphere.'},
+  lancha:{n:'Private boat'}, catamaran:{n:'Catamaran with jacuzzi'},
+};
+const tx = (p, k) => (lang === 'en' && EN[p.id] && EN[p.id][k] !== undefined) ? EN[p.id][k] : p[k];
+// pie de foto en inglés para la galería y el visor (t_en)
+const tt = c => (lang === 'en' && c.t_en) ? c.t_en : c.t;
 // TOURS: la lista que mandó Lore el 20 nov 2026 (mismo orden). LUGARES: los del linkbio.
 // Para agregar uno: copiar una línea (el id no se repite).
 const TOURS = [
@@ -705,100 +774,107 @@ const LUGARES = [
 ];
 const NOMBRES = {lancha:'Lancha privada', catamaran:'Catamarán con jacuzzi'};
 [...TOURS, ...LUGARES].forEach(x=>NOMBRES[x.id]=x.n);
+const nombre = id => (lang === 'en' && EN[id] && EN[id].n) ? EN[id].n : NOMBRES[id];
 const wa = t => `https://wa.me/${WA}?text=${encodeURIComponent(t)}`;
 const elegidos = new Set();
 
 // Videos de los planes
 const VIDEOS = {
-  cholon: [{f:'videos/v-cholon', v:1, t:'Cholón', alt:'Llegada en lancha a Cholón'}],
-  islas: [{f:'videos/v-islas-piscina', v:1, t:'Beach club en las islas', alt:'Fiesta en la piscina de un beach club'},
-          {f:'videos/v-islas-restaurante', v:1, t:'Almuerzo frente al mar', alt:'Restaurante de playa con vista a un yate'},
-          {f:'videos/v-playa', v:1, t:'Día de playa', alt:'Mesa de playa con piña y cervezas'}],
-  ciudad: [{f:'ciudad-catedral', t:'Calle del Centro con la Catedral', alt:'Calle colonial con la torre de la Catedral al fondo'},
-           {f:'ciudad-torre', t:'Ciudad amurallada', alt:'Calle colonial con balcones de madera'},
-           {f:'ciudad-balcones', t:'Balcones coloniales', alt:'Casa colonial amarilla con balcones'},
-           {f:'ciudad-muralla', t:'La muralla', alt:'Bandera de Colombia sobre la muralla'},
-           {f:'ciudad-techos', t:'Cartagena desde lo alto', alt:'Techos del Centro Histórico y la torre de una iglesia'}],
-  palenque: [{f:'palenqueras', t:'Palenqueras', alt:'Dos palenqueras con su traje típico'},
-             {f:'palenquera-frutas', t:'Palenquera con frutas', alt:'Palenquera con una bandeja de frutas en la cabeza'},
-             {f:'palenquera', t:'Palenquera', alt:'Retrato de una palenquera con turbante'}],
-  costa: [{f:'santa-marta', t:'Santa Marta', alt:'Santa Marta desde el aire, con la bahía y la Sierra'},
-          {f:'santa-marta-playa', t:'Playa en Santa Marta', alt:'Lanchas en una playa de agua turquesa'}],
-  chiva: [{f:'chiva-1', t:'Chiva típica de Cartagena', alt:'Chiva amarilla y verde pintada a mano'},
-          {f:'chiva-2', t:'Chivas listas para salir', alt:'Dos chivas de colores estacionadas'}],
-  lancha: [{f:'videos/v-lancha', v:1, t:'Lancha frente a Bocagrande', alt:'Lancha navegando frente a Bocagrande'}],
+  cholon: [{f:'videos/v-cholon', v:1, t:'Cholón', t_en:'Cholón', alt:'Llegada en lancha a Cholón'}],
+  islas: [{f:'videos/v-islas-piscina', v:1, t:'Beach club en las islas', t_en:'Beach club at the islands', alt:'Fiesta en la piscina de un beach club'},
+          {f:'videos/v-islas-restaurante', v:1, t:'Almuerzo frente al mar', t_en:'Lunch by the sea', alt:'Restaurante de playa con vista a un yate'},
+          {f:'videos/v-playa', v:1, t:'Día de playa', t_en:'Beach day', alt:'Mesa de playa con piña y cervezas'}],
+  ciudad: [{f:'ciudad-catedral', t:'Calle del Centro con la Catedral', t_en:'Old Town street and the Cathedral', alt:'Calle colonial con la torre de la Catedral al fondo'},
+           {f:'ciudad-torre', t:'Ciudad amurallada', t_en:'Walled city', alt:'Calle colonial con balcones de madera'},
+           {f:'ciudad-balcones', t:'Balcones coloniales', t_en:'Colonial balconies', alt:'Casa colonial amarilla con balcones'},
+           {f:'ciudad-muralla', t:'La muralla', t_en:'The city walls', alt:'Bandera de Colombia sobre la muralla'},
+           {f:'ciudad-techos', t:'Cartagena desde lo alto', t_en:'Cartagena from above', alt:'Techos del Centro Histórico y la torre de una iglesia'}],
+  palenque: [{f:'palenqueras', t:'Palenqueras', t_en:'Palenqueras', alt:'Dos palenqueras con su traje típico'},
+             {f:'palenquera-frutas', t:'Palenquera con frutas', t_en:'Palenquera with fruit', alt:'Palenquera con una bandeja de frutas en la cabeza'},
+             {f:'palenquera', t:'Palenquera', t_en:'Palenquera', alt:'Retrato de una palenquera con turbante'}],
+  costa: [{f:'santa-marta', t:'Santa Marta', t_en:'Santa Marta', alt:'Santa Marta desde el aire, con la bahía y la Sierra'},
+          {f:'santa-marta-playa', t:'Playa en Santa Marta', t_en:'Beach in Santa Marta', alt:'Lanchas en una playa de agua turquesa'}],
+  chiva: [{f:'chiva-1', t:'Chiva típica de Cartagena', t_en:'Traditional Cartagena chiva', alt:'Chiva amarilla y verde pintada a mano'},
+          {f:'chiva-2', t:'Chivas listas para salir', t_en:'Chivas ready to go', alt:'Dos chivas de colores estacionadas'}],
+  lancha: [{f:'videos/v-lancha', v:1, t:'Lancha frente a Bocagrande', t_en:'Boat off Bocagrande', alt:'Lancha navegando frente a Bocagrande'}],
 };
+function pintarTours(){
 document.getElementById('listaTours').innerHTML = TOURS.map(p=>`
   <article class="tour${p.img ? ' con-foto' : ''}">
-    ${p.img ? `<div class="foto"><img src="img/${p.img}.webp" alt="${p.n}" loading="lazy"></div>` : ''}
+    ${p.img ? `<div class="foto"><img src="img/${p.img}.webp" alt="${tx(p,'n')}" loading="lazy"></div>` : ''}
     <div class="cuerpo">
-    <div class="top"><div class="ic"><svg><use href="#i-${p.ic}"/></svg></div><div><div class="tipo">${p.t}</div><h3>${p.n}</h3></div></div>
-    ${p.d ? `<p>${p.d}</p>` : ''}
-    ${p.l ? `<ul>${p.l.map(x=>`<li>${x}</li>`).join('')}</ul>` : ''}
-    ${p.inc ? `<div class="incluye">${p.inc}</div>` : ''}
+    <div class="top"><div class="ic"><svg><use href="#i-${p.ic}"/></svg></div><div><div class="tipo">${tx(p,'t')}</div><h3>${tx(p,'n')}</h3></div></div>
+    ${tx(p,'d') ? `<p>${tx(p,'d')}</p>` : ''}
+    ${tx(p,'l') ? `<ul>${tx(p,'l').map(x=>`<li>${x}</li>`).join('')}</ul>` : ''}
+    ${tx(p,'inc') ? `<div class="incluye">${tx(p,'inc')}</div>` : ''}
     <div class="botones">
-      <button class="btn agregar" aria-pressed="false" data-id="${p.id}">Agregar</button>
-      <a class="btn btn-coral" href="${wa('Hola Lore, quiero información de: ' + p.n)}" target="_blank" rel="noopener">Reservar</a>
-      ${p.ver ? `<a class="btn ver" href="${p.ver}">${p.verTxt}</a>` : ''}
-      ${VIDEOS[p.id] ? (VIDEOS[p.id].some(x=>x.v) ? `<button class="btn ver" type="button" data-video="${p.id}"><svg><use href="#i-play"/></svg>Video</button>` : `<button class="btn ver" type="button" data-video="${p.id}">Fotos</button>`) : ''}
-      ${p.ig ? `<a class="btn ig" href="${p.ig}" target="_blank" rel="noopener" aria-label="Ver ${p.n} en Instagram"><svg><use href="#i-ig"/></svg></a>` : ''}
+      <button class="btn agregar" aria-pressed="false" data-id="${p.id}">${u('add')}</button>
+      <a class="btn btn-coral" href="${wa(u('waTour') + tx(p,'n'))}" target="_blank" rel="noopener">${u('book')}</a>
+      ${p.ver ? `<a class="btn ver" href="${p.ver}">${tx(p,'verTxt')}</a>` : ''}
+      ${VIDEOS[p.id] ? (VIDEOS[p.id].some(x=>x.v) ? `<button class="btn ver" type="button" data-video="${p.id}"><svg><use href="#i-play"/></svg>${u('video')}</button>` : `<button class="btn ver" type="button" data-video="${p.id}">${u('photos')}</button>`) : ''}
+      ${p.ig ? `<a class="btn ig" href="${p.ig}" target="_blank" rel="noopener" aria-label="${u('ig').replace('{n}', tx(p,'n'))}"><svg><use href="#i-ig"/></svg></a>` : ''}
     </div>
     </div>
   </article>`).join('');
+}
 
+function pintarLugares(){
 document.getElementById('lista').innerHTML = LUGARES.map(p=>`
   <article class="plan" data-f="${p.f}">
-    <div class="foto"><img src="img/${p.img}.webp" alt="${p.n}" loading="lazy"><span class="cat">${p.c}</span></div>
+    <div class="foto"><img src="img/${p.img}.webp" alt="${p.n}" loading="lazy"><span class="cat">${tx(p,'c')}</span></div>
     <div class="info">
       <h3>${p.n}</h3>
-      <p>${p.d}</p>
+      <p>${tx(p,'d')}</p>
       <div class="botones">
-        <button class="btn agregar" aria-pressed="false" data-id="${p.id}">Agregar</button>
-        <a class="btn btn-coral" href="${wa('Hola Lore, quiero una reserva en ' + p.n)}" target="_blank" rel="noopener">Reservar</a>
-        <a class="btn ig" href="${p.ig}" target="_blank" rel="noopener" aria-label="Ver ${p.n} en Instagram"><svg><use href="#i-ig"/></svg></a>
+        <button class="btn agregar" aria-pressed="false" data-id="${p.id}">${u('add')}</button>
+        <a class="btn btn-coral" href="${wa(u('waPlace') + p.n)}" target="_blank" rel="noopener">${u('book')}</a>
+        <a class="btn ig" href="${p.ig}" target="_blank" rel="noopener" aria-label="${u('ig').replace('{n}', p.n)}"><svg><use href="#i-ig"/></svg></a>
       </div>
     </div>
   </article>`).join('');
+  const activo = document.querySelector('.filtros button[aria-pressed="true"]');
+  if (activo) { const f = activo.dataset.f; document.querySelectorAll('.plan').forEach(c=>c.hidden = !(f==='todos' || c.dataset.f===f)); }
+}
 
 // Experiencias de clientes: fotos (img/clientes/*.webp) y videos (img/clientes/*.mp4 + póster .webp).
 const CLIENTES = [
-  {f:'clientes/c-f-lancha-muelle', t:'Lancha en Cartagena', alt:'Clientes a bordo de la lancha en el muelle, frente al Centro de Convenciones', ancha:1},
-  {f:'clientes/c-embarque', v:1, t:'Embarque en el muelle', alt:'Clientes subiendo a la lancha'},
-  {f:'clientes/c-f-muelle', t:'Muelle de los Pegasos', alt:'Clientes caminando por el muelle rumbo a la lancha'},
-  {f:'clientes/c-muelle', v:1, t:'Rumbo a la lancha', alt:'Clientes llegando al muelle'},
-  {f:'clientes/c-f-lancha-grupo', t:'Listos para zarpar', alt:'Grupo de clientes sentados en la lancha', ancha:1},
-  {f:'clientes/c-penol', v:1, t:'Guatapé', alt:'Clientes caminando hacia la Piedra del Peñol'},
-  {f:'clientes/c-f-cuatrimotos', t:'Cuatrimotos', alt:'Grupo de clientes en cuatrimotos', ancha:1},
-  {f:'clientes/c-ritwal', v:1, t:'Cena con vista', alt:'Clientes en un jardín iluminado con vista a la ciudad'},
-  {f:'clientes/c-coctel-montana', v:1, t:'Restaurante de montaña', alt:'Cóctel servido con vista al valle'},
-  {f:'clientes/c-guatape', v:1, t:'Guatapé', alt:'Malecón y embalse de Guatapé'},
-  {f:'clientes/c-plato-humo', v:1, t:'Experiencia gastronómica', alt:'Plato servido bajo campana con humo'},
-  {f:'clientes/c-golf', v:1, t:'Club de golf', alt:'Clientes en un campo de golf'},
-  {f:'clientes/c-f-terraza', t:'Terraza de noche', alt:'Terraza de restaurante de noche con lámparas de mimbre'},
-  {f:'clientes/c-cena', v:1, t:'Cena especial', alt:'Cliente cenando con velas'},
-  {f:'clientes/c-cuatrimotos', v:1, t:'Cuatrimotos', alt:'Clientes listos para montar en cuatrimoto'},
-  {f:'clientes/c-rumba', v:1, t:'Rumba', alt:'Botella con bengalas en la discoteca'},
-  {f:'clientes/c-selfie', v:1, t:'Clienta feliz', alt:'Clienta en la terraza de un restaurante'},
-  {f:'clientes/c-museo', v:1, t:'Recorrido por museo', alt:'Clientes recorriendo un museo'},
-  {f:'clientes/c-f-carne', t:'Gastronomía', alt:'Plato de carne con risotto'},
-  {f:'clientes/c-coctel', v:1, t:'Coctelería', alt:'Cóctel con humo de hielo seco'},
-  {f:'clientes/c-guatape-lancha', v:1, t:'Paseo en lancha', alt:'Clientes subiendo a la lancha en el embalse'},
-  {f:'clientes/c-comida', v:1, t:'Gastronomía', alt:'Mesa con varios platos para compartir'},
-  {f:'clientes/c-f-golf', t:'Café con vista', alt:'Café en terraza con vista a un campo de golf'},
-  {f:'clientes/c-bolera', v:1, t:'Bolos y bar', alt:'Bar con pistas de bolos iluminadas'},
-  {f:'clientes/c-f-asiatico', t:'Restaurante asiático', alt:'Faroles rojos de un restaurante asiático', ancha:1},
-  {f:'clientes/c-f-carpaccio', t:'Gastronomía', alt:'Carpaccio servido de noche'},
-  {f:'clientes/c-f-club', t:'Noche de club', alt:'Logo iluminado en un club'},
+  {f:'clientes/c-f-lancha-muelle', t:'Lancha en Cartagena', t_en:'Boat in Cartagena', alt:'Clientes a bordo de la lancha en el muelle, frente al Centro de Convenciones', ancha:1},
+  {f:'clientes/c-embarque', v:1, t:'Embarque en el muelle', t_en:'Boarding at the pier', alt:'Clientes subiendo a la lancha'},
+  {f:'clientes/c-f-muelle', t:'Muelle de los Pegasos', t_en:'Muelle de los Pegasos', alt:'Clientes caminando por el muelle rumbo a la lancha'},
+  {f:'clientes/c-muelle', v:1, t:'Rumbo a la lancha', t_en:'Heading to the boat', alt:'Clientes llegando al muelle'},
+  {f:'clientes/c-f-lancha-grupo', t:'Listos para zarpar', t_en:'Ready to set sail', alt:'Grupo de clientes sentados en la lancha', ancha:1},
+  {f:'clientes/c-penol', v:1, t:'Guatapé', t_en:'Guatapé', alt:'Clientes caminando hacia la Piedra del Peñol'},
+  {f:'clientes/c-f-cuatrimotos', t:'Cuatrimotos', t_en:'ATVs', alt:'Grupo de clientes en cuatrimotos', ancha:1},
+  {f:'clientes/c-ritwal', v:1, t:'Cena con vista', t_en:'Dinner with a view', alt:'Clientes en un jardín iluminado con vista a la ciudad'},
+  {f:'clientes/c-coctel-montana', v:1, t:'Restaurante de montaña', t_en:'Mountain restaurant', alt:'Cóctel servido con vista al valle'},
+  {f:'clientes/c-guatape', v:1, t:'Guatapé', t_en:'Guatapé', alt:'Malecón y embalse de Guatapé'},
+  {f:'clientes/c-plato-humo', v:1, t:'Experiencia gastronómica', t_en:'Dining experience', alt:'Plato servido bajo campana con humo'},
+  {f:'clientes/c-golf', v:1, t:'Club de golf', t_en:'Golf club', alt:'Clientes en un campo de golf'},
+  {f:'clientes/c-f-terraza', t:'Terraza de noche', t_en:'Terrace at night', alt:'Terraza de restaurante de noche con lámparas de mimbre'},
+  {f:'clientes/c-cena', v:1, t:'Cena especial', t_en:'Special dinner', alt:'Cliente cenando con velas'},
+  {f:'clientes/c-cuatrimotos', v:1, t:'Cuatrimotos', t_en:'ATVs', alt:'Clientes listos para montar en cuatrimoto'},
+  {f:'clientes/c-rumba', v:1, t:'Rumba', t_en:'Nightlife', alt:'Botella con bengalas en la discoteca'},
+  {f:'clientes/c-selfie', v:1, t:'Clienta feliz', t_en:'Happy client', alt:'Clienta en la terraza de un restaurante'},
+  {f:'clientes/c-museo', v:1, t:'Recorrido por museo', t_en:'Museum tour', alt:'Clientes recorriendo un museo'},
+  {f:'clientes/c-f-carne', t:'Gastronomía', t_en:'Fine dining', alt:'Plato de carne con risotto'},
+  {f:'clientes/c-coctel', v:1, t:'Coctelería', t_en:'Cocktails', alt:'Cóctel con humo de hielo seco'},
+  {f:'clientes/c-guatape-lancha', v:1, t:'Paseo en lancha', t_en:'Boat ride', alt:'Clientes subiendo a la lancha en el embalse'},
+  {f:'clientes/c-comida', v:1, t:'Gastronomía', t_en:'Fine dining', alt:'Mesa con varios platos para compartir'},
+  {f:'clientes/c-f-golf', t:'Café con vista', t_en:'Coffee with a view', alt:'Café en terraza con vista a un campo de golf'},
+  {f:'clientes/c-bolera', v:1, t:'Bolos y bar', t_en:'Bowling and bar', alt:'Bar con pistas de bolos iluminadas'},
+  {f:'clientes/c-f-asiatico', t:'Restaurante asiático', t_en:'Asian restaurant', alt:'Faroles rojos de un restaurante asiático', ancha:1},
+  {f:'clientes/c-f-carpaccio', t:'Gastronomía', t_en:'Fine dining', alt:'Carpaccio servido de noche'},
+  {f:'clientes/c-f-club', t:'Noche de club', t_en:'Club night', alt:'Logo iluminado en un club'},
 ];
 const VISIBLES = 13;
 let mostrar = VISIBLES;
 const gal = document.getElementById('galeria');
 function pintarGaleria(){
   gal.innerHTML = CLIENTES.slice(0, mostrar).map((c,i)=>`
-    <button type="button" data-g="${i}"${c.ancha ? ' class="ancha"' : ''} aria-label="Ver ${c.alt}">
+    <button type="button" data-g="${i}"${c.ancha ? ' class="ancha"' : ''} aria-label="${u('see').replace('{n}', tt(c))}">
       <img src="img/${c.f}.webp" alt="${c.alt}" loading="lazy">
       ${c.v ? '<span class="play"><svg><use href="#i-play"/></svg></span>' : ''}
-      ${c.t ? `<span class="tag">${c.t}</span>` : ''}
+      ${c.t ? `<span class="tag">${tt(c)}</span>` : ''}
     </button>`).join('');
   document.getElementById('masBox').hidden = CLIENTES.length <= mostrar;
 }
@@ -812,7 +888,7 @@ function abrir(i, lista){
   vMedia.innerHTML = c.v
     ? `<video src="img/${c.f}.mp4" poster="img/${c.f}.webp" controls autoplay playsinline></video>`
     : `<img src="img/${c.f}.webp" alt="${c.alt}">`;
-  document.getElementById('visorPie').textContent = c.t || '';
+  document.getElementById('visorPie').textContent = tt(c) || '';
   visor.hidden = false; document.body.style.overflow = 'hidden';
 }
 function cerrar(){ visor.hidden = true; vMedia.innerHTML = ''; document.body.style.overflow = ''; }
@@ -824,8 +900,6 @@ visor.querySelector('.ant').addEventListener('click', ()=>abrir(actual-1));
 visor.querySelector('.sig').addEventListener('click', ()=>abrir(actual+1));
 visor.addEventListener('click', e=>{ if (e.target === visor) cerrar(); });
 document.addEventListener('keydown', e=>{ if (visor.hidden) return; if (e.key==='Escape') cerrar(); if (e.key==='ArrowLeft') abrir(actual-1); if (e.key==='ArrowRight') abrir(actual+1); });
-pintarGaleria();
-
 document.addEventListener('click', e=>{
   const b = e.target.closest('.miniaturas [data-src]'); if(!b) return;
   const caja = b.closest('.fotos-l');
@@ -836,14 +910,14 @@ document.addEventListener('click', e=>{
 function pintar(){
   const caja = document.getElementById('elegidos');
   caja.innerHTML = elegidos.size
-    ? [...elegidos].map(id=>`<span class="chip">${NOMBRES[id]}<button type="button" data-quitar="${id}" aria-label="Quitar ${NOMBRES[id]}">×</button></span>`).join('')
-    : '<span class="vacio">Aún no has agregado planes. Agrégalos arriba o escríbeme igual.</span>';
+    ? [...elegidos].map(id=>`<span class="chip">${nombre(id)}<button type="button" data-quitar="${id}" aria-label="${u('remove').replace('{n}', nombre(id))}">×</button></span>`).join('')
+    : `<span class="vacio">${u('empty')}</span>`;
   document.querySelectorAll('.agregar').forEach(b=>{
     const on = elegidos.has(b.dataset.id);
-    b.setAttribute('aria-pressed', on); b.textContent = on ? 'Agregado ✓' : 'Agregar';
+    b.setAttribute('aria-pressed', on); b.textContent = on ? u('added') : u('add');
   });
   const n = elegidos.size;
-  document.getElementById('flotaTxt').textContent = `Tu plan: ${n} ${n===1?'plan':'planes'}`;
+  document.getElementById('flotaTxt').textContent = u('plan')(n);
   document.getElementById('flota').classList.toggle('ver', n>0);
   document.body.classList.toggle('con-plan', n>0);
   if (typeof actualizarEnvio === 'function') actualizarEnvio();
@@ -877,10 +951,10 @@ document.getElementById('anio').textContent = new Date().getFullYear();
 // El botón es un enlace normal: así abre WhatsApp en cualquier navegador.
 function mensaje(){
   const v = id => document.getElementById(id).value.trim();
-  let t = `Hola Lore${v('nombre') ? ', soy ' + v('nombre') : ''}. Quiero armar un plan en Cartagena.`;
-  if (elegidos.size) t += `\n\nPlanes:\n` + [...elegidos].map(id=>'• ' + NOMBRES[id]).join('\n');
-  if (v('fecha')) { const [a,m,d] = v('fecha').split('-'); t += `\n\nLlegada: ${d}/${m}/${a}`; }
-  t += `\nPersonas: ${v('personas')}`;
+  let t = u('hi') + (v('nombre') ? u('iam') + v('nombre') : '') + u('want');
+  if (elegidos.size) t += `\n\n${u('plans')}\n` + [...elegidos].map(id=>'• ' + nombre(id)).join('\n');
+  if (v('fecha')) { const [a,m,d] = v('fecha').split('-'); t += `\n\n${u('arrival')} ${d}/${m}/${a}`; }
+  t += `\n${u('guests')} ${v('personas')}`;
   if (v('nota')) t += `\n\n${v('nota')}`;
   return t;
 }
@@ -892,6 +966,38 @@ form.addEventListener('change', actualizarEnvio);
 form.addEventListener('submit', e=>{ e.preventDefault(); actualizarEnvio(); enviar.click(); });
 enviar.addEventListener('pointerdown', actualizarEnvio);
 actualizarEnvio();
+
+function ponerIdioma(l){
+  lang = l === 'en' ? 'en' : 'es';
+  document.documentElement.lang = lang === 'en' ? 'en' : 'es-CO';
+  document.title = u('title');
+  document.querySelectorAll('[data-en]').forEach(el=>{
+    if (el.dataset.es === undefined) el.dataset.es = el.innerHTML;
+    el.innerHTML = lang === 'en' ? el.dataset.en : el.dataset.es;
+  });
+  ['href','placeholder'].forEach(at=>{
+    document.querySelectorAll(`[data-en-${at}]`).forEach(el=>{
+      const k = 'es' + at[0].toUpperCase() + at.slice(1);
+      if (el.dataset[k] === undefined) el.dataset[k] = el.getAttribute(at);
+      el.setAttribute(at, lang === 'en' ? el.getAttribute(`data-en-${at}`) : el.dataset[k]);
+    });
+  });
+  document.querySelectorAll('.idioma button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.lang === lang));
+  pintarTours(); pintarLugares(); pintarGaleria(); pintar();
+  if (!visor.hidden) abrir(actual);
+}
+document.querySelectorAll('.idioma button').forEach(b=>b.addEventListener('click', ()=>{
+  ponerIdioma(b.dataset.lang);
+  try { localStorage.setItem('lore-idioma', lang); } catch (e) {}
+}));
+// Idioma inicial: enlace terminado en #en o #es, el que la persona escogió antes, o el idioma de su celular.
+(function(){
+  let l = null;
+  if (location.hash === '#en' || location.hash === '#es') l = location.hash.slice(1);
+  if (!l) { try { l = localStorage.getItem('lore-idioma'); } catch (e) {} }
+  if (!l) l = (navigator.language || 'es').toLowerCase().startsWith('es') ? 'es' : 'en';
+  ponerIdioma(l);
+})();
 </script>
 </body>
 </html>

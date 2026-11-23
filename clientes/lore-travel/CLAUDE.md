@@ -53,3 +53,10 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   adicionales con sus precios. **No se nombra al proveedor (MAVI)** para que el cliente reserve con Lore. Fotos sacadas del
   PDF: `img/catamaran-*.webp`, `bahia-atardecer.webp`, `islas-rosario.webp` (esta también es ahora la foto del Tour 5 islas).
   Tour nuevo «Transporte privado» (van y limosina en una sola tarjeta, para que las filas queden parejas). Fotos de Pexels (licencia libre, sin crédito obligatorio) en ciudad, Palenque, Santa Marta y limosina, con botón «Fotos»; Wikimedia Commons rechaza descargas desde la sesión (política de robots, 429). Sin foto: Totumo y la van (pedir a Lore fotos reales).
+- **23 nov 2026: página en español e inglés** (pedido de Rigoberto). Botón **ES | EN** arriba (`.idioma`). Idioma inicial:
+  enlace terminado en `#en` o `#es` → lo que la persona escogió antes (`localStorage` «lore-idioma») → idioma del celular
+  (español si empieza por «es»; si no, inglés). Textos fijos: atributo `data-en` (y `data-en-href`, `data-en-placeholder`)
+  en el HTML; listas del script: diccionario `EN` por id (tours y lugares), `t_en` en `CLIENTES` y `VIDEOS`, textos de
+  botones y mensajes en `UI`. En inglés los mensajes de WhatsApp salen en inglés y los precios como «COP $10,500,000».
+  **Al agregar un texto o un plan nuevo, poner también su inglés.** Menú completo solo desde 1200 px de ancho; en
+  pantallas menores quedan logo, ES | EN y WhatsApp (en celulares de menos de 420 px el botón de WhatsApp es solo ícono).
