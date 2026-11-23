@@ -37,6 +37,12 @@ reservas y los pedidos de la tienda.
   tocarla, tiene flechas y rayitas abajo. **Sin precio** (21 nov 2026, Rigoberto): cada gorra solo muestra el nombre y
   «Pedir por WhatsApp», y el mensaje pregunta si está disponible y qué precio tiene. Datos en `GORRAS` (nombre y
   foto). Los nombres son descriptivos (color y estilo), sin marcas.
+- **En celular se ve como en computador** (23 nov 2026, Rigoberto): bloque `@media (max-width: 899px)` al final de los
+  estilos. El menú se ve completo en una segunda fila que se desliza (sin botón de menú); en la portada la foto ocupa
+  el 60 % de arriba y el texto va abajo, sin tapar la capa (la lupa calcula la cabeza con el tamaño de la foto); en
+  precios la foto del corte va arriba a la derecha y cambia sola cada 2,4 s; Daniel con foto y texto lado a lado; los
+  tres datos de la fila en vivo en una sola fila; cortes y pagos de la reserva en dos columnas; dos cortes a la vez en
+  «Salidos de esta silla.».
 - **Solo para hombres** (21 nov 2026, Rigoberto): se atienden hombres y niños.
 - **Un solo barbero: Daniel Mejía** (21 nov 2026, Rigoberto quitó a los demás). Foto real mandada por Rigoberto:
   `img/equipo-daniel.jpg` (a color, en su barbería; en el letrero se lee «Bendito Barbería Daniel Mejía») y el recorte

@@ -429,6 +429,63 @@ p { margin: 0; }
 .pie .marca { font-size: 2.4rem; color: var(--blanco); }
 .pie p { color: var(--gris); }
 
+/* ---------- Celular: misma composición que en computador ---------- */
+@media (max-width: 899px) {
+  :root { --alto-header: 88px; }
+  /* menú visible como en computador, en una segunda fila que se desliza */
+  .header .envoltura { flex-wrap: wrap; height: auto; column-gap: 12px; row-gap: 0; }
+  .marca { line-height: 47px; }
+  .header-acciones { height: 47px; }
+  .nav { display: flex; order: 3; flex: 0 0 100%; gap: 22px; height: 40px; align-items: center; overflow-x: auto; white-space: nowrap; border-top: 1px solid #eeeaea; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a { font-size: .86rem; }
+  .menu-boton, .menu-movil { display: none !important; }
+  /* portada: el cliente con la capa arriba y el texto abajo, sin taparse */
+  .foto-portada { bottom: auto; height: 60%; }
+  .sombra-portada { background: linear-gradient(0deg, rgba(8,6,6,1) 0%, rgba(8,6,6,.96) 40%, rgba(8,6,6,0) 62%); }
+  .portada-texto { gap: 14px; }
+  .portada-texto h1 { font-size: 2.9rem; max-width: 10ch; }
+  .portada-texto p { font-size: .9rem; }
+  .puerta span { font-size: 25vw; }
+  /* precios: la foto del corte arriba a la derecha, como al lado en computador */
+  .precios-grid { position: relative; }
+  .precios h2 { font-size: 3.3rem; max-width: 6ch; }
+  .precios .tarjeta-foto { position: absolute; top: 0; right: max(16px, env(safe-area-inset-right, 0px)); width: 36%; max-width: 160px; }
+  .tarjeta-foto figcaption { top: 6px; left: 6px; padding: 4px 7px; font-size: .64rem; }
+  .tarjeta-foto figcaption b { font-size: .86rem; }
+  /* cortes: se ven dos a la vez */
+  .cortes-fila { grid-auto-columns: minmax(150px, 45vw); }
+  .corte .papel { left: 6px; right: 6px; bottom: 6px; padding: 7px 9px 8px; }
+  .corte .papel h3 { font-size: 1.05rem; }
+  .corte .papel span { font-size: .72rem; }
+  /* barbero: foto y texto lado a lado */
+  .barbero-unico { grid-template-columns: minmax(0, 44%) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .barbero-texto { gap: 12px; }
+  .barbero-texto .titulo-grande { font-size: 2.3rem; }
+  .barbero-texto .texto-suave { font-size: .84rem; }
+  .especialidades li { padding: 7px 0; font-size: .8rem; }
+  .barbero-texto .boton { min-height: 40px; padding: 0 .9em; font-size: .8rem; }
+  .barbero-unico .papel { left: 6px; right: 6px; bottom: 6px; padding: 7px 9px 8px; }
+  .barbero-unico .papel h3 { font-size: 1.15rem; }
+  .barbero-unico .papel p { font-size: .7rem; }
+  /* en vivo: los tres datos en una fila */
+  .vivo-resumen { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .vivo-resumen > div { padding: 14px 8px 14px 0; }
+  .vivo-resumen > div + div, .vivo-resumen > div:last-child { grid-column: auto; padding-left: 10px; border-left: 1px solid var(--linea); border-top: 0; }
+  .vivo-resumen b { font-size: 1.45rem; }
+  .vivo-resumen span { font-size: .74rem; }
+  .vivo-resumen > div:last-child b { font-size: 1.05rem; line-height: 1.15; }
+  /* reserva: los cortes y el pago en dos columnas */
+  .opciones { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .opcion { padding: 10px 11px; }
+  .opcion small { font-size: .74rem; }
+  .opcion .precio-op { font-size: 1.05rem; }
+  /* antes de venir: dirección y pagos lado a lado */
+  .info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 18px; }
+  .info-grid > div:nth-child(2) { grid-column: 1 / -1; order: 3; }
+  .info-grid p, .info-grid li { font-size: .86rem; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
@@ -946,7 +1003,7 @@ p { margin: 0; }
   var lente = { x: 0, y: 0, tx: 0, ty: 0, r: 0, ultimo: 0, visible: true, listo: false };
   if (matchMedia("(hover: none)").matches) $("#pista").textContent = "Toca la cabeza del cliente para ver cómo llegó.";
   function cabezaEnPantalla() {
-    var W = escenario1.clientWidth, H = escenario1.clientHeight;
+    var W = fotoPortada.clientWidth, H = fotoPortada.clientHeight;
     var esc = Math.max(W / LUPA_CABEZA.w, H / LUPA_CABEZA.h);
     var posX = innerWidth < 700 ? .74 : .66;
     return { x: LUPA_CABEZA.x * esc + (W - LUPA_CABEZA.w * esc) * posX, y: LUPA_CABEZA.y * esc + (H - LUPA_CABEZA.h * esc) * .5, esc: esc };
@@ -985,6 +1042,15 @@ p { margin: 0; }
     if (precioFoto.getAttribute("src") === s.foto) return;
     precioFoto.style.opacity = "0";
     setTimeout(function () { precioFoto.src = s.foto; precioFoto.alt = s.nombre + ": " + s.detalle; precioFoto.style.opacity = "1"; }, reducir ? 0 : 180);
+  }
+  if (matchMedia("(hover: none)").matches && !reducir) {
+    var verPrecios = false, iPrecio = 1;
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (e) { verPrecios = e[0].isIntersecting; }, { threshold: .4 }).observe(lista);
+    setInterval(function () {
+      if (!verPrecios || document.hidden) return;
+      iPrecio = (iPrecio + 1) % SERVICIOS.length;
+      mostrarServicio(SERVICIOS[iPrecio], lista.querySelectorAll(".fila-precio")[iPrecio]);
+    }, 2400);
   }
   SERVICIOS.forEach(function (s) {
     var li = el("li");
