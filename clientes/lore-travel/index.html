@@ -270,6 +270,10 @@ h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;line-height:1.1;letter-spaci
 .incluye-apto svg{width:20px;height:20px;color:var(--coral);flex:none;margin-top:1px}
 .alojamiento .acciones{display:flex;flex-wrap:wrap;gap:10px}
 .alojamiento .acciones .btn{flex:1 1 auto}
+.alojamiento .casa{margin-top:64px;padding-top:56px;border-top:1px solid var(--linea)}
+.otra-opcion{margin-top:40px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;background:#fff;border:1px solid var(--linea);border-radius:14px;padding:18px 20px}
+.otra-opcion p{font-weight:600;max-width:46em}
+.otra-opcion .btn{color:var(--mar)}
 .mas-casas{margin-top:44px;display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:14px;align-items:center}
 .mas-casas img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:14px}
 .mas-casas h3{font-size:20px;font-weight:800}
@@ -661,14 +665,47 @@ body.con-plan .wa{bottom:88px}
         </div>
       </div>
     </div>
-    <div class="wrap mas-casas">
-      <img src="img/apto/sala-colonial-1.webp" alt="Sala colonial con sillas de cuero naranja" loading="lazy">
-      <img src="img/apto/sala-colonial-2.webp" alt="Sala colonial con flores y jarrones" loading="lazy">
-      <div>
-        <h3 data-en="Looking for another style or a bigger group?">¿Buscas otro estilo o son más personas?</h3>
-        <p data-en="I have more houses and apartments in the Old Town. Tell me your group size and dates, and I&#x27;ll send you options.">Tengo más casas y apartamentos en el Centro Histórico. Cuéntame cuántos son y tus fechas, y te mando opciones.</p>
-        <a class="btn btn-coral" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20ver%20m%C3%A1s%20opciones%20de%20alojamiento%20en%20Cartagena" data-en-href="https://wa.me/573006279421?text=Hi%20Lore%2C%20I%27d%20like%20to%20see%20more%20places%20to%20stay%20in%20Cartagena" target="_blank" rel="noopener" data-en="&lt;svg&gt;&lt;use href=&quot;#i-wa&quot;/&gt;&lt;/svg&gt;Ask for options"><svg><use href="#i-wa"/></svg>Pedir opciones</a>
+    <div class="wrap apto-top casa">
+      <div class="fotos-l">
+        <div class="foto-l"><img src="img/casa/comedor.webp" alt="Comedor de la casa colonial" data-video="casa" loading="lazy"></div>
+        <div class="miniaturas">
+          <button type="button" aria-current="true" data-src="casa/comedor" aria-label="Comedor con espejos antiguos"><img src="img/casa/comedor.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa/sala-1" aria-label="Sala colonial"><img src="img/casa/sala-1.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa/sala-2" aria-label="Sala con techo de madera"><img src="img/casa/sala-2.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa/cocina" aria-label="Cocina equipada"><img src="img/casa/cocina.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa/balcon" aria-label="Balcón sobre el patio"><img src="img/casa/balcon.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa/habitacion-1" aria-label="Habitación con dos camas dobles"><img src="img/casa/habitacion-1.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa/habitacion-2" aria-label="Habitación principal"><img src="img/casa/habitacion-2.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa/habitacion-3" aria-label="Habitación con lámpara de cristal"><img src="img/casa/habitacion-3.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa/habitacion-4" aria-label="Habitación con TV"><img src="img/casa/habitacion-4.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa/habitacion-5" aria-label="Habitación con armarios de madera"><img src="img/casa/habitacion-5.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa/bano-1" aria-label="Baño"><img src="img/casa/bano-1.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa/bano-2" aria-label="Baño con ducha"><img src="img/casa/bano-2.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa/bano-3" aria-label="Baño"><img src="img/casa/bano-3.webp" alt="" loading="lazy"></button>
+        </div>
       </div>
+      <div>
+        <div class="sello-cat" data-en="Places to stay">Alojamiento</div>
+        <h2 data-en="Colonial house in the Old Town">Casa colonial en el Centro Histórico</h2>
+        <p class="lead" data-en="A house with true Cartagena soul: checkerboard marble floors, antique furniture, wooden-beamed ceilings and a leafy balcony over the courtyard. Ideal for families and larger groups.">Una casa con alma cartagenera: pisos de mármol en ajedrez, muebles antiguos, techos de madera y un balcón lleno de verde sobre el patio. Ideal para familias y grupos grandes.</p>
+        <ul class="incluye-apto">
+          <li><svg><use href="#i-ok"/></svg><span data-en="Spacious dining room">Comedor amplio</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Colonial living room with wooden beams">Sala colonial con techos de madera</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Fully equipped kitchen">Cocina equipada</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Balcony over the courtyard">Balcón sobre el patio</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Several bedrooms with bathroom">Varias habitaciones con baño</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Air conditioning and TV">Aire acondicionado y TV</span></li>
+        </ul>
+        <div class="acciones">
+          <button class="btn agregar" aria-pressed="false" data-id="casa">Agregar</button>
+          <button class="btn btn-borde" type="button" data-video="casa" style="color:var(--mar)" data-en="See all photos">Ver todas las fotos</button>
+          <a class="btn btn-coral" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20informaci%C3%B3n%20de%20la%20casa%20colonial%20en%20el%20Centro%20Hist%C3%B3rico" data-en-href="https://wa.me/573006279421?text=Hi%20Lore%2C%20I%27d%20like%20information%20about%20the%20colonial%20house%20in%20the%20Old%20Town" target="_blank" rel="noopener" data-en="&lt;svg&gt;&lt;use href=&quot;#i-wa&quot;/&gt;&lt;/svg&gt;Ask for capacity and price"><svg><use href="#i-wa"/></svg>Preguntar capacidad y precio</a>
+        </div>
+      </div>
+    </div>
+    <div class="wrap otra-opcion">
+      <p data-en="Looking for something else? I have more houses and apartments in the Old Town.">¿Buscas otra opción? Tengo más casas y apartamentos en el Centro Histórico.</p>
+      <a class="btn btn-borde" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20ver%20m%C3%A1s%20opciones%20de%20alojamiento%20en%20Cartagena" data-en-href="https://wa.me/573006279421?text=Hi%20Lore%2C%20I%27d%20like%20to%20see%20more%20places%20to%20stay%20in%20Cartagena" target="_blank" rel="noopener" data-en="&lt;svg&gt;&lt;use href=&quot;#i-wa&quot;/&gt;&lt;/svg&gt;Ask for options"><svg><use href="#i-wa"/></svg>Pedir opciones</a>
     </div>
   </section>
 
@@ -820,7 +857,7 @@ const EN = {
   spa:{c:'Spa and celebrations', d:'Sublime Premium Spa: relaxation and birthday or bachelorette celebrations.'},
   niku:{c:'Restaurant', d:'Signature cuisine prepared right in front of you.'},
   morena:{c:'Restaurant', d:'Morena Orígenes: Caribbean flavors and atmosphere.'},
-  lancha:{n:'Private boat'}, catamaran:{n:'Catamaran with jacuzzi'}, alojamiento:{n:'Luxury apartment in the Old Town'},
+  lancha:{n:'Private boat'}, catamaran:{n:'Catamaran with jacuzzi'}, alojamiento:{n:'Luxury apartment in the Old Town'}, casa:{n:'Colonial house in the Old Town'},
 };
 const tx = (p, k) => (lang === 'en' && EN[p.id] && EN[p.id][k] !== undefined) ? EN[p.id][k] : p[k];
 // pie de foto en inglés para la galería y el visor (t_en)
@@ -850,7 +887,7 @@ const LUGARES = [
   {id:'niku', n:'Niku', f:'comida', c:'Restaurante', img:'niku', d:'Cocina de autor preparada frente a ti.', ig:'https://www.instagram.com/nikurestaurante?igsh=NTN3ZWJxZGoyZ3Z3'},
   {id:'morena', n:'Morena', f:'comida', c:'Restaurante', img:'morena', d:'Morena Orígenes: sabores y ambiente con raíces del Caribe.', ig:'https://www.instagram.com/morenaorigenes?igsh=cmJ0NncxbWJwYnNn'},
 ];
-const NOMBRES = {lancha:'Lancha privada', catamaran:'Catamarán con jacuzzi', alojamiento:'Apartamento de lujo en el Centro Histórico'};
+const NOMBRES = {lancha:'Lancha privada', catamaran:'Catamarán con jacuzzi', alojamiento:'Apartamento de lujo en el Centro Histórico', casa:'Casa colonial en el Centro Histórico'};
 [...TOURS, ...LUGARES].forEach(x=>NOMBRES[x.id]=x.n);
 const nombre = id => (lang === 'en' && EN[id] && EN[id].n) ? EN[id].n : NOMBRES[id];
 const wa = t => `https://wa.me/${WA}?text=${encodeURIComponent(t)}`;
@@ -874,6 +911,20 @@ const VIDEOS = {
           {f:'santa-marta-playa', t:'Playa en Santa Marta', t_en:'Beach in Santa Marta', alt:'Lanchas en una playa de agua turquesa'}],
   chiva: [{f:'chiva-1', t:'Chiva típica de Cartagena', t_en:'Traditional Cartagena chiva', alt:'Chiva amarilla y verde pintada a mano'},
           {f:'chiva-2', t:'Chivas listas para salir', t_en:'Chivas ready to go', alt:'Dos chivas de colores estacionadas'}],
+  casa: [
+    {f:'casa/comedor', t:'Comedor con espejos antiguos', t_en:'Dining room with antique mirrors', alt:'Comedor con espejos antiguos'},
+    {f:'casa/sala-1', t:'Sala colonial', t_en:'Colonial living room', alt:'Sala colonial'},
+    {f:'casa/sala-2', t:'Sala con techo de madera', t_en:'Living room with wooden beams', alt:'Sala con techo de madera'},
+    {f:'casa/cocina', t:'Cocina equipada', t_en:'Fully equipped kitchen', alt:'Cocina equipada'},
+    {f:'casa/balcon', t:'Balcón sobre el patio', t_en:'Balcony over the courtyard', alt:'Balcón sobre el patio'},
+    {f:'casa/habitacion-1', t:'Habitación con dos camas dobles', t_en:'Bedroom with two double beds', alt:'Habitación con dos camas dobles'},
+    {f:'casa/habitacion-2', t:'Habitación principal', t_en:'Master bedroom', alt:'Habitación principal'},
+    {f:'casa/habitacion-3', t:'Habitación con lámpara de cristal', t_en:'Bedroom with crystal chandelier', alt:'Habitación con lámpara de cristal'},
+    {f:'casa/habitacion-4', t:'Habitación con TV', t_en:'Bedroom with TV', alt:'Habitación con TV'},
+    {f:'casa/habitacion-5', t:'Habitación con armarios de madera', t_en:'Bedroom with wooden wardrobes', alt:'Habitación con armarios de madera'},
+    {f:'casa/bano-1', t:'Baño', t_en:'Bathroom', alt:'Baño'},
+    {f:'casa/bano-2', t:'Baño con ducha', t_en:'Bathroom with shower', alt:'Baño con ducha'},
+    {f:'casa/bano-3', t:'Baño', t_en:'Bathroom', alt:'Baño'}],
   alojamiento: [
     {f:'apto/sala-cocina', t:'Sala, comedor y cocina', t_en:'Living room, dining room and kitchen', alt:'Sala, comedor y cocina'},
     {f:'apto/terraza-catedral', t:'Terraza con vista a la Catedral', t_en:'Rooftop terrace with a view of the Cathedral', alt:'Terraza con vista a la Catedral'},

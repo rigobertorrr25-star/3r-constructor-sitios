@@ -80,3 +80,8 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   otro estilo o son más personas?» con las 2 fotos de la sala colonial (piso de ajedrez: es otra propiedad, confirmar con
   Lore). **No se nombra «Alejandria»**, igual que con el catamarán, para que reserven con Lore. Menú: se agregó
   «Alojamiento / Stays» y se quitó «Contacto» para que quepa (el botón de WhatsApp cumple esa función).
+- **25 nov 2026: casa colonial** (Rigoberto mandó 13 fotos más; confirman que la sala de sillas naranjas es otra propiedad).
+  La franja «¿Buscas otro estilo?» se cambió por una segunda ficha en `#alojamiento`: «Casa colonial en el Centro Histórico»
+  (galería de 13 fotos en `img/casa/`, `VIDEOS.casa`, botón «Preguntar capacidad y precio» porque no vino folleto: **no se
+  inventó capacidad**) + línea «¿Buscas otra opción?» para pedir más alojamientos. Arreglado: en el apartamento, cuatro fotos
+  estaban con el nombre cruzado (cocina, sala y dos baños); se renombraron y se revisaron todas con una hoja de contacto.
