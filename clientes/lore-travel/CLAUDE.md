@@ -90,3 +90,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   secadora, mayordomo 24 h, ama de llaves 8 h. La ficha ya muestra todo eso y el botón dice «Cotizar la casa». Galería: 28
   fotos (14 miniaturas; el visor muestra todas), foto principal = terraza con la Catedral. **Ojo**: las fotos que manda
   Rigoberto llegan en otro orden que el de la pantalla; renombrar siempre revisando una hoja de contacto.
+- **25 nov 2026: apartamento de arte** (folleto «Art Luxury Apartment», no se nombra): tercera ficha en `#alojamiento`,
+  capacidad 6; 3 habitaciones, 3,5 baños, sala comedor, cocina, piscina, terraza mirador, oficina, aire, wifi, agua caliente,
+  lavadora y secadora, planta eléctrica, mayordomo 24 h, ama de llaves 8 h. 15 fotos en `img/arte/` (`VIDEOS.arte`). La foto
+  de la habitación principal se recortó para quitar unas fotos familiares de niños que había en la pared.
