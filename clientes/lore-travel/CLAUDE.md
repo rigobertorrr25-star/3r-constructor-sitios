@@ -99,3 +99,6 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   botón «Preguntar capacidad y precio», no se inventó capacidad. Las fotos de piscina con pérgola que se habían puesto en el
   apartamento de arte son de esta casa (la misma pérgola de madera sale sobre su escalera): se pasaron aquí y el arte quedó
   con la terraza de la Catedral como foto principal. Confirmar con Lore.
+- **25 nov 2026: clientes en Palenque** (4 fotos + 4 videos: letrero con palenqueras, tambores, baile, ronda con la comunidad,
+  tienda de artesanías, almuerzo). Van de primeros en `CLIENTES` (`clientes/p-*`); la foto del letrero es también la del tour
+  Palenque y su botón ahora es «Video» (tambores + fotos de Pexels). El video de tambores se recortó de 52 a 15 s.
