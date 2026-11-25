@@ -63,7 +63,7 @@ nav.menu a:hover{color:var(--coral-osc)}
 @media (max-width:1199px){nav.menu{display:none}}
 nav.menu a,.barra .btn{white-space:nowrap}
 .logo{flex:none}
-nav.menu{gap:22px}
+nav.menu{gap:18px}
 
 /* Portada */
 .portada{padding:56px 0 72px;overflow:hidden}
@@ -195,9 +195,9 @@ h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;line-height:1.1;letter-spaci
 /* Lancha privada */
 .lancha{background:#F3F8F8}
 .lancha .wrap:first-child{display:grid;grid-template-columns:1fr 1.15fr;gap:48px;align-items:center}
-.lancha .fotos-l{display:grid;gap:8px;min-width:0}
-.lancha .foto-l{border-radius:16px;overflow:hidden;aspect-ratio:3/2;max-width:100%;background:#DCE8E9}
-.lancha .foto-l img{width:100%;height:100%;object-fit:cover}
+.fotos-l{display:grid;gap:8px;min-width:0}
+.foto-l{border-radius:16px;overflow:hidden;aspect-ratio:3/2;max-width:100%;background:#DCE8E9}
+.foto-l img{width:100%;height:100%;object-fit:cover}
 .miniaturas{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
 .miniaturas button{aspect-ratio:1/1;border-radius:8px;overflow:hidden;opacity:.7;border:2px solid transparent;transition:opacity .2s}
 .miniaturas button[aria-current="true"]{opacity:1;border-color:var(--coral)}
@@ -257,6 +257,25 @@ h2{font-size:clamp(28px,3.6vw,42px);font-weight:800;line-height:1.1;letter-spaci
 .extras ul{list-style:none;display:grid;gap:5px;color:var(--gris)}
 .extras li b{color:var(--tinta);font-weight:700}
 @media (max-width:900px){.catamaran .wrap.cat-top,.pisos,.planes-cat,.extras{grid-template-columns:1fr}.catamaran .wrap.cat-top{gap:28px}}
+
+/* Alojamiento */
+.alojamiento .wrap.apto-top{display:grid;grid-template-columns:1.15fr 1fr;gap:48px;align-items:start}
+.alojamiento .foto-l img{object-position:50% 30%;cursor:zoom-in}
+.alojamiento .miniaturas{grid-template-columns:repeat(7,1fr)}
+.alojamiento .lead{color:var(--gris);font-size:17px;margin:12px 0 18px}
+.capac{display:inline-flex;align-items:center;gap:10px;background:var(--mar);color:#fff;font-weight:800;padding:10px 14px;border-radius:10px;margin-bottom:18px}
+.capac svg{width:22px;height:22px;color:var(--coral-claro)}
+.incluye-apto{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 20px;margin-bottom:22px;list-style:none}
+.incluye-apto li{display:flex;gap:9px;align-items:flex-start;font-size:15px}
+.incluye-apto svg{width:20px;height:20px;color:var(--coral);flex:none;margin-top:1px}
+.alojamiento .acciones{display:flex;flex-wrap:wrap;gap:10px}
+.alojamiento .acciones .btn{flex:1 1 auto}
+.mas-casas{margin-top:44px;display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:14px;align-items:center}
+.mas-casas img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:14px}
+.mas-casas h3{font-size:20px;font-weight:800}
+.mas-casas p{color:var(--gris);margin:8px 0 16px}
+@media (max-width:900px){.alojamiento .wrap.apto-top{grid-template-columns:1fr;gap:28px}.mas-casas{grid-template-columns:1fr 1fr}.mas-casas>div{grid-column:1/3}}
+@media (max-width:480px){.incluye-apto{grid-template-columns:1fr}.alojamiento .miniaturas{grid-template-columns:repeat(5,1fr)}}
 
 /* Arma tu plan */
 .armar{background:var(--mar);color:#fff}
@@ -372,10 +391,10 @@ body.con-plan .wa{bottom:88px}
       <a href="#tours">Tours</a>
       <a href="#lancha" data-en="Private boat">Lancha privada</a>
       <a href="#catamaran" data-en="Catamaran">Catamarán</a>
+      <a href="#alojamiento" data-en="Stays">Alojamiento</a>
       <a href="#planes" data-en="Restaurants">Restaurantes</a>
       <a href="#clientes" data-en="Clients">Clientes</a>
       <a href="#armar" data-en="Plan your trip">Arma tu plan</a>
-      <a href="#contacto" data-en="Contact">Contacto</a>
     </nav>
     <div class="lado">
       <div class="idioma" role="group" aria-label="Idioma / Language"><button type="button" data-lang="es" aria-pressed="true">ES</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div>
@@ -594,6 +613,65 @@ body.con-plan .wa{bottom:88px}
     </div>
   </section>
 
+  <section class="sec alojamiento" id="alojamiento">
+    <div class="wrap apto-top">
+      <div class="fotos-l">
+        <div class="foto-l"><img src="img/apto/sala-cocina.webp" alt="Sala, comedor y cocina del apartamento" data-video="alojamiento" loading="lazy"></div>
+        <div class="miniaturas">
+          <button type="button" aria-current="true" data-src="apto/sala-cocina" aria-label="Sala, comedor y cocina"><img src="img/apto/sala-cocina.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="apto/terraza-catedral" aria-label="Terraza con vista a la Catedral"><img src="img/apto/terraza-catedral.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="apto/jacuzzi" aria-label="Jacuzzi a cielo abierto"><img src="img/apto/jacuzzi.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="apto/comedor" aria-label="Comedor"><img src="img/apto/comedor.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="apto/cocina" aria-label="Cocina equipada"><img src="img/apto/cocina.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="apto/habitacion-1" aria-label="Habitación principal"><img src="img/apto/habitacion-1.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="apto/habitacion-2" aria-label="Habitación con TV"><img src="img/apto/habitacion-2.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="apto/habitacion-3" aria-label="Habitación con vista al patio"><img src="img/apto/habitacion-3.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="apto/habitacion-4" aria-label="Habitación"><img src="img/apto/habitacion-4.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="apto/habitacion-5" aria-label="Habitación"><img src="img/apto/habitacion-5.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="apto/bano-1" aria-label="Baño con doble lavamanos"><img src="img/apto/bano-1.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="apto/bano-2" aria-label="Baño con ducha"><img src="img/apto/bano-2.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="apto/bano-3" aria-label="Ducha"><img src="img/apto/bano-3.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="apto/patio" aria-label="Patio colonial"><img src="img/apto/patio.webp" alt="" loading="lazy"></button>
+        </div>
+      </div>
+      <div>
+        <div class="sello-cat" data-en="Places to stay">Alojamiento</div>
+        <h2 data-en="Luxury apartment in the Old Town">Apartamento de lujo en el Centro Histórico</h2>
+        <p class="lead" data-en="In a colonial house with a view of the Cathedral, an open-air jacuzzi on the rooftop and everything ready for your group, steps from the walled city.">En una casa colonial con vista a la Catedral, jacuzzi a cielo abierto en la terraza y todo listo para tu grupo, a pasos de la ciudad amurallada.</p>
+        <div class="capac"><svg><use href="#i-gente"/></svg><span data-en="Sleeps 6 to 8 people">Capacidad: 6 a 8 personas</span></div>
+        <ul class="incluye-apto">
+          <li><svg><use href="#i-ok"/></svg><span data-en="3 bedrooms">3 habitaciones</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="3.5 bathrooms">3 baños y medio</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Living and dining room">Sala comedor</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Fully equipped kitchen">Cocina completamente equipada</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Open-air jacuzzi">Jacuzzi a cielo abierto</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Rooftop terrace">Terraza</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Air conditioning">Aire acondicionado</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Wi-Fi">Wifi</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Hot water">Agua caliente</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Washer and dryer">Lavadora y secadora</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Housekeeper 8 hours a day">Ama de llaves 8 horas diarias</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="24-hour security">Vigilancia 24 horas</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Backup generator">Planta eléctrica</span></li>
+        </ul>
+        <div class="acciones">
+          <button class="btn agregar" aria-pressed="false" data-id="alojamiento">Agregar</button>
+          <button class="btn btn-borde" type="button" data-video="alojamiento" style="color:var(--mar)" data-en="See all photos">Ver todas las fotos</button>
+          <a class="btn btn-coral" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20informaci%C3%B3n%20del%20apartamento%20de%20lujo%20en%20el%20Centro%20Hist%C3%B3rico" data-en-href="https://wa.me/573006279421?text=Hi%20Lore%2C%20I%27d%20like%20information%20about%20the%20luxury%20apartment%20in%20the%20Old%20Town" target="_blank" rel="noopener" data-en="&lt;svg&gt;&lt;use href=&quot;#i-wa&quot;/&gt;&lt;/svg&gt;Get a quote"><svg><use href="#i-wa"/></svg>Cotizar el apartamento</a>
+        </div>
+      </div>
+    </div>
+    <div class="wrap mas-casas">
+      <img src="img/apto/sala-colonial-1.webp" alt="Sala colonial con sillas de cuero naranja" loading="lazy">
+      <img src="img/apto/sala-colonial-2.webp" alt="Sala colonial con flores y jarrones" loading="lazy">
+      <div>
+        <h3 data-en="Looking for another style or a bigger group?">¿Buscas otro estilo o son más personas?</h3>
+        <p data-en="I have more houses and apartments in the Old Town. Tell me your group size and dates, and I&#x27;ll send you options.">Tengo más casas y apartamentos en el Centro Histórico. Cuéntame cuántos son y tus fechas, y te mando opciones.</p>
+        <a class="btn btn-coral" href="https://wa.me/573006279421?text=Hola%20Lore%2C%20quiero%20ver%20m%C3%A1s%20opciones%20de%20alojamiento%20en%20Cartagena" data-en-href="https://wa.me/573006279421?text=Hi%20Lore%2C%20I%27d%20like%20to%20see%20more%20places%20to%20stay%20in%20Cartagena" target="_blank" rel="noopener" data-en="&lt;svg&gt;&lt;use href=&quot;#i-wa&quot;/&gt;&lt;/svg&gt;Ask for options"><svg><use href="#i-wa"/></svg>Pedir opciones</a>
+      </div>
+    </div>
+  </section>
+
   <section class="sec" id="planes">
     <div class="wrap">
       <div class="cabeza">
@@ -742,7 +820,7 @@ const EN = {
   spa:{c:'Spa and celebrations', d:'Sublime Premium Spa: relaxation and birthday or bachelorette celebrations.'},
   niku:{c:'Restaurant', d:'Signature cuisine prepared right in front of you.'},
   morena:{c:'Restaurant', d:'Morena Orígenes: Caribbean flavors and atmosphere.'},
-  lancha:{n:'Private boat'}, catamaran:{n:'Catamaran with jacuzzi'},
+  lancha:{n:'Private boat'}, catamaran:{n:'Catamaran with jacuzzi'}, alojamiento:{n:'Luxury apartment in the Old Town'},
 };
 const tx = (p, k) => (lang === 'en' && EN[p.id] && EN[p.id][k] !== undefined) ? EN[p.id][k] : p[k];
 // pie de foto en inglés para la galería y el visor (t_en)
@@ -772,7 +850,7 @@ const LUGARES = [
   {id:'niku', n:'Niku', f:'comida', c:'Restaurante', img:'niku', d:'Cocina de autor preparada frente a ti.', ig:'https://www.instagram.com/nikurestaurante?igsh=NTN3ZWJxZGoyZ3Z3'},
   {id:'morena', n:'Morena', f:'comida', c:'Restaurante', img:'morena', d:'Morena Orígenes: sabores y ambiente con raíces del Caribe.', ig:'https://www.instagram.com/morenaorigenes?igsh=cmJ0NncxbWJwYnNn'},
 ];
-const NOMBRES = {lancha:'Lancha privada', catamaran:'Catamarán con jacuzzi'};
+const NOMBRES = {lancha:'Lancha privada', catamaran:'Catamarán con jacuzzi', alojamiento:'Apartamento de lujo en el Centro Histórico'};
 [...TOURS, ...LUGARES].forEach(x=>NOMBRES[x.id]=x.n);
 const nombre = id => (lang === 'en' && EN[id] && EN[id].n) ? EN[id].n : NOMBRES[id];
 const wa = t => `https://wa.me/${WA}?text=${encodeURIComponent(t)}`;
@@ -796,6 +874,21 @@ const VIDEOS = {
           {f:'santa-marta-playa', t:'Playa en Santa Marta', t_en:'Beach in Santa Marta', alt:'Lanchas en una playa de agua turquesa'}],
   chiva: [{f:'chiva-1', t:'Chiva típica de Cartagena', t_en:'Traditional Cartagena chiva', alt:'Chiva amarilla y verde pintada a mano'},
           {f:'chiva-2', t:'Chivas listas para salir', t_en:'Chivas ready to go', alt:'Dos chivas de colores estacionadas'}],
+  alojamiento: [
+    {f:'apto/sala-cocina', t:'Sala, comedor y cocina', t_en:'Living room, dining room and kitchen', alt:'Sala, comedor y cocina'},
+    {f:'apto/terraza-catedral', t:'Terraza con vista a la Catedral', t_en:'Rooftop terrace with a view of the Cathedral', alt:'Terraza con vista a la Catedral'},
+    {f:'apto/jacuzzi', t:'Jacuzzi a cielo abierto', t_en:'Open-air jacuzzi', alt:'Jacuzzi a cielo abierto'},
+    {f:'apto/comedor', t:'Comedor', t_en:'Dining room', alt:'Comedor'},
+    {f:'apto/cocina', t:'Cocina equipada', t_en:'Fully equipped kitchen', alt:'Cocina equipada'},
+    {f:'apto/habitacion-1', t:'Habitación principal', t_en:'Master bedroom', alt:'Habitación principal'},
+    {f:'apto/habitacion-2', t:'Habitación con TV', t_en:'Bedroom with TV', alt:'Habitación con TV'},
+    {f:'apto/habitacion-3', t:'Habitación con vista al patio', t_en:'Bedroom overlooking the courtyard', alt:'Habitación con vista al patio'},
+    {f:'apto/habitacion-4', t:'Habitación', t_en:'Bedroom', alt:'Habitación'},
+    {f:'apto/habitacion-5', t:'Habitación', t_en:'Bedroom', alt:'Habitación'},
+    {f:'apto/bano-1', t:'Baño con doble lavamanos', t_en:'Bathroom with double sink', alt:'Baño con doble lavamanos'},
+    {f:'apto/bano-2', t:'Baño con ducha', t_en:'Bathroom with shower', alt:'Baño con ducha'},
+    {f:'apto/bano-3', t:'Ducha', t_en:'Shower', alt:'Ducha'},
+    {f:'apto/patio', t:'Patio colonial', t_en:'Colonial courtyard', alt:'Patio colonial'}],
   lancha: [{f:'videos/v-lancha', v:1, t:'Lancha frente a Bocagrande', t_en:'Boat off Bocagrande', alt:'Lancha navegando frente a Bocagrande'}],
 };
 function pintarTours(){
@@ -902,7 +995,13 @@ function abrir(i, lista){
 }
 function cerrar(){ visor.hidden = true; vMedia.innerHTML = ''; document.body.style.overflow = ''; }
 gal.addEventListener('click', e=>{ const b = e.target.closest('[data-g]'); if (b) abrir(+b.dataset.g, CLIENTES); });
-document.addEventListener('click', e=>{ const b = e.target.closest('[data-video]'); if (b) abrir(0, VIDEOS[b.dataset.video]); });
+document.addEventListener('click', e=>{
+  const b = e.target.closest('[data-video]'); if (!b) return;
+  const lista = VIDEOS[b.dataset.video];
+  // si es la foto grande de una galería, abrir en la foto que se está viendo
+  const i = b.tagName === 'IMG' ? Math.max(0, lista.findIndex(x => b.getAttribute('src') === `img/${x.f}.webp`)) : 0;
+  abrir(i, lista);
+});
 visor.querySelector('.cerrar').addEventListener('click', cerrar);
 visor.querySelector('.ant').addEventListener('click', ()=>abrir(actual-1));
 

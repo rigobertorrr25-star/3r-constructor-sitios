@@ -72,3 +72,11 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   (el atributo autoplay en HTML insertado no cuenta como toque del cliente). Ahora `abrir()` crea el `<video>` y llama
   `play()` dentro del mismo toque; si el celular no deja sonido, arranca en silencio. Probado con clic real en celular y
   computador: los 22 avanzan solos, con sonido, y se ven completos. Safari (iPhone) no se puede probar desde la sesión.
+- **25 nov 2026: alojamiento** (Rigoberto mandó 13 fotos y el folleto de «Alejandria Luxury Apartment» + 2 fotos de una sala
+  colonial con sillas naranjas). Sección `#alojamiento` debajo del catamarán: «Apartamento de lujo en el Centro Histórico»
+  (capacidad 6 a 8; 3 habitaciones, 3,5 baños, sala comedor, cocina equipada, jacuzzi a cielo abierto, terraza, aire, wifi,
+  agua caliente, lavadora y secadora, ama de llaves 8 h, vigilancia 24 h, planta eléctrica), galería de 14 fotos con
+  miniaturas (`img/apto/`, el patio sale recortado del folleto) que abre el visor (`VIDEOS.alojamiento`), y franja «¿Buscas
+  otro estilo o son más personas?» con las 2 fotos de la sala colonial (piso de ajedrez: es otra propiedad, confirmar con
+  Lore). **No se nombra «Alejandria»**, igual que con el catamarán, para que reserven con Lore. Menú: se agregó
+  «Alojamiento / Stays» y se quitó «Contacto» para que quepa (el botón de WhatsApp cumple esa función).
