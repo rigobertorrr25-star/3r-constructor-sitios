@@ -85,3 +85,8 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   (galería de 13 fotos en `img/casa/`, `VIDEOS.casa`, botón «Preguntar capacidad y precio» porque no vino folleto: **no se
   inventó capacidad**) + línea «¿Buscas otra opción?» para pedir más alojamientos. Arreglado: en el apartamento, cuatro fotos
   estaban con el nombre cruzado (cocina, sala y dos baños); se renombraron y se revisaron todas con una hoja de contacto.
+- **25 nov 2026: folleto de la casa** («Catleya Luxury House», no se nombra): capacidad 12; 5 habitaciones, 5,5 baños, sala
+  comedor, cocina equipada, piscina, jacuzzi a cielo abierto, terraza mirador, ascensor, aire, wifi, agua caliente, lavadora y
+  secadora, mayordomo 24 h, ama de llaves 8 h. La ficha ya muestra todo eso y el botón dice «Cotizar la casa». Galería: 28
+  fotos (14 miniaturas; el visor muestra todas), foto principal = terraza con la Catedral. **Ojo**: las fotos que manda
+  Rigoberto llegan en otro orden que el de la pantalla; renombrar siempre revisando una hoja de contacto.
