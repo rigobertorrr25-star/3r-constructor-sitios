@@ -763,19 +763,19 @@ body.con-plan .wa{bottom:88px}
         <div class="foto-l"><img src="img/casa2/piscina-pergola.webp" alt="Piscina en la terraza con pérgola" data-video="casa2" loading="lazy"></div>
         <div class="miniaturas">
           <button type="button" aria-current="true" data-src="casa2/piscina-pergola" aria-label="Piscina en la terraza"><img src="img/casa2/piscina-pergola.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa2/sala" aria-label="Sala con arte"><img src="img/casa2/sala.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa2/cocina" aria-label="Cocina con isla"><img src="img/casa2/cocina.webp" alt="" loading="lazy"></button>
           <button type="button" data-src="casa2/terraza" aria-label="Terraza con camastros"><img src="img/casa2/terraza.webp" alt="" loading="lazy"></button>
-          <button type="button" data-src="casa2/piscina" aria-label="Piscina con pérgola"><img src="img/casa2/piscina.webp" alt="" loading="lazy"></button>
-          <button type="button" data-src="casa2/terraza-cubierta" aria-label="Terraza cubierta junto al ascensor"><img src="img/casa2/terraza-cubierta.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa2/entrada-jardin" aria-label="Entrada con jardín interior"><img src="img/casa2/entrada-jardin.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa2/comedor-jardin" aria-label="Comedor junto al jardín"><img src="img/casa2/comedor-jardin.webp" alt="" loading="lazy"></button>
           <button type="button" data-src="casa2/habitacion-1" aria-label="Habitación principal"><img src="img/casa2/habitacion-1.webp" alt="" loading="lazy"></button>
           <button type="button" data-src="casa2/habitacion-coral" aria-label="Habitación con cama en altillo"><img src="img/casa2/habitacion-coral.webp" alt="" loading="lazy"></button>
           <button type="button" data-src="casa2/habitacion-peces" aria-label="Habitación con cama en altillo"><img src="img/casa2/habitacion-peces.webp" alt="" loading="lazy"></button>
-          <button type="button" data-src="casa2/habitacion-triple" aria-label="Habitación con tres camas"><img src="img/casa2/habitacion-triple.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa2/habitacion-doble" aria-label="Habitación con dos camas"><img src="img/casa2/habitacion-doble.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa2/piscina" aria-label="Piscina con pérgola"><img src="img/casa2/piscina.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa2/terraza-cubierta" aria-label="Terraza cubierta junto al ascensor"><img src="img/casa2/terraza-cubierta.webp" alt="" loading="lazy"></button>
           <button type="button" data-src="casa2/bano-tina" aria-label="Baño con tina"><img src="img/casa2/bano-tina.webp" alt="" loading="lazy"></button>
-          <button type="button" data-src="casa2/escalera" aria-label="Escalera a la terraza"><img src="img/casa2/escalera.webp" alt="" loading="lazy"></button>
-          <button type="button" data-src="casa2/habitacion-1c" aria-label="Habitación principal"><img src="img/casa2/habitacion-1c.webp" alt="" loading="lazy"></button>
-          <button type="button" data-src="casa2/bano-1" aria-label="Baño"><img src="img/casa2/bano-1.webp" alt="" loading="lazy"></button>
-          <button type="button" data-src="casa2/habitacion-coral-c" aria-label="Habitación con TV"><img src="img/casa2/habitacion-coral-c.webp" alt="" loading="lazy"></button>
-          <button type="button" data-src="casa2/piscina-2" aria-label="Piscina"><img src="img/casa2/piscina-2.webp" alt="" loading="lazy"></button>
+          <button type="button" data-src="casa2/sala-c" aria-label="Rincón de lectura"><img src="img/casa2/sala-c.webp" alt="" loading="lazy"></button>
         </div>
       </div>
       <div>
@@ -786,6 +786,8 @@ body.con-plan .wa{bottom:88px}
           <li><svg><use href="#i-ok"/></svg><span data-en="Rooftop pool">Piscina en la terraza</span></li>
           <li><svg><use href="#i-ok"/></svg><span data-en="Rooftop deck with loungers and pergola">Terraza con camastros y pérgola</span></li>
           <li><svg><use href="#i-ok"/></svg><span data-en="Elevator">Ascensor</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Indoor garden">Jardín interior</span></li>
+          <li><svg><use href="#i-ok"/></svg><span data-en="Kitchen with island">Cocina con isla</span></li>
           <li><svg><use href="#i-ok"/></svg><span data-en="Bedrooms with loft beds">Habitaciones con cama en altillo</span></li>
           <li><svg><use href="#i-ok"/></svg><span data-en="Bedroom with three beds">Habitación con tres camas</span></li>
           <li><svg><use href="#i-ok"/></svg><span data-en="Private bathrooms, one with a bathtub">Baños privados, uno con tina</span></li>
@@ -1008,23 +1010,31 @@ const VIDEOS = {
           {f:'chiva-2', t:'Chivas listas para salir', t_en:'Chivas ready to go', alt:'Dos chivas de colores estacionadas'}],
   casa2: [
     {f:'casa2/piscina-pergola', t:'Piscina en la terraza', t_en:'Rooftop pool', alt:'Piscina en la terraza'},
+    {f:'casa2/sala', t:'Sala con arte', t_en:'Living room with art', alt:'Sala con arte'},
+    {f:'casa2/cocina', t:'Cocina con isla', t_en:'Kitchen with island', alt:'Cocina con isla'},
     {f:'casa2/terraza', t:'Terraza con camastros', t_en:'Rooftop deck with loungers', alt:'Terraza con camastros'},
-    {f:'casa2/piscina', t:'Piscina con pérgola', t_en:'Pool with pergola', alt:'Piscina con pérgola'},
-    {f:'casa2/terraza-cubierta', t:'Terraza cubierta junto al ascensor', t_en:'Covered terrace by the elevator', alt:'Terraza cubierta junto al ascensor'},
+    {f:'casa2/entrada-jardin', t:'Entrada con jardín interior', t_en:'Entrance with indoor garden', alt:'Entrada con jardín interior'},
+    {f:'casa2/comedor-jardin', t:'Comedor junto al jardín', t_en:'Dining area by the garden', alt:'Comedor junto al jardín'},
     {f:'casa2/habitacion-1', t:'Habitación principal', t_en:'Master bedroom', alt:'Habitación principal'},
     {f:'casa2/habitacion-coral', t:'Habitación con cama en altillo', t_en:'Bedroom with loft bed', alt:'Habitación con cama en altillo'},
     {f:'casa2/habitacion-peces', t:'Habitación con cama en altillo', t_en:'Bedroom with loft bed', alt:'Habitación con cama en altillo'},
-    {f:'casa2/habitacion-triple', t:'Habitación con tres camas', t_en:'Bedroom with three beds', alt:'Habitación con tres camas'},
+    {f:'casa2/habitacion-doble', t:'Habitación con dos camas', t_en:'Twin bedroom', alt:'Habitación con dos camas'},
+    {f:'casa2/piscina', t:'Piscina con pérgola', t_en:'Pool with pergola', alt:'Piscina con pérgola'},
+    {f:'casa2/terraza-cubierta', t:'Terraza cubierta junto al ascensor', t_en:'Covered terrace by the elevator', alt:'Terraza cubierta junto al ascensor'},
     {f:'casa2/bano-tina', t:'Baño con tina', t_en:'Bathroom with bathtub', alt:'Baño con tina'},
+    {f:'casa2/sala-c', t:'Rincón de lectura', t_en:'Reading nook', alt:'Rincón de lectura'},
+    {f:'casa2/sala-b', t:'Sala', t_en:'Living room', alt:'Sala'},
+    {f:'casa2/habitacion-triple', t:'Habitación con tres camas', t_en:'Bedroom with three beds', alt:'Habitación con tres camas'},
     {f:'casa2/escalera', t:'Escalera a la terraza', t_en:'Stairs to the rooftop', alt:'Escalera a la terraza'},
     {f:'casa2/habitacion-1c', t:'Habitación principal', t_en:'Master bedroom', alt:'Habitación principal'},
-    {f:'casa2/bano-1', t:'Baño', t_en:'Bathroom', alt:'Baño'},
-    {f:'casa2/habitacion-coral-c', t:'Habitación con TV', t_en:'Bedroom with TV', alt:'Habitación con TV'},
-    {f:'casa2/piscina-2', t:'Piscina', t_en:'Pool', alt:'Piscina'},
     {f:'casa2/habitacion-1b', t:'Habitación principal', t_en:'Master bedroom', alt:'Habitación principal'},
     {f:'casa2/habitacion-coral-b', t:'Habitación con cama en altillo', t_en:'Bedroom with loft bed', alt:'Habitación con cama en altillo'},
+    {f:'casa2/habitacion-coral-c', t:'Habitación con TV', t_en:'Bedroom with TV', alt:'Habitación con TV'},
     {f:'casa2/habitacion-peces-b', t:'Habitación con cama en altillo', t_en:'Bedroom with loft bed', alt:'Habitación con cama en altillo'},
-    {f:'casa2/bano-2', t:'Baño', t_en:'Bathroom', alt:'Baño'}],
+    {f:'casa2/bano-1', t:'Baño', t_en:'Bathroom', alt:'Baño'},
+    {f:'casa2/bano-2', t:'Baño', t_en:'Bathroom', alt:'Baño'},
+    {f:'casa2/bano-3', t:'Baño', t_en:'Bathroom', alt:'Baño'},
+    {f:'casa2/piscina-2', t:'Piscina', t_en:'Pool', alt:'Piscina'}],
   arte: [
     {f:'arte/terraza-catedral', t:'Terraza con vista a la Catedral', t_en:'Terrace with a view of the Cathedral', alt:'Terraza con vista a la Catedral'},
     {f:'arte/sala', t:'Sala principal', t_en:'Main living room', alt:'Sala principal'},

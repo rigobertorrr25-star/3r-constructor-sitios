@@ -94,7 +94,7 @@ Reglas generales de trabajo (iguales en todos los proyectos de Rigoberto): ver `
   capacidad 6; 3 habitaciones, 3,5 baños, sala comedor, cocina, piscina, terraza mirador, oficina, aire, wifi, agua caliente,
   lavadora y secadora, planta eléctrica, mayordomo 24 h, ama de llaves 8 h. 15 fotos en `img/arte/` (`VIDEOS.arte`). La foto
   de la habitación principal se recortó para quitar unas fotos familiares de niños que había en la pared.
-- **25 nov 2026: cuarta propiedad** «Casa con piscina en la terraza» (`img/casa2/`, `VIDEOS.casa2`, 18 fotos): piscina con
+- **25 nov 2026: cuarta propiedad** «Casa con piscina en la terraza» (`img/casa2/`, `VIDEOS.casa2`, 26 fotos: + sala con arte, cocina con isla, jardín interior): piscina con
   pérgola, ascensor, habitaciones con cabeceros tallados y camas en altillo, habitación triple, baño con tina. Sin folleto:
   botón «Preguntar capacidad y precio», no se inventó capacidad. Las fotos de piscina con pérgola que se habían puesto en el
   apartamento de arte son de esta casa (la misma pérgola de madera sale sobre su escalera): se pasaron aquí y el arte quedó
